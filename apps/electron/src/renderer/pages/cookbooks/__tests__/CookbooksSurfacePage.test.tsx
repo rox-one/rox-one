@@ -220,6 +220,18 @@ const HEADINGLESS: CookbooksDocument = {
   cells: [{ cellType: 'code', source: 'print(1)', outputs: [], executionCount: null }],
 }
 
+/**
+ * Wave 14 (F11): one markdown cell whose headings go down and back up — the
+ * shape that proves the nested counters reset (an H1 after an H2 restarts the
+ * counting and its own H2 numbers `2.1`).
+ */
+const RESUMED: CookbooksDocument = {
+  ...NOTEBOOK,
+  cells: [
+    { cellType: 'markdown', source: '# Первый\n## Вложенный\n# Второй', outputs: [], executionCount: null },
+  ],
+}
+
 // Wave 11: a run answers its rich records alongside its text; `[]` when the
 // sidecar has none (the same default main applies to a wire response without
 // the field).
@@ -306,6 +318,8 @@ interface MutateCall {
   index?: number
   from?: number
   to?: number
+  /** Wave 14: the text an `add` carries (the buffer paste, and every replay). */
+  source?: string
 }
 
 interface ApiModel {
@@ -1393,7 +1407,8 @@ describe('CookbooksSurfacePage help (R7)', () => {
     const container = await render()
 
     const block = testId(container, 'cookbooks-help-shortcuts')!
-    expect(block.querySelectorAll('li')).toHaveLength(11)
+    // Wave 14 (F6/F9) appends undo/redo and the code indent — 17 lines.
+    expect(block.querySelectorAll('li')).toHaveLength(17)
     for (const key of [
       'cookbooks.help.shortcutRun',
       'cookbooks.help.shortcutRunStay',
@@ -1406,6 +1421,12 @@ describe('CookbooksSurfacePage help (R7)', () => {
       'cookbooks.help.shortcutEdit',
       'cookbooks.help.shortcutType',
       'cookbooks.help.shortcutSave',
+      'cookbooks.shortcuts.altEnter',
+      'cookbooks.shortcuts.multi',
+      'cookbooks.shortcuts.cellBuffer',
+      'cookbooks.shortcuts.undo',
+      'cookbooks.shortcuts.tab',
+      'cookbooks.shortcuts.drag',
     ]) {
       expect(block.textContent).toContain(t(key))
     }
@@ -1584,10 +1605,22 @@ describe('CookbooksSurfacePage outline (wave 9)', () => {
     expect(outline.querySelector('summary')!.textContent).toBe(t('cookbooks.outline.title'))
 
     const items = allTestIds(container, 'cookbooks-outline-item-') as HTMLElement[]
-    // The H4 and the trailing `###` run are not outline material.
-    expect(items.map((item) => item.textContent)).toEqual(['Первая', 'Вторая', 'Третья'])
+    // The H4 and the trailing `###` run are not outline material. Wave 14 (F11):
+    // every entry is prefixed with the numeral its level earns.
+    expect(items.map((item) => item.textContent)).toEqual(['1 Первая', '1.1 Вторая', '1.1.1 Третья'])
     expect(items[0].getAttribute('aria-label')).toBe(t('cookbooks.outline.itemLabel', { title: 'Первая' }))
     expect(items[2].getAttribute('aria-label')).toBe(t('cookbooks.outline.itemLabel', { title: 'Третья' }))
+  })
+
+  it('numbers by level, indents by level and resets the nested counters', async () => {
+    const { container } = await renderNotebook({ documents: { 'rox-analytics': RESUMED } })
+
+    const items = allTestIds(container, 'cookbooks-outline-item-') as HTMLElement[]
+    // A second H1 starts the count over; its H2 is `2.1`.
+    expect(items.map((item) => item.textContent)).toEqual(['1 Первый', '1.1 Вложенный', '2 Второй'])
+    // The indent travels on the entry's own row, one step per level.
+    expect(items[0].closest('li')!.className).not.toContain('pl-')
+    expect(items[1].closest('li')!.className).toContain('pl-2')
   })
 
   it('scrolls to the block the heading belongs to', async () => {
@@ -1613,8 +1646,8 @@ describe('CookbooksSurfacePage outline (wave 9)', () => {
     await click(container, 'cookbooks-card-churn-playbook')
 
     const items = allTestIds(container, 'cookbooks-outline-item-') as HTMLElement[]
-    // `# Churn` is the only heading of the playbook body.
-    expect(items.map((item) => item.textContent)).toEqual(['Churn'])
+    // `# Churn` is the only heading of the playbook body — numbered `1`.
+    expect(items.map((item) => item.textContent)).toEqual(['1 Churn'])
 
     await click(container, 'cookbooks-outline-item-0')
     expect(scrollCalls).toEqual(['cookbooks-playbook-markdown'])
@@ -1767,15 +1800,26 @@ describe('CookbooksSurfacePage copy source (wave 9)', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Wave 9 — .ipynb export
+// Wave 9 — .ipynb export (wave 14 F8: behind the «Скачать» menu)
 // ---------------------------------------------------------------------------
+
+/**
+ * Wave 14 (F8): download through the menu the surface now offers — the trigger
+ * discloses its two entries, and the entry is what writes the file.
+ */
+async function download(container: HTMLElement, entry: 'ipynb' | 'py'): Promise<void> {
+  await click(container, 'cookbooks-export')
+  await click(container, `cookbooks-export-${entry}`)
+}
 
 describe('CookbooksSurfacePage export (wave 9)', () => {
   it('is offered for a supported notebook only', async () => {
     const { container } = await renderNotebook({
       documents: { 'rox-analytics': NOTEBOOK, 'churn-playbook': PLAYBOOK },
     })
-    expect(testId(container, 'cookbooks-export')!.textContent).toBe(t('cookbooks.actions.export'))
+    expect(testId(container, 'cookbooks-export')!.textContent).toBe(t('cookbooks.export.menu'))
+    // The menu is closed until it is asked for.
+    expect(testId(container, 'cookbooks-export-ipynb')).toBeNull()
 
     // A playbook is not a notebook: nothing to export.
     await click(container, 'cookbooks-card-churn-playbook')
@@ -1798,7 +1842,7 @@ describe('CookbooksSurfacePage export (wave 9)', () => {
     await click(container, 'cookbooks-run-2')
     await click(container, 'cookbooks-run-1')
     await type(container, 'cookbooks-source-3', 'print(42)')
-    await click(container, 'cookbooks-export')
+    await download(container, 'ipynb')
 
     expect(api.counts.export).toHaveLength(1)
     const call = api.counts.export[0]
@@ -1835,7 +1879,7 @@ describe('CookbooksSurfacePage export (wave 9)', () => {
 
   it('reports a cancelled save dialog without an error', async () => {
     const { container } = await renderNotebook({ export: async () => ({ saved: false }) })
-    await click(container, 'cookbooks-export')
+    await download(container, 'ipynb')
     expect(testId(container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.export.cancelled'))
   })
 
@@ -1845,8 +1889,67 @@ describe('CookbooksSurfacePage export (wave 9)', () => {
         throw new Error('EACCES: permission denied')
       },
     })
-    await click(container, 'cookbooks-export')
+    await download(container, 'ipynb')
     expect(testId(container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.export.failed'))
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 14 — the download menu (F8): the «Скачать» disclosure and its `.py`
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage download menu (wave 14, F8)', () => {
+  it('opens on the trigger, closes on the pick and unwinds on Escape', async () => {
+    const { api, container } = await renderNotebook()
+
+    await click(container, 'cookbooks-export')
+    expect(testId(container, 'cookbooks-export')!.getAttribute('aria-expanded')).toBe('true')
+    expect(testId(container, 'cookbooks-export-ipynb')!.textContent).toBe(t('cookbooks.export.ipynb'))
+    expect(testId(container, 'cookbooks-export-py')!.textContent).toBe(t('cookbooks.export.py'))
+    // Nothing was written just by looking at the menu.
+    expect(api.counts.export).toHaveLength(0)
+
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'Escape' })
+    expect(testId(container, 'cookbooks-export-ipynb')).toBeNull()
+    expect(testId(container, 'cookbooks-export')!.getAttribute('aria-expanded')).toBe('false')
+
+    await download(container, 'ipynb')
+    expect(api.counts.export).toHaveLength(1)
+    // The pick closes the menu behind it.
+    expect(testId(container, 'cookbooks-export-ipynb')).toBeNull()
+  })
+
+  it('writes the cells as a .py script, under the notebook’s own name', async () => {
+    const { api, container } = await renderNotebook()
+    await type(container, 'cookbooks-source-1', 'print(42)')
+    await download(container, 'py')
+
+    expect(api.counts.export).toHaveLength(1)
+    const call = api.counts.export[0]
+    expect(call.itemId).toBe('rox-analytics')
+    // Same stem as the notebook export, `.py` instead of `.ipynb`.
+    expect(call.filename).toBe('ROX-Analytics.py')
+    // The shared builder's layout: a title comment, then one `# %%` block per
+    // cell — code verbatim, markdown as comments — and a single trailing `\n`.
+    expect(call.content).toBe(
+      [
+        '# ROX Analytics',
+        '# %%',
+        // The markdown heading is commented out line-by-line, so its own `#`
+        // survives as a second hash — Jupytext's own percent-format shape.
+        '# # Заметка',
+        '# %%',
+        'print(42)',
+        '# %%',
+        'raise ValueError("boom")',
+        '# %%',
+        'print(3)',
+        '',
+      ].join('\n'),
+    )
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(
+      t('cookbooks.export.saved', { path: '/tmp/rox-analytics.ipynb' }),
+    )
   })
 })
 
@@ -2492,15 +2595,16 @@ describe('CookbooksSurfacePage rich output (wave 11)', () => {
     const { container } = await renderNotebook({
       documents: {
         'rox-analytics': savedNotebook(
-          [savedOutput('', [{ mime: 'text/latex', data: '$x^2$' }, { mime: 'text/plain', data: 'x**2' }])],
+          [savedOutput('', [{ mime: 'application/x-yaml', data: 'x: 2' }, { mime: 'text/plain', data: 'x**2' }])],
           1,
         ),
       },
     })
 
-    // Latex is out of scope for this wave (SPEC §Вне скоупа): the record is
-    // carried by the document and reaches the export, but draws no widget — and
-    // the plain-text record still gives the block its fallback text.
+    // A mime outside the renderable list (yaml) is carried by the document and
+    // reaches the export, but draws no widget — and the plain-text record still
+    // gives the block its fallback text. (`text/latex` rendered as of wave 14 —
+    // its own case lives in the F10 block.)
     expect(allTestIds(container, 'cookbooks-display-')).toHaveLength(0)
     expect(testId(container, 'cookbooks-output-0')!.querySelector('pre')!.textContent).toBe('x**2')
   })
@@ -2760,7 +2864,7 @@ describe('CookbooksSurfacePage rich output (wave 11)', () => {
       run: async () => ({ ...RUN_OK, displays: [{ mime: 'image/png', data: PNG_DATA }] }),
     })
     await click(container, 'cookbooks-run-1')
-    await click(container, 'cookbooks-export')
+    await download(container, 'ipynb')
 
     const notebook = JSON.parse(api.counts.export[0].content) as { cells: Record<string, unknown>[] }
     // The stream record comes first, the rich record after it (SPEC §16).
@@ -3772,5 +3876,770 @@ describe('CookbooksSurfacePage restart and run all (wave 13, F9)', () => {
     const container = await render()
     await click(container, 'cookbooks-card-rox-analytics')
     expect(testId(container, 'cookbooks-restart-run-all')).toBeNull()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 14 (slice A) — drag & drop (F1), multi-selection + the cell buffer (F2),
+// Alt+Enter (F3) and the run-all progress (F4). As with wave 13, the W14 locale
+// keys land in slice C; until then `t()` renders the raw key, so the assertions
+// below read behaviour (mutate calls, DOM attributes, notices) rather than copy.
+// ---------------------------------------------------------------------------
+
+/** The `dataTransfer` stub a drag carries — a plain map keyed by mime. */
+interface DragTransfer {
+  effectAllowed: string
+  dropEffect: string
+  setData(type: string, value: string): void
+  getData(type: string): string
+}
+
+function dragData(): DragTransfer {
+  const store = new Map<string, string>()
+  return {
+    effectAllowed: '',
+    dropEffect: '',
+    setData(type: string, value: string): void {
+      store.set(type, value)
+    },
+    getData(type: string): string {
+      return store.get(type) ?? ''
+    },
+  }
+}
+
+/**
+ * Dispatch one native drag event with a `dataTransfer` the page can read.
+ * happy-dom has no `DragEvent`, so a `MouseEvent` (which carries `clientY`) is
+ * used and the transfer object is attached by hand — the page reads
+ * `event.dataTransfer` and `event.clientY` exactly as React exposes them.
+ */
+async function drag(target: Element, type: string, data: DragTransfer, clientY = 0): Promise<Event> {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientY })
+  Object.defineProperty(event, 'dataTransfer', { value: data, configurable: true })
+  await act(async () => {
+    target.dispatchEvent(event)
+  })
+  await flush()
+  return event
+}
+
+/** A fixed rect for a drop target, so the article midline is deterministic. */
+function stubRect(element: Element, rect: { top: number; height: number }): void {
+  Object.defineProperty(element, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({
+      top: rect.top,
+      bottom: rect.top + rect.height,
+      height: rect.height,
+      left: 0,
+      right: 0,
+      width: 0,
+      x: 0,
+      y: rect.top,
+      toJSON: () => ({}),
+    }),
+  })
+}
+
+/** A Shift-click on a cell body — the range gesture. */
+async function shiftClickCell(container: HTMLElement, index: number): Promise<void> {
+  const article = testId(container, `cookbooks-cell-${index}`) as HTMLElement
+  await act(async () => {
+    article.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: true }))
+  })
+  await flush()
+}
+
+describe('CookbooksSurfacePage drag & drop (wave 14, F1)', () => {
+  it('moves a cell onto a hovered insert gap, translating the gap into the op', async () => {
+    const { api, container } = await renderNotebook()
+    const data = dragData()
+    await drag(testId(container, 'cookbooks-drag-handle-0')!, 'dragstart', data)
+    await drag(testId(container, 'cookbooks-insert-2')!, 'dragover', data)
+    await drag(testId(container, 'cookbooks-insert-2')!, 'drop', data)
+
+    // gap 2 above the dragged cell 0 → destination index 1.
+    expect(api.counts.mutate).toEqual([{ itemId: 'rox-analytics', op: 'move', from: 0, to: 1 }])
+  })
+
+  it('drops on a cell midline: the line and the op follow the hovered half', async () => {
+    const { api, container } = await renderNotebook()
+    const data = dragData()
+    const article = testId(container, 'cookbooks-cell-3')!
+    stubRect(article, { top: 100, height: 40 })
+
+    await drag(testId(container, 'cookbooks-drag-handle-0')!, 'dragstart', data)
+    // Above the midline → the gap above cell 3 (gap 3 → destination 2).
+    await drag(article, 'dragover', data, 110)
+    expect(article.getAttribute('data-drop-position')).toBe('above')
+    await drag(article, 'drop', data)
+    expect(api.counts.mutate).toEqual([{ itemId: 'rox-analytics', op: 'move', from: 0, to: 2 }])
+
+    // Below the midline → the gap under cell 3 (gap 4 → destination 3).
+    const second = await renderNotebook()
+    const below = testId(second.container, 'cookbooks-cell-3')!
+    stubRect(below, { top: 100, height: 40 })
+    const data2 = dragData()
+    await drag(testId(second.container, 'cookbooks-drag-handle-0')!, 'dragstart', data2)
+    await drag(below, 'dragover', data2, 130)
+    expect(below.getAttribute('data-drop-position')).toBe('below')
+    await drag(below, 'drop', data2)
+    expect(second.api.counts.mutate).toEqual([{ itemId: 'rox-analytics', op: 'move', from: 0, to: 3 }])
+  })
+
+  it('is a no-op when the drop gap resolves back onto the dragged cell', async () => {
+    const { api, container } = await renderNotebook()
+    const data = dragData()
+    await drag(testId(container, 'cookbooks-drag-handle-1')!, 'dragstart', data)
+    await drag(testId(container, 'cookbooks-insert-2')!, 'dragover', data)
+    await drag(testId(container, 'cookbooks-insert-2')!, 'drop', data)
+
+    // gap 2 above cell 1 → destination 1 === from → nothing happens.
+    expect(api.counts.mutate).toHaveLength(0)
+  })
+
+  it('refuses the drag entirely while an action is in flight', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { api, container } = await renderNotebook({ run: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    const handle = testId(container, 'cookbooks-drag-handle-0')!
+    expect(handle.getAttribute('draggable')).not.toBe('true')
+    expect(handle.getAttribute('aria-disabled')).toBe('true')
+
+    const data = dragData()
+    const start = await drag(handle, 'dragstart', data)
+    expect(start.defaultPrevented).toBe(true)
+    await drag(testId(container, 'cookbooks-insert-2')!, 'dragover', data)
+    await drag(testId(container, 'cookbooks-insert-2')!, 'drop', data)
+    expect(api.counts.mutate).toHaveLength(0)
+
+    await act(async () => {
+      gate.resolve(RUN_OK)
+      await gate.promise
+    })
+    await flush()
+  })
+
+  it('marks the idle handle as draggable', async () => {
+    const { container } = await renderNotebook()
+    expect(testId(container, 'cookbooks-drag-handle-1')!.getAttribute('draggable')).toBe('true')
+  })
+})
+
+describe('CookbooksSurfacePage multi-selection (wave 14, F2)', () => {
+  it('Shift+click extends a contiguous range; Esc clears it', async () => {
+    const { container } = await renderNotebook()
+    await selectCell(container, 0)
+    await shiftClickCell(container, 2)
+
+    for (const index of [0, 1, 2]) {
+      expect(testId(container, `cookbooks-cell-${index}`)!.getAttribute('data-selected')).toBe('true')
+    }
+    // The focus (the last click) is the anchor carrier; the range start is not.
+    expect(testId(container, 'cookbooks-cell-2')!.getAttribute('data-anchor')).toBe('true')
+    expect(testId(container, 'cookbooks-cell-0')!.getAttribute('data-anchor')).toBeNull()
+    expect(testId(container, 'cookbooks-cell-2')!.getAttribute('aria-current')).toBe('true')
+
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'Escape' })
+    for (const index of [0, 1, 2]) {
+      expect(testId(container, `cookbooks-cell-${index}`)!.getAttribute('data-selected')).toBeNull()
+    }
+  })
+
+  it('Shift+ArrowDown extends the range while keeping the anchor', async () => {
+    const { container } = await renderNotebook()
+    await selectCell(container, 0)
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'ArrowDown', shiftKey: true })
+
+    expect(testId(container, 'cookbooks-cell-0')!.getAttribute('data-selected')).toBe('true')
+    expect(testId(container, 'cookbooks-cell-1')!.getAttribute('data-selected')).toBe('true')
+    expect(testId(container, 'cookbooks-cell-2')!.getAttribute('data-selected')).toBeNull()
+  })
+
+  it('a plain move collapses the range back to one cell', async () => {
+    const { container } = await renderNotebook()
+    await selectCell(container, 0)
+    await shiftClickCell(container, 2)
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'j' })
+
+    expect(testId(container, 'cookbooks-cell-3')!.getAttribute('data-selected')).toBe('true')
+    expect(testId(container, 'cookbooks-cell-0')!.getAttribute('data-selected')).toBeNull()
+  })
+})
+
+describe('CookbooksSurfacePage cell buffer (wave 14, F2)', () => {
+  it('Ctrl+C copies the selection and Ctrl+V pastes it after the focus as one block', async () => {
+    const { api, container } = await renderNotebook()
+    await selectCell(container, 0)
+    await shiftClickCell(container, 2)
+
+    const pane = testId(container, 'cookbooks-document')!
+    await pressKey(pane, { key: 'c', metaKey: true })
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(
+      t('cookbooks.buffer.copied', { count: 3 }),
+    )
+
+    await selectCell(container, 3)
+    await pressKey(pane, { key: 'v', metaKey: true })
+
+    expect(api.counts.mutate).toEqual([
+      { itemId: 'rox-analytics', op: 'add', cellType: 'markdown', index: 4, source: '# Заметка' },
+      { itemId: 'rox-analytics', op: 'add', cellType: 'code', index: 5, source: 'print(1)' },
+      { itemId: 'rox-analytics', op: 'add', cellType: 'code', index: 6, source: 'raise ValueError("boom")' },
+    ])
+  })
+
+  it('Ctrl+X cuts the selection as a descending delete group', async () => {
+    const { api, container } = await renderNotebook()
+    await selectCell(container, 1)
+    await shiftClickCell(container, 3)
+
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'x', metaKey: true })
+
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.buffer.cut', { count: 3 }))
+    expect(api.counts.mutate).toEqual([
+      { itemId: 'rox-analytics', op: 'delete', index: 3 },
+      { itemId: 'rox-analytics', op: 'delete', index: 2 },
+      { itemId: 'rox-analytics', op: 'delete', index: 1 },
+    ])
+  })
+
+  it('Ctrl+V with an empty buffer reports it and mutates nothing', async () => {
+    const { api, container } = await renderNotebook()
+    await selectCell(container, 1)
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'v', metaKey: true })
+
+    expect(api.counts.mutate).toHaveLength(0)
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.buffer.empty'))
+  })
+
+  it('leaves Ctrl+C/X/V native inside a cell editor', async () => {
+    const { api, container } = await renderNotebook()
+    await selectCell(container, 1)
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'c', metaKey: true })
+    // Now copy from inside the editor: the page must not re-capture.
+    const field = testId(container, 'cookbooks-source-2') as HTMLTextAreaElement
+    field.focus()
+    await pressKey(field, { key: 'c', metaKey: true })
+    await pressKey(field, { key: 'x', metaKey: true })
+    expect(api.counts.mutate).toHaveLength(0)
+  })
+
+  it('dd deletes every selected cell as one confirmed group', async () => {
+    const confirm = stubConfirm(true)
+    const { api, container } = await renderNotebook()
+    await selectCell(container, 1)
+    await shiftClickCell(container, 3)
+
+    const pane = testId(container, 'cookbooks-document')!
+    await pressKey(pane, { key: 'd' })
+    await pressKey(pane, { key: 'd' })
+
+    expect(confirm.calls).toEqual([t('cookbooks.cell.deleteConfirm')])
+    expect(api.counts.mutate).toEqual([
+      { itemId: 'rox-analytics', op: 'delete', index: 3 },
+      { itemId: 'rox-analytics', op: 'delete', index: 2 },
+      { itemId: 'rox-analytics', op: 'delete', index: 1 },
+    ])
+  })
+
+  it('the per-cell menu copies and pastes through the same buffer', async () => {
+    const { api, container } = await renderNotebook()
+    await selectCell(container, 1)
+    await click(container, 'cookbooks-menu-1')
+    await click(container, 'cookbooks-cellmenu-copy-1')
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(
+      t('cookbooks.buffer.copied', { count: 1 }),
+    )
+
+    await click(container, 'cookbooks-menu-2')
+    await click(container, 'cookbooks-cellmenu-paste-2')
+    expect(api.counts.mutate).toEqual([
+      { itemId: 'rox-analytics', op: 'add', cellType: 'code', index: 3, source: 'print(1)' },
+    ])
+  })
+})
+
+describe('CookbooksSurfacePage Alt+Enter (wave 14, F3)', () => {
+  it('runs the focused cell and inserts an empty code cell right below it', async () => {
+    const { api, container } = await renderNotebook({ run: async () => RUN_OK })
+    await selectCell(container, 1)
+
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'Enter', altKey: true })
+
+    expect(api.counts.run).toHaveLength(1)
+    expect(api.counts.run[0]).toMatchObject({ itemId: 'rox-analytics', index: 1, code: 'print(1)' })
+    expect(api.counts.mutate).toEqual([{ itemId: 'rox-analytics', op: 'add', cellType: 'code', index: 2 }])
+  })
+
+  it('is inert on a markdown cell and while nothing is selected', async () => {
+    const { api, container } = await renderNotebook({ run: async () => RUN_OK })
+    // No selection yet.
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'Enter', altKey: true })
+    expect(api.counts.run).toHaveLength(0)
+
+    // Cell 0 is markdown.
+    await selectCell(container, 0)
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'Enter', altKey: true })
+    expect(api.counts.run).toHaveLength(0)
+    expect(api.counts.mutate).toHaveLength(0)
+  })
+})
+
+describe('CookbooksSurfacePage run progress (wave 14, F4)', () => {
+  it('shows the batch’s own size while it runs and hides it afterwards', async () => {
+    const gate = Promise.withResolvers<{ cells: CookbooksRunCell[] }>()
+    const { container } = await renderNotebook({ runAll: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-all') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    const progress = testId(container, 'cookbooks-run-progress')
+    expect(progress).not.toBeNull()
+    expect(progress!.getAttribute('aria-label')).toBe(t('cookbooks.run.progressAria'))
+    // The sidecar answers a batch in ONE response, so the honest reading is the
+    // run's size — not a count of what has landed.
+    expect(progress!.textContent).toBe(t('cookbooks.run.batch', { total: 3 }))
+
+    await act(async () => {
+      gate.resolve({ cells: RUN_ALL })
+      await gate.promise
+    })
+    await flush()
+    expect(testId(container, 'cookbooks-run-progress')).toBeNull()
+  })
+
+  it('reports the size of the subset a «выполнить выше» run covers', async () => {
+    const gate = Promise.withResolvers<{ cells: CookbooksRunCell[] }>()
+    const { container } = await renderNotebook({ runAll: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-above-3') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    // Cells 1 and 2 are the code cells above cell 3 — the subset's own size.
+    expect(testId(container, 'cookbooks-run-progress')!.textContent).toBe(
+      t('cookbooks.run.batch', { total: 2 }),
+    )
+
+    await act(async () => {
+      gate.resolve({ cells: RUN_ALL })
+      await gate.promise
+    })
+    await flush()
+    expect(testId(container, 'cookbooks-run-progress')).toBeNull()
+  })
+
+  it('shows nothing during a single-cell run', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { container } = await renderNotebook({ run: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+    expect(testId(container, 'cookbooks-run-progress')).toBeNull()
+
+    await act(async () => {
+      gate.resolve(RUN_OK)
+      await gate.promise
+    })
+    await flush()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 14 (slice E) — undo/redo (F6), fold (F7), Tab indent (F9) and the
+// `text/latex` output (F10). As above, the assertions read behaviour (mutate
+// calls, DOM state, toasts) rather than copy.
+// ---------------------------------------------------------------------------
+
+/** Drive the ⋯ row's own gesture: open the disclosure, then pick the action. */
+async function cellMenu(container: HTMLElement, index: number, action: string): Promise<void> {
+  await click(container, `cookbooks-menu-${index}`)
+  await click(container, `cookbooks-${action}-${index}`)
+}
+
+describe('CookbooksSurfacePage undo/redo (wave 14, F6)', () => {
+  it('keeps both controls disabled until a gesture is recorded', async () => {
+    const { container } = await renderNotebook()
+    expect((testId(container, 'cookbooks-undo') as HTMLButtonElement).disabled).toBe(true)
+    expect((testId(container, 'cookbooks-redo') as HTMLButtonElement).disabled).toBe(true)
+
+    await cellMenu(container, 0, 'move-down')
+
+    expect((testId(container, 'cookbooks-undo') as HTMLButtonElement).disabled).toBe(false)
+    // Nothing has been undone yet, so there is nothing to redo.
+    expect((testId(container, 'cookbooks-redo') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('undoes and redoes a move with the inverse op, naming the gesture', async () => {
+    const { api, container } = await renderNotebook()
+    const pane = testId(container, 'cookbooks-document')!
+
+    await cellMenu(container, 0, 'move-down')
+    expect(api.counts.mutate).toEqual([{ itemId: 'rox-analytics', op: 'move', from: 0, to: 1 }])
+
+    await pressKey(pane, { key: 'z', metaKey: true })
+    expect(api.counts.mutate).toEqual([
+      { itemId: 'rox-analytics', op: 'move', from: 0, to: 1 },
+      { itemId: 'rox-analytics', op: 'move', from: 1, to: 0 },
+    ])
+    expect(toasts).toContain(`success:${t('cookbooks.undo.done', { action: t('cookbooks.op.move') })}`)
+    expect((testId(container, 'cookbooks-redo') as HTMLButtonElement).disabled).toBe(false)
+
+    await pressKey(pane, { key: 'z', metaKey: true, shiftKey: true })
+    expect(api.counts.mutate[2]).toEqual({ itemId: 'rox-analytics', op: 'move', from: 0, to: 1 })
+    expect(toasts).toContain(`success:${t('cookbooks.redo.done', { action: t('cookbooks.op.move') })}`)
+    expect((testId(container, 'cookbooks-undo') as HTMLButtonElement).disabled).toBe(false)
+    expect((testId(container, 'cookbooks-redo') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('undoes an insert as a delete of its index, and redoes it with its text', async () => {
+    const { api, container } = await renderNotebook()
+    await click(container, 'cookbooks-insert-code-1')
+    expect(api.counts.mutate).toEqual([{ itemId: 'rox-analytics', op: 'add', cellType: 'code', index: 1 }])
+
+    await click(container, 'cookbooks-undo')
+    expect(api.counts.mutate[1]).toEqual({ itemId: 'rox-analytics', op: 'delete', index: 1 })
+
+    await click(container, 'cookbooks-redo')
+    // An insert that carried no source replays as the empty cell it made.
+    expect(api.counts.mutate[2]).toEqual({
+      itemId: 'rox-analytics',
+      op: 'add',
+      cellType: 'code',
+      index: 1,
+      source: '',
+    })
+    expect(toasts).toContain(`success:${t('cookbooks.redo.done', { action: t('cookbooks.op.add') })}`)
+  })
+
+  it('undoes a multi-delete as ONE entry, re-adding the block in document order', async () => {
+    stubConfirm(true)
+    const { api, container } = await renderNotebook()
+    await selectCell(container, 1)
+    await shiftClickCell(container, 3)
+
+    const pane = testId(container, 'cookbooks-document')!
+    await pressKey(pane, { key: 'd' })
+    await pressKey(pane, { key: 'd' })
+    expect(api.counts.mutate).toHaveLength(3)
+
+    await pressKey(pane, { key: 'z', metaKey: true })
+    // The deletes went out descending; their inverses come back ascending —
+    // the sidecar refuses an insert past the end of the document.
+    expect(api.counts.mutate.slice(3)).toEqual([
+      { itemId: 'rox-analytics', op: 'add', cellType: 'code', index: 1, source: 'print(1)' },
+      { itemId: 'rox-analytics', op: 'add', cellType: 'code', index: 2, source: 'raise ValueError("boom")' },
+      { itemId: 'rox-analytics', op: 'add', cellType: 'code', index: 3, source: 'print(3)' },
+    ])
+    expect(toasts).toContain(`success:${t('cookbooks.undo.done', { action: t('cookbooks.op.delete') })}`)
+  })
+
+  it('undoes a paste as one entry, naming the buffer rather than the insert', async () => {
+    const { api, container } = await renderNotebook()
+    await selectCell(container, 1)
+    const pane = testId(container, 'cookbooks-document')!
+    await pressKey(pane, { key: 'c', metaKey: true })
+    await pressKey(pane, { key: 'v', metaKey: true })
+    expect(api.counts.mutate).toEqual([
+      { itemId: 'rox-analytics', op: 'add', cellType: 'code', index: 2, source: 'print(1)' },
+    ])
+
+    await pressKey(pane, { key: 'z', metaKey: true })
+    expect(api.counts.mutate[1]).toEqual({ itemId: 'rox-analytics', op: 'delete', index: 2 })
+    expect(toasts).toContain(`success:${t('cookbooks.undo.done', { action: t('cookbooks.op.paste') })}`)
+  })
+
+  it('undoes a conversion back to the type the cell had', async () => {
+    const { api, container } = await renderNotebook({
+      mutate: mutationResult(withCellType(NOTEBOOK, 1, 'markdown'), 1),
+    })
+    await cellMenu(container, 1, 'convert')
+    expect(api.counts.mutate).toEqual([
+      { itemId: 'rox-analytics', op: 'convert', index: 1, cellType: 'markdown' },
+    ])
+
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'z', metaKey: true })
+    expect(api.counts.mutate[1]).toEqual({
+      itemId: 'rox-analytics',
+      op: 'convert',
+      index: 1,
+      cellType: 'code',
+    })
+    expect(toasts).toContain(`success:${t('cookbooks.undo.done', { action: t('cookbooks.op.convert') })}`)
+  })
+
+  it('is inert while an action is in flight — buttons disabled, keys swallowed', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { api, container } = await renderNotebook({ run: () => gate.promise })
+    await cellMenu(container, 0, 'move-down')
+    expect(api.counts.mutate).toHaveLength(1)
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+
+    expect((testId(container, 'cookbooks-undo') as HTMLButtonElement).disabled).toBe(true)
+    await pressKey(testId(container, 'cookbooks-document')!, { key: 'z', metaKey: true })
+    expect(api.counts.mutate).toHaveLength(1)
+
+    await act(async () => {
+      gate.resolve(RUN_OK)
+      await gate.promise
+    })
+    await flush()
+    expect((testId(container, 'cookbooks-undo') as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('drops the stack when another document is opened', async () => {
+    const second: CookbooksCard = {
+      id: 'second-lab',
+      title: 'Second lab',
+      vendor: 'ROX',
+      kind: 'ipynb',
+      secretsHave: [],
+      secretsMissing: [],
+      disabled: false,
+      disabledReason: null,
+    }
+    const { container } = await renderNotebook({
+      cards: [...CARDS, second],
+      documents: {
+        'rox-analytics': NOTEBOOK,
+        'second-lab': { ...NOTEBOOK, itemId: 'second-lab', title: 'Second lab' },
+      },
+    })
+    await cellMenu(container, 0, 'move-down')
+    expect((testId(container, 'cookbooks-undo') as HTMLButtonElement).disabled).toBe(false)
+
+    await click(container, 'cookbooks-card-second-lab')
+
+    expect((testId(container, 'cookbooks-undo') as HTMLButtonElement).disabled).toBe(true)
+    expect((testId(container, 'cookbooks-redo') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('leaves Ctrl+Z native inside a cell editor', async () => {
+    const { api, container } = await renderNotebook()
+    await cellMenu(container, 0, 'move-down')
+
+    const field = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    field.focus()
+    const event = await pressKey(field, { key: 'z', metaKey: true })
+
+    expect(event.defaultPrevented).toBe(false)
+    expect(api.counts.mutate).toHaveLength(1)
+  })
+})
+
+describe('CookbooksSurfacePage fold (wave 14, F7)', () => {
+  it('hides a code cell’s editor but keeps its output, and unfolds again', async () => {
+    const { container } = await renderNotebook({ run: async () => RUN_OK })
+    await click(container, 'cookbooks-run-1')
+
+    const article = testId(container, 'cookbooks-cell-1')!
+    const toggle = testId(container, 'cookbooks-fold-1') as HTMLButtonElement
+    expect(article.getAttribute('data-collapsed')).toBeNull()
+    expect(toggle.getAttribute('aria-pressed')).toBe('false')
+
+    await click(container, 'cookbooks-fold-1')
+
+    expect(testId(container, 'cookbooks-cell-1')!.getAttribute('data-collapsed')).toBe('true')
+    expect((testId(container, 'cookbooks-fold-1') as HTMLButtonElement).getAttribute('aria-pressed')).toBe('true')
+    expect(testId(container, 'cookbooks-source-1')).toBeNull()
+    expect(testId(container, 'cookbooks-cell-1')!.textContent).toContain(t('cookbooks.cell.folded'))
+    // The output is not part of «код скрыт»: the block and its actions stay.
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
+    expect(testId(container, 'cookbooks-copy-output-1')).not.toBeNull()
+    // Only the cell that was folded is folded.
+    expect(testId(container, 'cookbooks-cell-2')!.getAttribute('data-collapsed')).toBeNull()
+
+    await click(container, 'cookbooks-fold-1')
+
+    expect(testId(container, 'cookbooks-cell-1')!.getAttribute('data-collapsed')).toBeNull()
+    expect(testId(container, 'cookbooks-source-1')).not.toBeNull()
+  })
+
+  it('hides the rendered markdown of a text cell too', async () => {
+    const { container } = await renderNotebook()
+    expect(testId(container, 'cookbooks-markdown-0')).not.toBeNull()
+
+    await click(container, 'cookbooks-fold-0')
+
+    expect(testId(container, 'cookbooks-markdown-0')).toBeNull()
+    expect(testId(container, 'cookbooks-cell-0')!.getAttribute('data-collapsed')).toBe('true')
+  })
+
+  it('drops every fold when the document is re-read', async () => {
+    const { container } = await renderNotebook()
+    await click(container, 'cookbooks-fold-1')
+    expect(testId(container, 'cookbooks-cell-1')!.getAttribute('data-collapsed')).toBe('true')
+
+    // A structural op re-reads the document, and a fold is indexed by cell —
+    // an insert or a delete would fold the wrong one afterwards.
+    await cellMenu(container, 0, 'move-down')
+
+    expect(testId(container, 'cookbooks-cell-1')!.getAttribute('data-collapsed')).toBeNull()
+  })
+})
+
+describe('CookbooksSurfacePage Tab indent (wave 14, F9)', () => {
+  it('indents at the caret and dedents the line it sits in', async () => {
+    const { container } = await renderNotebook()
+    const field = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    field.focus()
+    field.setSelectionRange(0, 0)
+
+    const pressed = await pressKey(field, { key: 'Tab' })
+
+    expect(pressed.defaultPrevented).toBe(true)
+    const indented = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    expect(indented.value).toBe('  print(1)')
+    // The caret travelled with the text instead of jumping to the end.
+    expect([indented.selectionStart, indented.selectionEnd]).toEqual([2, 2])
+
+    await pressKey(indented, { key: 'Tab', shiftKey: true })
+    expect((testId(container, 'cookbooks-source-1') as HTMLTextAreaElement).value).toBe('print(1)')
+  })
+
+  it('indents every touched line of a selection, and dedents them back', async () => {
+    const { container } = await renderNotebook()
+    await type(container, 'cookbooks-source-1', 'a\nb')
+    const field = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    field.focus()
+    field.setSelectionRange(0, 3)
+
+    await pressKey(field, { key: 'Tab' })
+
+    const indented = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    expect(indented.value).toBe('  a\n  b')
+    // The selection still covers both lines, so the next gesture sees them.
+    expect([indented.selectionStart, indented.selectionEnd]).toEqual([2, 7])
+
+    await pressKey(indented, { key: 'Tab', shiftKey: true })
+    expect((testId(container, 'cookbooks-source-1') as HTMLTextAreaElement).value).toBe('a\nb')
+  })
+
+  it('leaves Tab alone in a markdown editor', async () => {
+    const { container } = await renderNotebook()
+    await click(container, 'cookbooks-mode-0')
+
+    const field = testId(container, 'cookbooks-source-0') as HTMLTextAreaElement
+    const pressed = await pressKey(field, { key: 'Tab' })
+
+    expect(pressed.defaultPrevented).toBe(false)
+    expect((testId(container, 'cookbooks-source-0') as HTMLTextAreaElement).value).toBe('# Заметка')
+  })
+})
+
+/**
+ * Wave 14 (F9, slice F): the `Shift+Tab` half.
+ *
+ * `Shift+Tab` never arrives as a React event at all — `chat.cyclePermissionMode`
+ * owns the chord and the action registry intercepts it on `window` in the
+ * CAPTURE phase (actions/registry.tsx), ahead of the textarea's own handler. The
+ * surface therefore takes the action over exactly like it already takes over
+ * `app.search` (`mod+f`, above), and these cases dispatch the key on `window` —
+ * the way the registry really receives it — rather than on the editor.
+ */
+describe('CookbooksSurfacePage Shift+Tab dedent takeover (wave 14, F9)', () => {
+  /** The chord as the registry sees it: a real `Shift+Tab`, `code` included. */
+  const shiftTab = { key: 'Tab', code: 'Tab', shiftKey: true } as const
+
+  it('dedents the focused code editor through the action registry', async () => {
+    const { container } = await renderNotebook()
+    await type(container, 'cookbooks-source-1', '  print(1)')
+    const field = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    field.focus()
+    field.setSelectionRange(2, 2)
+
+    const pressed = await pressKey(window, shiftTab)
+
+    // The takeover swallowed the chord (no chat mode switch reached the key).
+    expect(pressed.defaultPrevented).toBe(true)
+    const dedented = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    expect(dedented.value).toBe('print(1)')
+    // The caret travelled with the text, exactly like the local handler's.
+    expect([dedented.selectionStart, dedented.selectionEnd]).toEqual([0, 0])
+  })
+
+  it('dedents every touched line when the selection spans them', async () => {
+    const { container } = await renderNotebook()
+    await type(container, 'cookbooks-source-1', '  a\n  b')
+    const field = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    field.focus()
+    field.setSelectionRange(2, 7)
+
+    const pressed = await pressKey(window, shiftTab)
+
+    expect(pressed.defaultPrevented).toBe(true)
+    const dedented = testId(container, 'cookbooks-source-1') as HTMLTextAreaElement
+    expect(dedented.value).toBe('a\nb')
+    // Both lines stay selected, so the next gesture sees them.
+    expect([dedented.selectionStart, dedented.selectionEnd]).toEqual([0, 3])
+  })
+
+  it('never touches the value when the focus is outside a code editor', async () => {
+    const { container } = await renderNotebook()
+    await type(container, 'cookbooks-source-1', '  print(1)')
+    // A selected cell, not an editor: the surface must stay out of the way.
+    await selectCell(container, 1)
+    expect(document.activeElement).toBe(testId(container, 'cookbooks-cell-1'))
+
+    const pressed = await pressKey(window, shiftTab)
+
+    expect(pressed.defaultPrevented).toBe(false)
+    expect((testId(container, 'cookbooks-source-1') as HTMLTextAreaElement).value).toBe('  print(1)')
+  })
+
+  it('leaves Shift+Tab to the platform in a markdown editor', async () => {
+    const { container } = await renderNotebook()
+    await click(container, 'cookbooks-mode-0')
+    const field = testId(container, 'cookbooks-source-0') as HTMLTextAreaElement
+    field.focus()
+    field.setSelectionRange(0, 0)
+
+    const pressed = await pressKey(window, shiftTab)
+
+    expect(pressed.defaultPrevented).toBe(false)
+    expect((testId(container, 'cookbooks-source-0') as HTMLTextAreaElement).value).toBe('# Заметка')
+  })
+})
+
+describe('CookbooksSurfacePage latex output (wave 14, F10)', () => {
+  it('renders a persisted text/latex record as display math', async () => {
+    const { container } = await renderNotebook({
+      documents: {
+        'rox-analytics': savedNotebook([savedOutput('', [{ mime: 'text/latex', data: '\\frac{a}{b}' }])], null),
+      },
+    })
+
+    expect(testId(container, 'cookbooks-display-latex-0')).not.toBeNull()
+    // Drawn by the product renderer, exactly like a `$$` block in a markdown
+    // cell — KaTeX (or the latex block standing in for it while the lazy plugin
+    // loads) emits `.katex`, and the surface imports no math library itself.
+    await flush(4)
+    expect(testId(container, 'cookbooks-output-0')!.querySelector('.katex')).not.toBeNull()
+  })
+
+  it('skips an empty latex record', async () => {
+    const { container } = await renderNotebook({
+      documents: {
+        'rox-analytics': savedNotebook([savedOutput('', [{ mime: 'text/latex', data: '   ' }])], null),
+      },
+    })
+
+    expect(testId(container, 'cookbooks-display-latex-0')).toBeNull()
   })
 })

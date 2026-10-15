@@ -5,7 +5,7 @@
  * as numbers: the page measures the offsets, this function owns the meaning.
  */
 import { describe, expect, it } from 'bun:test'
-import { pickActiveEntry } from '../scroll-spy'
+import { numberHeadings, pickActiveEntry } from '../scroll-spy'
 
 describe('pickActiveEntry', () => {
   it('reports nothing for a document with no outline', () => {
@@ -63,5 +63,36 @@ describe('pickActiveEntry', () => {
     // Two headings of the same cell land on the same offset; both are `<=` the
     // boundary, so the later one wins — the reader is in the lower section.
     expect(pickActiveEntry([0, 0, 0], 0)).toBe(2)
+  })
+})
+
+describe('numberHeadings', () => {
+  it('answers nothing for a document with no headings', () => {
+    expect(numberHeadings([])).toEqual([])
+  })
+
+  it('numbers one counter per level, joined with dots', () => {
+    expect(numberHeadings([1])).toEqual(['1'])
+    expect(numberHeadings([1, 2, 3])).toEqual(['1', '1.1', '1.1.1'])
+    // Siblings share the parent and count up on their own level.
+    expect(numberHeadings([1, 2, 2, 3, 2])).toEqual(['1', '1.1', '1.2', '1.2.1', '1.3'])
+  })
+
+  it('resets every deeper counter when a shallower heading arrives', () => {
+    // The H1 after `1.1.1` starts the count over; its own H2 numbers `2.1`.
+    expect(numberHeadings([1, 2, 3, 1, 2])).toEqual(['1', '1.1', '1.1.1', '2', '2.1'])
+    expect(numberHeadings([1, 2, 1, 2, 1])).toEqual(['1', '1.1', '2', '2.1', '3'])
+  })
+
+  it('counts a skipped level as the first child of the level it skipped', () => {
+    // `HEADING_PATTERN` stops at H3, so an H1 followed by an H3 is legal — the
+    // numerals stay contiguous rather than carrying a hole.
+    expect(numberHeadings([1, 3])).toEqual(['1', '1.1.1'])
+  })
+
+  it('clamps a level into the 1..6 range Markdown defines', () => {
+    // Below the first level counts as the first; above the sixth counts as six.
+    expect(numberHeadings([0, -3])).toEqual(['1', '2'])
+    expect(numberHeadings([2, 6])).toEqual(['1.1', '1.1.1.1.1.1'])
   })
 })
