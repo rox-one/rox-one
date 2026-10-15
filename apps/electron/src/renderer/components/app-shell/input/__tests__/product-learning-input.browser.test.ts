@@ -22,9 +22,24 @@ beforeAll(async () => {
     builder.onLoad({ filter: /^fixture-i18n$/, namespace: 'fixture' }, () => ({ contents: "const t=key=>key; export const useTranslation=()=>({t,i18n:{language:'en',resolvedLanguage:'en'}}); export const Trans=({children,i18nKey})=>children??i18nKey;", loader: 'js' }))
     builder.onResolve({ filter: /\?url$/ }, args => ({ path: args.path, namespace: 'asset' }))
     builder.onLoad({ filter: /.*/, namespace: 'asset' }, () => ({ contents: "export default 'about:blank'", loader: 'js' }))
+    // `define` above pins NODE_ENV to "development", so `@openuidev/react-lang` (reached
+    // through the markdown renderer) takes its dev bootstrap and dynamically imports
+    // `@openuidev/devtools`. That package fetches its widget from cdn.jsdelivr.net at
+    // runtime and installs a document-capture keydown handler that calls
+    // stopPropagation() + preventDefault(), so the app's own Escape handling never runs:
+    // the model-picker case waits for `nativeLayers` to fall back to 0 and hangs (20 s,
+    // which then tears the shared browser down and fails the other seven cases in this
+    // file). The inspector is never product surface under test — same stub as the
+    // sibling product-tour fixtures.
+    builder.onResolve({ filter: /^@openuidev\/devtools$/ }, args => ({ path: args.path, namespace: 'fixture' }))
+    builder.onLoad({ filter: /^@openuidev\/devtools$/, namespace: 'fixture' }, () => ({ contents: 'export function OpenUIDevtools(){return null}', loader: 'js' }))
     builder.onLoad({ filter: /\.css$/ }, () => ({ contents: '', loader: 'text' }))
   } }] })
   const script = result.outputFiles.find(file => file.path.endsWith('.js'))!.text
+  // Executable form of the stub above: while `@openuidev/devtools` is bundled, its CDN
+  // widget is reachable and Escape dies at document capture. If the stub regresses, this
+  // fails here instead of surfacing as an unexplained 20 s timeout in the picker case.
+  if (script.includes('cdn.jsdelivr.net')) throw new Error('the vendor devtools inspector reached the fixture bundle; Escape handling will be swallowed at document capture')
   server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch(request) {
     return new URL(request.url).pathname === '/fixture.js' ? new Response(script, { headers: { 'content-type': 'text/javascript' } }) : new Response('<html><head><style>body{margin:100px}.relative{position:relative}.absolute{position:absolute}.inset-0{inset:0}.invisible{visibility:hidden}.flex{display:flex}.flex-col{flex-direction:column}button{min-width:40px;min-height:24px}.input-container{width:600px}[data-slot="drawer-content"]{position:fixed;left:0;right:0;bottom:0;max-height:70vh;overflow:auto;background:white}[data-slot="drawer-overlay"]{position:fixed;inset:0;background:#0002}.input-toolbar-btn{display:inline-block}</style></head><body><div id="root"></div><script>window.__fixtureThemeGlob=()=>({})</script><script type="module" src="/fixture.js"></script></body></html>', { headers: { 'content-type': 'text/html' } })
   } })
