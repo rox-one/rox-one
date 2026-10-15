@@ -50,6 +50,8 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
           >
             <button
               type="button"
+              data-glass-slot="row"
+              data-state={branch.isCurrent ? 'selected' : undefined}
               className={cn(
                 'flex h-7 w-full items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-caption',
                 branch.isCurrent ? 'bg-white/6 text-foreground' : 'text-foreground/80 hover:bg-white/4',

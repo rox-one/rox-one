@@ -114,7 +114,7 @@ export function ConationNotesPanel({ bridge = null }: Props = {}) {
   }
 
   return (
-    <div data-conation-notes="readonly">
+    <div data-conation-notes="readonly" data-glass-slot="panel">
       {errorKey ? <p>{t(errorKey)}</p> : null}
       <ul>
         {items.map((doc) => (
@@ -126,7 +126,7 @@ export function ConationNotesPanel({ bridge = null }: Props = {}) {
         ))}
       </ul>
       {open ? (
-        <article>
+        <article data-glass-slot="card">
           <h2>{open.title}</h2>
           <pre>{open.body ?? ''}</pre>
         </article>

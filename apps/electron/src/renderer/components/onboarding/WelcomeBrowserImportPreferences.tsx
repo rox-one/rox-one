@@ -93,7 +93,7 @@ export function WelcomeBrowserImportPreferences({ onSavingChange }: { onSavingCh
             else void load(generation.current)
           }}>{t('common.retry')}</Button>
         </div> : null}
-        <div className="flex items-start gap-2 rounded-[var(--radius-card)] bg-foreground/5 p-3">
+        <div data-glass-slot="card" className="flex items-start gap-2 rounded-[var(--radius-card)] bg-foreground/5 p-3">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-500" aria-hidden="true" />
           <p className="onb-helper text-xs text-muted-foreground">{t('onboarding.welcome.browserImportPermissionHint')}</p>
         </div>

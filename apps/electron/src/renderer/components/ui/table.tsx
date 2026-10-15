@@ -9,6 +9,7 @@ interface TableProps extends React.ComponentProps<'table'> {
 function Table({ className, noWrapper, ...props }: TableProps) {
   const table = (
     <table
+      data-glass-slot="table"
       className={cn('w-full caption-bottom text-sm border-separate border-spacing-0', className)}
       {...props}
     />
@@ -58,6 +59,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<'tfoot'>) {
 function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
   return (
     <tr
+      data-glass-slot="row"
       className={cn(
         'transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted',
         className

@@ -68,7 +68,7 @@ export function SessionContextPanel({ sessionId }: { sessionId: string | null })
 
   if (!enabled) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
+      <div data-glass-slot="empty" className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
         <span className="text-base font-medium text-foreground/80">
           {t('inspector.empty.context.title')}
         </span>

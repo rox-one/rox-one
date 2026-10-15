@@ -39,6 +39,7 @@ export function DriveAppDataSection({ onOpenBackup, mirrorApi }: DriveAppDataSec
       data-testid="drive-app-data"
       aria-label={t('drive.appData.label')}
       className="rounded-lg border border-border/60 bg-card/60 p-4"
+      data-glass-slot="card"
     >
       <header className="mb-3 flex items-center gap-2">
         <Database className="icon-toolbar text-primary" />

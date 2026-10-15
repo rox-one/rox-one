@@ -256,7 +256,11 @@ function SectionHeader({ icon: Icon, label }: { icon: LucideIcon; label: string 
 
 function EmptyRow({ children }: { children: string }) {
   return (
-    <div className={cn('mx-3 mb-2 rounded-md px-2.5 py-2', 'bg-muted/40 text-sm text-muted-foreground')}>
+    <div
+      className={cn('mx-3 mb-2 rounded-md px-2.5 py-2', 'bg-muted/40 text-sm text-muted-foreground')}
+      // Arc Glass: section/loading placeholders = the `empty` slab.
+      data-glass-slot="empty"
+    >
       {children}
     </div>
   )
@@ -289,6 +293,9 @@ function NavRow({
         'text-sm font-medium text-foreground/80',
         'hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
       )}
+      // Arc Glass: tree rows are `row` surfaces — transparent base, hover from
+      // the shared state tokens (arc-glass-surfaces.css). Paint only.
+      data-glass-slot="row"
     >
       <Icon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
       <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
@@ -583,7 +590,12 @@ function NotebookList({ notebooks, mobile, viewportRef }: { notebooks: Knowledge
 
   return (
     <div className="mb-2 flex flex-col gap-0.5">
-      <div className={cn('mb-1 flex gap-1 text-xs text-muted-foreground', mobile ? 'mx-0 w-full px-2' : 'mx-3')}>
+      <div
+        className={cn('mb-1 flex gap-1 text-xs text-muted-foreground', mobile ? 'mx-0 w-full px-2' : 'mx-3')}
+        // Arc Glass: filter chips + create actions = toolbar material
+        // (static blur + bottom hairline).
+        data-glass-slot="toolbar"
+      >
         {(['all', 'notes', 'databases'] as NavFilter[]).map((id) => (
           <button
             key={id}

@@ -38,6 +38,7 @@ export function PermissionDiffPreview({ preview }: { preview: PermissionPreview 
         role="region"
         aria-label={t('chat.approval.previewLabel')}
         tabIndex={0}
+        data-glass-slot="editor"
         className="max-h-48 overflow-auto rounded-[var(--radius-control)] bg-surface-input font-mono text-caption outline-none focus-visible:ring-1 focus-visible:ring-ring"
       >
         {hunks.map((hunk, index) => (

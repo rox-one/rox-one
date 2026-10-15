@@ -26,6 +26,7 @@ export function BulkActionBar({ count, onAction, onClear }: BulkActionBarProps) 
       role="toolbar"
       aria-label={t('tasks.bulk.selected', { count })}
       data-testid="tasks-bulk-bar"
+      data-glass-slot="toast"
       onKeyDown={(event) => {
         if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight' && event.key !== 'Home' && event.key !== 'End') return
         const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('button'))

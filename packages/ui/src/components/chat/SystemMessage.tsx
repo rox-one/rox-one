@@ -69,6 +69,7 @@ export function SystemMessage({
   return (
     <div className={cn("px-4 py-2", className)}>
       <div
+        data-glass-slot="card"
         className={cn("text-sm px-3 py-2 rounded-md", style.className)}
         style={{
           ...style.bgStyle,

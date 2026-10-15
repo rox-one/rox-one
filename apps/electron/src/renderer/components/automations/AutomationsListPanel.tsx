@@ -278,7 +278,7 @@ export function AutomationsListPanel({
   useScreenSidebar(sidebarConfig)
 
   return (
-    <div className={cn('rox-autom-list', className)} data-testid="automations-list">
+    <div className={cn('rox-autom-list', className)} data-glass-slot="panel" data-testid="automations-list">
       <div className="rox-autom-list-top">
         <div className="relative flex-1 min-w-0">
           <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 opacity-50" />
@@ -318,7 +318,7 @@ export function AutomationsListPanel({
       <ScrollArea className="flex-1">
         <div className="pb-3" data-list-role="automations">
           {automations.length === 0 ? (
-            <div className="rox-autom-empty">
+            <div className="rox-autom-empty" data-glass-slot="empty">
               <p>{t('automations.noAutomationsConfigured')}</p>
               <button type="button" className="rox-autom-btn is-primary mt-3" onClick={handleCreate} disabled={creating}>
                 <Plus className="size-3.5" />
@@ -326,7 +326,7 @@ export function AutomationsListPanel({
               </button>
             </div>
           ) : visibleCount === 0 ? (
-            <div className="rox-autom-empty">
+            <div className="rox-autom-empty" data-glass-slot="empty">
               <p>{t('automations.noAutomationsFound')}</p>
               {query && (
                 <button type="button" className="rox-autom-link mt-1" onClick={() => setQuery('')}>
@@ -350,12 +350,16 @@ export function AutomationsListPanel({
                   {items.map((automation) => {
                     const selected = selectedAutomationId === automation.id
                     const inMulti = isMultiSelectActive && isInSelection(automation.id)
+                    // Multi-select is published as the row recipe's selected state:
+                    // its transparent base would otherwise drop the `is-multi` tint.
                     return (
                       <div
                         key={automation.id}
                         role="option"
                         tabIndex={0}
                         aria-selected={selected}
+                        data-glass-slot="row"
+                        data-state={inMulti ? 'selected' : undefined}
                         data-automation-id={automation.id}
                         className={cn('rox-autom-row automation-item', (!automation.enabled || automation.contextPause) && 'is-off', inMulti && 'is-multi')}
                         onMouseDown={(e) => handleRowMouseDown(e, automation.id)}

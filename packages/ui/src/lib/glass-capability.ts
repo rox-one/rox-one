@@ -1,8 +1,11 @@
 /**
  * Glass capability tier. `full` = backdrop blur + SVG edge refraction (Chromium
- * backdrop-filter url()); `basic` = plain backdrop-filter blur. Pure input →
- * tier so it is testable; `applyGlassTier` writes html[data-glass] and keeps it
- * live (reduced-transparency changes, battery) without polling.
+ * backdrop-filter url()); `basic` = the solid, blur-free material — under Arc
+ * Glass every glass recipe drops backdrop-filter and keeps tint, sheen and
+ * hairlines (the same flatten the a11y/performance gates apply); other themes
+ * define their own use of the attribute. Pure input → tier so it is testable;
+ * `applyGlassTier` writes html[data-glass] and keeps it live
+ * (reduced-transparency changes, battery) without polling.
  */
 export type GlassTier = 'full' | 'basic'
 

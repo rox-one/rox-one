@@ -50,7 +50,7 @@ export function DiffViewerControls({
 }: DiffViewerControlsProps) {
   const { t } = useTranslation()
   return (
-    <div className={cn('flex items-center gap-1.5', className)}>
+    <div data-glass-slot="toolbar" className={cn('flex items-center gap-1.5', className)}>
       {/* Stats display: -X +Y */}
       <div className="flex items-center gap-2 mr-0.5 text-base font-medium font-mono">
         <span className="text-destructive">-{deletions}</span>

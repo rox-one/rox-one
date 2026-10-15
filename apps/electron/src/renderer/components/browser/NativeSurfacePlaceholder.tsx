@@ -10,7 +10,7 @@ export function NativeSurfacePlaceholder({ presentation, surfaceRef }: {
   const { t } = useTranslation()
   if (presentation !== 'clipped' && presentation !== 'unfocused') return null
   return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-5 text-center text-muted-foreground">
+    <div data-glass-slot="empty" className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-5 text-center text-muted-foreground">
       <p className="text-xs">{t(presentation === 'clipped' ? 'nativeSurface.notFullyVisible' : 'nativeSurface.focusToShow')}</p>
       <button
         type="button"

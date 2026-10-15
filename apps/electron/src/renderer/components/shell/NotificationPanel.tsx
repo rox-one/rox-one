@@ -123,7 +123,7 @@ export function NotificationPanel({ workspaceId, items, unread, filter, onFilter
       </div>
       <ul className="max-h-[min(60vh,480px)] overflow-y-auto p-1" aria-live="polite">
         {shown.length === 0 && (
-          <li className="px-3 py-8 text-center text-sm text-muted-foreground" data-notification-empty="">
+          <li className="px-3 py-8 text-center text-sm text-muted-foreground" data-notification-empty="" data-glass-slot="empty">
             {t(filter === 'unread' ? 'shell.notifications.emptyUnread' : 'shell.notifications.empty')}
           </li>
         )}
@@ -136,6 +136,7 @@ export function NotificationPanel({ workspaceId, items, unread, filter, onFilter
                 onClick={() => activate(n)}
                 data-notification-id={n.id}
                 data-notification-kind={n.kind}
+                data-glass-slot="row"
                 className={cn('flex w-full items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 pr-8 text-left hover:bg-[var(--state-hover)] focus-visible:ring-1 focus-visible:ring-ring', !n.read && 'bg-accent/5')}
               >
                 <Icon className={cn('mt-0.5 icon-toolbar shrink-0', n.kind === 'error' ? 'text-destructive' : n.kind === 'approval' || n.kind === 'balance' ? 'text-status-warning' : 'text-muted-foreground')} aria-hidden />

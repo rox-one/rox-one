@@ -932,7 +932,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
                 {group.tasks.map((task) => {
                   const sessionLink = task.links.find((l) => l.kind === 'session')
                   return (
-                    <div key={task.id} className="group flex min-w-0 items-center gap-2 rounded-md px-1 py-0.5 hover:bg-foreground/[0.03]">
+                    <div key={task.id} data-glass-slot="row" className="group flex min-w-0 items-center gap-2 rounded-md px-1 py-0.5 hover:bg-foreground/[0.03]">
                       <CheckBox checked={Boolean(task.completedAt)} label={task.title} onChange={() => toggleTask(task)} />
                       <button
                         type="button"
@@ -1147,7 +1147,7 @@ export default function ProjectRoadmapPage({ projectSlug }: ProjectInfoPageProps
               {t('projectInfo.tabSettings')}
             </button>
             {settingsOpen ? (
-              <div className="mt-2 grid min-w-0 max-w-[720px] grid-cols-1 gap-4 rounded-lg bg-foreground/[0.025] p-3">
+              <div data-glass-slot="editor" className="mt-2 grid min-w-0 max-w-[720px] grid-cols-1 gap-4 rounded-lg bg-foreground/[0.025] p-3">
                 <Field label={t('projectInfo.workingDirectory')}>
                   <div className="flex min-w-0 gap-2">
                     <Input value={editWorkingDir} onChange={(e) => setEditWorkingDir(e.target.value)} placeholder={t('projectInfo.workingDirectoryPlaceholder')} className="min-w-0 flex-1" />

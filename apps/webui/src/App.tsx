@@ -253,6 +253,13 @@ export default function App() {
   }
   useEffect(() => clearOverlayTimers, [])
 
+  // The landing renders before the shared renderer mounts, so it never had a
+  // ThemeProvider above it: `html[data-theme]` was never written on a cold load
+  // and every glass/scenic recipe — including the landing cards'
+  // `data-glass-slot="card"` — stayed inert. Mirror the renderer branch's prop
+  // (`ReadyRenderer`) so the landing paints under the same resolved theme.
+  const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+
   if (phase === 'loading') return <LoadingScreen />
   if (phase === 'error') return <ErrorScreen message={error} code={errorCode} onRetry={() => setAttempt(value => value + 1)} />
   if (!bootstrap || webSession === null) return <LoadingScreen />
@@ -265,10 +272,12 @@ export default function App() {
     // cloud-VM deep-link probe so we never flash the landing before entering.
     if (modesLanding === null || cloudLinkChecking) return <LoadingScreen />
     if (modesLanding) return (
-      <WebModesLanding host={window.electronAPI} onEnter={(mode) => {
-        setEnteredMode(mode)
-        setCloudVmOpen(mode === 'cloud-vm')
-      }} />
+      <ThemeProvider activeWorkspaceId={workspaceId ?? bootstrap.workspaceId}>
+        <WebModesLanding host={window.electronAPI} onEnter={(mode) => {
+          setEnteredMode(mode)
+          setCloudVmOpen(mode === 'cloud-vm')
+        }} />
+      </ThemeProvider>
     )
   }
 
@@ -284,7 +293,7 @@ export default function App() {
       </div>
       {cloudVmOpen && (
         // eslint-disable-next-line rox/prefer-primitives -- the cloud-VM mode surface is a fullscreen layer, not a modal dialog: the shared renderer stays mounted underneath (inert + aria-hidden) and "Перейти в чат" returns to it; Dialog/Sheet/FullscreenOverlayBase portal to a new root and trap focus, which would break that contract
-        <div className="fixed inset-0 z-fullscreen overflow-auto bg-background" data-cloud-vm-surface-overlay="true" role="dialog" aria-modal="true">
+        <div data-glass-slot="dialog" className="fixed inset-0 z-fullscreen overflow-auto bg-background" data-cloud-vm-surface-overlay="true" role="dialog" aria-modal="true">
           <CloudVmSurface
             host={window.electronAPI}
             onOpenRun={(id) => {

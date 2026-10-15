@@ -22,6 +22,7 @@ export function OneTimeHint({ id, title, body, when = true, className }: OneTime
       role="note"
       aria-label={title}
       data-one-time-hint={id}
+      data-glass-slot="toast"
       className={cn('flex max-w-sm items-start gap-2 rounded-[var(--radius-card)] border border-border-subtle bg-surface-elevated p-3 text-small shadow-middle', className)}
     >
       <Lightbulb className="icon-inline mt-0.5 shrink-0 text-accent" aria-hidden />
@@ -31,7 +32,7 @@ export function OneTimeHint({ id, title, body, when = true, className }: OneTime
         <button
           type="button"
           onClick={() => dismissHint(id)}
-          className="mt-2 rounded-[var(--radius-control)] px-1.5 py-0.5 text-caption font-medium text-accent hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-ring"
+          className="mt-2 rounded-[var(--radius-control)] px-1.5 py-0.5 text-caption font-medium text-accent hover:bg-[var(--state-hover)] focus-visible:ring-1 focus-visible:ring-ring"
         >
           {t('shell.hint.gotIt')}
         </button>
@@ -40,7 +41,7 @@ export function OneTimeHint({ id, title, body, when = true, className }: OneTime
         type="button"
         onClick={() => dismissHint(id)}
         aria-label={t('shell.hint.dismiss')}
-        className="shrink-0 rounded-[var(--radius-control)] p-0.5 text-text-muted hover:bg-surface-hover hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
+        className="shrink-0 rounded-[var(--radius-control)] p-0.5 text-text-muted hover:bg-[var(--state-hover)] hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
       >
         <X className="icon-caption" aria-hidden />
       </button>

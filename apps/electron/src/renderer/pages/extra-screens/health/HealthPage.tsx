@@ -137,7 +137,7 @@ export default function HealthPage(_props: { itemId: string | null }) {
         />
         <div className="shrink-0 px-4 pb-2">
           {allClear ? (
-            <div className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2.5" data-testid="health-all-ok">
+            <div data-glass-slot="card" className="rounded-[var(--radius-card)] bg-surface-hover px-3 py-2.5" data-testid="health-all-ok">
               <div className="font-bold text-success">{t('extraScreens.health.allOkTitle')}</div>
               <div className="mt-0.5 text-small text-muted-foreground">{t('extraScreens.health.allOkBody')}</div>
             </div>
@@ -158,6 +158,7 @@ export default function HealthPage(_props: { itemId: string | null }) {
                     key={row.id}
                     type="button"
                     onClick={() => setSelectedId(row.id)}
+                    data-glass-slot="row"
                     className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-1 py-0.5 text-left text-small text-muted-foreground hover:bg-surface-hover hover:text-foreground"
                   >
                     <HealthStatusDot status={row.status} />
@@ -198,6 +199,7 @@ export default function HealthPage(_props: { itemId: string | null }) {
                     key={row.id}
                     type="button"
                     onClick={() => setSelectedId(row.id)}
+                    data-glass-slot="row"
                     className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-surface-hover"
                   >
                     <HealthStatusDot status={row.status} />

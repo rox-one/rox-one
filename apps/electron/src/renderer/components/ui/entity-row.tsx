@@ -348,7 +348,13 @@ export function EntityRow({
     </div>
   ) : null
 
-  // Build the inner content (shared between with-context-menu and without)
+  // Build the inner content (shared between with-context-menu and without).
+  // Arc Glass: the interactive lane carries `data-glass-slot="row"`; the frozen
+  // recipe (packages/ui/src/components/glass/arc-glass-surfaces.css) paints the
+  // transparent base plus hover/selection. Selection is mirrored as
+  // `data-state="selected"` because that recipe's selected branch reads
+  // `[aria-selected="true"]` / `[data-state="selected"]` — a consumer's own
+  // `aria-selected` passed through `buttonProps` keeps working unchanged.
   const innerContent = (
     <div className="relative group select-none pl-2 mr-2">
       {/* Selection indicator bar — suppressed when an outer wrapper draws its
@@ -367,6 +373,8 @@ export function EntityRow({
       {/* Main content row — div role=option so checkbox/hover-action buttons are not nested in a <button>. */}
       <div
         tabIndex={0}
+        data-glass-slot="row"
+        data-state={isSelected || isInMultiSelect ? 'selected' : undefined}
         {...(buttonProps as React.HTMLAttributes<HTMLDivElement>)}
         role="option"
         className={cn(

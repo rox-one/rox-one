@@ -236,7 +236,7 @@ export function EntityViewPlaceholder({ view, labelKey }: EntityViewPlaceholderP
   const key = labelKey ?? ENTITY_VIEW_LABEL_KEYS[view] ?? 'entityView.comingSoon'
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center min-h-0">
+    <div data-glass-slot="empty" className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center min-h-0">
       <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground">
         <Icon className="icon-empty" />
       </div>

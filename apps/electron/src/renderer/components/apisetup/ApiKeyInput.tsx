@@ -736,7 +736,7 @@ export function ApiKeyInput({
 
           {/* Environment info */}
           {bedrockAuthMethod === 'environment' && (
-            <div className="rounded-md bg-foreground-2 p-3">
+            <div data-glass-slot="card" className="rounded-md bg-foreground-2 p-3">
               <p className="text-xs text-foreground/50">
                 Uses your existing AWS credential chain — <code className="text-foreground/70">~/.aws/credentials</code>, <code className="text-foreground/70">AWS_PROFILE</code>, IAM roles, SSO sessions, and environment variables.
               </p>
@@ -815,6 +815,7 @@ export function ApiKeyInput({
                     onClick={() => { setOpenTier(null); setTierFilter('') }}
                   />
                   <div
+                    data-glass-slot="popover"
                     className="fixed z-island min-w-[200px] overflow-hidden rounded-md bg-background text-foreground shadow-modal-small"
                     style={{
                       top: tierDropdownPosition.top,
@@ -917,6 +918,7 @@ export function ApiKeyInput({
               </Label>
               <textarea
                 id="custom-model-metadata"
+                data-glass-slot="editor"
                 value={customModelsJson}
                 onChange={(e) => {
                   setCustomModelsJson(e.target.value)

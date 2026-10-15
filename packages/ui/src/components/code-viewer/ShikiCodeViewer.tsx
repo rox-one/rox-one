@@ -148,8 +148,8 @@ export function ShikiCodeViewer({
 
   return (
     <div
-      className={cn('h-full w-full overflow-auto', className)}
-      style={{ backgroundColor }}
+      data-glass-slot="editor"
+      className={cn('h-full w-full overflow-auto bg-background', className)}
     >
       <div className="min-h-full flex">
         {/* Line numbers gutter */}

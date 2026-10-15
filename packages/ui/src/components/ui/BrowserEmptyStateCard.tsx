@@ -26,7 +26,10 @@ export function BrowserEmptyStateCard({
   const { t } = useTranslation()
   return (
     <div className="w-full h-full flex items-center justify-center p-8">
-      <div className="w-full max-w-[700px] bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden border border-border/30">
+      <div
+        className="w-full max-w-[700px] bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden border border-border/30"
+        data-glass-slot="empty"
+      >
         <div className="px-4 py-3 border-b border-border/30 flex items-center bg-muted/20 select-none">
           <h3 className="text-base font-medium text-foreground tracking-tight">
             {title}

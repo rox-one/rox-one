@@ -74,10 +74,27 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
   }
 
   if (unavailable) {
-    return <p className="px-1 py-6 text-sm text-muted-foreground">{t('knowledgeMap.unavailable')}</p>
+    return (
+      <p
+        className="px-1 py-6 text-sm text-muted-foreground"
+        // Arc Glass: unavailable = the `empty` slab.
+        data-glass-slot="empty"
+      >
+        {t('knowledgeMap.unavailable')}
+      </p>
+    )
   }
   if (error) {
-    return <p className="px-1 py-6 text-sm text-muted-foreground" role="alert">{t('knowledgeMap.error')}</p>
+    return (
+      <p
+        className="px-1 py-6 text-sm text-muted-foreground"
+        // Arc Glass: load failure = the `empty` slab.
+        data-glass-slot="empty"
+        role="alert"
+      >
+        {t('knowledgeMap.error')}
+      </p>
+    )
   }
   if (!dto) {
     return (
@@ -122,7 +139,13 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
     return (
       <div className="space-y-3">
         {dto.stats.files === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('knowledgeMap.empty.title')}</p>
+          <p
+            className="text-sm text-muted-foreground"
+            // Arc Glass: no indexed files = the `empty` slab.
+            data-glass-slot="empty"
+          >
+            {t('knowledgeMap.empty.title')}
+          </p>
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -131,6 +154,8 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
             </div>
             <div
               className="h-[180px] rounded-lg border border-border bg-surface-elevated/40 pointer-events-none"
+              // Arc Glass: compact preview canvas = a `card` surface.
+              data-glass-slot="card"
               aria-hidden
             >
               <KnowledgeMapGraph
@@ -155,7 +180,11 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
 
   if (dto.stats.files === 0) {
     return (
-      <div className="space-y-3">
+      <div
+        className="space-y-3"
+        // Arc Glass: no indexed files = the `empty` slab.
+        data-glass-slot="empty"
+      >
         <p className="text-sm font-medium">{t('knowledgeMap.empty.title')}</p>
         <p className="text-sm text-muted-foreground">{t('knowledgeMap.empty.body')}</p>
         <Button size="sm" variant="outline" onClick={refresh} disabled={loading}>
@@ -168,7 +197,12 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div
+        className="flex flex-wrap items-center gap-2"
+        // Arc Glass: mode switch + zoom/fit controls + search = toolbar material
+        // (static blur + bottom hairline, arc-glass-surfaces.css).
+        data-glass-slot="toolbar"
+      >
         <SettingsSegmentedControl<KnowledgeMapMode>
           size="sm"
           value={mode}
@@ -229,7 +263,12 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
       {statsLine}
       {legend}
 
-      <div className="rounded-lg border border-border overflow-hidden bg-surface-elevated/30">
+      <div
+        className="rounded-lg border border-border overflow-hidden bg-surface-elevated/30"
+        // Arc Glass: the map canvas frame = a `card` surface (tint + sheen +
+        // ring, no blur — the graph itself stays sharp).
+        data-glass-slot="card"
+      >
         {mode === 'graph' && (
           <div className="h-[440px]">
             <KnowledgeMapGraph

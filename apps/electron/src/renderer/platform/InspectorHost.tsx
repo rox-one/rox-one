@@ -536,7 +536,7 @@ export function InspectorHost() {
           type="button"
           aria-label={t('inspector.expand')}
           onClick={expandLens}
-          className="chrome-strip rox-shell-pane rox-shell-divider-l pointer-events-auto flex h-full w-[28px] shrink-0 items-center justify-center hover:bg-foreground/5"
+          className="chrome-strip rox-shell-pane rox-shell-divider-l pointer-events-auto flex h-full w-[28px] shrink-0 items-center justify-center hover:bg-[var(--state-hover)]"
           data-inspector="collapsed"
         >
           <ChevronsRight className="h-3.5 w-3.5 rotate-180" />
@@ -576,7 +576,7 @@ export function InspectorHost() {
         type="button"
         aria-label={t('inspector.expand')}
         onClick={expandLens}
-        className="chrome-strip rox-shell-pane rox-shell-divider-l pointer-events-auto flex h-full w-[28px] shrink-0 items-center justify-center hover:bg-foreground/5"
+        className="chrome-strip rox-shell-pane rox-shell-divider-l pointer-events-auto flex h-full w-[28px] shrink-0 items-center justify-center hover:bg-[var(--state-hover)]"
         data-session-inspector={sessionMode ? 'true' : 'false'}
         data-inspector="collapsed"
       >
@@ -641,7 +641,7 @@ export function InspectorHost() {
                   data-inspector-pin={pinned ? 'on' : 'off'}
                   onClick={togglePinned}
                   className={cn(
-                    'flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] transition-colors hover:bg-surface-hover hover:text-foreground',
+                    'flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] transition-colors hover:bg-[var(--state-hover)] hover:text-foreground',
                     pinned ? 'text-accent' : 'text-muted-foreground/60',
                   )}
                 >
@@ -656,7 +656,7 @@ export function InspectorHost() {
                   type="button"
                   aria-label={t('inspector.hide')}
                   onClick={collapseChrome}
-                  className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
+                  className="flex h-6 w-6 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground/60 transition-colors hover:bg-[var(--state-hover)] hover:text-foreground"
                 >
                   <ChevronsRight className="h-3.5 w-3.5" />
                 </button>
@@ -707,7 +707,7 @@ export function InspectorHost() {
                     'flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] transition-colors',
                     active
                       ? 'bg-accent/10 text-accent'
-                      : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+                      : 'text-muted-foreground hover:bg-[var(--state-hover)] hover:text-foreground',
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -725,7 +725,7 @@ export function InspectorHost() {
                 type="button"
                 aria-label={t('inspector.hide')}
                 onClick={collapseChrome}
-                className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
+                className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] text-muted-foreground/50 transition-colors hover:bg-[var(--state-hover)] hover:text-foreground"
               >
                 <ChevronsRight className="h-4 w-4" />
               </button>

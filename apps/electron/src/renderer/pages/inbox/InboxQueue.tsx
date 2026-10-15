@@ -503,7 +503,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
         subtitle={visibleBlockingCount ? t('inbox.blockingCount', { count: visibleBlockingCount }) : undefined}
         actions={<Button variant="ghost" disabled={refreshing} onClick={() => void refreshInbox()}>{refreshing ? <LoaderCircle aria-hidden className="icon-caption animate-spin motion-reduce:animate-none" /> : null}{t('inbox.refresh')}</Button>}
       />
-      <div className="mx-3 flex flex-wrap items-center gap-1.5 border-b border-border-subtle py-2">
+      <div data-glass-slot="toolbar" className="mx-3 flex flex-wrap items-center gap-1.5 border-b border-border-subtle py-2">
         <input
           type="search"
           value={query}
@@ -528,7 +528,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
         </label>
       </div>
       {selectedVisibleIds.length > 0 ? (
-      <div data-testid="inbox-selection-toolbar" className="mx-3 flex flex-wrap items-center gap-1.5 border-b border-border-subtle py-1.5 text-caption">
+      <div data-testid="inbox-selection-toolbar" data-glass-slot="toolbar" className="mx-3 flex flex-wrap items-center gap-1.5 border-b border-border-subtle py-1.5 text-caption">
         {/* eslint-disable-next-line rox/prefer-primitives -- Checkbox primitive (#1592) has not landed; the bulk select-all switch stays native until it does */}
         <input
           type="checkbox"
@@ -571,9 +571,9 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
       ) : isWebUI ? (
         <p className="mx-3 mt-2 text-caption text-text-muted" data-testid="inbox-desktop-only-hint">{t('inbox.desktopOnlyHint')}</p>
       ) : null}
-      <div role="listbox" aria-label={t('inbox.title')} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="inbox-list">
+      <div role="listbox" aria-label={t('inbox.title')} data-glass-slot="table" className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="inbox-list">
         {visible.length === 0 ? (
-          <div ref={actionsTourRef} data-tour-id="inbox.actions" className="flex min-h-[300px] flex-1 flex-col items-center justify-center px-5 py-10 text-center" role={initialLoading ? 'status' : undefined}>
+          <div ref={actionsTourRef} data-tour-id="inbox.actions" data-glass-slot="empty" className="flex min-h-[300px] flex-1 flex-col items-center justify-center px-5 py-10 text-center" role={initialLoading ? 'status' : undefined}>
           <span aria-hidden="true" className="mb-2 flex size-16 items-center justify-center rounded-lg bg-accent/10 text-accent">
             {initialLoading ? <LoaderCircle className="icon-empty animate-spin motion-reduce:animate-none" /> : errorEntries.length || !workspaceId ? <Inbox className="icon-empty" /> : narrowed ? <Search className="icon-empty" /> : <CheckCheck className="icon-empty" />}
           </span>
@@ -809,7 +809,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
     <div data-testid="inbox-page" className="flex h-full min-h-0 min-w-0 flex-col bg-background font-sans text-body text-foreground">
       <div className="flex min-h-0 min-w-0 flex-1">
         <ShellSidebarPortal className="hidden w-[220px] shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3 md:flex">{navigator}</ShellSidebarPortal>
-        <section ref={listTourRef} data-tour-id="inbox.list" className={`min-h-0 min-w-0 flex-1 flex-col bg-surface-hover ${hasDetail ? 'hidden lg:flex' : 'flex'}`} data-testid="inbox-queue">
+        <section ref={listTourRef} data-tour-id="inbox.list" data-glass-slot="panel" className={`min-h-0 min-w-0 flex-1 flex-col bg-surface-hover ${hasDetail ? 'hidden lg:flex' : 'flex'}`} data-testid="inbox-queue">
           <label className="mx-3 mt-2 flex items-center gap-2 text-small text-text-secondary md:hidden">
             <span>{t('inbox.viewLabel')}</span>
             {/* eslint-disable-next-line rox/prefer-primitives -- md:hidden mobile view switcher: the native picker is the intended touch control; Radix Select is a portaled popover and would change the interaction, out of scope for a token pass */}
@@ -824,8 +824,8 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
           </label>
           {listPanel}
         </section>
-        {hasDetail ? <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background lg:max-w-[48%]" data-testid="inbox-detail-pane">
-          <div className="flex shrink-0 border-b border-border-subtle px-4 py-2"><Button variant="ghost" onClick={closeDetail}><ArrowLeft className="icon-caption" aria-hidden />{t('common.backToList')}</Button></div>
+        {hasDetail ? <section data-glass-slot="editor" className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background lg:max-w-[48%]" data-testid="inbox-detail-pane">
+          <div data-glass-slot="toolbar" className="flex shrink-0 border-b border-border-subtle px-4 py-2"><Button variant="ghost" onClick={closeDetail}><ArrowLeft className="icon-caption" aria-hidden />{t('common.backToList')}</Button></div>
           {detail}
         </section> : null}
       </div>

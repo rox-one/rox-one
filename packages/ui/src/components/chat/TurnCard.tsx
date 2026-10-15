@@ -1010,6 +1010,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
       <div className="flex items-stretch">
         <TreeViewConnector depth={depth} isLastChild={isLastChild} />
         <div
+          data-glass-slot="row"
           className={cn(
             "group/row flex items-center gap-2 py-0.5 text-foreground/75 flex-1 min-w-0",
             SIZE_CONFIG.fontSize
@@ -1129,6 +1130,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
       <div className="flex items-stretch">
         <TreeViewConnector depth={depth} isLastChild={isLastChild} />
         <div
+          data-glass-slot="row"
           className={cn(
             "group/row flex items-center gap-2 py-0.5 text-muted-foreground flex-1 min-w-0",
             SIZE_CONFIG.fontSize
@@ -1193,6 +1195,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
     <div className="flex items-stretch">
       <TreeViewConnector depth={depth} isLastChild={isLastChild} />
       <div
+        data-glass-slot="row"
         className={cn(
           "group/row flex items-center gap-2 py-0.5 text-text-secondary flex-1 min-w-0",
           SIZE_CONFIG.fontSize
@@ -1462,6 +1465,7 @@ function ActivityGroupRow({
     >
       {/* Task header row - no left padding, chevron aligned with activity row icons */}
       <div
+        data-glass-slot="row"
         className={cn(
           "group/row flex items-center gap-2 py-0.5 rounded-md cursor-pointer text-text-secondary",
           "hover:text-foreground transition-colors",
@@ -2682,7 +2686,7 @@ export function ResponseCard({
 
     return (
       <>
-        <div data-g05-card-chrome className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden relative group group-focus-within:opacity-100" tabIndex={-1}>
+        <div data-g05-card-chrome data-glass-slot="card" className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden relative group group-focus-within:opacity-100" tabIndex={-1}>
           {/* Fullscreen button - desktop only; compact mode keeps message chrome minimal */}
           {!compactMode && (
           <button
@@ -2833,7 +2837,7 @@ export function ResponseCard({
   // Streaming response - show throttled content with spinner
   return (
     <>
-      <div data-g05-card-chrome className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden group">
+      <div data-g05-card-chrome data-glass-slot="card" className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden group">
         {/* Content area - uses displayedText (throttled) for performance */}
         {/* Subtle fade at top and bottom edges (dark mode only) */}
         <div
@@ -3195,6 +3199,7 @@ export const TurnCard = React.memo(function TurnCard({
           {/* Collapsed Header / Toggle */}
           <button
             onClick={toggleExpanded}
+            data-glass-slot="row"
             className={cn(
               "flex items-center gap-2 w-full pl-2.5 pr-1.5 py-1.5 rounded-[var(--radius-control)] text-left",
               SIZE_CONFIG.fontSize,

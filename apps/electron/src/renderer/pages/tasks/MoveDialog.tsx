@@ -78,6 +78,7 @@ export function MoveDialog({
                 role="option"
                 aria-selected={index === active}
                 data-index={index}
+                data-glass-slot="row"
                 onMouseEnter={() => setActive(index)}
                 onClick={() => onPick(dest.id)}
                 className={cn(

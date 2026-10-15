@@ -93,6 +93,7 @@ function SettingsItemRow({ item, isSelected, isFirst, onSelect }: SettingsItemRo
         <button
           type="button"
           onClick={onSelect}
+          data-glass-slot="row"
           className={cn(
             'flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm rounded-[var(--radius-card)]',
             // Fast hover transition (75ms vs default 150ms)
@@ -185,8 +186,8 @@ export default function SettingsNavigator({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-3 pt-3 pb-2">
+    <div className="flex flex-col h-full" data-glass-slot="panel">
+      <div className="px-3 pt-3 pb-2" data-glass-slot="toolbar">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -236,6 +237,7 @@ export default function SettingsNavigator({
           <div
             className="px-5 py-10 text-center text-sm text-muted-foreground"
             role="status"
+            data-glass-slot="empty"
             data-testid="settings-navigator-empty"
           >
             {t('settings.navigator.noResults', { query })}

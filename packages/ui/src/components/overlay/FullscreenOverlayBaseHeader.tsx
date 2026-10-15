@@ -180,7 +180,10 @@ function FilePathBadge({ filePath }: FilePathBadgeProps) {
         </DropdownMenu>
       </ContextMenu.Trigger>
       <ContextMenu.Portal>
-        <ContextMenu.Content className={contextMenuContentClasses}>
+        <ContextMenu.Content
+          data-glass-slot="popover"
+          className={contextMenuContentClasses}
+        >
           {contextItems}
         </ContextMenu.Content>
       </ContextMenu.Portal>

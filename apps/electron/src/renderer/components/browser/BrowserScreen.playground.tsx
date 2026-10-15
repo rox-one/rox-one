@@ -45,8 +45,8 @@ function BrowserScreenStory() {
   const [url, setUrl] = React.useState('http://127.0.0.1:3000')
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="flex h-12 shrink-0 items-center gap-3 border-b border-border/60 px-3">
+    <div className="flex h-full min-h-0 flex-col bg-background" data-glass-slot="panel">
+      <div data-glass-slot="toolbar" className="flex h-12 shrink-0 items-center gap-3 border-b border-border/60 px-3">
         <BrowserTabStrip activeSessionId="session-open-design" instancesOverride={mockInstances} maxVisibleBadges={4} />
         <div className="ml-auto flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground">
           <Sparkles className="h-3.5 w-3.5 text-accent" />
@@ -72,7 +72,7 @@ function BrowserScreenStory() {
       />
 
       <main className="min-h-0 flex-1 bg-foreground-2 p-4">
-        <div className="h-full overflow-hidden rounded-lg border border-border/60 bg-background shadow-thin">
+        <div className="h-full overflow-hidden rounded-lg border border-border/60 bg-background shadow-thin" data-glass-slot="card">
           <BrowserEmptyStateCard
             title="Open Design runtime"
             description="URL-backed BrowserView surface for the separately running Open Design web app and daemon."

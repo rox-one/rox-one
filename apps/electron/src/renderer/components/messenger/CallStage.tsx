@@ -34,7 +34,7 @@ export function CallStage({ call }: { call: ReturnType<typeof useTeamCall> }) {
   const timer = useCallTimer(call.call?.startedAt)
   const tiles = call.videoTracks()
   return (
-    <div className="shrink-0 border-b border-border/60 bg-surface-raised px-4 py-2" data-testid="messenger-call-stage">
+    <div data-glass-slot="toolbar" className="shrink-0 border-b border-border/60 bg-surface-raised px-4 py-2" data-testid="messenger-call-stage">
       {tiles.length ? (
         <div className="mb-2 flex gap-2 overflow-x-auto">
           {tiles.map(v => <VideoTile key={`${v.identity}-${v.source}`} track={v.track} name={v.name} screen={v.source === Track.Source.ScreenShare} />)}

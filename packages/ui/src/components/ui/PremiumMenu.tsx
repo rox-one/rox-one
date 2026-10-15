@@ -212,6 +212,7 @@ export function PremiumMenu({
       <div className="fixed inset-0 z-menu-backdrop" onClick={closeMenu} />
       <div
         data-premium-menu=""
+        data-glass-slot="popover"
         data-variant={variant}
         className={cn(tokens.surfaceClass)}
         style={{

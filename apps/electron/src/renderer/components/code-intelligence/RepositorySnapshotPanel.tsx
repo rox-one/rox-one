@@ -154,7 +154,7 @@ export function RepositorySnapshotPanel({ workspaceId, projectId, workingDirecto
   const formatTime = (time: number) => new Intl.DateTimeFormat(i18n.resolvedLanguage, { dateStyle: 'medium', timeStyle: 'short' }).format(time)
 
   return (
-    <section className="space-y-4 rounded-[var(--radius-card)] border border-foreground/10 p-4" data-testid="repository-snapshot-panel" aria-labelledby="repository-snapshot-title" aria-busy={busy !== null}>
+    <section className="space-y-4 rounded-[var(--radius-card)] border border-foreground/10 p-4" data-testid="repository-snapshot-panel" data-glass-slot="panel" aria-labelledby="repository-snapshot-title" aria-busy={busy !== null}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h3 id="repository-snapshot-title" className="flex items-center gap-2 text-sm font-semibold"><FolderGit2 className="size-4" aria-hidden />{t('codeIntelligence.repository.title')}</h3>
@@ -177,7 +177,7 @@ export function RepositorySnapshotPanel({ workspaceId, projectId, workingDirecto
           ['maxFileBytes', 'max-file-bytes', 262144], ['maxBytes', 'max-bytes', 16777216], ['maxFiles', 'max-files', 10000],
         ] as const).map(([key, testId, max]) => <label key={key} className="space-y-1.5 text-xs font-medium"><span className="block">{t(`codeIntelligence.repository.${key}`)}</span><Input type="number" min={1} max={max} step={1} data-testid={`repository-${testId}`} value={draft[key]} disabled={busy !== null} onChange={event => updateDraft(key, event.target.value)} /></label>)}</div>
         <Button type="button" size="sm" variant="outline" data-testid="repository-preview-button" disabled={busy !== null} onClick={() => void previewInventory()}>{t('codeIntelligence.repository.preview')}</Button>
-        {preview && <div className="space-y-2 rounded-md border border-foreground/10 p-3 text-xs" data-testid="repository-preview">
+        {preview && <div className="space-y-2 rounded-md border border-foreground/10 p-3 text-xs" data-testid="repository-preview" data-glass-slot="card">
           <p className="break-all font-mono" data-testid="repository-preview-root">{preview.binding.canonicalRoot}</p>
           <SnapshotDetails snapshot={preview.inventory} />
           <p className="break-all">{t('codeIntelligence.repository.previewFingerprint')}: <span className="font-mono" data-testid="repository-preview-fingerprint">{preview.previewFingerprint}</span></p>
@@ -223,7 +223,7 @@ export function RepositorySnapshotPanel({ workspaceId, projectId, workingDirecto
               <Button type="submit" size="sm" variant="outline" disabled={!selectedFile || busy !== null}>{t('codeIntelligence.repository.readSpan')}</Button>
             </div>
             <p className="text-xs text-muted-foreground">{t('codeIntelligence.repository.spanLimit')}</p>
-            {span && <div className="space-y-2" data-testid="repository-span"><p className="break-all text-xs text-muted-foreground">{span.path}:{span.startLine}–{span.endLine} · {t(span.sourceVersion.kind === 'working-copy' ? 'codeIntelligence.repository.workingCopyEvidence' : 'codeIntelligence.repository.commitEvidence')} <span className="font-mono">{span.sourceVersion.value}</span></p><pre className="max-h-96 overflow-auto rounded-lg bg-foreground/5 p-3 text-xs"><code>{span.excerpt}</code></pre></div>}
+            {span && <div className="space-y-2" data-testid="repository-span"><p className="break-all text-xs text-muted-foreground">{span.path}:{span.startLine}–{span.endLine} · {t(span.sourceVersion.kind === 'working-copy' ? 'codeIntelligence.repository.workingCopyEvidence' : 'codeIntelligence.repository.commitEvidence')} <span className="font-mono">{span.sourceVersion.value}</span></p><pre className="max-h-96 overflow-auto rounded-lg bg-foreground/5 p-3 text-xs" data-glass-slot="editor"><code>{span.excerpt}</code></pre></div>}
           </form>}
         </>}
       </div>}

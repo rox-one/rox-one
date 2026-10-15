@@ -28,7 +28,7 @@ export function RuntimeInspector({ node, readPayload, onClose, onOpenMessage, on
     const query = new URLSearchParams({ workspace: scope.workspaceId, session: scope.sessionId, run: scope.rootRunId, event: node.id })
     try { await navigator.clipboard.writeText(`rox://runtime?${query}`) } catch { /* Clipboard may be restricted by platform. */ }
   }
-  return <aside className="runtime-inspector" data-testid="runtime-inspector" aria-label={t('runtimeMap.inspector')}>
+  return <aside className="runtime-inspector" data-glass-slot="panel" data-testid="runtime-inspector" aria-label={t('runtimeMap.inspector')}>
     <header className="runtime-inspector-header"><strong>{nodeTitle(node, t)}</strong><button type="button" className="runtime-icon-button" title={t('runtimeMap.closeInspector')} aria-label={t('runtimeMap.closeInspector')} onClick={onClose}><X size={15} /></button></header>
     <div className="runtime-inspector-actions">{(messageId || node.toolUseId) && onOpenMessage && <button type="button" onClick={() => onOpenMessage(messageId ?? '', node.toolUseId)}><ArrowLeft size={13} />{t('runtimeMap.showInChat')}</button>}<button type="button" onClick={copyLink}><Link2 size={13} />{t('runtimeMap.copyEventLink')}</button></div>
     <div className="runtime-inspector-scroll">

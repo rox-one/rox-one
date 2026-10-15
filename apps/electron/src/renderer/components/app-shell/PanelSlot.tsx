@@ -215,7 +215,7 @@ export function PanelSlot({
       >
         <div className="h-full flex flex-col">
           {gridTile ? (
-            <div className="rox-grid-tile-header flex shrink-0 items-center gap-1" data-testid="grid-tile-header">
+            <div className="rox-grid-tile-header flex shrink-0 items-center gap-1" data-testid="grid-tile-header" data-glass-slot="toolbar">
               <span className="min-w-0 flex-1 truncate text-xs font-medium text-text-secondary">
                 {tileTitle ?? t('navigation.mainSurface')}
               </span>

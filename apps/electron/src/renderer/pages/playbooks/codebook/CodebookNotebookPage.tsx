@@ -247,7 +247,7 @@ export default function CodebookNotebookPage({ notebook, onBack, onUpdate }: Cod
       ) : null}
 
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(240px,320px)]">
-        <section className="min-h-0 overflow-auto border-b border-border-subtle p-5 lg:border-b-0 lg:border-r" data-testid="playbooks-codebook-editor">
+        <section data-glass-slot="panel" className="min-h-0 overflow-auto border-b border-border-subtle p-5 lg:border-b-0 lg:border-r" data-testid="playbooks-codebook-editor">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-medium">{t('playbooks.codebook.cellsTitle')}</h2>
             <div className="flex items-center gap-2">
@@ -261,7 +261,7 @@ export default function CodebookNotebookPage({ notebook, onBack, onUpdate }: Cod
           </div>
 
           {job ? (
-            <div className="mb-3 rounded-[var(--radius-card)] border border-border-subtle p-3" aria-live="polite" data-testid="playbooks-codebook-progress">
+            <div data-glass-slot="card" className="mb-3 rounded-[var(--radius-card)] border border-border-subtle p-3" aria-live="polite" data-testid="playbooks-codebook-progress">
               <div className="mb-2 flex items-center gap-2 text-xs">
                 {running ? <Loader2 className="icon-caption animate-spin motion-reduce:animate-none" aria-hidden /> : <Play className="icon-caption" aria-hidden />}
                 <span className="font-medium">{t(`playbooks.codebook.jobState.${job.state}`)}</span>
@@ -294,7 +294,7 @@ export default function CodebookNotebookPage({ notebook, onBack, onUpdate }: Cod
           {exportError ? <p className="mb-3 text-xs text-destructive" role="alert" data-testid="playbooks-codebook-export-error">{t('playbooks.codebook.exportFailed', { error: exportError })}</p> : null}
 
           {cells.length === 0 ? (
-            <Empty data-testid="playbooks-codebook-empty">
+            <Empty data-testid="playbooks-codebook-empty" data-glass-slot="empty">
               <EmptyHeader>
                 <EmptyMedia variant="icon"><FilePlus2 aria-hidden /></EmptyMedia>
                 <EmptyTitle>{t('playbooks.codebook.emptyTitle')}</EmptyTitle>
@@ -352,7 +352,7 @@ export default function CodebookNotebookPage({ notebook, onBack, onUpdate }: Cod
           </p>
         </section>
 
-        <aside className="min-h-0 overflow-auto p-4" data-testid="playbooks-codebook-context" tabIndex={-1}>
+        <aside data-glass-slot="panel" className="min-h-0 overflow-auto p-4" data-testid="playbooks-codebook-context" tabIndex={-1}>
           <h2 className="mb-2 text-caption font-medium uppercase caps-label text-muted-foreground">{t('playbooks.codebook.contextTitle')}</h2>
           <label className="mb-1 block text-xs text-muted-foreground" htmlFor="codebook-project">{t('playbooks.codebook.projectLabel')}</label>
           <Input

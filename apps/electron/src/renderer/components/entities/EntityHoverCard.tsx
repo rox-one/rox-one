@@ -30,6 +30,7 @@ export function EntityHoverCard({ entityRef, preview, loading, onOpen, onCopyLin
       role="group"
       aria-label={t('entities.ui.card.preview', { title: name })}
       data-entity-hover-card=""
+      data-glass-slot="popover"
       className={cn(POPOVER_SURFACE, 'w-[360px] max-w-[calc(100vw-24px)] p-3', className)}
     >
       <EntityPreviewBody entityRef={entityRef} preview={preview} loading={loading} variant="hover" onOpen={onOpen} onCopyLink={onCopyLink} />

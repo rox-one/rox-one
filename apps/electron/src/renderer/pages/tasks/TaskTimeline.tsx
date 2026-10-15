@@ -149,7 +149,7 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="tasks-timeline">
-      <div className="flex shrink-0 flex-wrap items-center gap-2 px-3.5 pb-1.5 text-sm">
+      <div data-glass-slot="toolbar" className="flex shrink-0 flex-wrap items-center gap-2 px-3.5 pb-1.5 text-sm">
         {fixedRange ? null : <div role="radiogroup" aria-label={t('entities.ui.gantt.zoom')} className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5">
           {ZOOMS.map((z) => (
             <button key={z.id} type="button" role="radio" aria-checked={zoom === z.id} data-testid={`timeline-zoom-${z.id}`} onClick={() => onZoom(z.id)}
@@ -169,7 +169,7 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
       </div>
       <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-auto" onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel}>
         <div style={{ width: LABEL_COL + trackWidth }} className="relative min-h-full">
-          <div className="sticky top-0 z-sticky flex bg-background">
+          <div data-glass-slot="toolbar" className="sticky top-0 z-sticky flex bg-background">
             <div style={{ width: LABEL_COL }} className="sticky left-0 z-sticky shrink-0 bg-background" />
             <div className="relative h-6 select-none" style={{ width: trackWidth }}>
               {ticks.map((tick) => (
@@ -185,7 +185,7 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
               {dropDay ? <span style={barGeometry(range, { start: dropDay, end: dropDay }, pxPerDay)} className="absolute inset-y-0 bg-accent/15" /> : null}
             </div>
             {scheduled.length === 0 ? (
-              <p className="sticky left-0 px-3.5 py-3 text-sm text-text-muted" style={{ width: Math.min(viewport || LABEL_COL, LABEL_COL + trackWidth) }}>{t('entities.ui.gantt.empty')}</p>
+              <p data-glass-slot="empty" className="sticky left-0 px-3.5 py-3 text-sm text-text-muted" style={{ width: Math.min(viewport || LABEL_COL, LABEL_COL + trackWidth) }}>{t('entities.ui.gantt.empty')}</p>
             ) : groups.map((group) => (
               <React.Fragment key={group.key}>
                 {groupBy !== 'none' ? (
@@ -205,7 +205,7 @@ export function TaskTimeline({ tasks, today, locale, selectedId, zoom, groupBy, 
           </div>
         </div>
       </div>
-      <div className="shrink-0 border-t border-border-subtle px-3.5 py-2" data-testid="timeline-tray">
+      <div data-glass-slot="toolbar" className="shrink-0 border-t border-border-subtle px-3.5 py-2" data-testid="timeline-tray">
         <div className="mb-1 text-xs font-medium uppercase text-text-muted">{t('tasks.bucket.unscheduled')} · {unscheduled.length}</div>
         <div className="flex max-h-24 flex-wrap gap-1 overflow-y-auto">
           {unscheduled.map((task) => (

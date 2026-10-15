@@ -210,7 +210,7 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
             <Button type="button" variant="outline" size="sm" onClick={() => void loadRecord()}>{t('devSpace.home.retry')}</Button>
           </div>
         ) : !record ? (
-          <p className="text-sm text-muted-foreground" data-testid="dev-space-repo-not-found">{t('devSpace.repo.notFound')}</p>
+          <p data-glass-slot="empty" className="text-sm text-muted-foreground" data-testid="dev-space-repo-not-found">{t('devSpace.repo.notFound')}</p>
         ) : (
           <div className="flex flex-col gap-4">
             <Tabs
@@ -224,7 +224,7 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
             />
 
             {tab === OVERVIEW_TAB ? (
-              <section id={panelId(OVERVIEW_TAB)} role="tabpanel" className="space-y-4 rounded-[var(--radius-card)] border border-border-subtle p-5" data-testid="dev-space-surface-overview" aria-labelledby="dev-space-overview-title">
+              <section id={panelId(OVERVIEW_TAB)} role="tabpanel" data-glass-slot="card" className="space-y-4 rounded-[var(--radius-card)] border border-border-subtle p-5" data-testid="dev-space-surface-overview" aria-labelledby="dev-space-overview-title">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h2 id="dev-space-overview-title" className="text-sm font-semibold">{t('devSpace.repo.tabs.overview')}</h2>
                   <div className="flex items-center gap-2">
@@ -253,6 +253,7 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
                       return (
                         <li key={surface.id} className="min-w-0">
                           <button type="button" onClick={() => setTab(surface.id)} data-testid={`dev-space-overview-card-${surface.id}`}
+                            data-glass-slot="card"
                             className="flex w-full flex-col items-start gap-2 rounded-[var(--radius-card)] border border-border-subtle p-3 text-left transition-colors duration-[var(--motion-fast)] hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-ring motion-reduce:transition-none">
                             <span className="text-sm font-medium">{t(surface.labelKey)}</span>
                             <span className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -269,7 +270,7 @@ export default function DevSpaceRepoPage({ devSpaceRepoId }: DevSpaceRepoPagePro
                 <div>
                   <h3 className="mb-2 text-xs font-semibold uppercase caps-label text-muted-foreground">{t('devSpace.repo.runs.title')}</h3>
                   {runs.length === 0 ? (
-                    <p className="text-sm text-muted-foreground" data-testid="dev-space-runs-empty">{t('devSpace.repo.runs.empty')}</p>
+                    <p data-glass-slot="empty" className="text-sm text-muted-foreground" data-testid="dev-space-runs-empty">{t('devSpace.repo.runs.empty')}</p>
                   ) : (
                     <ul className="list-none space-y-1 p-0 text-xs" data-testid="dev-space-runs">
                       {runs.map((item) => (

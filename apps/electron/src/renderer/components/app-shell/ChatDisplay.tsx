@@ -2110,7 +2110,7 @@ const handleFollowUpChipClick = useCallback((item: {
         <>
         <div ref={entryTarget} className="flex flex-1 flex-col min-h-0 min-w-0 relative">
           {session.branchFromSessionId ? (
-            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 text-xs text-muted-foreground">
+            <div data-glass-slot="toolbar" className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 text-xs text-muted-foreground">
               <span>
                 {t('sideThread.childBanner', { status: session.sessionStatus || 'in_progress' })}
               </span>
@@ -2176,6 +2176,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         className="flex items-center justify-center h-64 px-4"
                       >
                         <div
+                          data-glass-slot="card"
                           className="max-w-sm rounded-[var(--radius-card)] border border-destructive/20 px-4 py-3 text-center shadow-tinted"
                           style={{
                             backgroundColor: 'oklch(from var(--destructive) l c h / 0.03)',
@@ -2226,7 +2227,7 @@ const handleFollowUpChipClick = useCallback((item: {
                   )}
                   {!compactMode && hasUnrenderedLoadedMessages && (
                     <div className="flex h-64 items-center justify-center px-4 text-center">
-                      <div className="max-w-sm rounded-[var(--radius-card)] border border-border/50 bg-foreground/[0.03] px-4 py-3">
+                      <div data-glass-slot="empty" className="max-w-sm rounded-[var(--radius-card)] border border-border/50 bg-foreground/[0.03] px-4 py-3">
                         <CircleAlert className="mx-auto mb-2 h-4 w-4 text-foreground/50" />
                         <div className="text-sm font-medium text-foreground/70">Conversation loaded, but no renderable messages were found.</div>
                         <p className="mt-1 text-xs text-foreground/50">Try reloading the session. If this persists, the message history may contain an unsupported format.</p>
@@ -2919,6 +2920,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
     <div className="flex justify-start mt-4">
       {/* Subtle bg (3% opacity) + tinted shadow for softer error appearance */}
       <div
+        data-glass-slot="card"
         className="max-w-[80%] shadow-tinted rounded-[var(--radius-card)] pl-5 pr-4 pt-2 pb-2.5 break-words"
         style={{
           backgroundColor: 'oklch(from var(--destructive) l c h / 0.03)',
@@ -3037,7 +3039,7 @@ function MessageBubble({
   if (message.role === 'assistant') {
     return (
       <div className="flex justify-start group">
-        <div className="relative max-w-[90%] bg-background shadow-minimal rounded-[var(--radius-card)] pl-6 pr-4 py-3 break-words min-w-0 select-text">
+        <div data-glass-slot="card" className="relative max-w-[90%] bg-background shadow-minimal rounded-[var(--radius-card)] pl-6 pr-4 py-3 break-words min-w-0 select-text">
           {/* Pop-out button - visible on hover */}
           {onPopOut && !message.isStreaming && (
             <button

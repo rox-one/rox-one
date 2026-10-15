@@ -32,6 +32,7 @@ export function RepositoryCard({ record, progress, busy, onOpen, onRefresh, onRe
     <article
       data-testid={`dev-space-repo-${record.id}`}
       onClick={() => onOpen(record)}
+      data-glass-slot="card"
       className={cn(
         'group flex min-w-0 flex-col gap-3 rounded-[var(--radius-card)] border border-border-subtle p-4 text-left transition-colors duration-[var(--motion-fast)] motion-reduce:transition-none',
         'cursor-pointer bg-surface-elevated hover:bg-surface-hover',

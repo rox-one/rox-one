@@ -243,6 +243,10 @@ export function SessionItem({
       onMouseDown={handleClick}
       buttonProps={{
         ...itemProps,
+        // Arc Glass: the interactive row is a `row` surface — transparent base,
+        // hover/selection paint from the shared recipe (arc-glass-surfaces.css).
+        'data-glass-slot': 'row',
+        'aria-selected': isSelected || isInMultiSelect ? true : undefined,
         onPointerEnter: prefetchTranscript,
         onFocus: prefetchTranscript,
         className: cn(

@@ -2726,6 +2726,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
           : 'cookbooks.failed.hint'
     return (
       <div
+        data-glass-slot="empty"
         className="flex h-full w-full flex-col items-center justify-center gap-3 bg-background px-6 text-center text-muted-foreground"
         data-testid="cookbooks-surface"
         data-state={ui}
@@ -2760,7 +2761,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     const canRunAll = doc.kind === 'ipynb' && doc.supported
     return (
       <>
-        <header className="sticky top-0 z-sticky flex flex-wrap items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-2 backdrop-blur">
+        <header data-glass-slot="toolbar" className="sticky top-0 z-sticky flex flex-wrap items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-2 backdrop-blur">
           <h2 data-testid="cookbooks-document-title" className="text-title-sm font-semibold text-foreground">
             {doc.title}
           </h2>
@@ -3030,6 +3031,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                   data-testid={`cookbooks-cell-${index}`}
                   data-cell-type={cell.cellType}
                   data-status={output?.status ?? 'idle'}
+                  data-glass-slot="editor"
                   // Wave 14 (F2): every selected cell (the whole range) is marked;
                   // the focus alone carries `data-anchor`/`aria-current`.
                   data-selected={selectedAll.includes(index) ? 'true' : undefined}
@@ -3471,6 +3473,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
       <div className="flex min-h-0 flex-1">
         <aside
           data-testid="cookbooks-catalog"
+          data-glass-slot="panel"
           className="flex w-[320px] shrink-0 flex-col border-r border-border-subtle"
         >
           <div className="px-3 pt-3 pb-2">
@@ -3498,6 +3501,8 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
                   data-kind={card.kind}
                   disabled={card.disabled}
                   aria-pressed={card.id === openItemId}
+                  data-glass-slot="row"
+                  data-state={card.id === openItemId ? 'selected' : undefined}
                   onClick={() => void openItem(card.id)}
                   className={cn(
                     'mb-1.5 flex w-full flex-col gap-1 rounded-[var(--radius-card)] border border-border-subtle px-2.5 py-2 text-left transition-colors',

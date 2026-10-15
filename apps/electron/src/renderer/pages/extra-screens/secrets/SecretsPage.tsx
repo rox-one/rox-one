@@ -488,7 +488,7 @@ export default function SecretsPage(_props: { itemId: string | null }) {
               <div className="text-muted-foreground">{t('extraScreens.secrets.refsEmpty')}</div>
             )}
             {refs && refs.map((ref) => (
-              <div key={`${ref.name}:${ref.envVar}`} className="rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-surface-hover">
+              <div key={`${ref.name}:${ref.envVar}`} data-glass-slot="row" className="rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-surface-hover">
                 <div className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate font-mono text-small" title={ref.name}>{ref.name}</span>
                   <span className="shrink-0 truncate font-mono text-small text-muted-foreground" title={ref.envVar}>{ref.envVar}</span>
@@ -535,7 +535,7 @@ export default function SecretsPage(_props: { itemId: string | null }) {
               />
             </>
           ) : (
-            <div className="flex h-full min-h-[220px] flex-col items-center justify-center gap-2 px-8 text-center">
+            <div data-glass-slot="empty" className="flex h-full min-h-[220px] flex-col items-center justify-center gap-2 px-8 text-center">
               <div className="text-title-sm font-bold">{t('extraScreens.secrets.vault.selectTitle')}</div>
               <div className="max-w-[440px] text-muted-foreground">{t('extraScreens.secrets.vault.selectBody')}</div>
             </div>

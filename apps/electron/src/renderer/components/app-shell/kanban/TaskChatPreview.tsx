@@ -42,7 +42,7 @@ export function TaskChatPreview({
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Title bar: project dot + title + status badge */}
-      <div className="flex items-center gap-2 border-b border-border/50 px-4 py-3">
+      <div data-glass-slot="toolbar" className="flex items-center gap-2 border-b border-border/50 px-4 py-3">
         {project && (
           <span
             className="h-2 w-2 shrink-0 rounded-full"
@@ -76,7 +76,7 @@ export function TaskChatPreview({
 
           {/* Spawned subtasks panel */}
           {subtasks.length > 0 && (
-            <div className="rounded-lg border border-border/60 bg-card p-3">
+            <div data-glass-slot="card" className="rounded-lg border border-border/60 bg-card p-3">
               <div className="mb-1 text-xs font-medium uppercase caps-label text-muted-foreground">
                 Spawned subtasks
               </div>
@@ -97,7 +97,7 @@ export function TaskChatPreview({
 
       {/* Input bar (presentational) */}
       <div className="border-t border-border/50 px-4 py-3">
-        <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-[var(--radius-control)] border border-border/60 bg-card px-3 py-2">
+        <div data-glass-slot="editor" className="mx-auto flex max-w-2xl items-center gap-2 rounded-[var(--radius-control)] border border-border/60 bg-card px-3 py-2">
           <ModelChip model={model} className="shrink-0" />
           <span className="flex-1 truncate text-sm text-foreground/40">Reply to this task…</span>
           <span

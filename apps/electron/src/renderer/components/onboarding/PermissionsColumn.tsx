@@ -116,7 +116,7 @@ export function PermissionsColumn({
         {t('onboarding.permissions.subtitle')}
       </p>
 
-      <div className="onb-perm-list divide-y divide-border/60 overflow-hidden rounded-[var(--radius-card)] border border-border/60 bg-background/30">
+      <div data-glass-slot="table" className="onb-perm-list divide-y divide-border/60 overflow-hidden rounded-[var(--radius-card)] border border-border/60 bg-background/30">
         {entriesForPlatform(current.platform).map((entry) => {
           const decision = canToggle(entry, current)
           const checked = isEnabled(entry, current)

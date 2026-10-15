@@ -34,7 +34,7 @@ const WEEKS = 12
 
 function StatTile({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-[var(--radius-card)] bg-surface-hover px-2.5 py-2" title={hint}>
+    <div data-glass-slot="card" className="rounded-[var(--radius-card)] bg-surface-hover px-2.5 py-2" title={hint}>
       <div className="text-caption uppercase text-muted-foreground">{label}</div>
       <div className="mt-0.5 text-title font-bold numeric leading-none">{value}</div>
     </div>

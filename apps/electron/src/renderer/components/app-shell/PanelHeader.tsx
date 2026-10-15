@@ -34,6 +34,7 @@ import { useAtomValue } from 'jotai'
 import { motion } from '@/lib/deferred-motion'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { ChevronDown, Menu } from 'lucide-react'
+import './app-shell.glass.css'
 import { cn } from '@/lib/utils'
 import { useCompensateForStoplight } from '@/context/StoplightContext'
 import { useAppShellContext } from '@/context/AppShellContext'
@@ -586,6 +587,7 @@ export function PanelHeader({
       animate={{ paddingLeft: shouldCompensate ? STOPLIGHT_PADDING : basePadding }}
       transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }}
       data-layout="panel-header"
+      data-glass-slot="toolbar"
       className={baseClassName}
     >
       {content}

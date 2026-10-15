@@ -74,6 +74,7 @@ export function ClipboardQuickLook({
         ) : entry ? (
           <pre
             data-testid="clipboard-quick-look-text"
+            data-glass-slot="editor"
             className={cn(
               'max-h-[60vh] overflow-auto whitespace-pre-wrap break-words rounded-[var(--radius-card)] bg-surface-hover p-3 text-small leading-5',
               mono && 'font-mono text-caption',

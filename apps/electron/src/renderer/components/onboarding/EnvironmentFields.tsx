@@ -59,6 +59,7 @@ function OptionButton({
     <button
       type="button"
       onClick={onClick}
+      data-glass-slot="card"
       className={cn(
         'w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors',
         selected ? 'border-accent bg-accent/10' : 'border-transparent bg-foreground-2 hover:bg-foreground/[0.02]',
@@ -226,7 +227,7 @@ export function EnvironmentFields({
           <p className="text-sm font-medium">{t('onboarding.environment.agentRules')}</p>
           <p className="text-xs text-muted-foreground">{t('onboarding.environment.agentRulesDesc')}</p>
           {prefs.agentRules.map((rule) => (
-            <div key={rule.id} className="space-y-1 rounded-lg bg-foreground-2 p-2">
+            <div key={rule.id} data-glass-slot="card" className="space-y-1 rounded-lg bg-foreground-2 p-2">
               <Label className="text-xs">{t(RULE_KEYS[rule.label])}</Label>
               <Input
                 value={rule.text}

@@ -142,7 +142,7 @@ export function ClipboardHistoryPanel() {
 
   return (
     <div ref={rootRef} className="flex h-full min-h-0 flex-col" data-testid="clipboard-history-panel">
-      <header className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-2 px-3 pt-2">
+      <header data-glass-slot="toolbar" className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-2 px-3 pt-2">
         <h2 className="text-title-sm font-semibold">{t('clipboard.title')}</h2>
         <span className="min-w-0 truncate text-small text-text-muted" data-testid="clipboard-counts">{counts}</span>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1">

@@ -59,6 +59,7 @@ export function ThinkingCard({ thinking }: ThinkingCardProps) {
   return (
     <div
       className={cn("mb-2 rounded-lg border border-border/60 bg-muted/30")}
+      data-glass-slot="card"
       role="region"
       aria-label={t('turnCard.thinking')}
     >

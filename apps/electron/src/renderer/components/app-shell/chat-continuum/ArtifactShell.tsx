@@ -45,6 +45,7 @@ export function ArtifactShell({
   return (
     <section
       data-g05-artifact
+      data-glass-slot="card"
       aria-labelledby={labelledBy}
       className="my-3 w-full overflow-hidden rounded-[var(--radius-card)] border border-border-subtle bg-surface-elevated"
     >
@@ -77,6 +78,7 @@ export function ArtifactSkeleton({ title, subtitle }: { title: string; subtitle:
   return (
     <section
       data-g05-artifact="loading"
+      data-glass-slot="card"
       aria-busy="true"
       className="my-3 w-full overflow-hidden rounded-[var(--radius-card)] border border-border-subtle bg-surface-elevated"
     >
@@ -109,6 +111,7 @@ export function ArtifactEmpty({ title, hint }: { title: string; hint: string }) 
   return (
     <section
       data-g05-artifact="empty"
+      data-glass-slot="empty"
       className="my-3 w-full rounded-[var(--radius-card)] border border-dashed border-border-subtle px-3 py-4"
     >
       <p className="text-small font-medium text-text-secondary">{title}</p>

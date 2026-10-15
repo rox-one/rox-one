@@ -393,7 +393,12 @@ export function KnowledgeHome() {
 
   const emptyState =
     status === 'idle' && (noConnections || kernelHasNoConnections || kernelOffline) ? (
-      <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
+      <div
+        className="flex flex-col items-center gap-3 px-4 py-8 text-center"
+        // Arc Glass: kernel/connection empty state = the `empty` slab
+        // (carries data-testid knowledge-open-rox-notes inside).
+        data-glass-slot="empty"
+      >
         <p className="text-base font-medium text-foreground">
           {t('knowledge.roxNotes.emptyTitle')}
         </p>
@@ -430,6 +435,9 @@ export function KnowledgeHome() {
           'hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
           view === 'proposals' && 'ring-1 ring-ring',
         )}
+        // Arc Glass: the entry is an interactive row — `row` (transparent base,
+        // hover/selection from state tokens; arc-glass-surfaces.css).
+        data-glass-slot="row"
       >
         <FileDiff className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground/80" title={t('knowledge.proposals.title')}>
@@ -447,7 +455,13 @@ export function KnowledgeHome() {
   if (view === 'proposals') {
     return (
       <div className="flex h-full flex-col">
-        <div className="border-b border-border pt-3">{proposalsEntry}</div>
+        <div
+          className="border-b border-border pt-3"
+          // Arc Glass: glued section header under the strip — toolbar material.
+          data-glass-slot="toolbar"
+        >
+          {proposalsEntry}
+        </div>
         <KnowledgeProposals className="min-h-0 flex-1" />
       </div>
     )
@@ -461,7 +475,11 @@ export function KnowledgeHome() {
 
     return (
       <div className="flex h-full flex-col">
-        <div className="sticky top-0 z-10 border-b border-border bg-background px-3 pb-2 pt-3">
+        <div
+          className="sticky top-0 z-10 border-b border-border bg-background px-3 pb-2 pt-3"
+          // Arc Glass: sticky header of the view surface — toolbar material.
+          data-glass-slot="toolbar"
+        >
           <button
             type="button"
             onClick={backToSearch}
@@ -513,7 +531,12 @@ export function KnowledgeHome() {
             viewGroups.map((group) => (
               <div key={group.key || '__all'}>
                 {group.key ? (
-                  <div className="sticky top-0 z-[1] bg-background/95 px-3 py-1.5 text-xs font-medium uppercase caps-label text-muted-foreground backdrop-blur">
+                  <div
+                    className="sticky top-0 z-[1] bg-background/95 px-3 py-1.5 text-xs font-medium uppercase caps-label text-muted-foreground backdrop-blur"
+                    // Arc Glass: sticky group header — the recipe supplies the
+                    // blur + bottom hairline, so the utility blur is overridden.
+                    data-glass-slot="toolbar"
+                  >
                     {group.key === 'ungrouped'
                       ? t('knowledge.views.ungrouped')
                       : group.key}
@@ -529,6 +552,9 @@ export function KnowledgeHome() {
                         'flex w-full items-start gap-2 px-3 py-2',
                         'hover:bg-accent/60',
                       )}
+                      // Arc Glass: hit row = `row` surface (transparent base,
+                      // hover from state tokens).
+                      data-glass-slot="row"
                     >
                       <button
                         type="button"
@@ -574,7 +600,11 @@ export function KnowledgeHome() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground flex items-center justify-between gap-2">
+      <div
+        className="border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground flex items-center justify-between gap-2"
+        // Arc Glass: glued strip at the top of the surface — toolbar material.
+        data-glass-slot="toolbar"
+      >
         <div className="flex shrink-0 items-center gap-3">
           {/* Legacy «Import Craft notes» entry hidden: the external core is no longer used. */}
           <button
@@ -593,6 +623,9 @@ export function KnowledgeHome() {
           <>
             <form
               className="sticky top-0 z-10 bg-background px-3 pb-2 pt-3"
+              // Arc Glass: full-text search = the list toolbar (static blur +
+              // bottom hairline, arc-glass-surfaces.css).
+              data-glass-slot="toolbar"
               onSubmit={(e) => {
                 e.preventDefault()
                 void runSearch(query)
@@ -640,6 +673,8 @@ export function KnowledgeHome() {
               'flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-left',
               'hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             )}
+            // Arc Glass: search hit = `row` surface (transparent, state hover).
+            data-glass-slot="row"
           >
             <span className="truncate text-base font-medium text-foreground" title={hit.title || hit.ref.id}>
               {hit.title || hit.ref.id}
@@ -662,7 +697,11 @@ export function KnowledgeHome() {
             {t('knowledge.surface.loading')}
           </div>
         ) : savedViews.length === 0 ? (
-          <div className="rounded-md bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground">
+          <div
+            className="rounded-md bg-muted/40 px-2.5 py-2 text-xs text-muted-foreground"
+            // Arc Glass: no saved views = the `empty` slab.
+            data-glass-slot="empty"
+          >
             {t('knowledge.views.none')}
           </div>
         ) : (
@@ -677,6 +716,10 @@ export function KnowledgeHome() {
                     'hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
                     activeViewId === v.id && 'bg-muted ring-1 ring-ring',
                   )}
+                  // Arc Glass: saved-view row — `row` surface; the active view
+                  // carries `data-state="selected"` for the accent marker.
+                  data-glass-slot="row"
+                  data-state={activeViewId === v.id ? 'selected' : undefined}
                 >
                   <span className="truncate text-sm font-medium text-foreground/90" title={v.name}>
                     {v.name}
@@ -698,6 +741,12 @@ export function KnowledgeHome() {
 
 function HomeHint({ text }: { text: string }) {
   return (
-    <p className="px-3 py-6 text-center text-sm text-muted-foreground">{text}</p>
+    <p
+      className="px-3 py-6 text-center text-sm text-muted-foreground"
+      // Arc Glass: search/list empty state = the `empty` slab.
+      data-glass-slot="empty"
+    >
+      {text}
+    </p>
   )
 }

@@ -52,7 +52,7 @@ export function WebModesLanding({ host, onEnter }: WebModesLandingProps) {
     cloud.status === 'available' || cloud.status === 'unavailable' ? cloud.provider : undefined
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-6 py-10 font-sans text-foreground">
+    <div className="flex min-h-screen items-center justify-center px-6 py-10 font-sans text-foreground">
       <div className="flex w-full max-w-2xl flex-col gap-6">
         <header className="flex flex-col gap-2 text-center">
           <h1 className="text-xl font-semibold">{t('webui.modes.title')}</h1>
@@ -60,7 +60,7 @@ export function WebModesLanding({ host, onEnter }: WebModesLandingProps) {
         </header>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <section className={CARD_CLASS} aria-label={t('webui.modes.chatTitle')}>
+          <section data-glass-slot="card" className={CARD_CLASS} aria-label={t('webui.modes.chatTitle')}>
             <div className="flex flex-col gap-1">
               <h2 className="text-sm font-medium">{t('webui.modes.chatTitle')}</h2>
               <p className="text-xs text-text-secondary">{t('webui.modes.chatDescription')}</p>
@@ -70,7 +70,7 @@ export function WebModesLanding({ host, onEnter }: WebModesLandingProps) {
             </button>
           </section>
 
-          <section className={CARD_CLASS} aria-label={t('webui.modes.cloudTitle')}>
+          <section data-glass-slot="card" className={CARD_CLASS} aria-label={t('webui.modes.cloudTitle')}>
             <div className="flex flex-col gap-1">
               <h2 className="text-sm font-medium">{t('webui.modes.cloudTitle')}</h2>
               <p className="text-xs text-text-secondary">{t('webui.modes.cloudDescription')}</p>

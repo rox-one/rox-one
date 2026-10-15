@@ -89,7 +89,13 @@ export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEnti
   let body: React.ReactNode
   if (view === 'map' || view === 'outline') {
     body = currentProjection.status === 'missing' || currentProjection.status === 'error' ? (
-      <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground" data-testid="knowledge-entity-unavailable" data-entity-id={id}>
+      <div
+        className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground"
+        // Arc Glass: projection failure = the `empty` slab (soft glass plate).
+        data-glass-slot="empty"
+        data-testid="knowledge-entity-unavailable"
+        data-entity-id={id}
+      >
         <p className="text-sm">{currentProjection.status === 'missing' ? t('common.unavailable') : currentProjection.error || t('common.unavailable')}</p>
         <button type="button" className="rounded-md border border-border px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setAttempt(value => value + 1)}>
           {t('common.retry')}
@@ -122,6 +128,9 @@ export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEnti
         {companionRef && !unifiedShellEnabled ? (
           <aside
             className="w-[320px] shrink-0 overflow-y-auto border-l border-border/60 bg-muted/[0.12]"
+            // Arc Glass: right-hand inspector rail = `panel` (background-family
+            // tint + static blur + hairline; arc-glass-surfaces.css).
+            data-glass-slot="panel"
             aria-label={t('knowledge.inspector.title')}
           >
             <KnowledgeInspector knowledgeRef={companionRef} />

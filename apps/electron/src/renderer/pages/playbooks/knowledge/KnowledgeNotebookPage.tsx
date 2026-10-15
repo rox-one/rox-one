@@ -131,7 +131,7 @@ export default function KnowledgeNotebookPage({ notebook, onBack, onUpdate, onGe
       ) : null}
 
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)_minmax(280px,360px)]">
-        <aside className="min-h-0 overflow-auto border-b border-border-subtle lg:border-b-0 lg:border-r" data-testid="playbooks-notebook-sources">
+        <aside data-glass-slot="panel" className="min-h-0 overflow-auto border-b border-border-subtle lg:border-b-0 lg:border-r" data-testid="playbooks-notebook-sources">
           <h2 className="px-3 pt-3 text-caption font-medium uppercase caps-label text-muted-foreground">
             {t('playbooks.notebook.sourcesTitle')}
           </h2>
@@ -172,7 +172,7 @@ export default function KnowledgeNotebookPage({ notebook, onBack, onUpdate, onGe
           ) : null}
         </aside>
 
-        <section className="min-h-0 overflow-auto border-b border-border-subtle p-5 lg:border-b-0 lg:border-r" data-testid="playbooks-notebook-note">
+        <section data-glass-slot="panel" className="min-h-0 overflow-auto border-b border-border-subtle p-5 lg:border-b-0 lg:border-r" data-testid="playbooks-notebook-note">
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="text-sm font-medium">{t('playbooks.notebook.noteTitle')}</h2>
             <Button type="button" variant="outline" size="sm" disabled={index.reindexing} onClick={() => void index.reindex()} data-testid="playbooks-notebook-reindex">
@@ -187,10 +187,11 @@ export default function KnowledgeNotebookPage({ notebook, onBack, onUpdate, onGe
             className="min-h-[320px] w-full resize-y text-sm"
             aria-label={t('playbooks.notebook.noteTitle')}
             data-testid="playbooks-notebook-note-input"
+            data-glass-slot="editor"
           />
         </section>
 
-        <section className="flex min-h-0 flex-col" data-testid="playbooks-notebook-ask">
+        <section data-glass-slot="panel" className="flex min-h-0 flex-col" data-testid="playbooks-notebook-ask">
           <PresetQuestions
             disabled={!hasSources}
             onSelect={(key) => void ask(t(`playbooks.notebook.presets.${key}`))}
@@ -204,7 +205,7 @@ export default function KnowledgeNotebookPage({ notebook, onBack, onUpdate, onGe
             </div>
             {!hasSources ? (
               <div className="p-3">
-                <Empty>
+                <Empty data-glass-slot="empty">
                   <EmptyHeader>
                     <EmptyMedia variant="icon">
                       <Sparkles aria-hidden />
