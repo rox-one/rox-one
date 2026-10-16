@@ -37,8 +37,12 @@ import type {
   CookbooksMutateResult,
   CookbooksOutput,
   CookbooksRunAllResult,
+  CookbooksRunAllStreamInput,
   CookbooksRunCell,
   CookbooksRunResult,
+  CookbooksRunStreamEvent,
+  CookbooksRunStreamHandle,
+  CookbooksRunStreamInput,
   CookbooksStartup,
   CookbooksState,
   CookbooksStatus,
@@ -511,6 +515,7 @@ function mapDocument(itemId: string, raw: unknown): CookbooksDocument {
 function mapRunResult(raw: unknown): CookbooksRunResult {
   const result = asRecord(raw)
   const cancelled = result.cancelled
+  const duration = result.duration_ms
   return {
     ok: result.ok === true,
     stdout: asText(result.stdout),
@@ -523,6 +528,30 @@ function mapRunResult(raw: unknown): CookbooksRunResult {
     // Additive wave-9 field: only present when the sidecar actually sent it, so
     // a pre-wave-9 payload maps to exactly the same object as before.
     ...(typeof cancelled === 'boolean' ? { cancelled } : {}),
+    // Additive wave-15 field, same rule as `mapRunCell`: a non-finite/absent
+    // value stays `undefined` (never 0, which would read as "instant").
+    ...(typeof duration === 'number' && Number.isFinite(duration)
+      ? { durationMs: Math.round(duration) }
+      : {}),
+  }
+}
+
+/**
+ * Wave 15: the `/run-all-stream` `end.result`, mirroring the inline mapping in
+ * `apiRunAll` (deliberately duplicated: the synchronous path stays untouched).
+ * The same `duration_ms`-when-finite rule as `mapRunResult`.
+ */
+function mapRunAllResult(raw: unknown): CookbooksRunAllResult {
+  const payload = asRecord(raw)
+  const records = payload.cells
+  const cancelled = payload.cancelled
+  const duration = payload.duration_ms
+  return {
+    cells: Array.isArray(records) ? records.map(mapRunCell) : [],
+    ...(typeof cancelled === 'boolean' ? { cancelled } : {}),
+    ...(typeof duration === 'number' && Number.isFinite(duration)
+      ? { durationMs: Math.round(duration) }
+      : {}),
   }
 }
 
@@ -544,6 +573,156 @@ function mapRunCell(raw: unknown): CookbooksRunCell {
     // really is one.
     durationMs:
       typeof duration === 'number' && Number.isFinite(duration) ? Math.round(duration) : undefined,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Wave 15: NDJSON stream reader (SPEC wave 15 §Решения 7 + §Контракт кадров)
+//
+// The sidecar's stream routes answer `application/x-ndjson`: one JSON frame per
+// line, written as it is produced, with no `Content-Length`. Main reads the body
+// with `response.body.getReader()` and splits it into frames itself.
+// ---------------------------------------------------------------------------
+
+/** One decoded NDJSON frame — an untyped sidecar record. */
+export type CookbooksRawFrame = Record<string, unknown>
+
+/** Incremental NDJSON reader (one instance per stream). */
+export interface CookbooksNdjsonParser {
+  /**
+   * Feed one decoded text chunk; returns every COMPLETE frame it unlocked. A
+   * partial trailing line stays buffered until the rest of it arrives (the
+   * sidecar may split a frame across reads), `\r\n` is accepted, and blank
+   * lines are skipped. A line that is not a JSON object throws — a body that is
+   * not NDJSON must never be read as frames.
+   */
+  push(chunk: string): CookbooksRawFrame[]
+}
+
+export function createCookbooksNdjsonParser(): CookbooksNdjsonParser {
+  let buffer = ''
+  return {
+    push(chunk: string): CookbooksRawFrame[] {
+      buffer += chunk
+      const frames: CookbooksRawFrame[] = []
+      let newline = buffer.indexOf('\n')
+      while (newline !== -1) {
+        const line = buffer.slice(0, newline).replace(/\r$/, '')
+        buffer = buffer.slice(newline + 1)
+        if (line.trim().length > 0) frames.push(parseCookbooksFrame(line))
+        newline = buffer.indexOf('\n')
+      }
+      return frames
+    },
+  }
+}
+
+/** Decode one NDJSON line; anything but a JSON object is a protocol error. */
+function parseCookbooksFrame(line: string): CookbooksRawFrame {
+  const parsed: unknown = JSON.parse(line)
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new SyntaxError('NDJSON frame is not an object')
+  }
+  return parsed as CookbooksRawFrame
+}
+
+function asInteger(value: unknown, fallback = 0): number {
+  return typeof value === 'number' && Number.isInteger(value) ? value : fallback
+}
+
+function asNullableInteger(value: unknown): number | null {
+  return typeof value === 'number' && Number.isInteger(value) ? value : null
+}
+
+/**
+ * Convert one sidecar frame (snake_case) into a renderer-facing event (camelCase)
+ * carrying its identity and order. The sidecar owns the wire shape; main owns
+ * the DTO (`timed_out` → `timedOut`, `duration_ms` → `durationMs`), exactly like
+ * `mapRunResult` already does for the synchronous routes.
+ *
+ * Returns `null` for a frame whose `t` is not part of the frozen contract, so a
+ * future additive frame is ignored rather than surfaced half-built.
+ */
+export function mapRunStreamFrame(
+  raw: CookbooksRawFrame,
+  runId: string,
+  seq: number,
+): CookbooksRunStreamEvent | null {
+  switch (raw.t) {
+    case 'start':
+      return {
+        t: 'start',
+        runId,
+        seq,
+        itemId: asText(raw.itemId),
+        index: asNullableInteger(raw.index),
+        cells: Array.isArray(raw.cells)
+          ? raw.cells.filter((cell): cell is number => Number.isInteger(cell))
+          : null,
+        timeout: typeof raw.timeout === 'number' && Number.isFinite(raw.timeout) ? raw.timeout : 0,
+      }
+    case 'cell-start':
+      return { t: 'cell-start', runId, seq, index: asInteger(raw.index) }
+    case 'stdout':
+      return { t: 'stdout', runId, seq, index: asNullableInteger(raw.index), data: asText(raw.data) }
+    case 'stderr':
+      return { t: 'stderr', runId, seq, index: asNullableInteger(raw.index), data: asText(raw.data) }
+    case 'display':
+      return {
+        t: 'display',
+        runId,
+        seq,
+        index: asNullableInteger(raw.index),
+        mime: asText(raw.mime),
+        data: asText(raw.data),
+      }
+    case 'cell-end': {
+      const duration = raw.duration_ms
+      return {
+        t: 'cell-end',
+        runId,
+        seq,
+        index: asInteger(raw.index),
+        status: raw.status === 'error' ? 'error' : raw.status === 'skipped' ? 'skipped' : 'ok',
+        ok: raw.ok === true,
+        timedOut: raw.timed_out === true,
+        durationMs:
+          typeof duration === 'number' && Number.isFinite(duration) ? Math.round(duration) : undefined,
+        returncode: asNullableInteger(raw.returncode),
+        error: typeof raw.error === 'string' ? raw.error : null,
+        stdout: asText(raw.stdout),
+        stderr: asText(raw.stderr),
+        displays: mapDisplays(raw.displays),
+      }
+    }
+    case 'end': {
+      const result = raw.result
+      return {
+        t: 'end',
+        runId,
+        seq,
+        ok: raw.ok === true,
+        returncode: asNullableInteger(raw.returncode),
+        timedOut: raw.timed_out === true,
+        cancelled: raw.cancelled === true,
+        missing: asStringArray(raw.missing),
+        durationMs: asNullableInteger(raw.duration_ms),
+        // The `end` result is either a `/run` result or a `/run-all` one; a
+        // batch result always carries `cells` and a single-cell result never
+        // does, so the shape is the discriminator the wire contract defines.
+        result: Array.isArray(asRecord(result).cells) ? mapRunAllResult(result) : mapRunResult(result),
+      }
+    }
+    case 'error':
+      return {
+        t: 'error',
+        runId,
+        seq,
+        status: asInteger(raw.status),
+        error: asText(raw.error),
+      }
+    default:
+      return null
   }
 }
 
@@ -577,6 +756,12 @@ export class CookbooksRuntime {
    * emptied store can only be cleared by replacing the process (see pushStore).
    */
   private storeSeeded = false
+  /**
+   * Wave 15: one controller per in-flight `/run-stream` / `/run-all-stream`
+   * read. `stop()` aborts them all, so a runtime shutdown can never leave a
+   * background reader attached to a dying sidecar (SPEC wave 15 §Решения 7).
+   */
+  private readonly activeStreams = new Set<AbortController>()
   private readonly o: Required<
     Pick<
       CookbooksRuntimeOptions,
@@ -699,6 +884,9 @@ export class CookbooksRuntime {
       return
     }
     this.clearRunTimers()
+    // Wave 15: detach every background stream reader before the sidecar goes
+    // away, so a dying process can never keep an IPC push channel pinned.
+    this.abortActiveStreams()
     const child = this.child
     if (!child) {
       this.setState('stopped')
@@ -919,6 +1107,175 @@ export class CookbooksRuntime {
     const payload = asRecord(raw)
     const cancelled = typeof payload.cancelled === 'number' ? payload.cancelled : Number(payload.cancelled)
     return { ok: payload.ok === true, cancelled: Number.isInteger(cancelled) ? cancelled : 0 }
+  }
+
+  // -------------------------------------------------------------------------
+  // Wave 15: live streaming (SPEC wave 15 §Решения 7)
+  //
+  // Same loopback origin, bearer token and budgets as the synchronous routes,
+  // but the answer is NDJSON read frame by frame. The invoke resolves as soon as
+  // the sidecar ACCEPTS the run (`{runId}`), so a run longer than the transport's
+  // 60 s handler ceiling can no longer be cut off; the frames keep arriving on
+  // the push channel afterwards. The old `apiRun`/`apiRunAll` are untouched.
+  // -------------------------------------------------------------------------
+
+  /** `POST /run-stream` → the frames of one cell, streamed to `onEvent`. */
+  async apiRunStream(
+    input: CookbooksRunStreamInput,
+    onEvent: (event: CookbooksRunStreamEvent) => void,
+  ): Promise<CookbooksRunStreamHandle> {
+    // One-shot store: the freshest snapshot at launch, merged by the sidecar
+    // into its in-memory store for this run only (same rule as apiRun).
+    const store = await this.resolveStoreSnapshot()
+    const body: Record<string, unknown> = { itemId: input.itemId, code: input.code, store }
+    // Never send an `undefined` index: the sidecar applies its own default.
+    if (input.index !== undefined) body.index = input.index
+    return this.startStream('/run-stream', body, this.o.runApiTimeoutMs, input.runId, onEvent)
+  }
+
+  /** `POST /run-all-stream` → per-cell frames of one batch, streamed to `onEvent`. */
+  async apiRunAllStream(
+    input: CookbooksRunAllStreamInput,
+    onEvent: (event: CookbooksRunStreamEvent) => void,
+  ): Promise<CookbooksRunStreamHandle> {
+    const store = await this.resolveStoreSnapshot()
+    return this.startStream(
+      '/run-all-stream',
+      { itemId: input.itemId, cells: input.cells, store },
+      this.o.runAllTimeoutMs(input.cells.length),
+      input.runId,
+      onEvent,
+    )
+  }
+
+  /**
+   * Open a stream route and hand its frames to `onEvent` in the background.
+   *
+   * Rejects (so the invoke rejects too) when the run is refused BEFORE the
+   * stream starts: not `running`, unreachable, or a 4xx/5xx JSON answer — the
+   * sidecar validates itemId/gates/secrets before the first frame, exactly like
+   * `/run`, and that answer is a normal JSON error body.
+   *
+   * Once the response is `ok`, this resolves `{runId}` and the remaining frames
+   * are read detached from the invoke.
+   */
+  private async startStream(
+    path: string,
+    body: unknown,
+    timeoutMs: number,
+    runId: string,
+    onEvent: (event: CookbooksRunStreamEvent) => void,
+  ): Promise<CookbooksRunStreamHandle> {
+    const startup = this.state === 'running' ? this.startup : null
+    if (!startup) throw new CookbooksApiError(0, 'runtime not running')
+    const controller = new AbortController()
+    this.activeStreams.add(controller)
+    // The same absolute budget the synchronous routes use; it covers the whole
+    // stream and is dropped the moment the read finishes (or is aborted).
+    const timer = this.o.setTimer(() => controller.abort(), timeoutMs)
+    let response: Response
+    try {
+      response = await fetch(`http://127.0.0.1:${startup.port}${path}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${startup.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      })
+    } catch (err) {
+      this.finishStream(controller, timer)
+      throw new CookbooksApiError(0, err instanceof Error ? err.message : String(err))
+    }
+    if (!response.ok) {
+      this.finishStream(controller, timer)
+      const payload: unknown = await response.json().catch(() => null)
+      const reported = asRecord(payload).error
+      const message = typeof reported === 'string' && reported.length > 0
+        ? reported
+        : response.statusText || `HTTP ${response.status}`
+      throw new CookbooksApiError(response.status, message)
+    }
+    // Detached: the invoke has already been answered. `onEvent` is main's own
+    // push closure, so a throw there must never become an unhandled rejection.
+    void this.readStreamBody(response, runId, onEvent, controller)
+      .catch(() => {})
+      .finally(() => this.finishStream(controller, timer))
+    return { runId }
+  }
+
+  /** Drop a stream's budget timer and release its abort controller. */
+  private finishStream(controller: AbortController, timer: TimerHandle): void {
+    this.o.clearTimer(timer)
+    this.activeStreams.delete(controller)
+  }
+
+  /** `stop()` hook: cut every background stream read (abort → read rejects). */
+  private abortActiveStreams(): void {
+    for (const controller of this.activeStreams) controller.abort()
+    this.activeStreams.clear()
+  }
+
+  /**
+   * Read one NDJSON response to its end, converting each frame into an event
+   * with a monotonic `seq` (starting at 0).
+   *
+   * A broken connection, an abort (budget elapsed or runtime stopped) or a
+   * non-JSON body cannot reject the already-answered invoke, so — unless the
+   * sidecar already sent its authoritative `end` — it is reported as a terminal
+   * `error` frame (`status: 0`). The surface then leaves its busy state instead
+   * of waiting for an `end` that will never come (SPEC wave 15 §Решения 7).
+   */
+  private async readStreamBody(
+    response: Response,
+    runId: string,
+    onEvent: (event: CookbooksRunStreamEvent) => void,
+    controller: AbortController,
+  ): Promise<void> {
+    const body = response.body
+    if (!body) {
+      onEvent({ t: 'error', runId, seq: 0, status: 0, error: 'empty stream body' })
+      return
+    }
+    const reader = body.getReader()
+    const decoder = new TextDecoder()
+    const parser = createCookbooksNdjsonParser()
+    let seq = 0
+    // `end` and a sidecar-emitted `error` are both terminal: whichever arrives
+    // first is the run's own verdict, and main must not append a second one.
+    let sawTerminal = false
+    let failure: string | null = null
+    try {
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        for (const frame of parser.push(decoder.decode(value, { stream: true }))) {
+          const event = mapRunStreamFrame(frame, runId, seq)
+          // Unknown frames (a future additive `t`) are ignored, never surfaced
+          // half-built, and never consume a seq.
+          if (!event) continue
+          seq += 1
+          if (event.t === 'end' || event.t === 'error') sawTerminal = true
+          onEvent(event)
+        }
+      }
+    } catch (err) {
+      failure = err instanceof Error ? err.message : String(err)
+    } finally {
+      // `read()` may be mid-flight when the controller aborts; releasing is
+      // best-effort and a no-op once the stream has already closed.
+      try {
+        reader.releaseLock()
+      } catch {
+        /* already released */
+      }
+    }
+    // A reader that stopped on an abort may resolve as "done" rather than throw
+    // (the exact shape depends on the runtime), so the signal is checked too.
+    if (!sawTerminal && (failure !== null || controller.signal.aborted)) {
+      onEvent({ t: 'error', runId, seq, status: 0, error: failure ?? 'stream aborted' })
+    }
   }
 
   /**

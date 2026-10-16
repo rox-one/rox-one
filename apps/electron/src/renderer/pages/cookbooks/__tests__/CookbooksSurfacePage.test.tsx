@@ -31,6 +31,13 @@
  * the same i18n instance the page uses, so a missing translation or a wrong
  * interpolation parameter fails here rather than silently rendering the raw key.
  *
+ * Wave 15 adds the streaming half: the run double answers a fast `{runId}` and
+ * mirrors the page's own subscription model (`runStream`/`runAllStream`/
+ * `onRunEvent`/`emitRunEvent`), the header counter is exercised as the honest
+ * «N из M» the frames report, and the live buffer is checked in portions before
+ * `end` replaces it with the authoritative result — including the partial text a
+ * stop leaves behind and the late frame a dead run must not apply.
+ *
  * Harness mirrors the sibling suites: happy-dom globals via `useDomForFile`,
  * the real RU i18n bundle through `setupI18n`, and `react-dom/client` imported
  * after the DOM exists.
@@ -56,6 +63,7 @@ import type {
   CookbooksSurfacePage as CookbooksSurfacePageComponent,
   CookbooksSurfacePageProps,
 } from '../CookbooksSurfacePage'
+import type { CookbooksStreamFrame } from '../live-stream'
 // Wave 13: the page now binds Ctrl/Cmd+F through the action registry (capture-
 // phase window listener), so the surface must render inside its provider — the
 // same host `App.tsx` mounts it under. The provider is inert until `mod+f` is
@@ -296,6 +304,13 @@ interface RunAllCall {
   itemId: string
   cells: { index: number; source: string }[]
 }
+/** Wave 15: the renderer mints the run id and sends it with the fast invoke. */
+interface RunStreamCall extends RunCall {
+  runId: string
+}
+interface RunAllStreamCall extends RunAllCall {
+  runId: string
+}
 interface SaveCall {
   itemId: string
   index?: number
@@ -345,6 +360,11 @@ interface ApiCounts {
   document: ItemCall[]
   run: RunCall[]
   runAll: RunAllCall[]
+  /**
+   * Wave 15: the renderer-minted run ids, in call order — the handle a live
+   * test needs to push its own frames down the push channel.
+   */
+  runIds: string[]
   save: SaveCall[]
   reset: ItemCall[]
   cancel: ItemCall[]
@@ -362,6 +382,7 @@ function installApi(model: ApiModel) {
     document: [],
     run: [],
     runAll: [],
+    runIds: [],
     save: [],
     reset: [],
     cancel: [],
@@ -371,8 +392,51 @@ function installApi(model: ApiModel) {
   /** Wave 10: the cross-array order of sidecar calls — proves save → mutate. */
   const events: string[] = []
   const listeners = new Set<(status: CookbooksStatus) => void>()
+  /** Wave 15: the renderer subscribers of the run-event push channel. */
+  const frameListeners = new Set<(frame: CookbooksStreamFrame) => void>()
   const documents = new Map(Object.entries(model.documents ?? {}))
   const docFor = (itemId: string): CookbooksDocument => documents.get(itemId) ?? { ...FALLBACK_DOC, itemId }
+
+  const emitRunEvent = (frame: CookbooksStreamFrame) => {
+    for (const listener of frameListeners) listener(frame)
+  }
+
+  /**
+   * Wave 15: replay a finished run as the sidecar's own frames — `start`, the
+   * per-cell `cell-start`/`stdout`/`cell-end` a cell that actually ran produced
+   * (a `skipped` cell never started), then the authoritative `end`. The frames
+   * go out on the microtask right after the invoke resolves, exactly like main's
+   * fire-and-forget push, so the page's fast-answer contract is what the test
+   * exercises.
+   */
+  const emitSingleRunFrames = (runId: string, index: number, result: CookbooksRunResult) => {
+    emitRunEvent({ runId, t: 'start', index, cells: null })
+    if (result.stdout.length > 0) emitRunEvent({ runId, t: 'stdout', index, data: result.stdout })
+    emitRunEvent({ runId, t: 'end', ok: result.ok, cancelled: result.cancelled === true, result })
+  }
+  const emitRunAllFrames = (runId: string, requested: number[], result: { cells: CookbooksRunCell[]; cancelled?: boolean }) => {
+    emitRunEvent({ runId, t: 'start', index: null, cells: requested })
+    for (const cell of result.cells) {
+      if (cell.status === 'skipped') continue
+      emitRunEvent({ runId, t: 'cell-start', index: cell.index })
+      if (cell.stdout.length > 0) emitRunEvent({ runId, t: 'stdout', index: cell.index, data: cell.stdout })
+      emitRunEvent({
+        runId,
+        t: 'cell-end',
+        index: cell.index,
+        status: cell.status,
+        ok: cell.status === 'ok',
+        // W13 parity: a record the sidecar timed nothing for (no `durationMs`)
+        // keeps no badge — pass the field through only when it is a real number.
+        ...(typeof cell.durationMs === 'number' ? { durationMs: cell.durationMs } : {}),
+        stdout: cell.stdout,
+        stderr: '',
+        error: cell.error,
+        displays: cell.displays,
+      })
+    }
+    emitRunEvent({ runId, t: 'end', ok: result.cancelled !== true, cancelled: result.cancelled === true, result })
+  }
 
   const api = {
     ensure: async () => {
@@ -407,6 +471,27 @@ function installApi(model: ApiModel) {
       counts.runAll.push(call)
       return model.runAll ? model.runAll(call) : { cells: RUN_ALL }
     },
+    // Wave 15: the streamed run — a fast `{runId}`, then the frames over the
+    // push channel. A microtask keeps the frames after the invoke's own
+    // resolution (the page subscribes before it invokes, so nothing is missed)
+    // while staying independent of the wall clock. The trimming below keeps the
+    // counts the synchronous shape the older assertions read.
+    runStream: async (call: RunStreamCall) => {
+      counts.run.push({ itemId: call.itemId, code: call.code, index: call.index })
+      counts.runIds.push(call.runId)
+      const result = model.run ? await model.run({ itemId: call.itemId, code: call.code, index: call.index }) : RUN_OK
+      queueMicrotask(() => emitSingleRunFrames(call.runId, call.index, result))
+      return { runId: call.runId }
+    },
+    runAllStream: async (call: RunAllStreamCall) => {
+      counts.runAll.push({ itemId: call.itemId, cells: call.cells })
+      counts.runIds.push(call.runId)
+      const result = model.runAll
+        ? await model.runAll({ itemId: call.itemId, cells: call.cells })
+        : { cells: RUN_ALL }
+      queueMicrotask(() => emitRunAllFrames(call.runId, call.cells.map((cell) => cell.index), result))
+      return { runId: call.runId }
+    },
     save: async (call: SaveCall) => {
       counts.save.push(call)
       events.push('save')
@@ -435,6 +520,13 @@ function installApi(model: ApiModel) {
         listeners.delete(callback)
       }
     },
+    // Wave 15: the run-event push channel — mirror of `onStatusChanged`.
+    onRunEvent: (callback: (frame: CookbooksStreamFrame) => void) => {
+      frameListeners.add(callback)
+      return () => {
+        frameListeners.delete(callback)
+      }
+    },
   }
 
   Object.assign(window, { electronAPI: { cookbooksLab: api } })
@@ -444,6 +536,7 @@ function installApi(model: ApiModel) {
     emitStatus: (status: CookbooksStatus) => {
       for (const listener of listeners) listener(status)
     },
+    emitRunEvent,
   }
 }
 
@@ -455,6 +548,21 @@ async function flush(times = 3): Promise<void> {
   for (let i = 0; i < times; i += 1) {
     const { promise, resolve } = Promise.withResolvers<void>()
     setTimeout(resolve, 0)
+    await act(async () => {
+      await promise
+    })
+  }
+}
+
+/**
+ * Wave 15: drain the page's live publish. The surface coalesces its live buffer
+ * through `requestAnimationFrame`, so a test that pushed frames must await the
+ * frame (never a guessed delay) before reading the block back.
+ */
+async function flushFrames(times = 2): Promise<void> {
+  for (let i = 0; i < times; i += 1) {
+    const { promise, resolve } = Promise.withResolvers<void>()
+    globalThis.requestAnimationFrame(() => resolve())
     await act(async () => {
       await promise
     })
@@ -4192,10 +4300,10 @@ describe('CookbooksSurfacePage Alt+Enter (wave 14, F3)', () => {
   })
 })
 
-describe('CookbooksSurfacePage run progress (wave 14, F4)', () => {
-  it('shows the batch’s own size while it runs and hides it afterwards', async () => {
+describe('CookbooksSurfacePage run progress (wave 14 F4 / wave 15 F6)', () => {
+  it('counts each cell as it closes and hides the counter once the batch lands', async () => {
     const gate = Promise.withResolvers<{ cells: CookbooksRunCell[] }>()
-    const { container } = await renderNotebook({ runAll: () => gate.promise })
+    const { api, container } = await renderNotebook({ runAll: () => gate.promise })
 
     await act(async () => {
       ;(testId(container, 'cookbooks-run-all') as HTMLButtonElement).click()
@@ -4205,9 +4313,20 @@ describe('CookbooksSurfacePage run progress (wave 14, F4)', () => {
     const progress = testId(container, 'cookbooks-run-progress')
     expect(progress).not.toBeNull()
     expect(progress!.getAttribute('aria-label')).toBe(t('cookbooks.run.progressAria'))
-    // The sidecar answers a batch in ONE response, so the honest reading is the
-    // run's size — not a count of what has landed.
-    expect(progress!.textContent).toBe(t('cookbooks.run.batch', { total: 3 }))
+    // Wave 15: the frames report every cell as it closes, so the honest reading
+    // starts at zero of the run's own size and only grows.
+    expect(progress!.textContent).toBe(t('cookbooks.run.progress', { done: 0, total: 3 }))
+
+    // A `cell-end` moves the counter — the page folds it in the moment it lands.
+    const runId = api.counts.runIds[0]
+    await act(async () => {
+      api.emitRunEvent({ runId, t: 'start', index: null, cells: [1, 2, 3] })
+      api.emitRunEvent({ runId, t: 'cell-end', index: 1, status: 'ok', durationMs: 3, stdout: 'ok-1', error: null, displays: [] })
+    })
+    await flushFrames()
+    expect(testId(container, 'cookbooks-run-progress')!.textContent).toBe(
+      t('cookbooks.run.progress', { done: 1, total: 3 }),
+    )
 
     await act(async () => {
       gate.resolve({ cells: RUN_ALL })
@@ -4228,7 +4347,7 @@ describe('CookbooksSurfacePage run progress (wave 14, F4)', () => {
 
     // Cells 1 and 2 are the code cells above cell 3 — the subset's own size.
     expect(testId(container, 'cookbooks-run-progress')!.textContent).toBe(
-      t('cookbooks.run.batch', { total: 2 }),
+      t('cookbooks.run.progress', { done: 0, total: 2 }),
     )
 
     await act(async () => {
@@ -4254,6 +4373,204 @@ describe('CookbooksSurfacePage run progress (wave 14, F4)', () => {
       await gate.promise
     })
     await flush()
+    expect(testId(container, 'cookbooks-run-progress')).toBeNull()
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Wave 15 — live output (F5/F7). The frames arrive over the push channel, so
+// these cases drive them by hand (`emitRunEvent`) the way main re-publishes the
+// sidecar's NDJSON, and read the block back through the rAF-coalesced publish.
+// ---------------------------------------------------------------------------
+
+describe('CookbooksSurfacePage live output (wave 15, F7)', () => {
+  it('shows a single run’s text in portions, then replaces it with the final result', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { api, container } = await renderNotebook({ run: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+    const runId = api.counts.runIds[0]
+
+    await act(async () => {
+      api.emitRunEvent({ runId, t: 'start', index: 1, cells: null })
+      api.emitRunEvent({ runId, t: 'stdout', index: 1, data: 'порция-1\n' })
+    })
+    await flushFrames()
+
+    const output = testId(container, 'cookbooks-output-1')!
+    expect(output.textContent).toContain('порция-1')
+    // The cell is mid-run: it has no terminal status yet.
+    expect(output.getAttribute('data-status')).toBe('running')
+
+    await act(async () => {
+      api.emitRunEvent({ runId, t: 'stdout', index: 1, data: 'порция-2\n' })
+    })
+    await flushFrames()
+    expect(testId(container, 'cookbooks-output-1')!.textContent).toContain('порция-1\nпорция-2')
+
+    // `end` finalizes: the live buffer gives way to the authoritative result.
+    await act(async () => {
+      gate.resolve(RUN_OK)
+      await gate.promise
+    })
+    await flush()
+    await flushFrames()
+
+    const settled = testId(container, 'cookbooks-output-1')!
+    expect(settled.getAttribute('data-status')).toBe('ok')
+    expect(settled.textContent).toContain('42')
+    expect(settled.textContent).not.toContain('порция')
+  })
+
+  it('streams a batch cell by cell, folding each finished cell into the surface', async () => {
+    const gate = Promise.withResolvers<{ cells: CookbooksRunCell[] }>()
+    const { api, container } = await renderNotebook({ runAll: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-all') as HTMLButtonElement).click()
+    })
+    await flush(1)
+    const runId = api.counts.runIds[0]
+
+    await act(async () => {
+      api.emitRunEvent({ runId, t: 'start', index: null, cells: [1, 2, 3] })
+      api.emitRunEvent({ runId, t: 'cell-start', index: 1 })
+      api.emitRunEvent({ runId, t: 'stdout', index: 1, data: 'живой-1\n' })
+    })
+    await flushFrames()
+    // The cell that is running shows its live text.
+    expect(testId(container, 'cookbooks-output-1')!.textContent).toContain('живой-1')
+
+    // Cell 1 closes: its record replaces the live buffer immediately, while the
+    // batch is still going.
+    await act(async () => {
+      api.emitRunEvent({
+        runId,
+        t: 'cell-end',
+        index: 1,
+        status: 'ok',
+        durationMs: 4,
+        stdout: 'живой-1\n',
+        error: null,
+        displays: [],
+      })
+    })
+    await flushFrames()
+    expect(testId(container, 'cookbooks-output-1')!.getAttribute('data-status')).toBe('ok')
+    expect(testId(container, 'cookbooks-run-progress')!.textContent).toBe(
+      t('cookbooks.run.progress', { done: 1, total: 3 }),
+    )
+
+    await act(async () => {
+      gate.resolve({ cells: RUN_ALL })
+      await gate.promise
+    })
+    await flush()
+    expect(testId(container, 'cookbooks-run-progress')).toBeNull()
+  })
+
+  it('keeps the partial text of a cell a stop cut short, with status cancelled', async () => {
+    const gate = Promise.withResolvers<{ cells: CookbooksRunCell[]; cancelled?: boolean }>()
+    const { api, container } = await renderNotebook({ runAll: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-all') as HTMLButtonElement).click()
+    })
+    await flush(1)
+    const runId = api.counts.runIds[0]
+
+    // Cell 1 finished; cell 2 was printing when the stop landed — it never
+    // produced a `cell-end`.
+    await act(async () => {
+      api.emitRunEvent({ runId, t: 'start', index: null, cells: [1, 2, 3] })
+      api.emitRunEvent({
+        runId,
+        t: 'cell-end',
+        index: 1,
+        status: 'ok',
+        durationMs: 4,
+        stdout: 'ok-1',
+        error: null,
+        displays: [],
+      })
+      api.emitRunEvent({ runId, t: 'cell-start', index: 2 })
+      api.emitRunEvent({ runId, t: 'stdout', index: 2, data: 'частичный-2\n' })
+    })
+    await flushFrames()
+    expect(testId(container, 'cookbooks-output-2')!.textContent).toContain('частичный-2')
+
+    await act(async () => {
+      gate.resolve({
+        cells: [
+          { index: 1, status: 'ok', stdout: 'ok-1', error: null, displays: [] },
+          { index: 2, status: 'skipped', stdout: '', error: null, displays: [] },
+          { index: 3, status: 'skipped', stdout: '', error: null, displays: [] },
+        ],
+        cancelled: true,
+      })
+      await gate.promise
+    })
+    await flush()
+    await flushFrames()
+
+    const stopped = testId(container, 'cookbooks-output-2')!
+    expect(stopped.getAttribute('data-status')).toBe('cancelled')
+    expect(stopped.textContent).toContain('частичный-2')
+    expect(testId(container, 'cookbooks-status')!.textContent).toContain(t('cookbooks.notice.runCancelled'))
+  })
+
+  it('ignores frames from a run this page does not own', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { api, container } = await renderNotebook({ run: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+    const runId = api.counts.runIds[0]
+
+    await act(async () => {
+      // A stale run: a different id, and a frame for a cell that never runs.
+      api.emitRunEvent({ runId: `${runId}-stale`, t: 'stdout', index: 2, data: 'чужое\n' })
+      api.emitRunEvent({ runId, t: 'stdout', index: 1, data: 'своё\n' })
+    })
+    await flushFrames()
+
+    expect(testId(container, 'cookbooks-output-2')!.getAttribute('data-status')).toBe('idle')
+    expect(testId(container, 'cookbooks-output-1')!.textContent).toContain('своё')
+
+    await act(async () => {
+      gate.resolve(RUN_OK)
+      await gate.promise
+    })
+    await flush()
+  })
+
+  it('drops late frames once the surface has unmounted', async () => {
+    const gate = Promise.withResolvers<CookbooksRunResult>()
+    const { api, container } = await renderNotebook({ run: () => gate.promise })
+
+    await act(async () => {
+      ;(testId(container, 'cookbooks-run-1') as HTMLButtonElement).click()
+    })
+    await flush(1)
+    const runId = api.counts.runIds[0]
+
+    const root = mounted!
+    mounted = null
+    await act(async () => {
+      root.unmount()
+    })
+
+    // A frame that arrives after the unmount must not touch the dead tree.
+    expect(() => {
+      api.emitRunEvent({ runId, t: 'stdout', index: 1, data: 'поздно\n' })
+      api.emitRunEvent({ runId, t: 'end', ok: true, cancelled: false, result: RUN_OK })
+    }).not.toThrow()
+    await flushFrames()
   })
 })
 

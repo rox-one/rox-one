@@ -21,8 +21,12 @@ export type {
   CookbooksMutateInput,
   CookbooksMutateResult,
   CookbooksOutput,
+  CookbooksRunAllStreamInput,
   CookbooksRunCell,
   CookbooksRunResult,
+  CookbooksRunStreamEvent,
+  CookbooksRunStreamHandle,
+  CookbooksRunStreamInput,
   CookbooksStartup,
   CookbooksState,
   CookbooksStatus,
@@ -33,7 +37,11 @@ import type {
   CookbooksMutateInput,
   CookbooksMutateResult,
   CookbooksRunAllResult,
+  CookbooksRunAllStreamInput,
   CookbooksRunResult,
+  CookbooksRunStreamEvent,
+  CookbooksRunStreamHandle,
+  CookbooksRunStreamInput,
   CookbooksStatus,
 } from './cookbooks'
 
@@ -2256,6 +2264,18 @@ export interface ElectronAPI {
      * a run of this item is active) carrying the sidecar's own `error` text.
      */
     mutate(args: CookbooksMutateInput): Promise<CookbooksMutateResult>
+    /**
+     * Wave 15: run one cell and stream its live output. Resolves `{runId}` as
+     * soon as the sidecar accepts the run (a fast invoke — the 60 s transport
+     * handler ceiling never applies to the run itself); frames arrive on
+     * `onRunEvent` until a terminal `end`/`error`. `runId` is minted by the
+     * caller, which removes the "event before the invoke answer" race.
+     */
+    runStream(args: CookbooksRunStreamInput): Promise<CookbooksRunStreamHandle>
+    /** Wave 15: the same streaming contract for a "Run all" batch. */
+    runAllStream(args: CookbooksRunAllStreamInput): Promise<CookbooksRunStreamHandle>
+    /** Wave 15: live frames of every active run, each with its `runId` + `seq`. */
+    onRunEvent(callback: (event: CookbooksRunStreamEvent) => void): () => void
     onStatusChanged(callback: (status: CookbooksStatus) => void): () => void
   }
 

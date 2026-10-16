@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import codecs
 import hashlib
 import json
 import os
@@ -19,7 +20,7 @@ from typing import Callable, Iterable, Mapping, Sequence
 
 from .copies import CookbookCopy
 from .notebooks import persist_code_output
-from .secrets import redact_output, rewrite_missing_secret_error
+from .secrets import redact_output, redact_output_stream, rewrite_missing_secret_error
 
 
 class KernelError(RuntimeError):
@@ -1334,6 +1335,27 @@ def _cap_displays(records, secrets, *, shared: dict | None = None) -> list[dict]
 _RUN_ALL_DRIVER = _DISPLAY_HELPERS + r'''
 import io, json, os, signal, sys, time, traceback
 
+# Wave 15: the driver is ALSO the producer of the live NDJSON frame stream. It
+# saves the real stdout before it swaps in per-cell buffers and writes one JSON
+# frame per line to that saved stream, so the host can relay per-cell progress
+# while the run is still going. `results.json` keeps being written per cell
+# exactly as before — the frames are additive (decision 4).
+real = sys.stdout
+
+# Per-cell emission cap: once a cell has streamed this many characters
+# (stdout + stderr together) the driver stops emitting data and writes exactly
+# one truncation frame (decision 6).
+FRAME_CAP = 200000
+
+
+def _frame(obj):
+    # One JSON object per line, flushed at once so the host sees it live.
+    try:
+        real.write(json.dumps(obj, ensure_ascii=False) + "\n")
+        real.flush()
+    except Exception:
+        pass
+
 
 def _redact(text, secrets):
     # Host-injected secret values must never reach the temp results file: the
@@ -1343,6 +1365,80 @@ def _redact(text, secrets):
     for value in sorted({v for v in secrets if v}, key=lambda s: (-len(s), s)):
         text = text.replace(value, "***")
     return text
+
+
+class _CellStream(io.StringIO):
+    # A per-cell stdout/stderr (decision 4): `getvalue()` stays the FULL raw
+    # capture (the record is redacted from it, exactly as before), while `write`
+    # also tees whole, already-masked lines out as frames. A secret split over a
+    # write boundary is held: only complete lines are released, and only up to
+    # the safe prefix (max secret length - 1 chars of margin). The `finish()`
+    # tail release at cell end masks whatever is still buffered.
+    def __init__(self, index, kind, secrets, budget):
+        io.StringIO.__init__(self)
+        self._index = index
+        self._kind = kind
+        self._secrets = [value for value in secrets if value]
+        holdback = max((len(value) for value in self._secrets), default=0) - 1
+        self._holdback = holdback if holdback > 0 else 0
+        self._buf = ""
+        self._budget = budget
+
+    def write(self, text):
+        written = io.StringIO.write(self, text)
+        if not text:
+            return written
+        budget = self._budget
+        if budget["capped"]:
+            budget["dropped"] += len(text)
+            return written
+        self._buf += text
+        limit = len(self._buf) - self._holdback
+        if limit <= 0:
+            return written
+        cut = self._buf.rfind("\n", 0, limit)
+        if cut == -1:
+            return written
+        chunk = self._buf[: cut + 1]
+        self._buf = self._buf[cut + 1 :]
+        self._emit(chunk)
+        return written
+
+    def _emit(self, chunk):
+        if not chunk:
+            return
+        masked = _redact(chunk, self._secrets)
+        budget = self._budget
+        if budget["capped"]:
+            budget["dropped"] += len(masked)
+            return
+        left = FRAME_CAP - budget["sent"]
+        if len(masked) <= left:
+            budget["sent"] += len(masked)
+            _frame({"t": self._kind, "index": self._index, "data": masked})
+            return
+        if left > 0:
+            _frame({"t": self._kind, "index": self._index, "data": masked[:left]})
+            budget["sent"] += left
+        budget["dropped"] += len(masked) - left
+        budget["capped"] = True
+
+    def finish(self):
+        # Cell end: release the held tail (masked, complete or not) and let the
+        # caller write the single truncation frame.
+        if self._buf:
+            chunk = self._buf
+            self._buf = ""
+            self._emit(chunk)
+
+
+def _cell_error(rec, per_cell):
+    if rec.get("timed_out"):
+        return (
+            "Kernel cell timed out after %gs and was stopped. "
+            "Raise the cell timeout or make the cell shorter." % per_cell
+        )
+    return rec.get("stderr") or rec.get("stdout") or "Kernel cell failed."
 
 
 def _write(path, payload):
@@ -1392,7 +1488,11 @@ def main(job_path):
         sink = _rox_new_sink(shared)
         _rox_configure_secrets(sink, secret_names)
         box["sink"] = sink
-        out, err = io.StringIO(), io.StringIO()
+        _frame({"t": "cell-start", "index": index})
+        # One emission budget per cell, shared by its stdout and stderr streams.
+        budget = {"sent": 0, "dropped": 0, "capped": False}
+        out = _CellStream(index, "stdout", secrets, budget)
+        err = _CellStream(index, "stderr", secrets, budget)
         rec = {"index": index, "ok": False, "stdout": "", "stderr": "",
                "timed_out": False, "duration_ms": 0, "displays": []}
         old = sys.stdout, sys.stderr
@@ -1412,6 +1512,15 @@ def main(job_path):
                 signal.setitimer(signal.ITIMER_REAL, 0)
             sys.stdout, sys.stderr = old
             _rox_flush_figures(sink)
+        # Release the held tails, then the ONE truncation frame, if we capped.
+        out.finish()
+        err.finish()
+        if budget["capped"]:
+            _frame({
+                "t": "stdout",
+                "index": index,
+                "data": "\n\u2026[truncated: %d chars omitted]" % budget["dropped"],
+            })
         # Filled before the record is written, so a kill mid-run keeps the
         # displays of every cell that already finished.
         rec["displays"] = _rox_records(sink)
@@ -1421,6 +1530,21 @@ def main(job_path):
         rec["duration_ms"] = int((time.monotonic() - start) * 1000)
         records.append(rec)
         _write(results_path, {"cells": records})
+        # The full cell record travels as `cell-end` (frame contract), after the
+        # temp write, so a killed run still leaves the records it finished.
+        _frame({
+            "t": "cell-end",
+            "index": index,
+            "status": "ok" if rec["ok"] else "error",
+            "ok": rec["ok"],
+            "timed_out": rec["timed_out"],
+            "duration_ms": rec["duration_ms"],
+            "returncode": None,
+            "error": None if rec["ok"] else _cell_error(rec, per_cell),
+            "stdout": rec["stdout"],
+            "stderr": rec["stderr"],
+            "displays": rec["displays"],
+        })
         if not rec["ok"]:
             break
     _write(results_path, {"cells": records})
@@ -1430,6 +1554,213 @@ def main(job_path):
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1]))
 '''
+
+
+class _FrameSink:
+    """Serializes ``emit`` calls and enforces the shared streaming cap (wave 15).
+
+    Both reader threads (stdout/stderr) push fragments here; the sink emits one
+    ``{"t": "stdout"|"stderr", "index": index, "data": …}`` frame per fragment
+    and holds ``MAX_CAPTURE_CHARS`` *across both streams*: the fragment that
+    crosses the cap is cut, later fragments are dropped, and ``marker()`` emits
+    the single ``…[truncated: N chars omitted]`` frame once, at the end.
+    """
+
+    def __init__(self, emit: Callable[[dict], None], index: int | None,
+                 max_chars: int = MAX_CAPTURE_CHARS) -> None:
+        self._emit = emit
+        self._index = index
+        self._max = int(max_chars)
+        self._lock = threading.Lock()
+        self._sent = 0
+        self._dropped = 0
+        self._capped = False
+
+    def push(self, kind: str, text: str) -> None:
+        if not text:
+            return
+        with self._lock:
+            if self._capped:
+                self._dropped += len(text)
+                return
+            left = self._max - self._sent
+            if len(text) <= left:
+                self._sent += len(text)
+                self._emit({"t": kind, "index": self._index, "data": text})
+                return
+            if left > 0:
+                self._emit({"t": kind, "index": self._index, "data": text[:left]})
+                self._sent += left
+                self._dropped += len(text) - left
+            else:
+                self._dropped += len(text)
+            self._capped = True
+
+    def marker(self) -> None:
+        with self._lock:
+            if not self._capped:
+                return
+            dropped = self._dropped
+        self._emit(
+            {
+                "t": "stdout",
+                "index": self._index,
+                "data": f"\n\u2026[truncated: {dropped} chars omitted]",
+            }
+        )
+
+
+def _read_chunk(stream, size: int = 65536) -> bytes:
+    """One chunk from a child pipe, without waiting for the buffer to fill.
+
+    ``BufferedReader.read(n)`` blocks until it has ``n`` bytes or EOF, which
+    would defeat streaming, so ``read1`` (one raw read) is preferred; an
+    unbuffered ``FileIO`` falls back to ``os.read`` on its fd.
+    """
+    reader = getattr(stream, "read1", None)
+    if reader is not None:
+        return reader(size)
+    return os.read(stream.fileno(), size)
+
+
+def _pump_stream(
+    stream,
+    kind: str,
+    sink: "_FrameSink | None",
+    redactor,
+    raw: list[str],
+    proc: subprocess.Popen,
+    errors: list[BaseException],
+) -> None:
+    """Read one child pipe, mask incrementally and emit frames (wave 15).
+
+    Reads in chunks through an incremental UTF-8 decoder (so a multi-byte
+    character split across reads is never cut), appends the decoded text to
+    ``raw`` (the caller re-caps/re-redacts it for the result) and, when a
+    ``sink`` is present, emits the already-masked fragment through it. A
+    frame-writer failure (the client went away) is recorded and the child killed
+    from here, so the other reader unblocks; the caller re-raises it.
+    """
+    decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+    try:
+        while True:
+            try:
+                chunk = _read_chunk(stream)
+            except Exception:
+                break
+            if not chunk:
+                break
+            try:
+                text = decoder.decode(chunk)
+            except Exception:
+                break
+            if not text:
+                continue
+            raw.append(text)
+            if sink is None:
+                continue
+            try:
+                sink.push(kind, redactor.feed(text))
+            except Exception as exc:  # the client vanished mid-stream
+                errors.append(exc)
+                _kill_process_tree(proc)
+                break
+    finally:
+        try:
+            stream.close()
+        except Exception:
+            pass
+
+
+class _FrameRelay:
+    """Relays the run-all driver's NDJSON frames to ``emit`` (wave 15).
+
+    A line from the driver's stdout that parses as a JSON object is relayed
+    verbatim (``cell-start``/``stdout``/``stderr``/``cell-end``/…); a non-JSON
+    line — a cell writing straight to the driver's fd — becomes a ``stderr``
+    frame carrying the current cell's index (or ``None``), matching today's
+    "not captured" behaviour, and is never merged into the final result. The
+    driver's own stderr is relayed as ``stderr`` frames with ``index=None``.
+    Emits are serialized so the two reader threads never interleave a frame.
+    """
+
+    def __init__(self, emit: Callable[[dict], None] | None) -> None:
+        self._emit = emit
+        self._lock = threading.Lock()
+        self._index: int | None = None
+
+    def stdout_line(self, line: str) -> None:
+        try:
+            frame = json.loads(line)
+        except ValueError:
+            frame = None
+        if not isinstance(frame, dict):
+            self._send({"t": "stderr", "index": self._index, "data": line + "\n"})
+            return
+        kind = frame.get("t")
+        if kind == "cell-start":
+            self._index = frame.get("index")
+        elif kind == "cell-end":
+            self._index = None
+        self._send(frame)
+
+    def stderr_line(self, line: str) -> None:
+        self._send({"t": "stderr", "index": None, "data": line + "\n"})
+
+    def _send(self, frame: dict) -> None:
+        if self._emit is None:
+            return
+        with self._lock:
+            self._emit(frame)
+
+
+def _pump_frames(
+    stream, relay: _FrameRelay, kind: str, proc: subprocess.Popen, errors: list[BaseException]
+) -> None:
+    """Read one driver pipe line by line and relay each line (wave 15).
+
+    Frames are one JSON object per line, so lines are decoded incrementally and
+    split on ``\\n``; a trailing partial line is flushed at EOF. A relay/writer
+    failure is recorded and the driver killed, so the other reader unblocks.
+    """
+    decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
+    buf = ""
+
+    def relay_line(line: str) -> None:
+        try:
+            if kind == "stdout":
+                relay.stdout_line(line)
+            else:
+                relay.stderr_line(line)
+        except Exception as exc:  # the client vanished mid-stream
+            errors.append(exc)
+            _kill_process_tree(proc)
+
+    try:
+        while True:
+            try:
+                chunk = _read_chunk(stream)
+            except Exception:
+                break
+            if not chunk:
+                break
+            try:
+                buf += decoder.decode(chunk)
+            except Exception:
+                break
+            while "\n" in buf:
+                line, buf = buf.split("\n", 1)
+                relay_line(line)
+                if errors:
+                    return
+        tail = buf.strip("\n")
+        if tail and not errors:
+            relay_line(tail)
+    finally:
+        try:
+            stream.close()
+        except Exception:
+            pass
 
 
 class RunHandle:
@@ -1628,16 +1959,31 @@ class Kernel:
         """Stop the in-flight cell; the next `execute` starts a fresh process."""
         self.interrupt()
 
-    def execute(
-        self, code: str, *, timeout: float | None = None, run: RunHandle | None = None
+    def execute_stream(
+        self,
+        code: str,
+        *,
+        index: int | None = None,
+        timeout: float | None = None,
+        run: RunHandle | None = None,
+        emit: Callable[[dict], None] | None = None,
     ) -> dict:
-        """Run one cell; never raises for cell failure, timeout or interrupt.
+        """Run one cell, streaming its output as ``emit`` frames (wave 15).
 
-        Calling this while a cell is already running raises ``KernelError`` rather
-        than starting a second process (one cell per kernel; plan 010). ``run``
-        binds this execution to a host-side ``RunHandle`` so ``POST /cancel`` can
-        kill the child process group from another thread; the result then carries
-        ``cancelled`` (and ``interrupted``) accordingly.
+        Same contract as ``execute`` — busy-guard, timeout, cancel, redaction,
+        display records and result schema — plus two additions:
+
+        * ``emit(frame)`` is called, while the cell runs, with one
+          ``{"t": "stdout"|"stderr", "index": index, "data": <masked fragment>}``
+          frame per read; fragments are already masked through
+          ``redact_output_stream`` (line-buffered, with holdback). ``start``/
+          ``end``/``display`` frames are the route's job, not the kernel's.
+        * the result carries ``duration_ms`` (host-side ``time.monotonic``).
+
+        The child runs ``python -u`` and both pipes are read incrementally with
+        an incremental UTF-8 decoder (``errors="replace"``), so a multi-byte
+        character split across reads is never cut; ``communicate`` is not used.
+        ``emit is None`` is the non-streaming path (``execute``).
 
         Wave 11: the child is handed a temp ``results`` path (stdin payload
         ``{"code", "results", "secret_env"}``) and writes its ``display_data``
@@ -1645,9 +1991,14 @@ class Kernel:
         into ``result["displays"]``. A killed child writes nothing, so a
         timeout/cancel yields ``displays == []``. The temp dir is removed before
         this returns.
+
+        Emission is capped: stdout + stderr share ``MAX_CAPTURE_CHARS``; once it
+        is reached the data frames stop and exactly one ``stdout`` frame with a
+        ``…[truncated: N chars omitted]`` marker is emitted (decision 6).
         """
         if not self._run_lock.acquire(blocking=False):
             raise KernelError("kernel busy: a cell is already running")
+        started = time.monotonic()
         try:
             work_dir = None
             limit = self.default_timeout if timeout is None else float(timeout)
@@ -1665,6 +2016,18 @@ class Kernel:
                 secret_names = sorted(
                     {str(name) for name, value in self.env.items() if value and value in redacted}
                 )
+            # Injected secrets never reach the notebook: redact both streams here
+            # (and mask the live frames from the same set). Policy: ``None`` masks
+            # *every* env value (historical behaviour); hosts pass just the
+            # credential values, so a non-secret default — the catalog
+            # ``defaultEnv`` gateway base URL — stays readable.
+            if self.redact_values is None:
+                secret_values = [
+                    value for name, value in proc_env.items() if value and name in self.env
+                ]
+                secret_values.extend(value for value in self.env.values() if value)
+            else:
+                secret_values = [value for value in self.redact_values if value]
             work_dir = tempfile.mkdtemp(prefix="rox-run-")
             results_path = os.path.join(work_dir, "results.json")
             payload = json.dumps(
@@ -1672,17 +2035,18 @@ class Kernel:
             )
             with self._lock:
                 self._interrupted = False
-            proc = subprocess.Popen(
-                [str(py), "-c", _RUNNER],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                errors="replace",
-                cwd=str(self.copy.root),
-                env=proc_env,
-                start_new_session=(os.name != "nt"),
-            )
+            try:
+                proc = subprocess.Popen(
+                    [str(py), "-u", "-c", _RUNNER],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=str(self.copy.root),
+                    env=proc_env,
+                    start_new_session=(os.name != "nt"),
+                )
+            except OSError as exc:
+                raise KernelError(f"could not start the kernel cell: {exc}") from exc
             # A `/cancel` may land before this Popen returned; the handle kills
             # the child itself in that window (see RunHandle.attach).
             if run is not None:
@@ -1696,13 +2060,75 @@ class Kernel:
                 hit = self._interrupted
             if hit:
                 _kill_process_tree(proc)
-            timed_out = False
             try:
-                out, err = proc.communicate(input=payload, timeout=limit)
-            except subprocess.TimeoutExpired:
-                timed_out = True
-                _kill_process_tree(proc)
-                out, err = proc.communicate()
+                proc.stdin.write(payload.encode("utf-8"))
+                proc.stdin.close()
+            except (OSError, ValueError):
+                pass
+            sink = _FrameSink(emit, index) if emit is not None else None
+            out_redactor = redact_output_stream(secret_values)
+            err_redactor = redact_output_stream(secret_values)
+            out_chunks: list[str] = []
+            err_chunks: list[str] = []
+            errors: list[BaseException] = []
+            readers = [
+                threading.Thread(
+                    target=_pump_stream,
+                    args=(
+                        proc.stdout,
+                        "stdout",
+                        sink,
+                        out_redactor,
+                        out_chunks,
+                        proc,
+                        errors,
+                    ),
+                    daemon=True,
+                ),
+                threading.Thread(
+                    target=_pump_stream,
+                    args=(
+                        proc.stderr,
+                        "stderr",
+                        sink,
+                        err_redactor,
+                        err_chunks,
+                        proc,
+                        errors,
+                    ),
+                    daemon=True,
+                ),
+            ]
+            for reader in readers:
+                reader.start()
+            timed_out = False
+
+            def watchdog():
+                nonlocal timed_out
+                try:
+                    proc.wait(timeout=limit)
+                except subprocess.TimeoutExpired:
+                    timed_out = True
+                    _kill_process_tree(proc)
+
+            watcher = threading.Thread(target=watchdog, daemon=True)
+            watcher.start()
+            try:
+                for reader in readers:
+                    reader.join()
+                watcher.join(timeout=10)
+                try:
+                    proc.wait(timeout=10)
+                except (subprocess.TimeoutExpired, OSError):
+                    pass
+                if sink is not None:
+                    # Release each stream's held tail (masked) then the single
+                    # truncation marker, in that order.
+                    sink.push("stdout", out_redactor.flush())
+                    sink.push("stderr", err_redactor.flush())
+                    sink.marker()
+                if errors:
+                    raise errors[0]
             finally:
                 with self._lock:
                     self._proc = None
@@ -1713,28 +2139,14 @@ class Kernel:
                 else:
                     cancelled = False
                 interrupted = interrupted or cancelled
-            # Injected secrets never reach the notebook: redact both streams here and
-            # build `error` from the redacted text so a traceback cannot leak a key.
-            # Redact the store values as they land in this cell's final env (plan 010).
-            # Policy: `redact_values is None` masks *every* env value (the historical
-            # behaviour, unchanged); hosts pass just the credential values, so a
-            # non-secret default — the catalog `defaultEnv` gateway base URL — stays
-            # readable in stdout/stderr/errors/displays.
-            if self.redact_values is None:
-                secret_values = [
-                    value for name, value in proc_env.items() if value and name in self.env
-                ]
-                secret_values.extend(value for value in self.env.values() if value)
-            else:
-                secret_values = [value for value in self.redact_values if value]
             # Wave 11: displays come back over the temp results file. A missing
             # file (kill, timeout, legacy payload) simply means none; either way
             # the records are re-validated, re-capped and re-redacted here.
             displays = _cap_displays(_read_displays(results_path), secret_values)
             result = {
                 "ok": proc.returncode == 0 and not timed_out and not interrupted,
-                "stdout": _cap_output(redact_output(out or "", secret_values)),
-                "stderr": _cap_output(redact_output(err or "", secret_values)),
+                "stdout": _cap_output(redact_output("".join(out_chunks), secret_values)),
+                "stderr": _cap_output(redact_output("".join(err_chunks), secret_values)),
                 "python": str(py),
                 "returncode": proc.returncode,
                 "install_log": install_log,
@@ -1744,6 +2156,7 @@ class Kernel:
                 "cancelled": cancelled,
                 "timeout": limit,
                 "displays": displays,
+                "duration_ms": int((time.monotonic() - started) * 1000),
             }
             if not result["ok"]:
                 result["error"] = _error_text(result)
@@ -1752,6 +2165,223 @@ class Kernel:
             if work_dir is not None:
                 shutil.rmtree(work_dir, ignore_errors=True)
             self._run_lock.release()
+
+    def execute(
+        self, code: str, *, timeout: float | None = None, run: RunHandle | None = None
+    ) -> dict:
+        """Run one cell (non-streaming); never raises for failure/timeout/interrupt.
+
+        Wave 15: a thin wrapper over ``execute_stream`` with no frame sink. The
+        result schema is exactly the pre-wave-15 one — the additive
+        ``duration_ms`` the streaming path carries is dropped here, so callers of
+        the synchronous path see the schema they always did.
+
+        Calling this while a cell is already running raises ``KernelError`` rather
+        than starting a second process (one cell per kernel; plan 010). ``run``
+        binds this execution to a host-side ``RunHandle`` so ``POST /cancel`` can
+        kill the child process group from another thread; the result then carries
+        ``cancelled`` (and ``interrupted``) accordingly.
+        """
+        result = self.execute_stream(code, timeout=timeout, run=run, emit=None)
+        result.pop("duration_ms", None)
+        return result
+
+    def execute_all_stream(
+        self, jobs: Sequence[tuple[int, str]], *, timeout: float | None = None,
+        run: RunHandle | None = None, emit: Callable[[dict], None] | None = None,
+    ) -> dict:
+        """Run every ``(index, source)`` job in ONE namespace, streaming frames.
+
+        Wave 15 sibling of ``execute``/``execute``-all: the driver stays a single
+        child process (cell 1 sees cell 0's names), but it now also writes NDJSON
+        frames to its stdout, which this method relays through ``emit`` —
+        ``cell-start``, ``stdout``/``stderr`` fragments (already masked by the
+        driver) and a full ``cell-end`` record. A non-JSON line from the driver's
+        stdout (a cell writing straight to the fd) is relayed as a ``stderr``
+        frame with the current cell's ``index`` (or ``None``); the driver's own
+        stderr is relayed the same way with ``index=None``. ``results.json`` is
+        still written per cell and is the source of the returned ``cells`` — the
+        frames are additive (decision 4).
+
+        Returns the same dict as the module-level ``execute_all`` minus its host
+        concerns (``persist``, catalog error rewriting): ``{"ok", "cells",
+        "returncode", "timed_out", "cancelled", "python"}`` with exactly one cell
+        record per job (input order).
+
+        ``timeout`` is the per-cell budget (driver-side ``signal.setitimer``); the
+        whole run is additionally bounded by ``timeout * max(len(jobs), 1) + 30``
+        seconds, killed via a watchdog thread. ``run`` is the host's cancellable
+        handle.
+        """
+        pending = [(int(index), str(source)) for index, source in jobs]
+        py, _install_log = ensure_venv(self.copy, python=self.python)
+        if not pending:
+            return {
+                "ok": True,
+                "cells": [],
+                "returncode": None,
+                "timed_out": False,
+                "cancelled": False,
+                "python": str(py),
+            }
+        per_cell = self.default_timeout if timeout is None else float(timeout)
+        proc_env = self._process_env()
+        env_map = dict(self.env)
+        # Same redaction policy as `execute`/`Kernel.execute`: `redact_values is
+        # None` masks every value this copy declared; an explicit sequence is the
+        # mask set verbatim (order kept, blanks dropped).
+        if self.redact_values is None:
+            secret_values = [
+                value for name, value in proc_env.items() if value and name in env_map
+            ]
+            secret_values.extend(value for value in env_map.values() if value)
+            secret_names = sorted({str(name) for name, value in env_map.items() if value})
+        else:
+            secret_values = [value for value in self.redact_values if value]
+            # G4-CBK-01: the driver redacts before every temp write; it is handed
+            # the env *names* only and reads the values from its own environment.
+            redacted = set(self.redact_values)
+            secret_names = sorted(
+                {str(name) for name, value in env_map.items() if value and value in redacted}
+            )
+
+        work_dir = Path(tempfile.mkdtemp(prefix="rox-run-all-"))
+        job_path = work_dir / "job.json"
+        driver_path = work_dir / "driver.py"
+        results_path = work_dir / "results.json"
+        job_path.write_text(
+            json.dumps(
+                {
+                    "cells": [[index, source] for index, source in pending],
+                    "results": str(results_path),
+                    "timeout": float(per_cell),
+                    "secret_env": secret_names,
+                }
+            ),
+            encoding="utf-8",
+        )
+        # Owner-only for defence in depth, even though the job holds no secret; the
+        # driver unlinks it as soon as it has read it.
+        os.chmod(job_path, 0o600)
+        driver_path.write_text(_RUN_ALL_DRIVER, encoding="utf-8")
+
+        limit = float(per_cell) * max(len(pending), 1) + 30.0
+        timed_out = False
+        try:
+            try:
+                proc = subprocess.Popen(
+                    [str(py), str(driver_path), str(job_path)],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=str(self.copy.root),
+                    env=proc_env,
+                    start_new_session=True,
+                )
+            except OSError as exc:
+                raise KernelError(f"could not start the run-all driver: {exc}") from exc
+            if run is not None:
+                run.attach(proc)
+            errors: list[BaseException] = []
+            relay = _FrameRelay(emit)
+            readers = [
+                threading.Thread(
+                    target=_pump_frames,
+                    args=(proc.stdout, relay, "stdout", proc, errors),
+                    daemon=True,
+                ),
+                threading.Thread(
+                    target=_pump_frames,
+                    args=(proc.stderr, relay, "stderr", proc, errors),
+                    daemon=True,
+                ),
+            ]
+            for reader in readers:
+                reader.start()
+
+            def watchdog():
+                nonlocal timed_out
+                try:
+                    proc.wait(timeout=limit)
+                except subprocess.TimeoutExpired:
+                    timed_out = True
+                    _kill_process_tree(proc)
+
+            watcher = threading.Thread(target=watchdog, daemon=True)
+            watcher.start()
+            try:
+                for reader in readers:
+                    reader.join()
+                watcher.join(timeout=10)
+                try:
+                    proc.wait(timeout=10)
+                except (subprocess.TimeoutExpired, OSError):
+                    pass
+                if errors:
+                    raise errors[0]
+            finally:
+                if run is not None:
+                    run.finish()
+            returncode = proc.returncode
+            records = _read_run_all_records(results_path, _run_all_read_limit(len(pending)))
+        finally:
+            shutil.rmtree(work_dir, ignore_errors=True)
+        cancelled = run.cancelled if run is not None else False
+
+        by_index = {}
+        for record in records:
+            index = record.get("index")
+            if isinstance(index, int) and index not in by_index:
+                by_index[index] = record
+
+        cells: list[dict] = []
+        # Wave 11: one display budget for the whole run, consumed cell by cell in
+        # document order (the driver applies the same 8 MiB cap on its side).
+        shared = {"left": _DISPLAY_RUN_ALL_LIMIT}
+        for index, source in pending:
+            record = by_index.get(index)
+            if record is None:
+                cells.append(
+                    {
+                        "index": index,
+                        "status": "skipped",
+                        "ok": False,
+                        "stdout": "",
+                        "stderr": "",
+                        "error": None,
+                        "timed_out": False,
+                        "duration_ms": 0,
+                        "displays": [],
+                    }
+                )
+                continue
+            ok = bool(record.get("ok"))
+            stdout = _cap_output(redact_output(str(record.get("stdout") or ""), secret_values))
+            stderr = _cap_output(redact_output(str(record.get("stderr") or ""), secret_values))
+            displays = _cap_displays(record.get("displays"), secret_values, shared=shared)
+            cell = {
+                "index": index,
+                "status": "ok" if ok else "error",
+                "ok": ok,
+                "stdout": stdout,
+                "stderr": stderr,
+                "error": None,
+                "timed_out": bool(record.get("timed_out")),
+                "duration_ms": int(record.get("duration_ms") or 0),
+                "displays": displays,
+            }
+            if not ok:
+                cell["error"] = _run_all_error(cell, per_cell)
+            cells.append(cell)
+
+        return {
+            "ok": all(cell["status"] == "ok" for cell in cells),
+            "cells": cells,
+            "returncode": returncode,
+            "timed_out": timed_out,
+            "cancelled": cancelled,
+            "python": str(py),
+        }
 
     def _process_env(self) -> dict[str, str]:
         # Plan 010: the child sees only the allowlist (plus this copy's declared
@@ -1884,6 +2514,100 @@ def execute_code(
     return result
 
 
+def execute_stream(
+    copy: CookbookCopy,
+    code: str,
+    *,
+    env: Mapping[str, str] | None = None,
+    redact_values: Sequence[str] | None = None,
+    persist: bool = True,
+    python: str | None = None,
+    index: int | None = None,
+    timeout: float = 60.0,
+    catalog=None,
+    item=None,
+    store: Mapping[str, str] | None = None,
+    run: RunHandle | None = None,
+    emit: Callable[[dict], None] | None = None,
+) -> dict:
+    """Run one Python cell, streaming its output through ``emit`` (wave 15).
+
+    The streaming twin of :func:`execute_code`: same host concerns
+    (missing-credential rewriting, ipynb persistence, one-shot Kernel per call)
+    plus ``emit`` — the sink the kernel calls *while the cell runs*, with
+    ``{"t": "stdout"|"stderr", "index": index, "data": <masked fragment>}``
+    frames. The route forms ``start``/``display``/``end`` itself; the kernel
+    emits none of those. ``index`` names the executed cell (its frames carry it,
+    and its outputs replace that cell's rather than the first whose source
+    happens to match). The result is the ``execute_code`` dict plus the additive
+    ``duration_ms``. ``emit=None`` is the non-streaming path. See
+    ``Kernel.execute_stream`` for the read/cap/redaction contract.
+    """
+    result = Kernel(
+        copy, env=env, redact_values=redact_values, python=python, default_timeout=timeout
+    ).execute_stream(code, index=index, run=run, emit=emit)
+    err = result.get("error")
+    if err and catalog is not None and item is not None:
+        rewritten = rewrite_missing_secret_error(catalog, item, err, store)
+        if rewritten:
+            result["error"] = rewritten
+    if persist:
+        persist_code_output(copy.document, code, result, index=index)
+    return result
+
+
+def execute_all_stream(
+    copy: CookbookCopy,
+    jobs: Sequence[tuple[int, str]],
+    *,
+    env: Mapping[str, str] | None = None,
+    redact_values: Sequence[str] | None = None,
+    python: str | None = None,
+    timeout: float = 60.0,
+    persist: bool = True,
+    catalog=None,
+    item=None,
+    store: Mapping[str, str] | None = None,
+    run: RunHandle | None = None,
+    emit: Callable[[dict], None] | None = None,
+) -> dict:
+    """Run every ``(index, source)`` job in one namespace, streaming frames.
+
+    Wave 15 mirror of :func:`execute_all`: the same host concerns (missing-
+    credential rewriting, ipynb persistence, one-shot Kernel per call) plus
+    ``emit`` — the live frame sink. The engine is ``Kernel.execute_all_stream``;
+    this function only adds what the Kernel does not own. ``emit`` relays the
+    driver's frames (``cell-start`` / ``stdout`` / ``stderr`` / ``cell-end``);
+    the route adds the ``start``/``end`` frames. ``emit=None`` is the
+    non-streaming path (``execute_all``).
+    """
+    pending = [(int(index), str(source)) for index, source in jobs]
+    result = Kernel(
+        copy, env=env, redact_values=redact_values, python=python, default_timeout=timeout
+    ).execute_all_stream(pending, run=run, emit=emit)
+    for cell, (index, source) in zip(result["cells"], pending):
+        if cell["status"] == "error" and catalog is not None and item is not None:
+            rewritten = rewrite_missing_secret_error(
+                catalog, item, cell["stderr"] or cell["stdout"] or cell["error"], store
+            )
+            if rewritten:
+                cell["error"] = rewritten
+        if persist and cell["status"] in ("ok", "error"):
+            persist_code_output(
+                copy.document,
+                source,
+                {
+                    "ok": cell["ok"],
+                    "stdout": cell["stdout"],
+                    "stderr": cell["stderr"],
+                    "error": cell["error"],
+                    "displays": cell["displays"],
+                },
+                index=cell["index"],
+            )
+    return result
+
+
 def execute_all(
     copy: CookbookCopy,
     jobs: Sequence[tuple[int, str]],
@@ -1935,172 +2659,27 @@ def execute_all(
     ``sys.stderr`` for ``io.StringIO``, so a cell that writes through
     ``os.write(1, ...)`` or the original ``sys.__stdout__``/``sys.__stderr__``
     bypasses per-cell capture — those bytes reach the driver's own stdout, which
-    is discarded. Use ``print`` (or ``sys.stdout``) for captured output.
+    is discarded (on the streaming path they become ``stderr`` frames for the
+    current cell, never part of the result). Use ``print`` (or ``sys.stdout``)
+    for captured output.
+
+    Wave 15: a thin wrapper over :func:`execute_all_stream` with ``emit=None``,
+    so the synchronous path is byte-for-byte what it always was.
     """
-    pending = [(int(index), str(source)) for index, source in jobs]
-    py, _install_log = ensure_venv(copy, python=python)
-    if not pending:
-        return {
-            "ok": True,
-            "cells": [],
-            "returncode": None,
-            "timed_out": False,
-            "cancelled": False,
-            "python": str(py),
-        }
-    proc_env = _subprocess_env(env)
-    env_map = dict(env or {})
-    # Same redaction policy as `Kernel.execute`: `redact_values is None` masks
-    # every value this copy declared (the historical behaviour, unchanged); an
-    # explicit sequence is the mask set verbatim (order kept, blanks dropped), so
-    # a non-secret default — the catalog `defaultEnv` gateway base URL — stays
-    # readable in the streams, the displays and the temp records.
-    if redact_values is None:
-        secret_values = [
-            value for name, value in proc_env.items() if value and name in env_map
-        ]
-        secret_values.extend(value for value in env_map.values() if value)
-        secret_names = sorted({str(name) for name, value in env_map.items() if value})
-    else:
-        secret_values = [value for value in redact_values if value]
-        # G4-CBK-01: the driver redacts before every temp write, so a kill mid-run
-        # cannot leave a raw secret on disk. It is handed the env *names* only and
-        # reads the values from its own environment (they are already in `proc_env`),
-        # so no secret value ever reaches the job file either — and, with an
-        # explicit mask set, a name whose value is NOT masked (the public base URL)
-        # is left out entirely, so the driver does not mask it.
-        redacted = set(redact_values)
-        secret_names = sorted(
-            {str(name) for name, value in env_map.items() if value and value in redacted}
-        )
-
-    work_dir = Path(tempfile.mkdtemp(prefix="rox-run-all-"))
-    job_path = work_dir / "job.json"
-    driver_path = work_dir / "driver.py"
-    results_path = work_dir / "results.json"
-    job_path.write_text(
-        json.dumps(
-            {
-                "cells": [[index, source] for index, source in pending],
-                "results": str(results_path),
-                "timeout": float(timeout),
-                "secret_env": secret_names,
-            }
-        ),
-        encoding="utf-8",
+    return execute_all_stream(
+        copy,
+        jobs,
+        env=env,
+        redact_values=redact_values,
+        python=python,
+        timeout=timeout,
+        persist=persist,
+        catalog=catalog,
+        item=item,
+        store=store,
+        run=run,
+        emit=None,
     )
-    # Owner-only for defence in depth, even though the job holds no secret; the
-    # driver unlinks it as soon as it has read it.
-    os.chmod(job_path, 0o600)
-    driver_path.write_text(_RUN_ALL_DRIVER, encoding="utf-8")
-
-    limit = float(timeout) * max(len(pending), 1) + 30.0
-    timed_out = False
-    try:
-        try:
-            proc = subprocess.Popen(
-                [str(py), str(driver_path), str(job_path)],
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                errors="replace",
-                cwd=str(copy.root),
-                env=proc_env,
-                start_new_session=True,
-            )
-        except OSError as exc:
-            raise KernelError(f"could not start the run-all driver: {exc}") from exc
-        if run is not None:
-            run.attach(proc)
-        try:
-            proc.communicate(timeout=limit)
-        except subprocess.TimeoutExpired:
-            timed_out = True
-            _kill_process_tree(proc)
-            proc.communicate()
-        returncode = proc.returncode
-        records = _read_run_all_records(results_path, _run_all_read_limit(len(pending)))
-    finally:
-        if run is not None:
-            run.finish()
-        shutil.rmtree(work_dir, ignore_errors=True)
-    cancelled = run.cancelled if run is not None else False
-
-    by_index = {}
-    for record in records:
-        index = record.get("index")
-        if isinstance(index, int) and index not in by_index:
-            by_index[index] = record
-
-    cells: list[dict] = []
-    # Wave 11: one display budget for the whole run, consumed cell by cell in
-    # document order (the driver applies the same 8 MiB cap on its side).
-    shared = {"left": _DISPLAY_RUN_ALL_LIMIT}
-    for index, source in pending:
-        record = by_index.get(index)
-        if record is None:
-            cells.append(
-                {
-                    "index": index,
-                    "status": "skipped",
-                    "ok": False,
-                    "stdout": "",
-                    "stderr": "",
-                    "error": None,
-                    "timed_out": False,
-                    "duration_ms": 0,
-                    "displays": [],
-                }
-            )
-            continue
-        ok = bool(record.get("ok"))
-        stdout = _cap_output(redact_output(str(record.get("stdout") or ""), secret_values))
-        stderr = _cap_output(redact_output(str(record.get("stderr") or ""), secret_values))
-        displays = _cap_displays(record.get("displays"), secret_values, shared=shared)
-        cell = {
-            "index": index,
-            "status": "ok" if ok else "error",
-            "ok": ok,
-            "stdout": stdout,
-            "stderr": stderr,
-            "error": None,
-            "timed_out": bool(record.get("timed_out")),
-            "duration_ms": int(record.get("duration_ms") or 0),
-            "displays": displays,
-        }
-        if not ok:
-            error = _run_all_error(cell, timeout)
-            if catalog is not None and item is not None:
-                rewritten = rewrite_missing_secret_error(
-                    catalog, item, stderr or stdout or error, store
-                )
-                if rewritten:
-                    error = rewritten
-            cell["error"] = error
-        if persist:
-            persist_code_output(
-                copy.document,
-                source,
-                {
-                    "ok": ok,
-                    "stdout": stdout,
-                    "stderr": stderr,
-                    "error": cell["error"],
-                    "displays": displays,
-                },
-                index=index,
-            )
-        cells.append(cell)
-
-    return {
-        "ok": all(cell["status"] == "ok" for cell in cells),
-        "cells": cells,
-        "returncode": returncode,
-        "timed_out": timed_out,
-        "cancelled": cancelled,
-        "python": str(py),
-    }
 
 
 def _read_run_all_records(path: Path, limit: int) -> list[dict]:

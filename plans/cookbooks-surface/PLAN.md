@@ -73,3 +73,5 @@
 | 2026-10-15 | W13 merge PR #2127 | merge `3fcb612d4` | ✅ влито в main |
 | 2026-10-15 | W14 «Cell Manipulation & Focus» (PR #2165): DnD-перестановка ячеек, мультивыделение + ячеечный буфер (copy/cut/paste), undo/redo структурных операций (Shift+Tab — takeover реестра), fold, меню «Скачать» (.ipynb/.py), Alt+Enter, Tab-индент, прогресс batch, latex-вывод, нумерация оглавления; + re-record bundle-size | `cd7f26803` + `d2519b5ac` | ✅ |
 | 2026-10-15 | W14 merge PR #2165 | merge `f56d3e747` | ✅ влито в main |
+| 2026-10-16 | W15 «Live Streaming & Honest Progress» (PR #2178): NDJSON-стриминг `/run-stream` и `/run-all-stream` (кадры, watchdog, tee драйвера, redaction с holdback), main — runStream/runAllStream + run-event (обход 60-с потолка handler), renderer — живой буфер + N/M + follow-scroll; вендор-ресинк 2026-10-16 | `fb8339251` | ✅ |
+| 2026-10-16 | W15 merge PR #2178 | merge `8543add56` | ✅ влито в main |

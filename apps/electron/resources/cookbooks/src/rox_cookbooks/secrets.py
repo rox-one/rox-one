@@ -80,3 +80,59 @@ def redact_output(text: str, secret_values: list[str]) -> str:
     for value in sorted({v for v in secret_values if v}, key=lambda s: (-len(s), s)):
         out = out.replace(value, "***")
     return out
+
+
+class RedactingOutputStream:
+    """Incremental, line-buffered twin of :func:`redact_output` (wave 15).
+
+    A streaming reader never sees a whole cell's output at once, so masking has
+    to happen *as text arrives* without ever emitting a secret that a read
+    boundary would otherwise split. ``feed`` therefore holds back two things:
+
+    * the trailing partial line (no ``\\n`` yet) — a secret on that line may be
+      completed by the next ``feed``;
+    * ``holdback = max(len(v) for v in values if v) - 1`` characters of safety
+      margin — only the "safe prefix" of the buffer is released, so a value that
+      *starts* inside the released region but ends past it cannot leak either.
+
+    Only complete lines (and, at ``flush``, the final remainder) are masked, via
+    the same longest-first algorithm as :func:`redact_output`. ``feed`` returns
+    the already-masked text that is safe to emit; ``flush`` returns whatever is
+    still buffered, masked, at cell end / kill.
+    """
+
+    def __init__(self, secret_values: list[str]) -> None:
+        self._values = [value for value in (secret_values or []) if value]
+        holdback = max((len(value) for value in self._values), default=0) - 1
+        self._holdback = holdback if holdback > 0 else 0
+        self._buf = ""
+
+    def _mask(self, text: str) -> str:
+        return redact_output(text, self._values)
+
+    def feed(self, text: str) -> str:
+        """Append ``text``; return the masked, complete-line prefix that is safe."""
+        if not text:
+            return ""
+        self._buf += text
+        limit = len(self._buf) - self._holdback
+        if limit <= 0:
+            return ""
+        cut = self._buf.rfind("\n", 0, limit)
+        if cut == -1:
+            return ""
+        cut += 1
+        chunk = self._buf[:cut]
+        self._buf = self._buf[cut:]
+        return self._mask(chunk)
+
+    def flush(self) -> str:
+        """Return the masked remainder (the held tail) and clear the buffer."""
+        chunk = self._mask(self._buf)
+        self._buf = ""
+        return chunk
+
+
+def redact_output_stream(secret_values: list[str]) -> RedactingOutputStream:
+    """A fresh incremental redactor for one output stream (see the class above)."""
+    return RedactingOutputStream(secret_values)
