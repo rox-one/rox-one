@@ -66,6 +66,15 @@ export const WARMUP_HEAP_BUDGET_MB = 25
 export const WARMUP_LONG_TASK_MS = 50
 /** A renderer without the diagnostics hook after this long is a stale build. */
 const HOOK_GRACE_MS = 30_000
+/**
+ * Ceiling for tearing the app down. `app.close()` talks to the Electron process
+ * over the Playwright transport and is NOT bounded by the launch `timeout`: a
+ * renderer that will not quit leaves it pending forever, and the job then runs
+ * to its own `timeout-minutes` and is cancelled having printed nothing. That is
+ * exactly what CI showed on 2026-10-15 (run 38821093999: 29 minutes in the step,
+ * zero lines of output).
+ */
+const CLOSE_GRACE_MS = 15_000
 const BYTES_PER_MB = 1024 * 1024
 
 interface ProbeArgs { main: string; out: string | null; timeoutMs: number; attempts: number; profile: string | null }
@@ -353,6 +362,26 @@ function partialProbe(note: string, attempt: number, launched: boolean, warmup: 
   }
 }
 
+/**
+ * Bounded teardown. `startup-bench.ts` gets away with a bare `await app.close()`
+ * because a successful run reaches its explicit `process.exit`; this probe has
+ * no such exit on every path, so a close that never settles takes the whole job
+ * with it. Resolve the race either way and, if the app is still up, kill it.
+ */
+async function closeApp(app: ElectronApplication | null): Promise<void> {
+  if (!app) return
+  const closed = await Promise.race([
+    app.close().then(() => true).catch(() => true),
+    new Promise<boolean>((resolveSleep) => setTimeout(() => resolveSleep(false), CLOSE_GRACE_MS)),
+  ])
+  if (closed) return
+  try {
+    app.process().kill('SIGKILL')
+  } catch {
+    // Already gone between the race and the kill.
+  }
+}
+
 async function launchAttempt(args: ProbeArgs, profile: string, attemptNumber: number): Promise<ProbeJson> {
   const launchArgs = process.platform === 'linux' ? ['--no-sandbox', '--disable-gpu', args.main] : [args.main]
   const started = performance.now()
@@ -441,8 +470,13 @@ async function launchAttempt(args: ProbeArgs, profile: string, attemptNumber: nu
   } catch (error) {
     return partialProbe(error instanceof Error ? error.message : String(error), attemptNumber, app !== null, null, null)
   } finally {
-    await app?.close().catch(() => undefined)
+    await closeApp(app)
   }
+}
+
+function emitResult(result: ProbeJson, out: string | null): void {
+  console.log(JSON.stringify(result))
+  if (out) writeFileSync(out, `${JSON.stringify(result, null, 2)}\n`)
 }
 
 async function main(): Promise<void> {
@@ -451,6 +485,26 @@ async function main(): Promise<void> {
     console.error(`[perf:warmup-probe] built entry not found: ${args.main}\nRun \`bun run electron:build\` first — the probe measures the packaged app, not the dev server.`)
     process.exit(1)
   }
+  // Hard watchdog. The probe drives a real Electron app through Playwright, and an
+  // await inside `launchAttempt` can outlive every per-call timeout it passes to
+  // Playwright — measured 2026-10-15: with `--attempts 1 --timeout 45000` it
+  // produced no output for 150 s locally, and in CI (run 38821093999) the step
+  // sat 29 minutes and printed nothing before the job timeout cancelled it.
+  //
+  // The contract in the workflow comment is "the probe exits 1 when it cannot
+  // measure ... and the JSON is archived either way". A probe that never returns
+  // breaks that contract, so enforce it here rather than relying on the job's
+  // `timeout-minutes`, which cancels the run instead of reporting a verdict.
+  // Derived, not magic: each attempt may spend up to `timeoutMs` launching and
+  // `timeoutMs` waiting for the warm-up hook, plus one teardown grace. The extra
+  // minute covers process start-up and the module load.
+  const watchdogMs = args.attempts * (args.timeoutMs * 2 + CLOSE_GRACE_MS) + 60_000
+  const watchdog = setTimeout(() => {
+    const stalled = partialProbe(`the probe did not finish within ${watchdogMs} ms; a pending await never settled`, 0, false, null, null)
+    console.error(`[perf:warmup-probe] watchdog fired after ${watchdogMs} ms — writing the partial result and exiting`)
+    emitResult(stalled, args.out)
+    process.exit(1)
+  }, watchdogMs)
   const profile = args.profile ?? mkdtempSync(join(tmpdir(), 'rox-warmup-probe-'))
   let result = partialProbe('the probe produced no attempt', 0, false, null, null)
   try {
@@ -461,14 +515,18 @@ async function main(): Promise<void> {
       if (attempt < args.attempts) console.error('[perf:warmup-probe] retrying on the same profile (a first-run profile has no workspace to warm)')
     }
   } finally {
+    clearTimeout(watchdog)
     if (!args.profile) rmSync(profile, { recursive: true, force: true })
   }
-  console.log(JSON.stringify(result))
-  if (args.out) writeFileSync(args.out, `${JSON.stringify(result, null, 2)}\n`)
+  emitResult(result, args.out)
   if (!result.probeOk) {
     console.error(`[perf:warmup-probe] measurement incomplete: ${result.note}`)
     process.exit(1)
   }
+  // Exit explicitly, the way `startup-bench.ts` does. A Playwright or Electron
+  // handle that outlives the measurement must not keep the job alive: the
+  // artifacts are already written above, and the only thing left to do is stop.
+  process.exit(0)
 }
 
 if (import.meta.main) await main()
