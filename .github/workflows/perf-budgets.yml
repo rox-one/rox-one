@@ -182,7 +182,7 @@ jobs:
   # tasks. Report-only: the probe exits 1 when it cannot measure (no queue on a
   # first-run profile, no CDP session) and the JSON is archived either way.
   # Report-only → main/schedule only (`if:` below). Same reasoning as `electron-startup`:
-  # it builds and launches the packaged Electron app (warmup-heap-probe.ts:365
+  # it builds and launches the packaged Electron app (warmup-heap-probe.ts:394
   # `_electron.launch`) and drives it over CDP, so it needs a display + the macOS keychain
   # (startup-bench.ts keeps the login keychain reachable for Chromium safeStorage).
   # Runner: hosted macOS `blacksmith-6vcpu-macos-15` — the repo's standard macOS runner.
@@ -200,6 +200,13 @@ jobs:
       - name: Build Electron app
         run: bun run electron:build
       - name: Warm-up heap/CPU probe (report-only)
+        # The probe's own bound is 2 attempts x 90 s plus 2 x 15 s of teardown
+        # grace (~3.5 min), so 12 min never cuts a healthy run — but it does stop
+        # a wedged one from eating the job's 30. Measured 2026-10-15 (run
+        # 38821093999): the step sat for 29 minutes and printed nothing, then the
+        # job timeout cancelled it, so the run reported neither a verdict nor a
+        # diagnostic.
+        timeout-minutes: 12
         run: bun run perf:warmup-probe -- --out warmup-probe.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
