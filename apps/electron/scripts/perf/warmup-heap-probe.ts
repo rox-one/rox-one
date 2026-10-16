@@ -394,6 +394,38 @@ function partialProbe(note: string, attempt: number, launched: boolean, warmup: 
 }
 
 /**
+ * Give the profile an empty workspace before the app starts.
+ *
+ * The diagnostics hook the probe reads lives in `shell-warmup.ts`, which is
+ * imported only by `AppShell.tsx` — so `window.__roxWarmup` appears only once
+ * AppShell mounts, and AppShell does not mount without a workspace. On a bare
+ * `mktemp -d` profile that never happens, and the probe reports
+ * "built renderer has no window.__roxWarmup" on every attempt (#2184).
+ *
+ * Seeding keeps the profile clean in the sense that matters — no user data, no
+ * real vault — while giving the app the one thing it needs to reach the code
+ * under measurement. It goes through the product's own storage API rather than
+ * writing `config.json` by hand, so the profile cannot drift from the real
+ * format.
+ */
+async function seedWorkspace(profile: string): Promise<void> {
+  const configDir = join(profile, 'config')
+  mkdirSync(configDir, { recursive: true })
+  // Same values `isolatedEnv` hands the child, set here so the seeding writes
+  // into the profile the app will read.
+  process.env.CRAFT_CONFIG_DIR = configDir
+  process.env.ROX_CONFIG_DIR = configDir
+  const rootPath = join(profile, 'workspace')
+  mkdirSync(rootPath, { recursive: true })
+  // Imported late: the storage layer resolves its directory at call time, and
+  // the env above must be in place before that.
+  const config = await import('@rox/shared/config')
+  const existing = config.getWorkspaces()
+  if (existing.length > 0) return
+  await config.createAndActivateLocalWorkspace({ name: 'Warm-up probe', rootPath })
+}
+
+/**
  * Bounded teardown. `startup-bench.ts` gets away with a bare `await app.close()`
  * because a successful run reaches its explicit `process.exit`; this probe has
  * no such exit on every path, so a close that never settles takes the whole job
@@ -537,6 +569,7 @@ async function main(): Promise<void> {
     process.exit(1)
   }, watchdogMs)
   const profile = args.profile ?? mkdtempSync(join(tmpdir(), 'rox-warmup-probe-'))
+  await seedWorkspace(profile)
   let result = partialProbe('the probe produced no attempt', 0, false, null, null)
   try {
     for (let attempt = 1; attempt <= args.attempts; attempt++) {
