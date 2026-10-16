@@ -75,6 +75,18 @@ const HOOK_GRACE_MS = 30_000
  * zero lines of output).
  */
 const CLOSE_GRACE_MS = 15_000
+/**
+ * Ceiling for a single renderer/CDP interaction. Playwright applies no default
+ * timeout to `page.evaluate`, `page.addInitScript` or `CDPSession.send`, and a
+ * renderer that stops answering leaves them pending forever — rejected promises
+ * are not the failure mode, silence is. The polling loop below only re-checks
+ * its own deadline *between* awaits, so one hung call defeats it entirely:
+ * measured 2026-10-15 (run 38821093999) the step sat 29 minutes with no output,
+ * and a local trace put the stall on the first `sampleHeap` call — `→ sampleHeap`
+ * with no matching `←`. Bound every such call so the loop can always reach its
+ * deadline, and let the existing `catch` treat the timeout as "try the next poll".
+ */
+const RENDERER_CALL_TIMEOUT_MS = 10_000
 const BYTES_PER_MB = 1024 * 1024
 
 interface ProbeArgs { main: string; out: string | null; timeoutMs: number; attempts: number; profile: string | null }
@@ -304,6 +316,20 @@ function readHeapUsage(value: unknown): HeapReading | null {
 }
 
 /**
+ * Reject instead of hanging. The wrapped promise stays pending (Playwright has
+ * no cancellation for a parked `evaluate`), which is acceptable here: the call
+ * is bounded per interaction and the process exits at the end of the attempt.
+ */
+function bounded<T>(work: Promise<T>, what: string, ms = RENDERER_CALL_TIMEOUT_MS): Promise<T> {
+  return Promise.race([
+    work,
+    new Promise<never>((_resolve, reject) =>
+      setTimeout(() => reject(new Error(`${what} did not settle within ${ms} ms`)), ms),
+    ),
+  ])
+}
+
+/**
  * Heap after a forced GC through the renderer's inspector session; when Electron
  * has no CDP session for the page, the renderer's own `performance.memory`.
  */
@@ -311,19 +337,24 @@ async function sampleHeap(page: Page): Promise<HeapSample> {
   const context = page.context()
   if ('newCDPSession' in context) {
     try {
-      const session = await context.newCDPSession(page)
-      await session.send('HeapProfiler.collectGarbage')
-      const reading = readHeapUsage(await session.send('Runtime.getHeapUsage'))
+      const session = await bounded(context.newCDPSession(page), 'newCDPSession')
+      await bounded(session.send('HeapProfiler.collectGarbage'), 'HeapProfiler.collectGarbage')
+      const usage = await bounded(session.send('Runtime.getHeapUsage'), 'Runtime.getHeapUsage')
+      const reading = readHeapUsage(usage)
       if (reading) return { reading, source: 'cdp' }
     } catch {
-      // No inspector session for this target: fall through to performance.memory.
+      // No inspector session, or it stopped answering: fall through to
+      // performance.memory rather than holding the attempt open.
     }
   }
   try {
-    const usedBytes = await page.evaluate(() => {
-      const used = performance.memory?.usedJSHeapSize
-      return typeof used === 'number' && Number.isFinite(used) ? used : null
-    })
+    const usedBytes = await bounded(
+      page.evaluate(() => {
+        const used = performance.memory?.usedJSHeapSize
+        return typeof used === 'number' && Number.isFinite(used) ? used : null
+      }),
+      'performance.memory',
+    )
     if (usedBytes !== null) return { reading: { usedBytes, totalBytes: usedBytes }, source: 'performance.memory' }
   } catch {
     // Window gone: report the missing reading honestly.
@@ -406,13 +437,13 @@ async function launchAttempt(args: ProbeArgs, profile: string, attemptNumber: nu
         if (page.isClosed()) continue
         try {
           if (!observerRegistered.has(page)) {
-            await page.addInitScript(installLongTaskObserver)
+            await bounded(page.addInitScript(installLongTaskObserver), 'addInitScript')
             observerRegistered.add(page)
           }
-          let snapshot = await readRendererSnapshot(page)
+          let snapshot = await bounded(readRendererSnapshot(page), 'readRendererSnapshot')
           if (snapshot.longTasks === null) {
-            await page.evaluate(installLongTaskObserver)
-            snapshot = await readRendererSnapshot(page)
+            await bounded(page.evaluate(installLongTaskObserver), 'installLongTaskObserver')
+            snapshot = await bounded(readRendererSnapshot(page), 'readRendererSnapshot')
           }
           if (!baselines.has(page)) {
             const sample = await sampleHeap(page)
