@@ -103,7 +103,15 @@ export function CommentsThread(props: CommentsThreadProps) {
           {comments.map((c) => <CommentRow key={c.id} comment={c} depth={0} allowReplies={allowReplies} thread={props} />)}
         </ul>
       )}
-      {onCreate ? (props.renderComposer?.(composerProps) ?? <TextComposer {...composerProps} submitLabel={t('entities.ui.comments.send')} />) : null}
+      {onCreate ? (() => {
+        // Explicit null / false / empty fragment must suppress the default
+        // composer — `??` would revive TextComposer when the slot returns null.
+        if (!props.renderComposer) {
+          return <TextComposer {...composerProps} submitLabel={t('entities.ui.comments.send')} />
+        }
+        const slot = props.renderComposer(composerProps)
+        return slot === undefined ? <TextComposer {...composerProps} submitLabel={t('entities.ui.comments.send')} /> : slot
+      })() : null}
     </section>
   )
 }

@@ -42,4 +42,26 @@ describe('CommentsThread edit draft', () => {
     await act(async () => { root.unmount() })
     container.remove()
   })
+
+  it('renderComposer returning null suppresses the default root TextComposer', async () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    await act(async () => {
+      root.render(
+        <CommentsThread
+          comments={[comment('Body')] as never}
+          timeZone="UTC"
+          onCreate={() => {}}
+          renderComposer={() => null}
+        />,
+      )
+    })
+    // Reply UI can still open composers; the section-level root composer must be absent.
+    const textareas = container.querySelectorAll('textarea')
+    expect(textareas.length).toBe(0)
+    await act(async () => { root.unmount() })
+    container.remove()
+  })
+
 })
