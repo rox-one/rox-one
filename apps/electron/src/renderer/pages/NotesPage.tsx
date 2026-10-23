@@ -23,6 +23,7 @@ import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
 import type { Node as PMNode } from 'prosemirror-model'
 import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { applyPropertyPatch, previewPropertyPatch, previewPropertyDictionary, projectFrontmatter, retainSource, retainedSourceHash, type MarkdownCommitCommand, type PropertyDictionaryPreview, type PropertyValue } from '@rox/core/docs'
+import { parseDocument } from 'yaml'
 import type { ContentFailure, ContentResolution } from '@rox/server-core/docs/descriptor-resolver'
 import type { BlockTreeResult, NativeMarkerMappingPreview } from '@rox/server-core/docs/block-tree-service'
 import { applyMarkerMapping as applyBlockMarkerMapping, retainedText, retainSource as retainBlockSource } from '@rox/core/docs'
@@ -204,13 +205,18 @@ function parseDailyNoteDate(noteId?: string): string | null {
 
 function propertiesFromNoteContent(content: string): Record<string, unknown> {
   try {
-    const projection = projectFrontmatter(retainSource(content))
-    if (projection.status !== 'ok') return {}
-    const out: Record<string, unknown> = {}
-    for (const property of projection.properties) {
-      if (property.keyPath.length === 1) out[property.keyPath[0]!] = property.value
-    }
-    return out
+    const source = retainSource(content)
+    if (!source.frontmatter) return {}
+    const yamlSource = retainedText(source, {
+      start: source.frontmatter.contentStart,
+      end: source.frontmatter.contentEnd,
+    })
+    // Full YAML document — keep nested maps/seqs (projectFrontmatter is leaf-scalars only).
+    const doc = parseDocument(yamlSource.replace(/\r(?!\n)/g, '\n'), { uniqueKeys: true })
+    if (doc.errors.length || doc.contents == null) return {}
+    const data = doc.toJS({ maxAliasCount: 0 })
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return {}
+    return data as Record<string, unknown>
   } catch {
     return {}
   }

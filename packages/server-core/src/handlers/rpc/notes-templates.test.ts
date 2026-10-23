@@ -131,4 +131,51 @@ describe('note templates library', () => {
     expect(initialContent).toMatch(/createdAt:\s*\d{10,}/)
   })
 
+
+  it('skips nested templates whose directory casing does not match normalized id', async () => {
+    mkdirSync(join(notesRoot, 'templates', 'Foo'), { recursive: true })
+    writeFileSync(join(notesRoot, 'templates', 'Foo', 'daily.md'), '---\ntitle: Nested\n---\n\nbody\n', 'utf-8')
+    const listed = await listNoteTemplatesForRoot(notesRoot)
+    expect(listed.map((item) => item.id)).toEqual(['daily', 'meeting'])
+  })
+
+  it('lists nested templates when the full relative path matches normalized id', async () => {
+    mkdirSync(join(notesRoot, 'templates', 'team'), { recursive: true })
+    writeFileSync(join(notesRoot, 'templates', 'team', 'weekly.md'), '---\ntitle: Team Weekly\n---\n\nbody\n', 'utf-8')
+    const listed = await listNoteTemplatesForRoot(notesRoot)
+    expect(listed.some((item) => item.id === 'team/weekly')).toBe(true)
+    expect(listed.find((item) => item.id === 'team/weekly')?.relativePath).toBe('templates/team/weekly.md')
+  })
+
+  it('read does not create templates dirs; materialize coerces string tags', async () => {
+    const bare = join(tmpdir(), `rox-notes-templates-read-${Date.now()}-${Math.random().toString(16).slice(2)}`)
+    mkdirSync(bare, { recursive: true })
+    try {
+      await expect(readNoteTemplateContent(bare, 'missing')).rejects.toThrow()
+      expect(() => readFileSync(join(bare, 'templates'))).toThrow()
+    } finally {
+      rmSync(bare, { recursive: true, force: true })
+    }
+
+    writeFileSync(
+      join(notesRoot, 'templates', 'string-tags.md'),
+      '---\ntitle: String Tags\ntags: meeting\n---\n\nHi\n',
+      'utf-8',
+    )
+    const { initialContent } = await materializeTemplateNoteContent(notesRoot, 'string-tags')
+    expect(initialContent).toMatch(/tags:\s*\n\s*-\s*meeting/)
+    expect(initialContent).not.toContain('tags: []')
+  })
+
+  it('caps template ids at 80 characters like the client', async () => {
+    const long = `t${'x'.repeat(100)}`
+    const saved = await saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: long,
+      title: 'Long',
+      body: 'x',
+    })
+    expect(saved.id.length).toBeLessThanOrEqual(80)
+    expect(saved.id).toBe(long.slice(0, 80))
+  })
+
 })

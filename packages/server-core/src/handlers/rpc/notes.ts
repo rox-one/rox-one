@@ -1849,6 +1849,22 @@ function templateIdFromRelativePath(relativePath: string): string {
   return relativePath.replace(/\.md$/i, '')
 }
 
+
+/** Preserve string tags as a one-element list; only missing/invalid become []. */
+function coerceTemplateTags(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .filter((tag): tag is string => typeof tag === 'string')
+      .map((tag) => tag.replace(/^#/, '').trim())
+      .filter(Boolean)
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.replace(/^#/, '').trim()
+    return trimmed ? [trimmed] : []
+  }
+  return []
+}
+
 function assertSafeTemplateId(templateId: string): string {
   // Same charset rules as renderer sanitizeTemplateId — remote callers cannot
   // create case/charset path variants under templates/.
@@ -1860,6 +1876,7 @@ function assertSafeTemplateId(templateId: string): string {
     .replace(/[^a-z0-9/_-]+/g, '-')
     .replace(/\/{2,}/g, '/')
     .replace(/^[/-]+|[/-]+$/g, '')
+    .slice(0, 80)
   if (!normalized) throw new Error('Invalid template id')
   const id = assertSafeNoteId(normalized)
   if (id.split('/').some(part => part === TEMPLATES_DIR || part === '')) throw new Error('Invalid template id')
@@ -1880,6 +1897,32 @@ async function assertSafeExistingTemplatesPath(notesRoot: string, candidate: str
   }
 }
 
+/** Resolve an existing template file — no mkdir (read / CREATE_FROM). */
+async function assertSafeExistingTemplateFilePath(notesRoot: string, templateId: string): Promise<string> {
+  const id = assertSafeTemplateId(templateId)
+  const templatesRoot = join(notesRoot, TEMPLATES_DIR)
+  const filePath = join(templatesRoot, `${id}.md`)
+  if (!isInsidePath(templatesRoot, filePath)) throw new Error('Invalid template id')
+  await assertSafeExistingTemplatesPath(notesRoot, templatesRoot)
+  await assertSafeExistingTemplatesPath(notesRoot, dirname(filePath))
+  await assertSafeExistingTemplatesPath(notesRoot, filePath)
+  let info
+  try {
+    info = await lstat(filePath)
+  } catch (error) {
+    if (isErrnoException(error, 'ENOENT')) throw new Error('Template not found')
+    throw error
+  }
+  if (info.isSymbolicLink() || !info.isFile()) throw new Error('Invalid template path')
+  const rootReal = await realpath(notesRoot)
+  const fileReal = await realpath(filePath)
+  if (!isInsidePath(rootReal, fileReal)) throw new Error('Invalid template path')
+  // Exact on-disk basename must match normalized id (case-sensitive FS).
+  if (basename(fileReal) !== `${basename(id)}.md`) throw new Error('Invalid template path')
+  return filePath
+}
+
+/** Ensure template path is writable — mkdir on save/replace only. */
 async function assertSafeTemplateFilePath(notesRoot: string, templateId: string): Promise<string> {
   await ensureNotesDirs(notesRoot)
   const id = assertSafeTemplateId(templateId)
@@ -1931,9 +1974,8 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
         if (info.isSymbolicLink() || !info.isFile()) continue
       } catch { continue }
       const id = templateIdFromRelativePath(rel).toLowerCase()
-      const expectedBasename = `${basename(id)}.md`
-      // Exact basename match — reject Weekly.MD vs weekly.md mismatches.
-      if (entry.name !== expectedBasename) continue
+      // Full relative path must already match normalized `${id}.md` (nested case too).
+      if (rel !== `${id}.md`) continue
       const content = await readFileNoFollow(abs).catch(() => '')
       const parsed = parseFrontmatter(content)
       const title = typeof parsed.properties.title === 'string' && parsed.properties.title.trim()
@@ -1954,7 +1996,7 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
 }
 
 export async function readNoteTemplateContent(notesRoot: string, templateId: string): Promise<{ title: string; body: string; properties: Record<string, unknown> }> {
-  const filePath = await assertSafeTemplateFilePath(notesRoot, templateId)
+  const filePath = await assertSafeExistingTemplateFilePath(notesRoot, templateId)
   const content = await readFileNoFollow(filePath)
   const parsed = parseFrontmatter(content)
   const id = assertSafeTemplateId(templateId)
@@ -2000,7 +2042,7 @@ export async function materializeTemplateNoteContent(
   const properties: Record<string, unknown> = {
     ...template.properties,
     title: noteTitle,
-    tags: Array.isArray(template.properties.tags) ? template.properties.tags : [],
+    tags: coerceTemplateTags(template.properties.tags),
   }
   // Do not inherit template identity/runtime keys (same strip set as saveAsTemplate).
   for (const key of ['createdAt', 'cover', 'icon']) delete properties[key]
