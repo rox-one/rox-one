@@ -947,6 +947,7 @@ export const CHANNEL_MAP = {
   teamChatCallLeave: invoke(RPC_CHANNELS.teamChat.CALL_LEAVE),
   teamChatCallSync: invoke(RPC_CHANNELS.teamChat.CALL_SYNC),
   teamChatCallTranscript: invoke(RPC_CHANNELS.teamChat.CALL_TRANSCRIPT),
+  teamChatPresence: invoke(RPC_CHANNELS.teamChat.PRESENCE),
   teamChatSearch: invoke(RPC_CHANNELS.teamChat.SEARCH),
   onTeamChatChanged: listener(RPC_CHANNELS.teamChat.CHANGED),
   createOrganization: invoke(RPC_CHANNELS.orgs.CREATE),

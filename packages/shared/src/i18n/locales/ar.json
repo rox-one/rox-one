@@ -11640,6 +11640,7 @@
   "tasks.modeGenerate": "إنشاء",
   "tasks.modeManual": "يدوي",
   "tasks.move.lists": "Lists",
+  "tasks.move.noArea": "بدون مجال",
   "tasks.move.noPlace": "No project",
   "tasks.move.none": "Nothing found",
   "tasks.move.other": "Other",

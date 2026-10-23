@@ -10,10 +10,15 @@
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { getLocalIdentity, getOrganizationMembership, loadOrgsStore } from '@rox/shared/orgs'
 import {
+  checkImChannelMembership,
+  fetchImPresence,
   getTeamChatStore,
   mintLiveKitToken,
+  publishImServiceEventBestEffort,
   resolveCallCredentials,
   summarizeCall,
+  toMessengerCallEvent,
+  TeamChatError,
   type TeamChannelCall,
   type CreateTeamChannelInput,
   type ListTeamMessagesInput,
@@ -65,12 +70,41 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.teamChat.CALL_LEAVE,
   RPC_CHANNELS.teamChat.CALL_SYNC,
   RPC_CHANNELS.teamChat.CALL_TRANSCRIPT,
+  RPC_CHANNELS.teamChat.PRESENCE,
   RPC_CHANNELS.teamChat.SEARCH,
 ] as const
 
 export const orgsTeamChatDirectory: TeamChatOrgDirectory = {
   roleOf: (orgId, userId) => getOrganizationMembership(orgId, userId)?.role ?? null,
   memberIds: (orgId) => loadOrgsStore().members.filter((m) => m.orgId === orgId).map((m) => m.userId),
+}
+
+/**
+ * Best-effort messenger contract v1.1 service-event for a local call message.
+ * Skips call.transcript when the contract-required transcriptUrl is absent.
+ */
+function publishCallServiceEvent(
+  channelId: string,
+  message: { kind?: string; event?: string; callId?: string; createdAt: number },
+  call: TeamChannelCall,
+  opts: { transcriptUrl?: string; summary?: string } = {},
+): void {
+  const mapped = toMessengerCallEvent(message as never, call, opts)
+  if (!mapped) return
+  if (mapped.type === 'call.transcript' && !mapped.transcriptUrl) return
+  publishImServiceEventBestEffort(channelId, mapped as never)
+}
+
+/** Local in-call overlay for presence: anyone currently in any visible channel call. */
+function localInCallIds(actor: TeamChatActor): Set<string> {
+  const chat = getTeamChatStore(orgsTeamChatDirectory)
+  const ids = new Set<string>()
+  for (const membership of loadOrgsStore().members.filter(m => m.userId === actor.userId)) {
+    for (const channel of chat.listChannels(membership.orgId, actor)) {
+      for (const participantId of channel.activeCall?.participantIds ?? []) ids.add(participantId)
+    }
+  }
+  return ids
 }
 
 function actorOf(ctx: { principal?: { subject: string } }): TeamChatActor {
@@ -141,16 +175,24 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
     return { ok: true }
   }, { nativeAction: 'write' })
 
-  // Calls: room access = channel membership, checked by the store before a token is minted.
+  // Calls: messenger contract v1.1 membership via /v1/im when reachable; else local store.
   // The LiveKit secret never leaves this process; only the short-lived token does.
   handle(RPC_CHANNELS.teamChat.CALL_JOIN, async (ctx, channelId: string, displayName?: string) => {
     const actor = actorOf(ctx)
     const creds = resolveCallCredentials()
     if (!creds.livekitUrl || !creds.livekitApiKey || !creds.livekitApiSecret) throw new Error('Calls are not configured')
-    const { call, orgId } = store().joinCall(channelId, actor)
+    // Remote membership gate (403 = definitive deny). Unreachable /im → local joinCall check.
+    const remote = await checkImChannelMembership(channelId, actor.userId)
+    if (remote === 'not-member') throw new TeamChatError('FORBIDDEN', 'Join the channel to call')
+    const { call, orgId, started } = store().joinCall(channelId, actor)
     const name = typeof displayName === 'string' ? displayName.trim().slice(0, 80) : ''
     const token = mintLiveKitToken({ apiKey: creds.livekitApiKey, apiSecret: creds.livekitApiSecret,
       identity: actor.userId, ...(name ? { name } : {}), room: call.roomName })
+    if (started) {
+      publishCallServiceEvent(channelId, {
+        kind: 'system', event: 'call.started', callId: call.id, createdAt: call.startedAt,
+      }, call)
+    }
     changed(orgId, channelId)
     return { call: callView(call)!, url: creds.livekitUrl, token }
   }, { nativeAction: 'write' })
@@ -159,14 +201,25 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
     const actor = actorOf(ctx)
     const { orgId, call, ended } = store().leaveCall(channelId, actor)
     changed(orgId, channelId)
-    if (ended && call?.transcript.length) {
-      // Last one out: post the AI summary next to the transcript when it is ready.
-      void summarizeEndedCall(call).then((summary) => {
-        if (!summary) return
-        try {
-          if (store().postCallSummaryAsSystem(channelId, call.id, summary)) changed(orgId, channelId)
-        } catch { /* channel archived meanwhile */ }
-      })
+    if (ended && call) {
+      publishCallServiceEvent(channelId, {
+        kind: 'system', event: 'call.ended', callId: call.id, createdAt: call.endedAt ?? Date.now(),
+      }, call)
+      if (call.transcript.length) {
+        // Last one out: post the AI summary next to the transcript when it is ready.
+        void summarizeEndedCall(call).then((summary) => {
+          if (!summary) return
+          try {
+            if (store().postCallSummaryAsSystem(channelId, call.id, summary)) {
+              changed(orgId, channelId)
+              // Contract requires transcriptUrl for call.transcript; skip remote until media is wired.
+              publishCallServiceEvent(channelId, {
+                kind: 'summary', callId: call.id, createdAt: Date.now(),
+              }, call, { summary })
+            }
+          } catch { /* channel archived meanwhile */ }
+        })
+      }
     }
     return { call: callView(call), ended }
   }, { nativeAction: 'write' })
@@ -182,6 +235,30 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
     if (added) changed(orgId, channelId)
     return { added }
   }, { nativeAction: 'write' })
+
+  // «О канале» presence: /v1/im/presence when Messenger is up; else in-call + self.
+  handle(RPC_CHANNELS.teamChat.PRESENCE, async (ctx, userIds: unknown) => {
+    const actor = actorOf(ctx)
+    const ids = (Array.isArray(userIds) ? userIds : [])
+      .filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 128)
+      .slice(0, 100)
+    const unique = [...new Set(ids)]
+    const remote = await fetchImPresence(unique)
+    const inCall = localInCallIds(actor)
+    return unique.map((userId) => {
+      if (inCall.has(userId)) return { userId, status: 'call' as const, source: remote ? 'im' as const : 'local' as const }
+      const hit = remote?.find((row) => row.userId === userId)
+      if (hit) {
+        const status = hit.status === 'offline' ? 'offline' as const : 'online' as const
+        return { userId, status, source: 'im' as const }
+      }
+      return {
+        userId,
+        status: (userId === actor.userId ? 'online' : 'offline') as 'online' | 'offline',
+        source: 'local' as const,
+      }
+    })
+  }, { nativeAction: 'read' })
 
   handle(RPC_CHANNELS.teamChat.SEARCH, async (ctx, orgId: string, query: string) =>
     store().searchMessages(orgId, query, actorOf(ctx)), { nativeAction: 'read' })
@@ -203,11 +280,17 @@ export function createTeamChatLiveKitWebhookIngress(
     getStore: () => getTeamChatStore(orgsTeamChatDirectory),
     onChanged: notifyChanged,
     onCallEnded: ({ orgId, channelId, call }) => {
+      publishCallServiceEvent(channelId, {
+        kind: 'system', event: 'call.ended', callId: call.id, createdAt: call.endedAt ?? Date.now(),
+      }, call)
       void summarizeEndedCall(call).then((summary) => {
         if (!summary) return
         try {
           if (getTeamChatStore(orgsTeamChatDirectory).postCallSummaryAsSystem(channelId, call.id, summary)) {
             notifyChanged(orgId, channelId)
+            publishCallServiceEvent(channelId, {
+              kind: 'summary', callId: call.id, createdAt: Date.now(),
+            }, call, { summary })
           }
         } catch { /* channel archived meanwhile */ }
       })

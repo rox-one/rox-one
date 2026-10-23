@@ -54,3 +54,18 @@ export {
   applyLiveKitWebhookEvent,
   type ApplyLiveKitWebhookResult,
 } from './apply-livekit-webhook.ts'
+
+export {
+  checkImChannelMembership,
+  fetchImPresence,
+  getImBridgeTransport,
+  publishImServiceEvent,
+  publishImServiceEventBestEffort,
+  resolveImBridgeBaseUrl,
+  setImBridgeTransport,
+  type ImBridgeTransport,
+  type ImMembershipVerdict,
+  type ImPresenceEntry,
+  type ImPresenceStatus,
+  type ImServiceEventPayload,
+} from './im-bridge.ts'

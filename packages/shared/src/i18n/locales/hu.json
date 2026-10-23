@@ -11576,6 +11576,7 @@
   "tasks.modeGenerate": "Generálás",
   "tasks.modeManual": "Kézi",
   "tasks.move.lists": "Lists",
+  "tasks.move.noArea": "Terület nélkül",
   "tasks.move.noPlace": "No project",
   "tasks.move.none": "Nothing found",
   "tasks.move.other": "Other",

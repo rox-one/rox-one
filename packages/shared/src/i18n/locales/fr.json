@@ -11590,6 +11590,7 @@
   "tasks.modeGenerate": "Generate",
   "tasks.modeManual": "Manual",
   "tasks.move.lists": "Lists",
+  "tasks.move.noArea": "Sans domaine",
   "tasks.move.noPlace": "No project",
   "tasks.move.none": "Nothing found",
   "tasks.move.other": "Other",

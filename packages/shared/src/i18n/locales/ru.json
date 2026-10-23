@@ -11636,6 +11636,7 @@
   "tasks.modeGenerate": "Сгенерировать",
   "tasks.modeManual": "Вручную",
   "tasks.move.lists": "Списки",
+  "tasks.move.noArea": "Без области",
   "tasks.move.noPlace": "Без проекта",
   "tasks.move.none": "Ничего не найдено",
   "tasks.move.other": "Другое",
