@@ -4,8 +4,12 @@ Request:  {"id": 1, "method": "search", "params": {...}}
 Response: {"id": 1, "result": ...} | {"id": 1, "error": {"code": str, "message": str}}
 
 stdout carries protocol frames only; all logging goes to stderr. Requests are
-handled concurrently (a long ``cognify`` never blocks ``search``), and frames
-are written under a lock so responses never interleave.
+handled concurrently (a long ``cognify`` never blocks ``search``). Backend
+writes (add/delete/cognify) share one lock; search stays unlocked and may see
+a partially-indexed view during writes (host applies a retrieval budget + FTS
+fallback). Frames are written under a lock so responses never interleave.
+Oversized frames are rejected and the remainder of the line is drained so the
+JSON-RPC stream stays in sync.
 """
 from __future__ import annotations
 
@@ -39,10 +43,12 @@ class Backend(Protocol):
     async def status(self) -> dict[str, Any]: ...
 
 
-def validate_docs(raw: Any) -> list[dict[str, Any]]:
+def validate_docs(raw: Any) -> tuple[list[dict[str, Any]], int]:
+    """Return (docs, truncated_count). Docs longer than MAX_DOC_CHARS are clipped."""
     if not isinstance(raw, list) or len(raw) > MAX_DOCS_PER_ADD:
         raise RpcError("bad_params", f"docs must be a list of at most {MAX_DOCS_PER_ADD}")
     out: list[dict[str, Any]] = []
+    truncated = 0
     for d in raw:
         if not isinstance(d, dict):
             raise RpcError("bad_params", "doc must be an object")
@@ -62,8 +68,11 @@ def validate_docs(raw: Any) -> list[dict[str, Any]]:
             continue
         if not text.strip():
             continue
-        out.append({"id": doc_id, "source": source, "text": text[:MAX_DOC_CHARS]})
-    return out
+        if len(text) > MAX_DOC_CHARS:
+            truncated += 1
+            text = text[:MAX_DOC_CHARS]
+        out.append({"id": doc_id, "source": source, "text": text})
+    return out, truncated
 
 
 class Server:
@@ -86,7 +95,11 @@ class Server:
         if method == "status":
             return await self.backend.status()
         if method == "add":
-            return await self.backend.add(validate_docs(params.get("docs")))
+            docs, truncated = validate_docs(params.get("docs"))
+            result = await self.backend.add(docs)
+            if isinstance(result, dict):
+                return {**result, "truncated": truncated}
+            return result
         if method == "cognify":
             sources = params.get("sources")
             if sources is not None and (not isinstance(sources, list) or not set(sources) <= VALID_SOURCES):
@@ -151,7 +164,14 @@ async def serve(backend: Backend, read_line: Callable[[], Awaitable[bytes]], out
         if not raw:
             break  # parent closed stdin: exit
         if len(raw) > MAX_LINE_BYTES:
+            # readline(limit) returns a partial chunk with no trailing newline when
+            # the line exceeds the limit; drain until newline (or EOF) so the next
+            # frame is not a corrupted remnant of this one.
             await server._send({"id": None, "error": {"code": "too_large", "message": "frame too large"}})
+            while not raw.endswith(b"\n"):
+                raw = await read_line()
+                if not raw:
+                    break
             continue
         line = raw.decode("utf-8", errors="replace").strip()
         if line:
