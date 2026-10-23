@@ -2040,6 +2040,11 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   max-inline-size: var(--panel-measure, 100%);
   margin-inline: auto;
 }
+/* SE wire: PanelSlot attaches both classes to its content body when
+   html[data-ui-profile="super-engineering"] and the route is not an
+   owner full-bleed surface (Home/Tasks/Messenger/Calls). Markers:
+   [data-se-panel-measure]. Ultra-wide bands above still retarget the
+   inherited --panel-gutter/--panel-measure tokens (#2199). */
 
 /* Rox Engineering shell micro-interactions (rail rows, top pills, panel
    header buttons). Scoped to html[data-ui-profile="super-engineering"] so
