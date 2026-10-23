@@ -2297,3 +2297,43 @@ html[data-ui-profile="super-engineering"][data-wallpaper] :is(
 html[data-ui-profile="super-engineering"][data-wallpaper][data-content-join="float"] [data-panel-grid-viewport] {
   background: var(--paper);
 }
+
+
+/* Rox Engineering shared shell frame / root + chrome text.
+   Theme roles `background` and `foreground` in super-engineering.json map via
+   themeToCSS to --background / --foreground. Under SE, pin the window root to
+   --background so material/tint ladders cannot wash the canon fill (scenic /
+   native vibrancy|mica / wallpaper keep their transparent or image paths).
+   Pin shared chrome labels — panel titles, expanded rail labels, and mode-pill
+   current/hover labels — to --foreground (tokens only, no raw hex). Does not
+   restyle surface-owned interiors (Home/Tasks/Messenger/Calls). Keeps prior SE
+   navigator / paper / input / motion / focus pins. */
+html[data-ui-profile="super-engineering"]:not([data-scenic]):not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]):not([data-wallpaper]),
+html[data-ui-profile="super-engineering"]:not([data-scenic]):not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]):not([data-wallpaper]) :is(body, #root) {
+  background: var(--background);
+}
+
+html[data-ui-profile="super-engineering"] {
+  --frame-fg: var(--foreground);
+  --content-fg: var(--foreground);
+}
+
+/* Expanded ActivityRail labels: full foreground (row may still use
+   --chrome-label for icon-only collapsed chrome). Active rows keep accent
+   via text-accent on the row. */
+html[data-ui-profile="super-engineering"] .rox-rail-row:not([aria-disabled="true"]):not([aria-current="page"]) .rox-rail-label {
+  color: var(--foreground);
+}
+
+/* Mode-pill current + hover labels already use --foreground in
+   titlebar-mode-pill.css; re-pin under SE so chrome-label / muted washes
+   cannot override. Inactive (55% mix) and disabled stay as base. */
+html[data-ui-profile="super-engineering"] .rox-mode-pill-item[aria-current="page"],
+html[data-ui-profile="super-engineering"] .rox-mode-pill-item:not([aria-disabled="true"]):not([aria-current="page"]):hover {
+  color: var(--foreground);
+}
+
+/* Shared panel header titles (h1). Identity/status stay text-secondary. */
+html[data-ui-profile="super-engineering"] [data-layout="panel-header"] h1 {
+  color: var(--foreground);
+}
