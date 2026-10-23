@@ -18,7 +18,7 @@ export const RuntimeNodeCard = React.memo(function RuntimeNodeCard({ data, selec
   const durationMeasurement = runtimeNodeDuration(node)
   const duration = durationText(durationMeasurement)
   const tokens = measurementText(nodeContentTokens(node), value => value.toLocaleString())
-  return <article className={`runtime-node runtime-node-${node.kind}`} data-status={node.status} data-selected={selected} data-testid="runtime-node" data-runtime-id={node.id}>
+  return <article className={`runtime-node runtime-node-${node.kind}`} data-glass-slot="card" data-status={node.status} data-selected={selected} data-testid="runtime-node" data-runtime-id={node.id}>
     <Handle type="target" position={Position.Left} isConnectable={false} />
     <header><span className="runtime-node-icon"><Icon size={15} /></span><strong>{nodeTitle(node, t)}</strong><span className="runtime-status-icon" title={node.status ? t(`runtimeMap.status.${node.status}`) : t('runtimeMap.unknown')}><StatusIcon size={13} /></span></header>
     <div className="runtime-node-detail"><p>{nodeSubtitle(node, t) || t('runtimeMap.contentInInspector')}</p></div>

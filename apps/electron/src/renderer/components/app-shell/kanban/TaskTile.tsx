@@ -145,6 +145,7 @@ export function TaskTile({
       role="button"
       tabIndex={0}
       aria-pressed={onSelect ? selected : undefined}
+      data-glass-slot="card"
       onClick={event => {
         if (
           onSelect &&

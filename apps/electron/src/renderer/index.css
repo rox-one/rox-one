@@ -572,11 +572,17 @@ html .popover-styled {
 
 [data-sonner-toast] {
   box-shadow: var(--shadow-modal-small) !important;
-  /* Opaque like every other overlay (PERF-07 / UI-AUDIT P1-10). */
-  background-color: oklch(from var(--popover) l c h / 1) !important;
   -webkit-app-region: no-drag !important;
   /* Fixed width to ensure text truncation works */
   width: 356px !important;
+}
+
+/* Opaque like every other overlay (PERF-07 / UI-AUDIT P1-10). Arc Glass paints
+   the toast surface itself (`data-glass-slot="toast"` / `[data-sonner-toast]`
+   in packages/ui/src/components/glass/arc-glass-surfaces.css), so the opaque
+   fill is scoped to the other themes. */
+html:not([data-theme="arc-glass"]) [data-sonner-toast] {
+  background-color: oklch(from var(--popover) l c h / 1) !important;
 }
 
 /* Hide icon container to remove leftover padding */
@@ -1447,8 +1453,15 @@ html[data-contrast="high"] :is(.popover-styled, [data-slot="popover-content"], .
    runtime keeps the reset — Electron never gets a CSS blur — and the hard
    a11y/performance gates above still reset the popover when they are active.
    With the layer off the popover stays opaque exactly as before.
+
+   Arc Glass (`html[data-theme="arc-glass"]`) is the second exception: its
+   overlay slots (data-glass-slot dialog/sheet/toast/popover, and sonner's
+   [data-sonner-toast]) draw their own opaque-enough fill and static blur in
+   packages/ui/src/components/glass/arc-glass-*.css, so the reset would cancel
+   the material. The a11y/performance gates still turn that blur off — see the
+   degradation blocks in those two stylesheets.
 ============================================================================= */
-html :is(
+html:not([data-theme="arc-glass"]) :is(
   [data-sonner-toast],
   [data-slot="tooltip-content"],
   [data-slot="hover-card-content"],
@@ -1466,7 +1479,7 @@ html :is(
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-html:not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"] {
+html:not([data-theme="arc-glass"]):not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -1512,11 +1525,6 @@ html[data-render-profile="performance"] :is(.animate-in, .animate-out, [data-ove
 html[data-render-profile="performance"] :is(.animate-shimmer-loading, .animate-shimmer-text),
 html[data-render-profile="performance"] .animate-shimmer::after {
   animation: none !important;
-}
-/* The nav sweep freezes at its transparent end; keep a solid hairline instead. */
-html[data-render-profile="performance"] .rox-nav-shimmer::after {
-  animation: none !important;
-  background: var(--accent);
 }
 /* Decorative pulses (skeleton loaders, motion-safe icons) stop too. Spinners
    (animate-spin) keep turning, and pulses that carry live state (recording,
@@ -1705,14 +1713,7 @@ html[data-contrast="high"] [data-home-cell]:hover > .rox-home-widget {
   transform: none;
 }
 /* «Сегодня» hero: accent glow inside the card, input and chips on tone steps. */
-.rox-home-hero-glow {
-  background:
-    radial-gradient(120% 140% at 0% 0%, color-mix(in oklch, var(--accent) 26%, transparent), transparent 60%),
-    radial-gradient(90% 120% at 100% 100%, color-mix(in oklch, var(--success) 14%, transparent), transparent 60%);
-}
-html[data-contrast="high"] .rox-home-hero-glow {
-  display: none;
-}
+/* Hero is a flat glass panel (Mark 2026-10-14): no radial glow layer. */
 .rox-home-ask {
   background-color: color-mix(in oklch, var(--widget-base) 70%, transparent);
 }
@@ -1880,6 +1881,17 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   }
 }
 
+/* top-50 #49: lite / reduced-data mode drops decorative motion and blur. */
+/* Near-zero (not 0s) so transitionend / animationend still fire for code that
+   waits on them. Spinners and loaders keep running at their own speed. */
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader),
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader)::before,
+:root[data-lite] *:not(.animate-spin, .animate-ping, [role="progressbar"], [data-spinner], .spinner, .loader)::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+:root[data-lite] { --material-blur-topbar: 0; --material-blur-rail: 0; --material-blur-strip: 0; --material-blur-inspector: 0; --material-blur-sidebar: 0; --material-blur-navigator: 0; --material-blur-chat: 0; --material-blur-composer: 0; --material-blur-popover: 0; }
 
 /* ── Grid-tile density (multi-panel grid + Home widgets) ──────────────────
    One scale, applied by token: every Tailwind text step inside a grid tile
@@ -1952,4 +1964,61 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   [data-panel-density="grid"] [data-secondary-toolbar] {
     display: none !important;
   }
+}
+
+/* Rail breakpoints: labels slide/fade in only on a collapsed -> expanded
+   disclosure (the rail reports data-rail-state="expanding" for that one
+   transition), never on mount in the expanded state. The animation-name is
+   never toggled by resizing; --motion-disclosure is 0ms under reduced motion
+   and during a live resize (html[data-resizing]). Opacity/transform only. */
+[data-rail-state="expanding"] .rox-rail-label {
+  animation: rox-rail-label-in var(--motion-disclosure) var(--ease-standard) both;
+}
+@keyframes rox-rail-label-in {
+  from { opacity: 0; transform: translateX(calc(var(--spacing) * -1)); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Fluid shell: below NARROW_SHELL_THRESHOLD the secondary sidebar floats over
+   the content (data-secondary-overlay). Enter with a transform/opacity slide so
+   the breakpoint reads as a reflow, not a pop. Durations come from the motion
+   tokens, which are 0ms under reduced motion and while the shell is resizing
+   (html[data-resizing]), so a live window drag never animates. */
+[data-secondary-overlay="true"] {
+  animation: rox-shell-overlay-in var(--motion-disclosure) var(--ease-emphasis) both;
+}
+@keyframes rox-shell-overlay-in {
+  from { opacity: 0; transform: translateX(calc(var(--spacing) * -3)); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Panel container queries (fluid panels). PanelSlot is the `panel` size
+   container (@container/panel), so these tiers follow the panel's own width,
+   not the window: a split view and a full-width surface get the same rhythm at
+   the same panel size. Tokens inherit from the container's direct child; the
+   opt-in primitives below read them. Static layout only (no transitions), so a
+   live resize reflows without animating. */
+.\@container\/panel > * {
+  --panel-gutter: calc(var(--spacing) * 3);
+  --panel-measure: 100%;
+}
+@container panel (min-width: 720px) {
+  .\@container\/panel > * {
+    --panel-gutter: calc(var(--spacing) * 5);
+    --panel-measure: 880px;
+  }
+}
+@container panel (min-width: 1200px) {
+  .\@container\/panel > * {
+    --panel-gutter: calc(var(--spacing) * 8);
+    --panel-measure: 1040px;
+  }
+}
+.rox-panel-gutter {
+  padding-inline: var(--panel-gutter, calc(var(--spacing) * 3));
+}
+.rox-panel-measure {
+  inline-size: 100%;
+  max-inline-size: var(--panel-measure, 100%);
+  margin-inline: auto;
 }

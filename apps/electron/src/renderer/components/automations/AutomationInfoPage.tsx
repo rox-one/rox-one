@@ -200,7 +200,7 @@ export function AutomationInfoPage({
           description={t('automations.sectionThenDescription', { count: automation.actions.length })}
           actions={editActions}
         >
-          <div className="divide-y divide-border/30">
+          <div data-glass-slot="table" className="divide-y divide-border/30">
             {automation.actions.map((action, i) => (
               <AutomationActionRow key={i} action={action} index={i} />
             ))}
@@ -259,7 +259,7 @@ export function AutomationInfoPage({
 
         {/* Section: Raw config (JSON) */}
         <Info_Section title={t('automations.sectionRawConfig')}>
-          <div className="rounded-[var(--radius-card)] shadow-minimal overflow-hidden [&_pre]:!bg-transparent [&_.relative]:!bg-transparent [&_.relative]:!border-0 [&_.relative>div:first-child]:!bg-transparent [&_.relative>div:first-child]:!border-0">
+          <div data-glass-slot="editor" className="rounded-[var(--radius-card)] shadow-minimal overflow-hidden [&_pre]:!bg-transparent [&_.relative]:!bg-transparent [&_.relative]:!border-0 [&_.relative>div:first-child]:!bg-transparent [&_.relative>div:first-child]:!border-0">
             <Info_Markdown maxHeight={300} fullscreen>
               {`\`\`\`json\n${JSON.stringify({
                 event: automation.event,

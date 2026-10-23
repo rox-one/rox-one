@@ -7,6 +7,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import {
+  Activity,
   GitBranch,
   LayoutGrid,
   ListTree,
@@ -28,6 +29,7 @@ export type EntityViewId =
   | 'teamchat'
   | 'table'
   | 'canvas'
+  | 'trajectory'
 
 export interface EntityViewCapability {
   id: EntityViewId
@@ -45,6 +47,7 @@ const DEFAULT_ICONS: Record<EntityViewId, LucideIcon> = {
   teamchat: GitBranch,
   table: LayoutGrid,
   canvas: Network,
+  trajectory: Activity,
 }
 
 /**
@@ -63,6 +66,7 @@ export const ENTITY_VIEW_LABEL_KEYS: Record<EntityViewId, string> = {
   teamchat: 'entityView.teamChat',
   table: 'entityView.table',
   canvas: 'entityView.canvas',
+  trajectory: 'entityView.trajectory',
 }
 
 export function defaultSessionEntityCapabilities(opts?: {
@@ -71,6 +75,7 @@ export function defaultSessionEntityCapabilities(opts?: {
   const siyuan = opts?.siyuanConnected ?? false
   return [
     { id: 'standard', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.standard, icon: DEFAULT_ICONS.standard },
+    { id: 'trajectory', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.trajectory, icon: DEFAULT_ICONS.trajectory },
     { id: 'map', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.map, icon: DEFAULT_ICONS.map },
     { id: 'outline', available: true, labelKey: ENTITY_VIEW_LABEL_KEYS.outline, icon: DEFAULT_ICONS.outline },
     { id: 'graph', available: siyuan, labelKey: ENTITY_VIEW_LABEL_KEYS.graph, icon: DEFAULT_ICONS.graph },
@@ -231,7 +236,7 @@ export function EntityViewPlaceholder({ view, labelKey }: EntityViewPlaceholderP
   const key = labelKey ?? ENTITY_VIEW_LABEL_KEYS[view] ?? 'entityView.comingSoon'
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center min-h-0">
+    <div data-glass-slot="empty" className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center min-h-0">
       <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] bg-foreground/5 text-muted-foreground">
         <Icon className="icon-empty" />
       </div>

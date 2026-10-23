@@ -76,7 +76,9 @@ import {
   ModeScreenLayout,
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
-import { tasksViewAtom } from './tasks/atoms'
+import { tasksLayoutAtom, tasksTimelineGroupAtom, tasksTimelineWeekAtom, tasksTimelineZoomAtom, tasksViewAtom } from './tasks/atoms'
+import { TaskTimeline } from './tasks/TaskTimeline'
+import { applySchedule, dependencyConflicts, isoOf, timelineRowOrder, weekRange, weekTasks, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
 import {
   agentChipFor,
   agentCounts,
@@ -90,18 +92,28 @@ import {
   parseAgentMention,
   parseSearch,
   subtasksOf,
+  navigateIndex,
+  deadlineTone,
   visibleNotes,
   type AgentChip,
   type AgentSessionLike,
+  type TasksView,
 } from './tasks/task-model'
+import { useTasksScreenSidebar } from '@/screens/tasks/useTasksScreenSidebar'
+import { useSecondarySidebarVisibility } from '@/components/shell/shell-prefs'
+import { useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { TaskSidebar } from './tasks/TaskSidebar'
 import { ConfirmDialog, Glyph, ProgressPie, TaskCheckbox, prefersReducedMotion } from './tasks/parts'
 import { QuickEntry, type QuickEntryResult } from './tasks/QuickEntry'
 import { MoveDialog, type MoveDestination } from './tasks/MoveDialog'
+import { BulkActionBar, type BulkAction } from './tasks/BulkActionBar'
+import { orderedSelection, pruneSelection, rangeSelection, toggleInSelection } from './tasks/multi-select'
+import { applyDestinationTo, clearSelection, plainClick, rangeFocus, runBulkOperation, selectAll, settlePrune, settleToggle, undoBulkOperation, type BulkSnapshot, type SelectionState } from './tasks/bulk-actions'
 import { TaskDetail } from './tasks/TaskDetail'
 import { useTaskDetailDrafts } from './tasks/use-task-detail-drafts'
-import { TaskSidebar } from './tasks/TaskSidebar'
 import { getSessionTitle } from '@/utils/session'
 import { taskDelegationErrorKey, type TaskDelegationErrorKey } from './tasks/delegation-errors'
+import { acceptsPlusDrop, destDefaults, insertHeading, isHeadingDrop, navDropKind } from './tasks/magic-plus'
 
 const SORTS: TaskSortId[] = ['order', 'due', 'priority', 'project', 'title']
 const CHIP_TONE: Record<AgentChip, Tone> = { running: 'success', review: 'warning', todo: 'accent', done: 'muted', linked: 'muted' }
@@ -174,6 +186,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [store, setStore] = useState(loadPersonalTaskStore)
   const detailDrafts = useTaskDetailDrafts(workspace?.id)
   const [view, setView] = useAtom(tasksViewAtom)
+  const [layout, setLayout] = useAtom(tasksLayoutAtom)
+  const [timelineZoom, setTimelineZoom] = useAtom(tasksTimelineZoomAtom)
+  const [timelineGroup, setTimelineGroup] = useAtom(tasksTimelineGroupAtom)
   const [sort, setSort] = useState<TaskSortId>('order')
   const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
   const [delegating, setDelegating] = useState(false)
@@ -187,13 +202,16 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState<string | null>(null)
   const [pendingDone, setPendingDone] = useState<ReadonlySet<string>>(new Set())
-  const [quickEntry, setQuickEntry] = useState<{ initial: string } | null>(null)
+  const [quickEntry, setQuickEntry] = useState<{ initial: string; dest?: string } | null>(null)
   useEffect(() => {
     // A2: «Создать новую задачу» in the inspector rail opens a fresh tasks
     // panel; that panel consumes the create request here on mount.
     if (consumePendingCompose('tasks')) setQuickEntry({ initial: '' })
   }, [])
   const [moveFor, setMoveFor] = useState<string | null>(null)
+  const [multi, setMulti] = useState<Set<string>>(() => new Set())
+  const [bulkMove, setBulkMove] = useState(false)
+  const anchorRef = useRef<string | null>(null)
   const [popover, setPopover] = useState<'when' | 'deadline' | null>(null)
   const [confirm, setConfirm] = useState<null | { kind: 'emptyTrash' } | { kind: 'removeArea'; id: string } | { kind: 'removeHeading'; id: string }>(null)
   const [inline, setInline] = useState<InlineDraft | null>(null)
@@ -217,6 +235,22 @@ export default function TasksPage(props: TasksPageProps = {}) {
     else setLocalSelectedId(id)
   }, [routeBound])
   const now = Date.now()
+  // Re-render at local midnight so «today» (timeline line, Сегодня) rolls over.
+  const [, setMidnight] = useState(0)
+  useEffect(() => {
+    const next = new Date(now)
+    next.setHours(24, 0, 1, 0)
+    let timer = 0
+    const arm = (at: number) => {
+      timer = window.setTimeout(() => {
+        // Timers can fire early (sleep/clock drift): re-arm until the day really changed.
+        if (Date.now() < at) arm(at)
+        else setMidnight((n) => n + 1)
+      }, Math.max(1000, at - Date.now()))
+    }
+    arm(next.getTime())
+    return () => window.clearTimeout(timer)
+  }, [isoOf(now)]) // eslint-disable-line react-hooks/exhaustive-deps
   const tourRef = useRef(tour)
   tourRef.current = tour
 
@@ -410,21 +444,32 @@ export default function TasksPage(props: TasksPageProps = {}) {
     return t(`tasks.projection.${d.list}`)
   })()
 
-  const createFromEntry = useCallback((parsed: ParsedTaskEntry, opts: { notes?: string; context?: SectionContext; afterId?: string; open?: boolean; projectId?: string | null; areaId?: string | null; checklistItems?: string[] } = {}) => {
+  /** Quick Entry presets: the Magic Plus drop target when there is one, else the view. */
+  const entryDefaults = (() => {
+    const dest = quickEntry?.dest ? destDefaults(quickEntry.dest, startOfLocalDay(now) + DAY) : null
+    if (!dest) return { label: destinationLabel, projectId: viewDefaults().projectId, areaId: viewDefaults().areaId }
+    const label = dest.projectId ? projectName(dest.projectId) : dest.areaId ? areaName(dest.areaId) : dest.when?.kind === 'evening' ? t('tasks.when.evening') : t(`tasks.projection.${dest.list}`)
+    return { label, projectId: dest.projectId, areaId: dest.areaId }
+  })()
+
+  const createFromEntry = useCallback((parsed: ParsedTaskEntry, opts: { notes?: string; context?: SectionContext; afterId?: string; open?: boolean; projectId?: string | null; areaId?: string | null; checklistItems?: string[]; dest?: string } = {}) => {
     const mention = parseAgentMention(parsed.title)
     if (!mention.title) return null
     const observation = tour.capture()
-    const d = viewDefaults()
+    const fromDest = opts.dest ? destDefaults(opts.dest, startOfLocalDay(Date.now()) + DAY) : null
+    const d: ReturnType<typeof viewDefaults> & { headingId?: string } = fromDest ?? viewDefaults()
     let createdId: string | null = null
     mutate((current) => {
       const ctx = opts.context ?? {}
+      const projectId = opts.projectId !== undefined ? opts.projectId ?? undefined : ctx.projectId ?? d.projectId
       const task = current.create({
         title: mention.title,
         notes: opts.notes ?? '',
         list: d.list,
-        projectId: opts.projectId !== undefined ? opts.projectId ?? undefined : ctx.projectId ?? d.projectId,
+        projectId,
         areaId: opts.areaId !== undefined ? opts.areaId ?? undefined : ctx.areaId ?? d.areaId,
-        headingId: ctx.headingId ?? undefined,
+        // The dropped heading applies only while the picker still points at its project.
+        headingId: ctx.headingId ?? (d.headingId && projectId === d.projectId ? d.headingId : undefined),
         tags: [...new Set([...(d.tag ? [d.tag] : []), ...parsed.tags])],
         recurrence: parsed.recurrence ? { ...parsed.recurrence, timeZone: parsed.recurrence.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone } : undefined,
         reminderAt: parsed.reminderAt,
@@ -455,7 +500,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [delegate, mutate, selectTask, viewDefaults, tour])
 
   const onQuickEntry = (result: QuickEntryResult) => {
-    const created = createFromEntry(result.parsed, { notes: result.notes, open: result.open, projectId: result.projectId, areaId: result.areaId, checklistItems: result.checklistItems })
+    const created = createFromEntry(result.parsed, { notes: result.notes, open: result.open, projectId: result.projectId, areaId: result.areaId, checklistItems: result.checklistItems, dest: quickEntry?.dest })
     setQuickEntry(null)
     if (created && result.open) window.setTimeout(() => titleRef.current?.focus(), 30)
   }
@@ -591,6 +636,62 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [view, topLevel, search, tagFilter, sort, pendingDone, showDone, store, projects, i18n.language])
 
   const visible = useMemo(() => sections.flatMap((section) => section.tasks), [sections])
+  const openTasks = useMemo(() => visible.filter(isOpenTask), [visible])
+  const [timelineWeek, setTimelineWeek] = useAtom(tasksTimelineWeekAtom)
+  const weekOpenTasks = useMemo(() => (timelineWeek ? weekTasks(topLevel.filter((task) => isOpenTask(task) && task.trashedAt == null), isoOf(now)) : []), [timelineWeek, topLevel, isoOf(now)]) // eslint-disable-line react-hooks/exhaustive-deps
+  const visibleIds = useMemo(() => visible.map((task) => task.id), [visible])
+  // Selection never outlives the rows it points at (view switch, search, completion).
+  const clearMulti = useCallback(() => setMulti((prev) => (prev.size ? new Set() : prev)), [])
+  const bulkIds = multi.size > 1 ? orderedSelection(multi, visibleIds) : []
+
+  const applySelection = (next: SelectionState) => {
+    setMulti(next.multi)
+    if (next.focus !== selectedId) selectTask(next.focus)
+  }
+
+  useEffect(() => {
+    const pruned = pruneSelection(multi, visibleIds)
+    if (pruned !== multi) applySelection(settlePrune(pruned, selectedId))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleIds])
+
+  const onRowMouseDown = (event: React.MouseEvent) => {
+    // Keep ⇧-click from extending the native text selection.
+    if (event.shiftKey) event.preventDefault()
+  }
+
+  const onRowClick = (event: React.MouseEvent, id: string) => {
+    const mod = event.metaKey || event.ctrlKey
+    if (event.shiftKey) {
+      const range = rangeSelection(visibleIds, anchorRef.current ?? selectedId, id)
+      applySelection(range.size > 1 ? { multi: range, focus: rangeFocus(range, selectedId, id) } : plainClick(id))
+      return
+    }
+    anchorRef.current = id
+    if (mod) {
+      const next = toggleInSelection(multi, id, selectedId)
+      const focus = selectedId && next.has(selectedId) ? selectedId : next.has(id) ? id : [...next][0] ?? null
+      applySelection(settleToggle(next, focus))
+      return
+    }
+    applySelection(plainClick(id))
+  }
+
+  const runBulk = (action: BulkAction, dest?: string) => {
+    const ids = bulkIds
+    if (!ids.length) return
+    if (action === 'move' && !dest) { setBulkMove(true); return }
+    let snapshot: BulkSnapshot | null = null
+    mutate((current) => { snapshot = runBulkOperation(current, ids, action, { pending: pendingDone, dest }) })
+    const snap = snapshot as BulkSnapshot | null
+    if (snap && snap.affected.length) {
+      const key = action === 'complete' ? 'tasks.bulk.completed' : action === 'trash' ? 'tasks.bulk.trashed' : 'tasks.bulk.updated'
+      toast(t(key, { count: snap.affected.length }), {
+        action: { label: t('tasks.toast.undo'), onClick: () => mutate((current) => undoBulkOperation(current, snap)) },
+      })
+    }
+    clearMulti()
+  }
   const selected = selectedId ? store.get(selectedId) : undefined
   const nativeTasks = personalTasksNativeAvailable()
   const syncState = personalTasksSyncState()
@@ -646,25 +747,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   }, [areas, personalProjects, projects, store, t])
 
   const applyDestination = useCallback((taskId: string, dest: string) => {
-    const tomorrow = startOfLocalDay(Date.now()) + DAY
-    mutate((current) => {
-      if (!current.get(taskId)) return
-      if (dest === 'list:inbox') current.moveTo(taskId, { list: 'inbox', projectId: null, areaId: null })
-      else if (dest === 'when:today') current.setWhen(taskId, { kind: 'today' })
-      else if (dest === 'when:evening') current.setWhen(taskId, { kind: 'evening' })
-      else if (dest === 'when:tomorrow' || dest === 'when:upcoming') current.setWhen(taskId, { kind: 'date', at: tomorrow })
-      else if (dest === 'when:anytime') current.setWhen(taskId, { kind: 'anytime' })
-      else if (dest === 'when:someday') current.setWhen(taskId, { kind: 'someday' })
-      else if (dest === 'noplace') current.moveTo(taskId, { projectId: null, areaId: null })
-      else if (dest.startsWith('project:')) current.moveTo(taskId, { projectId: dest.slice(8) })
-      else if (dest.startsWith('area:')) current.moveTo(taskId, { areaId: dest.slice(5) })
-      else if (dest.startsWith('heading:')) {
-        const [, pid, hid] = dest.split(':')
-        current.moveTo(taskId, { projectId: pid!, headingId: hid! })
-      } else if (dest === 'trash') current.trash(taskId)
-      else if (dest === 'logbook' && !current.get(taskId)!.completedAt) current.completeTask(taskId)
-      if (current.get(taskId)!.trashedAt != null && dest !== 'trash') current.restore(taskId)
-    })
+    mutate((current) => applyDestinationTo(current, taskId, dest))
   }, [mutate])
 
   // ── Keyboard ────────────────────────────────────────────────────────────
@@ -690,7 +773,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const onKeyDown = (event: React.KeyboardEvent) => {
     if (event.defaultPrevented || event.nativeEvent.isComposing || !canHandleKeyboard(event.target)) return
-    if (quickEntry || moveFor || confirm) return
+    if (quickEntry || moveFor || bulkMove || confirm) return
     const target = event.target as HTMLElement
     // Portalled navigation still bubbles through this page's React tree.
     // Sidebar buttons and disclosures retain their native Space/Enter behavior.
@@ -700,6 +783,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if (mod && event.key === 'Enter' && selected) {
       event.preventDefault()
       void delegate(selected)
+      return
+    }
+    if (!typing && multi.size && event.key === 'Escape') { event.preventDefault(); applySelection(clearSelection(selectedId)); return }
+    if (!typing && mod && !event.shiftKey && event.code === 'KeyA' && visibleIds.length) {
+      event.preventDefault()
+      applySelection(selectAll(visibleIds, selectedId))
       return
     }
     if (typing) {
@@ -727,13 +816,23 @@ export default function TasksPage(props: TasksPageProps = {}) {
       if (copyId) selectTask(copyId)
       return
     }
+    // ⌥⌘N: new heading at the selection (project, manual order).
+    if (mod && event.altKey && (event.code === 'KeyN' || event.key.toLowerCase() === 'n')) {
+      const section = selected ? sections.find((s) => s.tasks.some((task) => task.id === selected.id)) : undefined
+      if (section && selected && canInsertHeading(section)) {
+        event.preventDefault()
+        insertHeadingBefore(section, selected.id)
+      }
+      return
+    }
     if ((mod && event.key === 'Backspace') || (!mod && event.key === 'Delete')) {
       if (selected && selected.trashedAt == null) {
         event.preventDefault()
-        const index = visible.findIndex((task) => task.id === selected.id)
+        // In the timeline, the next selection follows the timeline's row order.
+        const order = showTimeline ? timelineRowOrder(openTasks, timelineGroup, isoOf(now)) : visible.map((task) => task.id)
+        const index = order.indexOf(selected.id)
         trashTask(selected)
-        const next = visible[index + 1] ?? visible[index - 1]
-        selectTask(next ? next.id : null)
+        selectTask(index < 0 ? null : order[index + 1] ?? order[index - 1] ?? null)
       }
       return
     }
@@ -743,14 +842,24 @@ export default function TasksPage(props: TasksPageProps = {}) {
       return
     }
     if (mod || event.altKey) return
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    const jumpKey = event.key === 'Home' || event.key === 'End' || event.key === 'PageDown' || event.key === 'PageUp'
+    // Home/End/PgUp/PgDn drive the list only from the list itself (or the body);
+    // elsewhere (detail pane, other scroll containers) they keep native scrolling.
+    if (jumpKey && !(target === document.body || listRef.current?.contains(target))) return
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || jumpKey) {
       event.preventDefault()
       const index = selected ? visible.findIndex((task) => task.id === selected.id) : -1
-      const next = event.key === 'ArrowDown' ? visible[Math.min(visible.length - 1, index + 1)] : visible[Math.max(0, index - 1)]
-      if (next) selectTask(next.id)
+      const to = navigateIndex(event.key, index, visible.length)
+      const next = to == null ? undefined : visible[to]
+      if (next) {
+        selectTask(next.id)
+        // Jumps can land far outside the viewport; selection alone does not scroll the row in.
+        listRef.current?.querySelector(`[data-task-id="${CSS.escape(next.id)}"]`)?.scrollIntoView({ block: 'nearest' })
+      }
       return
     }
-    if (event.key === ' ' && selected) {
+    // Space activates focused buttons and radios (zoom/group toggles) natively.
+    if (event.key === ' ' && selected && !(target instanceof HTMLElement && target.closest('button, [role="radio"]'))) {
       event.preventDefault()
       toggleComplete(selected)
       return
@@ -794,6 +903,16 @@ export default function TasksPage(props: TasksPageProps = {}) {
     if (current.get(id)?.trashedAt != null) current.restore(id)
   }
 
+  /** Heading insertion only makes sense in a project shown in manual order. */
+  const canInsertHeading = (section: Section) => view.kind === 'project' && sort === 'order' && Boolean(section.context?.projectId) && section.key !== 'done'
+  const insertHeadingBefore = (section: Section, taskId: string) => {
+    const from = section.tasks.findIndex((task) => task.id === taskId)
+    if (from < 0 || !canInsertHeading(section)) return
+    const moveIds = section.tasks.slice(from).map((task) => task.id)
+    const pid = section.context!.projectId!
+    mutate((current) => { insertHeading(current, pid, t('tasks.heading.new'), section.headingId ?? null, moveIds) })
+  }
+
   const dropOnRow = (event: React.DragEvent, section: Section, target: PersonalTask) => {
     event.preventDefault()
     event.stopPropagation()
@@ -802,6 +921,14 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const after = event.clientY > rect.top + rect.height / 2
     if (event.dataTransfer.types.includes(DRAG_PLUS)) {
       const index = section.tasks.findIndex((task) => task.id === target.id)
+      // Things: + dropped on a project row's left gutter inserts a heading there.
+      if (canInsertHeading(section) && isHeadingDrop(event.clientX, rect.left)) {
+        const from = after ? index + 1 : index
+        const moveIds = section.tasks.slice(from).map((task) => task.id)
+        const pid = section.context!.projectId!
+        mutate((current) => { insertHeading(current, pid, t('tasks.heading.new'), section.headingId ?? null, moveIds) })
+        return
+      }
       const anchor = after ? target : section.tasks[index - 1]
       setInline({ sectionKey: section.key, afterId: anchor?.id, context: section.context })
       setInlineText('')
@@ -833,15 +960,21 @@ export default function TasksPage(props: TasksPageProps = {}) {
 
   const navDropProps = (dest: string) => ({
     onDragOver: (event: React.DragEvent) => {
-      if (!event.dataTransfer.types.includes(DRAG_TASK)) return
+      // A + over Корзина/Журнал is ignored: no preventDefault, no hint.
+      const kind = navDropKind([...event.dataTransfer.types], dest, DRAG_PLUS, DRAG_TASK)
+      if (!kind) return
       event.preventDefault()
-      event.dataTransfer.dropEffect = 'move'
+      event.dataTransfer.dropEffect = kind === 'plus' ? 'copy' : 'move'
       if (dropHint !== `nav:${dest}`) setDropHint(`nav:${dest}`)
     },
     onDragLeave: () => setDropHint((hint) => (hint === `nav:${dest}` ? null : hint)),
     onDrop: (event: React.DragEvent) => {
+      const plus = event.dataTransfer.types.includes(DRAG_PLUS)
+      if (plus && !acceptsPlusDrop(dest)) return
       event.preventDefault()
       setDropHint(null)
+      // Magic Plus on a sidebar entry: Quick Entry preset to that list/project/area.
+      if (plus) { setQuickEntry({ initial: '', dest }); return }
       const sourceId = draggedId(event)
       if (sourceId) applyDestination(sourceId, dest)
     },
@@ -865,25 +998,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
     setNavCreate(null)
     setNavDraft('')
   }
-  const navigator = (
-    <TaskSidebar
-      view={view}
-      onSelect={setView}
-      listCount={listCount}
-      overdueCount={overdueCount}
-      trashCount={trashCount}
-      tasks={topLevel}
-      areas={areas}
-      personalProjects={personalProjects}
-      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
-      tags={tags}
-      agents={agents}
-      dropProps={navDropProps}
-      onToggleArea={area => mutate(current => current.updateArea(area.id, { collapsed: !area.collapsed }))}
-      footer={(
+  const createNavRef = useRef(createNav)
+  createNavRef.current = createNav
+  const navFooter = useMemo(() => (
         <div className="mt-auto pt-3">
           {navCreate ? (
-            <form onSubmit={createNav} className="px-1">
+            <form onSubmit={(event) => createNavRef.current(event)} className="px-1">
               <input
                 autoFocus
                 value={navDraft}
@@ -903,9 +1023,72 @@ export default function TasksPage(props: TasksPageProps = {}) {
             </div>
           )}
         </div>
-      )}
+  ), [navCreate, navDraft, t])
+  const viewKey = `${view.kind}:${view.id}`
+  // Memoised on the store snapshot so the sidebar's signature cache can hit.
+  const sidebarProjects = useMemo(() => {
+    const sidebarProject = (p: { id: string; name: string }) => ({ id: p.id, name: p.name, ...projectProgress(topLevel, p.id) })
+    const live = store.projects().filter((p) => p.trashedAt == null)
+    const liveAreas = store.areas().filter((a) => a.trashedAt == null)
+    const areaIds = new Set(liveAreas.map((a) => a.id))
+    return {
+      looseProjects: live.filter((p) => !p.areaId).map(sidebarProject),
+      // Projects whose area was deleted/trashed stay reachable under «Без области».
+      orphanProjects: live.filter((p) => p.areaId && !areaIds.has(p.areaId)).map(sidebarProject),
+      areas: liveAreas.map((a) => ({ id: a.id, name: a.name, collapsed: Boolean(a.collapsed), projects: live.filter((p) => p.areaId === a.id).map(sidebarProject) })),
+      workspaceProjects: projects.map((p) => sidebarProject({ id: p.config.id, name: p.config.name })),
+    }
+  }, [store, topLevel, projects])
+  const inboxCount = listCount('inbox')
+  const todayListCount = listCount('today')
+  const upcomingCount = listCount('upcoming')
+  const sidebarListCounts = useMemo(() => ({ inbox: inboxCount, today: todayListCount, upcoming: upcomingCount, trash: trashCount }), [inboxCount, todayListCount, upcomingCount, trashCount])
+  const sidebarHidden = useSecondarySidebarVisibility() === 'hidden'
+  const shellSidebarTarget = useShellSidebarTarget()
+  useTasksScreenSidebar({
+    listCounts: sidebarListCounts,
+    overdue: overdueCount,
+    ...sidebarProjects,
+    onToggleArea: (areaId) => toggleArea(areaId),
+    tags,
+    agents,
+    activeViewKey: viewKey,
+    onView: (next) => setView(next as TasksView),
+    onNewTask: () => setQuickEntry({ initial: '' }),
+    search,
+    onSearch: setSearch,
+    footer: navFooter,
+    dropTypes: [DRAG_TASK, 'text/task-id'],
+    onDropTask: (destination, data) => {
+      const sourceId = data.getData(DRAG_TASK) || data.getData('text/task-id')
+      if (sourceId) applyDestination(sourceId, destination)
+    },
+  })
+
+  // Inline navigator only when the shell second sidebar can't show (hidden
+  // mode, kept-alive or shell-less surface) so Tasks never loses navigation.
+  const toggleArea = (areaId: string) => mutate((current) => {
+    const area = current.areas().find((a) => a.id === areaId)
+    if (area) current.updateArea(area.id, { collapsed: !area.collapsed })
+  })
+  const navigator = sidebarHidden || !shellSidebarTarget ? (
+    <TaskSidebar
+      view={view}
+      onSelect={setView}
+      listCount={listCount}
+      overdueCount={overdueCount}
+      trashCount={trashCount}
+      tasks={topLevel}
+      areas={areas}
+      personalProjects={personalProjects}
+      workspaceProjects={projects.map(project => ({ id: project.config.id, name: project.config.name }))}
+      tags={tags}
+      agents={agents}
+      dropProps={navDropProps}
+      onToggleArea={area => toggleArea(area.id)}
+      footer={navFooter}
     />
-  )
+  ) : null
 
   // ── List rows ────────────────────────────────────────────────────────────
   const currentProject = view.kind === 'project' ? store.projects().find((p) => p.id === view.id) : undefined
@@ -959,7 +1142,8 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const isToday = isOpenTask(task) && matchesProjection(task, now, 'today')
     const place = !inProjectView && !section.onOpen && (task.projectId || task.areaId) ? (task.projectId ? projectName(task.projectId) : areaName(task.areaId)) : null
     const subs = subtasksOf(tasks, task.id)
-    const selectedRow = selectedId === task.id
+    const focusedRow = selectedId === task.id
+    const selectedRow = focusedRow || multi.has(task.id)
     const showStart = task.startAt != null && showToday && !isToday && !done
     const hasMeta = Boolean(place || progress.total || subs.length || source || showStart || (done && task.completedAt))
     return (
@@ -977,7 +1161,9 @@ export default function TasksPage(props: TasksPageProps = {}) {
           event.preventDefault()
           event.stopPropagation()
           const rect = event.currentTarget.getBoundingClientRect()
-          const hint = `${task.id}:${event.clientY > rect.top + rect.height / 2 ? 'after' : 'before'}`
+          const side = event.clientY > rect.top + rect.height / 2 ? 'after' : 'before'
+          const gutter = event.dataTransfer.types.includes(DRAG_PLUS) && canInsertHeading(section) && isHeadingDrop(event.clientX, rect.left)
+          const hint = `${task.id}:${gutter ? 'heading-' : ''}${side}`
           if (dropHint !== hint) setDropHint(hint)
         }}
         onDragLeave={() => setDropHint((hint) => (hint?.startsWith(`${task.id}:`) ? null : hint))}
@@ -989,12 +1175,24 @@ export default function TasksPage(props: TasksPageProps = {}) {
           dropHint === `${task.id}:after` && 'after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-full after:bg-accent',
         )}
       >
+        {dropHint === `${task.id}:heading-before` || dropHint === `${task.id}:heading-after` ? (
+          // Heading-gutter drop: a heading-style rule with its label, distinct from the row insert line.
+          <span
+            data-testid="tasks-heading-drop-hint"
+            className={cn('pointer-events-none absolute inset-x-3 z-sticky flex items-center gap-2 text-xs font-semibold text-accent', dropHint.endsWith('before') ? '-top-2' : '-bottom-2')}
+          >
+            {t('tasks.heading.new')}
+            <span className="h-px flex-1 bg-accent" />
+          </span>
+        ) : null}
         <div
           role="option"
           aria-selected={selectedRow}
-          tabIndex={selectedRow ? 0 : -1}
+          tabIndex={focusedRow ? 0 : -1}
           data-testid={`task-row-${task.id}`}
-          onClick={() => selectTask(task.id)}
+          data-glass-slot="row"
+          onMouseDown={onRowMouseDown}
+          onClick={(event) => onRowClick(event, task.id)}
           onDoubleClick={() => { selectTask(task.id); window.setTimeout(() => titleRef.current?.focus(), 0) }}
           className={cn(
             'mx-1.5 flex cursor-default items-start gap-2 rounded-[var(--radius-card)] px-2 py-[5px] outline-none',
@@ -1029,7 +1227,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
             <span key={tag} className="mt-[1px] inline-flex h-[18px] max-w-[96px] shrink-0 items-center truncate rounded-[var(--radius-control)] bg-foreground/[0.07] px-1.5 text-xs text-text-secondary">{tag}</span>
           ))}
           {task.dueAt != null && !done ? (
-            <span className={cn('mt-[1px] inline-flex h-[18px] shrink-0 items-center gap-1 text-xs numeric', daysUntil(task.dueAt, now) <= 0 ? 'font-semibold text-destructive' : 'text-text-secondary')} title={`${t('tasks.field.deadline')}: ${dateFmt.format(task.dueAt)}`}>
+            <span className={cn('mt-[1px] inline-flex h-[18px] shrink-0 items-center gap-1 text-xs numeric', { danger: 'font-semibold text-destructive', warning: 'text-status-warning', muted: 'text-text-secondary' }[deadlineTone(daysUntil(task.dueAt, now))])} title={`${t('tasks.field.deadline')}: ${dateFmt.format(task.dueAt)}`}>
               {Glyph.flag}{formatDeadline(task.dueAt)}
             </span>
           ) : null}
@@ -1124,8 +1322,45 @@ export default function TasksPage(props: TasksPageProps = {}) {
         <Button variant="danger" onClick={() => setConfirm({ kind: 'emptyTrash' })} data-testid="tasks-empty-trash">{t('tasks.trash.empty')}</Button>
       ) : null}
       {sortControl}
+      {view.kind !== 'agents' ? (
+        <div role="radiogroup" aria-label={t('tasks.timeline.layout')} className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5 text-sm">
+          {(['list', 'timeline'] as const).map((id) => (
+            <button key={id} type="button" role="radio" aria-checked={layout === id} data-testid={`tasks-layout-${id}`} onClick={() => setLayout(id)}
+              className={cn('rounded-[var(--radius-control)] px-2 py-0.5', layout === id ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>
+              {t(id === 'list' ? 'collection.view.list' : 'tasks.timeline.layout')}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {view.kind !== 'agents' && layout === 'timeline' ? (
+        // Моя неделя: this week's open tasks across every project/area, Mon–Sun.
+        <button type="button" aria-pressed={timelineWeek} data-testid="tasks-timeline-week" onClick={() => setTimelineWeek((v) => !v)}
+          className={cn('rounded-[var(--radius-control)] border border-border-subtle px-2 py-0.5 text-sm', timelineWeek ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>
+          {t('tasks.week.title')}
+        </button>
+      ) : null}
     </>
   )
+
+  const scheduleTask = (id: string, patch: SchedulePatch) => {
+    if (patch.startAt == null && patch.dueAt == null) return
+    const today = isoOf(Date.now())
+    const key = (c: { blocker: PersonalTask; blocked: PersonalTask }) => `${c.blocker.id}>${c.blocked.id}`
+    const before = new Set(dependencyConflicts(storeRef.current.list().filter(isOpenTask), id, today).map(key))
+    mutate((current) => applySchedule(current, id, patch))
+    // Finish-to-start: warn (don't auto-shift) only for conflicts this move created.
+    const conflict = dependencyConflicts(storeRef.current.list().filter(isOpenTask), id, today).find((c) => !before.has(key(c)))
+    if (conflict) toast.warning(t('tasks.deps.conflict', { title: conflict.blocked.title, blocker: conflict.blocker.title }))
+  }
+  const timelineGroupTitle = (group: TimelineGroup) => {
+    if (group.id == null) return t('tasks.move.noPlace')
+    if (group.kind === 'project') return projectName(group.id)
+    if (group.kind === 'area') return areaName(group.id)
+    return t(`tasks.projection.${group.id}`)
+  }
+  const showTimeline = layout === 'timeline' && view.kind !== 'agents'
+  // Leaving the list for the timeline drops any multi-selection.
+  useEffect(() => { if (layout === 'timeline') clearMulti() }, [layout, clearMulti])
 
   const projectToolbar = view.kind === 'project' && currentProject ? (
     <div className="flex flex-wrap items-center gap-1 px-3 pb-1.5">
@@ -1191,14 +1426,14 @@ export default function TasksPage(props: TasksPageProps = {}) {
   )
 
   const list = (
-    <div className="relative flex h-full min-h-0 flex-col">
-      <header className="shrink-0 px-3 pt-2" data-testid="tasks-list-header">
+    <div data-glass-slot="table" className="relative flex h-full min-h-0 flex-col">
+      <header data-glass-slot="toolbar" className="shrink-0 px-3 pt-2" data-testid="tasks-list-header">
         <div className="flex min-w-0 items-center gap-2">
           <h2 className="min-w-0 flex-1 truncate text-lg font-semibold">{titleNode}</h2>
           {magicPlusControl}
         </div>
         <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 py-1">
-          <span className="min-w-0 text-sm text-text-muted">{t('tasks.status.open', { count: view.kind === 'agents' ? agentList.length : visible.filter(isOpenTask).length })}</span>
+          <span className="min-w-0 text-sm text-text-muted">{t('tasks.status.open', { count: view.kind === 'agents' ? agentList.length : openTasks.length })}</span>
           <div className="flex min-w-0 flex-wrap items-center gap-1">{headerControls}</div>
         </div>
       </header>
@@ -1263,10 +1498,11 @@ export default function TasksPage(props: TasksPageProps = {}) {
       <div
         ref={listRef}
         role="listbox"
+        aria-multiselectable="true"
         aria-label={typeof listTitle === 'string' ? listTitle : undefined}
         tabIndex={0}
         data-testid="tasks-list"
-        className="relative min-h-0 flex-1 overflow-y-auto pb-3 outline-none"
+        className={cn('relative min-h-0 flex-1 outline-none', showTimeline ? 'overflow-hidden' : 'overflow-y-auto pb-3')}
       >
         {view.kind === 'agents' ? (
           agentList.length === 0 ? (
@@ -1282,6 +1518,21 @@ export default function TasksPage(props: TasksPageProps = {}) {
               {session.sessionStatus ? <Badge tone="muted">{String(session.sessionStatus)}</Badge> : null}
             </button>
           ))
+        ) : showTimeline ? (
+          <TaskTimeline
+            tasks={timelineWeek ? weekOpenTasks : openTasks}
+            fixedRange={timelineWeek ? weekRange(isoOf(now)) : undefined}
+            today={isoOf(now)}
+            locale={i18n.language}
+            selectedId={selectedId}
+            zoom={timelineZoom}
+            groupBy={timelineGroup}
+            onZoom={setTimelineZoom}
+            onGroupBy={setTimelineGroup}
+            onSelect={selectTask}
+            onSchedule={scheduleTask}
+            groupTitle={timelineGroupTitle}
+          />
         ) : nothing ? (
           <EmptyState title={searching ? t('tasks.search.none') : t(emptyKey)} />
         ) : sections.map(renderSection)}
@@ -1340,7 +1591,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
   const shortcuts: Array<[string, string]> = [
     [formatHotkeyDisplay('mod+n'), 'quick'],
     [formatHotkeyDisplay('space'), 'complete'],
-    ['↑ ↓', 'navigate'],
+    ['↑ ↓ · Home End · PgUp PgDn', 'navigate'],
     [formatHotkeyDisplay('enter'), 'edit'],
     [formatHotkeyDisplay('mod+k'), 'move'],
     [formatHotkeyDisplay('mod+t'), 'today'],
@@ -1385,7 +1636,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       setPopover={setPopover}
     />
   ) : (
-    <div className="flex flex-col gap-3 px-5 py-6">
+    <div data-glass-slot="empty" className="flex flex-col gap-3 px-5 py-6">
       <p className="text-text-muted" role="status" data-testid={selectedId ? 'tasks-not-found' : 'tasks-select-hint'}>
         {t(selectedId ? 'tasks.notFound' : 'tasks.selectHint')}
       </p>
@@ -1473,11 +1724,11 @@ export default function TasksPage(props: TasksPageProps = {}) {
         <QuickEntry
           now={now}
           initialText={quickEntry.initial}
-          destinationLabel={destinationLabel}
+          destinationLabel={entryDefaults.label}
           projects={personalProjects}
           areas={areas}
-          initialProjectId={viewDefaults().projectId}
-          initialAreaId={viewDefaults().areaId}
+          initialProjectId={entryDefaults.projectId}
+          initialAreaId={entryDefaults.areaId}
           onClose={() => { setQuickEntry(null); listRef.current?.focus() }}
           onSubmit={onQuickEntry}
         />
@@ -1490,6 +1741,16 @@ export default function TasksPage(props: TasksPageProps = {}) {
           onClose={() => { setMoveFor(null); listRef.current?.focus() }}
         />
       ) : null}
+      {bulkMove && bulkIds.length && layout !== 'timeline' ? (
+        <MoveDialog
+          title={t('tasks.bulk.moveTitle', { count: bulkIds.length })}
+          destinations={moveDestinations}
+          onPick={(dest) => { runBulk('move', dest); setBulkMove(false); listRef.current?.focus() }}
+          onClose={() => { setBulkMove(false); listRef.current?.focus() }}
+        />
+      ) : null}
+      {/* The bulk bar acts on list multi-select; the timeline has none. */}
+      {bulkIds.length && !bulkMove && layout !== 'timeline' ? <BulkActionBar count={bulkIds.length} onAction={runBulk} onClear={() => { clearMulti(); listRef.current?.focus() }} /> : null}
       {confirm?.kind === 'emptyTrash' ? (
         <ConfirmDialog
           title={t('tasks.trash.emptyTitle')}

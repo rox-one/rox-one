@@ -138,6 +138,7 @@ export function InlineApprovalCard({
   return (
     <section
       data-g05-approval={view}
+      data-glass-slot="card"
       aria-labelledby={headingId}
       onKeyDown={handleKeyDown}
       className={cn(
@@ -199,7 +200,7 @@ export function InlineApprovalCard({
         <div className="px-3 pt-2.5"><PermissionDiffPreview preview={request.preview} /></div>
       ) : request.command && (
         <div className="px-3 pt-2.5">
-          <pre className="max-h-24 overflow-auto whitespace-pre-wrap break-all rounded-[var(--radius-control)] bg-surface-input px-3 py-2 font-mono text-caption leading-[var(--text-body-leading)] text-text-primary">
+          <pre data-glass-slot="editor" className="max-h-24 overflow-auto whitespace-pre-wrap break-all rounded-[var(--radius-control)] bg-surface-input px-3 py-2 font-mono text-caption leading-[var(--text-body-leading)] text-text-primary">
             {request.command}
           </pre>
         </div>

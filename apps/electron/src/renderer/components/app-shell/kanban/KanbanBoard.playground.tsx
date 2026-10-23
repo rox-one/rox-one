@@ -14,7 +14,7 @@ import {
 function PlannerKanbanScreenStory() {
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/60 px-4">
+      <header data-glass-slot="toolbar" className="flex h-12 shrink-0 items-center justify-between border-b border-border/60 px-4">
         <div>
           <h2 className="text-sm font-semibold text-foreground">Planner board</h2>
           <p className="text-xs text-muted-foreground">Production KanbanBoard with deterministic fixture data.</p>

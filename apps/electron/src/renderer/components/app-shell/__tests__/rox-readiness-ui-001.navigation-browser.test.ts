@@ -247,6 +247,7 @@ function fixtureBundleSource(main: string, shell: string, tabs: string) {
     const EXTRA_SCREENS=[],getModeRegistry=()=>({list:()=>[]});
     const automationsAtom=atom([]),knowledgeHomeViewAtom=atom('search'),knowledgeActiveViewIdAtom=atom(null);
     const Pass=props=>React.createElement('section',null,props.children), Panel=Pass, StoplightProvider=Pass;
+    const Skeleton=props=>React.createElement('span',{'data-skeleton':true,'aria-hidden':true},null);
     // Product-tour instrumentation is a declared fixture seam; real navigation
     // and content recovery callbacks above remain the production implementation.
     const TourPanelScope=Pass, navigationEntity=()=>({}), UnavailableAutomationTour=()=>null;
@@ -271,6 +272,12 @@ function fixtureBundleSource(main: string, shell: string, tabs: string) {
       PlaybooksHomePage=leaf('playbooks-home'),CookbooksSurfacePage=leaf('cookbooks-surface'),
       MissionBoard=leaf('mission-board'),DrivePage=leaf('drive');
     const getSettingsPageComponent=()=>leaf('settings'),recordRecentSetting=()=>{};
+    // MainContentPanel renders the settings nav beside its content on settings
+    // routes; this suite drives link/panel restoration, so the nav is a declared
+    // fixture seam like the panel leaves above (an unbound identifier here throws
+    // ReferenceError while every panel renders and the suite then fails on an
+    // unrelated waitFor timeout).
+    const SettingsScreenSidebar=props=>React.createElement('div',{'data-leaf':'settings-sidebar','data-subpage':props.subpage??''},null);
     const AgentsWorkspacePage=leaf('agents'),SurfaceHost=leaf('surface');
     ${main}
     ${shell}

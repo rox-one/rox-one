@@ -199,7 +199,9 @@ export function TeamSessionPanel({
   }
 
   return (
-    <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto bg-background p-4 text-sm" data-testid="team-session-panel">
+    // Arc Glass: no opaque fill here — the panel sits inside the glass
+    // `popover` surface (ui/popover.tsx), which paints the background.
+    <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto p-4 text-sm" data-testid="team-session-panel">
       <div className="flex items-baseline justify-between gap-2">
         <div className="text-base font-semibold">{t('teamCollab.title')}</div>
         {roster.org ? <div className="truncate text-xs text-muted-foreground">{roster.org.name}</div> : null}

@@ -35,6 +35,7 @@ export function AutomationCard({
 
   return (
     <div
+      data-glass-slot="card"
       className={cn(
         'rounded-[var(--radius-card)] bg-background shadow-minimal overflow-hidden transition-all',
         !automation.enabled && 'opacity-50',

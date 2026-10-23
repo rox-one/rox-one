@@ -36,6 +36,7 @@ import {
   type Tone,
 } from '@/components/mode-screen/ModeScreen'
 import {
+  DECISION_KINDS,
   collectInboxFilterStats,
   markDone,
   reopen,
@@ -54,13 +55,14 @@ import {
 import { isOptionalMailSetup, type MailFolder } from '../../../shared/mail-local'
 import { useMail } from './mail/useMail'
 import { MailCompose, MailListPanel, MailReader, folderLabel, useComposeState } from './mail/MailPanels'
-import { emailIdFromItem, mailItemId, mailToInboxItem, statusKey } from './mail/mail-view'
+import { emailIdFromItem, mailItemId, mailErrorKey, mailToInboxItem, statusKey } from './mail/mail-view'
 import type { TeamInboxItem } from '@rox/shared/team'
 import { InboxSidebar, InboxKindIcon, isMailFilter, type InboxPageFilter } from './InboxSidebar'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
 import { toErrorMessage } from '@/lib/errors'
+import { useInboxScreenSidebar } from '@/screens/inbox/useInboxScreenSidebar'
 
 const KIND_TONE: Record<InboxKind, Tone> = {
   permission: 'warning',
@@ -206,7 +208,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   const openFolder = (f: MailFolder) => {
     if (contextRef.current !== actorContext || !actorContext.actorKey) return
     setFilter({ mail: f.id })
-    mail.setFolder({ folderId: f.id === 'inbox' ? null : f.id, role: f.role })
+    mail.setFolder({ folderId: f.id === 'inbox' || f.id === f.role ? null : f.id, role: f.role })
     selectMail(null)
   }
   const mailNext = (id: string) => {
@@ -385,8 +387,8 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
         const m = mail.message && mail.message.id === mailSelected ? mail.message : null
         if (!m || composeState.compose) return
         const next = mailNext(m.id)
-        if (event.key === 'e') { event.preventDefault(); void mail.act((a) => a.move([m.id], 'archive')).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(String(e)) }) }
-        if (event.key === '#') { event.preventDefault(); void mail.act((a) => a.remove([m.id])).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(String(e)) }) }
+        if (event.key === 'e') { event.preventDefault(); void mail.act((a) => a.move([m.id], 'archive')).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(e) }) }
+        if (event.key === '#') { event.preventDefault(); void mail.act((a) => a.remove([m.id])).then(() => { if (contextRef.current === actorContext) selectMail(next) }, (e) => { if (contextRef.current === actorContext) mail.setError(e) }) }
         if (event.key === 'r') { event.preventDefault(); composeState.start('reply', m) }
         if (event.key === 'Escape') selectMail(null)
         return
@@ -445,7 +447,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   }
 
   const optionalMailSetup = isOptionalMailSetup(mail.status)
-  const mailFailure = optionalMailSetup && !inMail ? null : mail.error ?? (mail.status?.enabled && (mail.status.state === 'error' || mail.status.state === 'unreachable') ? mail.status.error ?? t(statusKey(mail.status)) : null)
+  const mailFailure = optionalMailSetup && !inMail ? null : mail.error ? t(mailErrorKey(mail.errorCode)) : mail.status?.enabled && mail.status.state === 'error' ? t(mailErrorKey(mail.status.errorCode)) : mail.status?.enabled && mail.status.state === 'unreachable' ? t(statusKey(mail.status), { url: mail.status.serverUrl }) : null
   const errorEntries = [...Object.entries(errors).filter(([, value]) => value), ...(mailFailure ? [['mail', mailFailure]] : [])]
   const initialLoading = !!workspaceId && (!loaded.memory || !loaded.skills || !loaded.senders)
     || mail.statusLoading || mail.status?.state === 'provisioning' || mailReady && mail.loading && mail.unread.length === 0
@@ -460,6 +462,26 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   const refreshInbox = async () => {
     await Promise.all([reload(), mail.refreshStatus().then(() => mail.refresh())])
   }
+  // Shell second sidebar (shell-layout): same data as the legacy portal navigator.
+  const sidebarKinds = useMemo(() => [...DECISION_KINDS, ...activityKinds, 'reply', 'error', ...(mailReady ? [] : ['mail'])], [activityKinds, mailReady])
+  const sidebarMailFolders = useMemo(() => mailReady ? mail.folders.map((f) => ({
+    id: f.id, label: folderLabel(t, f), role: f.role ?? undefined,
+    count: f.role === 'drafts' || f.role === 'sent' ? f.total : f.unread,
+  })) : [], [mailReady, mail.folders, t])
+  useInboxScreenSidebar({
+    counts: filteredCounts,
+    kinds: sidebarKinds,
+    mailFolders: sidebarMailFolders,
+    filter,
+    onFilter: setFilter,
+    onMailFolder: (id) => { const f = mail.folders.find((x) => x.id === id); if (f) openFolder(f) },
+    query,
+    onQuery: setQuery,
+    onCompose: mailReady ? () => composeState.start('new', null) : null,
+    onRefresh: () => { void refreshInbox() },
+    loading: initialLoading,
+    error: inboxFailed ? t('inbox.sourceError', { sources: errorEntries.map(([key]) => t(key === 'mail' ? 'inbox.kind.mail' : `inbox.source.${key}`)).join(', ') }) : null,
+  })
   const resetFilters = () => { setQuery(''); setFilter('all'); setPreferences((previous) => ({ ...previous, signalFilter: 'all', unreadOnly: false })) }
   const narrowed = !!query.trim() || preferences.unreadOnly || preferences.signalFilter !== 'all' || filter !== 'all'
   const mailFolder = inMail ? mail.folders.find((f) => f.id === filter.mail) : undefined
@@ -477,11 +499,11 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   ) : (
     <>
       <ListHeader
-        title={filter === 'all' ? t('inbox.title') : typeof filter === 'object' ? kindLabel(filter.kind) : t(`inbox.view.${filter}`)}
+        title={filter === 'all' ? t('inbox.view.all') : typeof filter === 'object' ? kindLabel(filter.kind) : t(`inbox.view.${filter}`)}
         subtitle={visibleBlockingCount ? t('inbox.blockingCount', { count: visibleBlockingCount }) : undefined}
         actions={<Button variant="ghost" disabled={refreshing} onClick={() => void refreshInbox()}>{refreshing ? <LoaderCircle aria-hidden className="icon-caption animate-spin motion-reduce:animate-none" /> : null}{t('inbox.refresh')}</Button>}
       />
-      <div className="mx-3 flex flex-wrap items-center gap-1.5 border-b border-border-subtle py-2">
+      <div data-glass-slot="toolbar" className="mx-3 flex flex-wrap items-center gap-1.5 border-b border-border-subtle py-2">
         <input
           type="search"
           value={query}
@@ -506,7 +528,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
         </label>
       </div>
       {selectedVisibleIds.length > 0 ? (
-      <div data-testid="inbox-selection-toolbar" className="mx-3 flex flex-wrap items-center gap-1.5 border-b border-border-subtle py-1.5 text-caption">
+      <div data-testid="inbox-selection-toolbar" data-glass-slot="toolbar" className="mx-3 flex flex-wrap items-center gap-1.5 border-b border-border-subtle py-1.5 text-caption">
         {/* eslint-disable-next-line rox/prefer-primitives -- Checkbox primitive (#1592) has not landed; the bulk select-all switch stays native until it does */}
         <input
           type="checkbox"
@@ -549,9 +571,9 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
       ) : isWebUI ? (
         <p className="mx-3 mt-2 text-caption text-text-muted" data-testid="inbox-desktop-only-hint">{t('inbox.desktopOnlyHint')}</p>
       ) : null}
-      <div role="listbox" aria-label={t('inbox.title')} className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="inbox-list">
+      <div role="listbox" aria-label={t('inbox.title')} data-glass-slot="table" className="min-h-0 flex-1 overflow-y-auto pb-3" onKeyDown={onListKeys} data-testid="inbox-list">
         {visible.length === 0 ? (
-          <div ref={actionsTourRef} data-tour-id="inbox.actions" className="flex min-h-[300px] flex-1 flex-col items-center justify-center px-5 py-10 text-center" role={initialLoading ? 'status' : undefined}>
+          <div ref={actionsTourRef} data-tour-id="inbox.actions" data-glass-slot="empty" className="flex min-h-[300px] flex-1 flex-col items-center justify-center px-5 py-10 text-center" role={initialLoading ? 'status' : undefined}>
           <span aria-hidden="true" className="mb-2 flex size-16 items-center justify-center rounded-lg bg-accent/10 text-accent">
             {initialLoading ? <LoaderCircle className="icon-empty animate-spin motion-reduce:animate-none" /> : errorEntries.length || !workspaceId ? <Inbox className="icon-empty" /> : narrowed ? <Search className="icon-empty" /> : <CheckCheck className="icon-empty" />}
           </span>
@@ -778,7 +800,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
   const status = (
     <>
       {counts.blocking > 0 ? <span>{t('inbox.status.blocking', { count: counts.blocking })}</span> : null}
-      {mail.available && (mailReady || inMail || mailFailure) ? <span className="truncate" data-testid="mail-status" title={mail.status?.error ?? undefined}>{t(statusKey(mail.status), { address: mail.status?.address ?? '', url: mail.status?.serverUrl ?? '', error: mail.status?.error ?? '', flag: mail.status?.flag ?? '' })}</span> : null}
+      {mail.available && (mailReady || inMail || mailFailure) ? <span className="truncate" data-testid="mail-status">{t(statusKey(mail.status), { address: mail.status?.address ?? '', url: mail.status?.serverUrl ?? '', flag: mail.status?.flag ?? '' })}</span> : null}
     </>
   )
   const hasDetail = !!(selected || currentId || mailSelected || composeState.compose)
@@ -787,7 +809,7 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
     <div data-testid="inbox-page" className="flex h-full min-h-0 min-w-0 flex-col bg-background font-sans text-body text-foreground">
       <div className="flex min-h-0 min-w-0 flex-1">
         <ShellSidebarPortal className="hidden w-[220px] shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3 md:flex">{navigator}</ShellSidebarPortal>
-        <section ref={listTourRef} data-tour-id="inbox.list" className={`min-h-0 min-w-0 flex-1 flex-col bg-surface-hover ${hasDetail ? 'hidden lg:flex' : 'flex'}`} data-testid="inbox-queue">
+        <section ref={listTourRef} data-tour-id="inbox.list" data-glass-slot="panel" className={`min-h-0 min-w-0 flex-1 flex-col bg-surface-hover ${hasDetail ? 'hidden lg:flex' : 'flex'}`} data-testid="inbox-queue">
           <label className="mx-3 mt-2 flex items-center gap-2 text-small text-text-secondary md:hidden">
             <span>{t('inbox.viewLabel')}</span>
             {/* eslint-disable-next-line rox/prefer-primitives -- md:hidden mobile view switcher: the native picker is the intended touch control; Radix Select is a portaled popover and would change the interaction, out of scope for a token pass */}
@@ -802,8 +824,8 @@ export function InboxQueue({ selectedId }: { selectedId?: string | null }) {
           </label>
           {listPanel}
         </section>
-        {hasDetail ? <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background lg:max-w-[48%]" data-testid="inbox-detail-pane">
-          <div className="flex shrink-0 border-b border-border-subtle px-4 py-2"><Button variant="ghost" onClick={closeDetail}><ArrowLeft className="icon-caption" aria-hidden />{t('common.backToList')}</Button></div>
+        {hasDetail ? <section data-glass-slot="editor" className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-background lg:max-w-[48%]" data-testid="inbox-detail-pane">
+          <div data-glass-slot="toolbar" className="flex shrink-0 border-b border-border-subtle px-4 py-2"><Button variant="ghost" onClick={closeDetail}><ArrowLeft className="icon-caption" aria-hidden />{t('common.backToList')}</Button></div>
           {detail}
         </section> : null}
       </div>

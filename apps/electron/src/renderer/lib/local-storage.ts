@@ -11,6 +11,8 @@ const PREFIX = 'craft-'
  */
 export const KEYS = {
   featureProductTourV1: 'feature-product-tour-v1',
+  /** Spotlight orientation tour: { status: 'completed' | 'skipped', version, at } */
+  guidedTour: 'guided-tour',
   // Chat sidebar
   sidebarVisible: 'sidebar-visible',
   sidebarPinned: 'sidebar-pinned',
@@ -24,6 +26,9 @@ export const KEYS = {
   shellRailPins: 'shell-rail-pins-v1',
   shellPills: 'shell-pills-v1',
   shellPanels: 'shell-panels-v1',
+  errorJournal: 'error-journal-v1',
+  liteMode: 'lite-mode-v1',
+  statusBarItems: 'status-bar-items-v1',
   uiDensity: 'ui-density-v1',
   screenHintsSeen: 'screen-hints-seen-v1',
   listFilter: 'list-filter',
@@ -183,6 +188,9 @@ export const KEYS = {
   featureDialogArtifactsV1: 'feature-dialog-artifacts-v1',
   featureComposerDeckV1: 'feature-composer-deck-v1',
   featurePanelSwapV1: 'feature-panel-swap-v1',
+  shellNotifications: 'shell-notifications-v1',
+  shellNotificationBaselines: 'shell-notification-baselines-v1',
+  shellInspector: 'shell-inspector-v1',
 } as const
 
 export const EVENTS = {

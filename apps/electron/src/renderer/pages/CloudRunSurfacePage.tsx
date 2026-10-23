@@ -159,6 +159,7 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
         className="flex h-full flex-col items-center justify-center gap-3 p-6 text-muted-foreground"
         data-cloud-run-surface="empty"
         data-testid="cloud-run-surface-empty"
+        data-glass-slot="empty"
       >
         <p className="text-sm">{t('cloudRuns.surface.noRunSelected')}</p>
         <p className="max-w-md text-center text-xs text-muted-foreground/80">
@@ -183,6 +184,7 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
         data-cloud-run-surface="loading"
         data-cloud-run-id={runId}
         data-testid="cloud-run-surface-loading"
+        data-glass-slot="empty"
       >
         <p className="text-sm">{t('common.loading')}</p>
       </div>
@@ -202,6 +204,7 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
         data-cloud-run-surface={state.kind}
         data-cloud-run-id={runId}
         data-testid={`cloud-run-surface-${state.kind}`}
+        data-glass-slot="empty"
       >
         <p className="text-sm">{title}</p>
         {state.kind === 'unavailable' && state.message ? (
@@ -237,7 +240,7 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
       data-cloud-run-state={run.status?.state ?? 'unknown'}
       data-testid="cloud-run-surface-host"
     >
-      <div className="flex h-7 shrink-0 items-center justify-between border-b border-border/40 px-3">
+      <div data-glass-slot="toolbar" className="flex h-7 shrink-0 items-center justify-between border-b border-border/40 px-3">
         <span className="truncate text-xs font-medium text-foreground/80">
           {t('settings.cloudRuns.title')} · {run.name || run.id}
         </span>
@@ -250,7 +253,7 @@ export default function CloudRunSurfacePage({ runId }: CloudRunSurfacePageProps)
           {t('cloudRuns.surface.openSettings')}
         </button>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto p-4 text-sm">
+      <div data-glass-slot="editor" className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto p-4 text-sm">
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-xs">
           <dt className="text-muted-foreground">ID</dt>
           <dd className="font-mono break-all">{run.id}</dd>

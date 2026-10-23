@@ -11,6 +11,8 @@ import {
   getActiveWorkspace,
   getWorkspaceByNameOrId,
   MaterialSettingsSchema,
+  PresetThemeSchema,
+  ThemeLayersSchema,
   setActiveWorkspace,
   updateWorkspaceRemoteServer,
 } from '@rox/shared/config'
@@ -24,12 +26,12 @@ import {
 import { perf } from '@rox/shared/utils'
 import { pushTyped, type RequestContext, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { assertNativeMetadataRead, readNativeViews } from './native-sidebar-metadata'
+import { assertNativeMetadataRead, readNativeChatFolders, readNativeViews } from './native-sidebar-metadata'
 import { readNativeWorkspaceMetadata } from './native-workspace-registry'
 import { isValidWorkingDirectory, isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
 import { isSensitiveAgentCwd } from '@rox/shared/sessions'
 import type { RemoteServerConfig, Workspace } from '@rox/core/types'
-import type { MaterialSettings, ThemeOverrides } from '@rox/shared/config'
+import type { MaterialSettings, ThemeLayers, ThemeOverrides } from '@rox/shared/config'
 import {
   isClaimableLive,
   rpcWorkspaceActResult,
@@ -54,11 +56,15 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.theme.GET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_COLOR_THEME,
   RPC_CHANNELS.theme.SET_APP_MATERIAL,
+  RPC_CHANNELS.theme.SET_APP_LAYERS,
+  RPC_CHANNELS.theme.SAVE_USER_PRESET,
   RPC_CHANNELS.theme.BROADCAST_PREFERENCES,
   RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME,
   RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME,
   RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES,
   RPC_CHANNELS.theme.BROADCAST_WORKSPACE_THEME,
+  RPC_CHANNELS.chatFolders.GET,
+  RPC_CHANNELS.chatFolders.MUTATE,
   RPC_CHANNELS.views.LIST,
   RPC_CHANNELS.views.SAVE,
   RPC_CHANNELS.toolIcons.GET_MAPPINGS,
@@ -531,6 +537,43 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     return next
   })
 
+  // Persist the layer tokens (frame/content/elevation/wallpaper/accent/glass)
+  // into theme.json. Same contract as SET_APP_MATERIAL: LOCAL_ONLY, `null`
+  // clears, an object replaces the field wholesale, the watcher broadcasts.
+  server.handle(RPC_CHANNELS.theme.SET_APP_LAYERS, async (ctx, layers: unknown) => {
+    if (ctx.webUiAuthenticated) throw new CodedError('AUTH_FAILED', 'App theme layers are local-only')
+    let parsed: ThemeLayers | null
+    if (layers === null) {
+      parsed = null
+    } else {
+      const result = ThemeLayersSchema.safeParse(layers)
+      if (!result.success) throw new CodedError('INVALID_PAYLOAD', 'Invalid theme layers')
+      parsed = result.data as ThemeLayers
+    }
+    const { loadAppTheme, saveAppTheme } = await import('@rox/shared/config/storage')
+    const next: ThemeOverrides = loadAppTheme() ?? {}
+    if (parsed === null || Object.keys(parsed).length === 0) delete next.layers
+    else next.layers = parsed
+    saveAppTheme(next)
+    return next
+  })
+
+  // Save the current look as a user preset (Settings → Внешний вид →
+  // «Сохранить как пресет» / import). Never overwrites: the id gets a numeric
+  // suffix until it is free. Returns the new preset id.
+  server.handle(RPC_CHANNELS.theme.SAVE_USER_PRESET, async (ctx, baseId: unknown, theme: unknown) => {
+    if (ctx.webUiAuthenticated) throw new CodedError('AUTH_FAILED', 'User presets are local-only')
+    if (typeof baseId !== 'string' || !/^[a-z0-9][a-z0-9-]{0,47}$/.test(baseId)) throw new CodedError('INVALID_PAYLOAD', 'Invalid preset id')
+    const result = PresetThemeSchema.safeParse(theme)
+    if (!result.success) throw new CodedError('INVALID_PAYLOAD', 'Invalid preset theme')
+    const { writePresetThemeFile } = await import('@rox/shared/config/storage')
+    for (let n = 1; n <= 50; n += 1) {
+      const id = n === 1 ? `user-${baseId}` : `user-${baseId}-${n}`
+      if (writePresetThemeFile(id, result.data)) return id
+    }
+    throw new CodedError('INVALID_PAYLOAD', 'Too many presets with this name')
+  })
+
   // Broadcast theme preferences to all other windows (for cross-window sync)
   server.handle(RPC_CHANNELS.theme.BROADCAST_PREFERENCES, async (ctx, preferences: { mode: string; colorTheme: string; font: string }) => {
     if (ctx.webUiAuthenticated) {
@@ -613,6 +656,43 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     saveViews(workspace.rootPath, views)
     // Broadcast labels changed since views are used alongside labels in sidebar
     pushTyped(server, RPC_CHANNELS.labels.CHANGED, { to: 'workspace', workspaceId }, workspaceId)
+  })
+
+  // ============================================================
+  // Chat folders (chat-folders.json)
+  // ============================================================
+
+  server.handle(RPC_CHANNELS.chatFolders.GET, async (ctx, workspaceId: string) => {
+    const nativeWorkspace = assertNativeMetadataRead(ctx, deps, server, workspaceId)
+    if (nativeWorkspace) return readNativeChatFolders(nativeWorkspace.rootPath)
+    // Local callers read only the workspace their window is bound to (same rule as MUTATE).
+    const callerWorkspaceId = ctx.workspaceId ?? (
+      ctx.webContentsId === null ? undefined : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
+    )
+    if (!workspaceId || callerWorkspaceId !== workspaceId) throw new CodedError('AUTH_FAILED', 'Workspace access denied')
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error('Workspace not found')
+    const { loadChatFoldersPruned } = await import('@rox/shared/chat-folders/storage')
+    assertNativeMetadataRead(ctx, deps, server, workspaceId, workspace.rootPath)
+    return loadChatFoldersPruned(workspace.rootPath)
+  }, { nativeAction: 'read' })
+
+  // Apply one validated op (create/rename/delete/move/reorder) and broadcast the new state
+  server.handle(RPC_CHANNELS.chatFolders.MUTATE, async (ctx, workspaceId: string, op: import('@rox/shared/chat-folders').ChatFoldersOp) => {
+    // Caller must be bound to the workspace it writes (no cross-workspace writes).
+    const callerWorkspaceId = ctx.workspaceId ?? (
+      ctx.webContentsId === null ? undefined : deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId) ?? undefined
+    )
+    if (!workspaceId || callerWorkspaceId !== workspaceId) throw new CodedError('AUTH_FAILED', 'Workspace access denied')
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error('Workspace not found')
+    // Sidebar metadata is host-owned: native/remote principals (read-only or
+    // not) never mutate it — same policy as views:save / labels:create.
+    if (ctx.principal) throw new CodedError('FORBIDDEN', 'Workspace metadata is read-only for remote clients')
+    const { mutateChatFolders } = await import('@rox/shared/chat-folders/storage')
+    const next = mutateChatFolders(workspace.rootPath, op)
+    pushTyped(server, RPC_CHANNELS.chatFolders.CHANGED, { to: 'workspace', workspaceId }, workspaceId, next)
+    return next
   })
 
   // ============================================================

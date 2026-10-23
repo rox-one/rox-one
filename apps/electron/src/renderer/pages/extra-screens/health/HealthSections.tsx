@@ -105,7 +105,7 @@ export function HealthRowDetail({
       </div>
       <p className="mt-2 text-text-secondary">{t(row.detailKey, row.detailParams)}</p>
       {row.rawDetail && (
-        <pre className="mt-2 whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[var(--radius-card)] bg-surface-hover px-3 py-2 font-mono text-small text-muted-foreground">
+        <pre data-glass-slot="editor" className="mt-2 whitespace-pre-wrap [overflow-wrap:anywhere] rounded-[var(--radius-card)] bg-surface-hover px-3 py-2 font-mono text-small text-muted-foreground">
           {row.rawDetail}
         </pre>
       )}

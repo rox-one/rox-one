@@ -388,7 +388,13 @@ export default function KnowledgeSurfacePage({
   }, [instanceId])
 
   const fullSurface = (
-    <div ref={containerRef} className="relative h-full w-full bg-background">
+    <div
+      ref={containerRef}
+      className="relative h-full w-full bg-background"
+      // Arc Glass: the composited Rox Notes view is the reading/editing
+      // surface — dense fill + sheen, never blur (arc-glass-surfaces.css).
+      data-glass-slot="editor"
+    >
       <NativeSurfacePlaceholder presentation={presentation} surfaceRef={containerRef} />
     </div>
   )
@@ -398,6 +404,9 @@ export default function KnowledgeSurfacePage({
       <div
         className="flex items-center gap-1 border-b border-border px-2 py-1"
         role="toolbar"
+        // Arc Glass: mode switcher + copy menu = the surface toolbar slot
+        // (static blur + bottom hairline, arc-glass-surfaces.css).
+        data-glass-slot="toolbar"
         aria-label={t('knowledge.surface.toolbar.label')}
       >
         {SURFACE_TOOLBAR_MODES.map(({ mode: m, labelKey }) => {
@@ -465,7 +474,14 @@ export default function KnowledgeSurfacePage({
 
   if (!knowledgeEnabled) {
     return (
-      <div data-testid="knowledge-entity-unavailable" data-knowledge-id={id} role="status" className="flex h-full w-full flex-col items-center justify-center gap-2 bg-background px-6 text-center text-muted-foreground">
+      <div
+        data-testid="knowledge-entity-unavailable"
+        data-knowledge-id={id}
+        role="status"
+        // Arc Glass: centred notice = the `empty` slab (tint + sheen + ring).
+        data-glass-slot="empty"
+        className="flex h-full w-full flex-col items-center justify-center gap-2 bg-background px-6 text-center text-muted-foreground"
+      >
         <p className="text-sm font-medium">{t('knowledge.featureDisabled.title')}</p>
         <p className="text-sm">{t('knowledge.featureDisabled.body')}</p>
         <p className="text-xs">{t('knowledge.featureDisabled.envHint')}</p>
@@ -475,7 +491,11 @@ export default function KnowledgeSurfacePage({
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
+      <div
+        // Arc Glass: centred notice = the `empty` slab (tint + sheen + ring).
+        data-glass-slot="empty"
+        className="flex items-center justify-center h-full w-full bg-background text-muted-foreground"
+      >
         <p className="text-sm">{t('knowledge.surface.error')}</p>
       </div>
     )
@@ -484,7 +504,11 @@ export default function KnowledgeSurfacePage({
   if (removed) {
     // Deliberate teardown (main broadcast REMOVED), not a load failure.
     return (
-      <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
+      <div
+        // Arc Glass: centred notice = the `empty` slab (tint + sheen + ring).
+        data-glass-slot="empty"
+        className="flex items-center justify-center h-full w-full bg-background text-muted-foreground"
+      >
         <p className="text-sm">{t('knowledge.surface.removed')}</p>
       </div>
     )
@@ -492,7 +516,11 @@ export default function KnowledgeSurfacePage({
 
   if (!instanceId) {
     return (
-      <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
+      <div
+        // Arc Glass: centred notice = the `empty` slab (tint + sheen + ring).
+        data-glass-slot="empty"
+        className="flex items-center justify-center h-full w-full bg-background text-muted-foreground"
+      >
         <p className="text-sm">{t('knowledge.surface.loading')}</p>
       </div>
     )
@@ -501,7 +529,11 @@ export default function KnowledgeSurfacePage({
   if (isCompat) {
     return (
       <div className="flex h-full w-full flex-col bg-background">
-        <div className="border-b border-border px-3 py-1 text-xs text-muted-foreground">
+        <div
+          className="border-b border-border px-3 py-1 text-xs text-muted-foreground"
+          // Arc Glass: the compat hint is a glued strip — toolbar material.
+          data-glass-slot="toolbar"
+        >
           {t('knowledge.surface.compatHint')}
         </div>
         {toolbar}

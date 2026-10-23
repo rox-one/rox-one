@@ -5,6 +5,12 @@
    the material fraction of the opaque surface colour. Raw values live only
    in this token file (UI token ratchet). */
 :root {
+  /* Glass surface (GlassSurface). One knob, 0..1, set by theme
+     customization; every glass value derives from it. Blur is static —
+     never transitioned (NO-ANIMATED-BLUR RULE in motion.css). */
+  --glass-intensity: 0.6;
+  --glass-radius: 14px;
+
   --material-blur-topbar: 20px;
   --material-blur-rail: 20px;
   --material-blur-strip: 20px;
@@ -93,6 +99,51 @@
      panels; dark palettes keep 0 (see `html.dark` below). */
   --material-chrome-muted-mix: 62%;
   --material-light-tint-lift: 3;
+}
+
+/* Derived glass tokens — the single source. Declared on :root and again on
+   every glass element so a per-surface --glass-intensity (GlassSurface
+   `intensity`, theme layers) re-resolves them locally. */
+:root,
+.glass-surface,
+html[data-theme="arc-glass"] :is([data-glass-slot], .rox-mode-pill) {
+  --glass-blur: calc(8px + 24px * var(--glass-intensity));
+  --glass-saturate: calc(1 + 0.6 * var(--glass-intensity));
+  --glass-tint: calc(4% + 10% * var(--glass-intensity));
+  --glass-edge-alpha: calc(8% + 22% * var(--glass-intensity));
+  --glass-specular-alpha: calc(4% + 16% * var(--glass-intensity));
+  /* Edge lighting: a top rim highlight plus a hairline, then the drop shadow. */
+  --glass-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, white var(--glass-edge-alpha), transparent),
+    inset 0 0 0 1px color-mix(in srgb, white calc(var(--glass-edge-alpha) / 2), transparent),
+    var(--shadow-popover, 0 8px 24px rgb(0 0 0 / 0.25));
+
+  /* --- Screen vocabulary (content layer, arc-glass-surfaces.css) -----------
+     Same single knob: every step below is a function of --glass-intensity.
+       tight blur   glued toolbars/panels (shorter throw than --glass-blur)
+       hairline     the 1px tinted edge every content surface draws
+       sheen        top specular highlight for cards / empty states / editors
+       card/overlay shadow + per-slot fill mixes. */
+  --glass-blur-tight: calc(4px + 10px * var(--glass-intensity));
+  --glass-hairline: color-mix(in srgb, white calc(var(--glass-edge-alpha) * 0.55), transparent);
+  --glass-sheen: calc(3% + 13% * var(--glass-intensity));
+  --glass-card-shadow:
+    0 1px 0 color-mix(in srgb, white calc(var(--glass-edge-alpha) / 2), transparent),
+    0 1px 2px rgb(0 0 0 / 0.06),
+    0 10px 22px -14px rgb(0 0 0 / 0.30);
+  --glass-overlay-shadow: var(--shadow-overlay, var(--shadow-popover));
+  /* Fill families: cards read the elev-1 family, overlays the elev-3 one. */
+  --glass-card-fill: var(--elev-1, var(--paper));
+  --glass-overlay-fill: var(--elev-3, var(--popover-solid));
+  /* Translucency per slot. Reading surfaces (editor) stay >=80% so AA holds;
+     rows are transparent paint and take their accents from state.css. */
+  --glass-panel-mix: calc(46% + 22% * var(--glass-intensity));
+  --glass-toolbar-mix: calc(52% + 24% * var(--glass-intensity));
+  --glass-card-mix: calc(40% + 24% * var(--glass-intensity));
+  --glass-table-mix: calc(44% + 22% * var(--glass-intensity));
+  --glass-empty-mix: calc(26% + 22% * var(--glass-intensity));
+  --glass-editor-mix: max(80%, calc(66% + 16% * var(--glass-intensity)));
+  --glass-overlay-mix: max(84%, calc(74% + 12% * var(--glass-intensity)));
 }
 
 /* Light palettes lift the glass; dark palettes keep the source lightness. The

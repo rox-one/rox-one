@@ -8,6 +8,18 @@ from .server import MAX_LINE_BYTES, serve
 
 
 async def _amain() -> int:
+    # Protocol frames must be the only bytes on fd 1. Dup the real stdout, then
+    # point fd 1 / sys.stdout at stderr so Python *and* native C extensions that
+    # write to fileno 1 cannot interleave with JSON-RPC. Fake backend is for
+    # tests only — the host must never set ROX_COGNEE_FAKE_BACKEND in production.
+    real_out_fd = os.dup(1)
+    real_out = os.fdopen(real_out_fd, "wb", buffering=0)
+    try:
+        os.dup2(sys.stderr.fileno(), 1)
+    except OSError:
+        pass
+    sys.stdout = sys.stderr
+
     if os.environ.get("ROX_COGNEE_FAKE_BACKEND") == "1":
         from .fake_backend import FakeBackend
 
@@ -25,7 +37,7 @@ async def _amain() -> int:
     async def read_line() -> bytes:
         return await loop.run_in_executor(None, stdin.readline, MAX_LINE_BYTES + 1)
 
-    await serve(backend, read_line)
+    await serve(backend, read_line, out=real_out)
     return 0
 
 

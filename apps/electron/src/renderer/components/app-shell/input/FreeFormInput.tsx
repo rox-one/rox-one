@@ -72,7 +72,7 @@ import {
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useOptionalModalRegistry } from '@/context/ModalContext'
 import { useOptionalDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
-import { EditPopover, getEditConfig } from '@/components/ui/EditPopover'
+import { getEditConfig } from '@/components/ui/edit-config'
 import { SourceAvatar } from '@/components/ui/source-avatar'
 import { SourceSelectorPopover } from '@/components/ui/SourceSelectorPopover'
 import { CompactSourceSelector } from '@/components/ui/CompactSourceSelector'
@@ -122,6 +122,10 @@ import { ComposerDeck } from './deck/ComposerDeck'
 import { DeckChip } from './deck/DeckChip'
 import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@rox/shared/config/rox-public-models'
 import { toErrorMessage } from '@/lib/errors'
+
+const EditPopover = React.lazy(() =>
+  import('@/components/ui/EditPopover').then((m) => ({ default: m.EditPopover })),
+)
 
 function dedupModelsById<T extends string | ModelDefinition>(models: T[]): T[] {
   const seen = new Set<string>()
@@ -2323,6 +2327,10 @@ export function FreeFormInput({
     <form onSubmit={handleSubmit}>
       <div
         ref={containerRef}
+        // Arc Glass: the standalone branch IS the composer surface. InputContainer
+        // (the app path) always passes `unstyled` and carries the slot itself, so
+        // this attribute is inert there and only paints unwrapped composers.
+        data-glass-slot={unstyled ? undefined : 'composer'}
         className={cn(
           'overflow-hidden transition-colors motion-reduce:transition-none',
           // Container styling - only when not wrapped by InputContainer
@@ -2382,7 +2390,8 @@ export function FreeFormInput({
             fall back to the same-window deep-link path; that worked inside
             Electron but launched the desktop app from the WebUI via `rox://`.
             Match the AppShell pattern (which already uses spread). */}
-        {addLabelEditConfig && (
+        {addLabelEditConfig && addLabelPopoverOpen && (
+          <React.Suspense fallback={null}>
           <EditPopover
             trigger={<span className="absolute top-0 left-0 w-0 h-0 overflow-hidden" />}
             open={addLabelPopoverOpen}
@@ -2396,6 +2405,7 @@ export function FreeFormInput({
             side="top"
             align="start"
           />
+          </React.Suspense>
         )}
 
         {/* Pre-flight image-support warning — only for pi_compat connections

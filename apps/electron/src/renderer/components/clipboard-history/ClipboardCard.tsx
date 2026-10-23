@@ -57,6 +57,9 @@ export function ClipboardCard({
       aria-label={label}
       aria-current={selected ? 'true' : undefined}
       data-testid="clipboard-card"
+      data-glass-slot="row"
+      data-state={selected ? 'selected' : undefined}
+      tabIndex={selected ? 0 : -1}
       data-entry-id={entry.id}
       onClick={() => onSelect(entry.id)}
       className={cn(

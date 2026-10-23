@@ -85,6 +85,12 @@ export function buildDailyNoteMarkdown(input: {
   template?: string
 }): string {
   const date = assertDailyDate(input.date)
+  return mergeSessionsBlock(renderDailyTemplate(date, input.template), sessionsForDate(input.sessions ?? [], date))
+}
+
+/** The daily template with its placeholders filled; no sessions block. */
+export function renderDailyTemplate(dateInput: string, templateInput?: string): string {
+  const date = assertDailyDate(dateInput)
   const fallback = [
     '---',
     'title: "{{date}}"',
@@ -95,12 +101,55 @@ export function buildDailyNoteMarkdown(input: {
     '# {{date}}',
     '',
   ].join('\n')
-  const template = (input.template?.trim() ? input.template : fallback)
+  return (templateInput?.trim() ? templateInput : fallback)
     .replaceAll('{{date}}', date)
     .replaceAll('{{title}}', date)
     .replaceAll('{{yesterday}}', shiftDate(date, -1))
     .replaceAll('{{tomorrow}}', shiftDate(date, 1))
-  return mergeSessionsBlock(template, sessionsForDate(input.sessions ?? [], date))
+}
+
+/**
+ * Content to create for a missing daily note, or `null` when the file exists.
+ * An existing daily note is never rewritten in the background: that moved its
+ * revision under an open editor and the next save failed with a false
+ * «changed outside this editor» conflict. The day's sessions are rendered live
+ * by the Notes view instead of being stored in the body.
+ */
+export function planDailyNoteWrite(input: { date: string; existing: string | null; template?: string }): string | null {
+  if (input.existing !== null) return null
+  return renderDailyTemplate(input.date, input.template)
+}
+
+/** The exact line the old writer rendered for a session (see renderSessionsBlock). */
+export function legacySessionLine(session: DailySessionRef): string {
+  return `- ${session.name.replace(/\s+/g, ' ').trim() || session.id}`
+}
+
+/**
+ * One-time cleanup for notes created before the live overlay: drops the stored
+ * sessions block markers and only lines that exactly match `- ${name}` for a
+ * known session. Every other line in the block (other bullets, tasks, links,
+ * prose) is kept in place, and so is
+ * the `## Sessions` heading when such lines remain. Returns `null` when there
+ * is nothing to strip.
+ */
+export function stripLegacySessionsBlock(markdown: string, sessions: readonly DailySessionRef[]): string | null {
+  const start = markdown.indexOf(DAILY_SESSIONS_START)
+  const end = start < 0 ? -1 : markdown.indexOf(DAILY_SESSIONS_END, start)
+  if (start < 0 || end < 0) return null
+  const inner = markdown.slice(start + DAILY_SESSIONS_START.length, end)
+  const generated = new Set(sessions.map(legacySessionLine))
+  const kept = inner.split('\n').filter(line => line.trim() && !generated.has(line.trimEnd())).join('\n')
+  let from = start
+  if (!kept) {
+    const heading = /(?:^|\n)## Sessions[ \t]*\n+$/.exec(markdown.slice(0, start))
+    if (heading) from = heading.index + (heading[0].startsWith('\n') ? 1 : 0)
+  }
+  const before = markdown.slice(0, from).replace(/\n+$/, '')
+  const after = markdown.slice(end + DAILY_SESSIONS_END.length).replace(/^\n+/, '')
+  const parts = [before, kept, after].filter(Boolean)
+  const joined = parts.join('\n\n')
+  return joined.endsWith('\n') ? joined : `${joined}\n`
 }
 
 function escapeRegExp(value: string): string {

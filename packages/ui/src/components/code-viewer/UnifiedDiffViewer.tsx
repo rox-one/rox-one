@@ -156,20 +156,17 @@ export function UnifiedDiffViewer({
     }
   }, [filePath, disableFileHeader, onFileHeaderClick])
 
-  // Use CSS variable so custom themes are respected
-  const backgroundColor = 'var(--background)'
-
   // If we couldn't parse the diff, show a fallback
   if (!fileDiff) {
     return (
       <div
         ref={containerRef}
+        data-glass-slot="editor"
         className={cn(
-          'h-full w-full overflow-auto p-4',
+          'h-full w-full overflow-auto p-4 bg-background',
           className
         )}
         style={{
-          backgroundColor,
           fontFamily: 'var(--font-mono)',
           fontSize: 13,
           lineHeight: 1.6,
@@ -183,12 +180,12 @@ export function UnifiedDiffViewer({
   return (
     <div
       ref={containerRef}
+      data-glass-slot="editor"
       className={cn(
-        'h-full w-full overflow-auto transition-opacity duration-200',
+        'h-full w-full overflow-auto transition-opacity duration-200 bg-background',
         className
       )}
       style={{
-        backgroundColor,
         fontFamily: 'var(--font-mono)',
         fontSize: 13,
         lineHeight: 1.6,

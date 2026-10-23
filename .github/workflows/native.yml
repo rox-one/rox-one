@@ -6,6 +6,11 @@ on:
       - 'native/**'
       - 'packages/server-core/src/native/**'
       - 'packages/server-core/src/sources/**'
+      # Kept: nothing else runs these on push/PR. `.github/workflows/cloud-runs-conformance.yml`
+      # `on:` is only `schedule` (04:00 UTC) + `workflow_dispatch` — no push/PR path coverage —
+      # and its two steps run just 2 of the 10 files in `packages/cloud-runner/src/__tests__/`
+      # (local-provider.test.ts, daytona-provider.test.ts), while the `bun test` below runs the
+      # whole directory. Dropping this path would silently lose PR-time coverage of 8 test files.
       - 'packages/cloud-runner/**'
       - 'packages/shared/src/protocol/**'
       - 'packages/shared/src/sessions/**'
@@ -16,29 +21,52 @@ on:
       - 'native/**'
       - 'packages/server-core/src/native/**'
       - 'packages/server-core/src/sources/**'
+      # Kept, same reasoning as the push block above.
       - 'packages/cloud-runner/**'
       - 'packages/shared/src/protocol/**'
       - 'packages/shared/src/sessions/**'
       - 'packages/shared/src/feature-flags.ts'
       - '.github/workflows/native.yml'
   workflow_dispatch:
+  # Daily backstop: main is checked once a day regardless of push storms.
+  schedule:
+    - cron: '17 3 * * *'
 
 permissions:
   contents: read
 
 concurrency:
-  group: native-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # `github.event_name` is in the group so a push cannot cancel the nightly schedule run.
+  group: native-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   native:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - [self-hosted, linux-toolchain]
-          - [self-hosted, macos-toolchain]
-    runs-on: ${{ matrix.os }}
+    # Runner: hosted Linux, `blacksmith-4vcpu-ubuntu-2404` — the repo's standard Ubuntu
+    # runner (22 other `runs-on:` entries use it), not GitHub-hosted `ubuntu-latest` and
+    # not `[self-hosted, macos-toolchain]`. No self-hosted/deficient-machine state is used
+    # here: no pre-installed cache, no local service, no `/Users/` path.
+    #
+    # macOS is NOT needed — checked, cross-platform evidence:
+    #   - native/Cargo.toml:18-29 — workspace deps are serde/serde_json/rusqlite(bundled)/
+    #     sha2/tokio/tempfile. No objc2*, no core-foundation, no winapi, no
+    #     `target.'cfg(target_os = ...)'` block anywhere in the tree.
+    #   - native/crates/craft-rund/Cargo.toml:13 — `[target.'cfg(unix)'.dependencies] libc`
+    #     is the only platform gate, and it is `unix`, not `macos`.
+    #   - native/apps/craft-native/src/main.rs:65-68 — the sole non-unix `main()` is the
+    #     Windows stub ("craft-native does not support Windows x64 yet"); macOS is not special-cased.
+    #   - grep for DYLD_ / codesign / spctl / osascript / Mach-O / .app/ / Library/ across
+    #     native/** and the TS test dirs: zero hits.
+    #   - TS platform branches are win32-only: packages/server-core/src/native/supervisor.ts:46-47,123
+    #     and packages/server-core/src/sources/builtin-mcp-startup.ts:131,151,156.
+    # Linux is strictly *more* coverage than the macOS box had:
+    #   packages/cloud-runner/src/__tests__/rox-readiness-ui-001.local-runner-recovery.test.ts:7 is
+    #   `test.skipIf(process.platform !== 'linux')` and reads `/proc/<pid>/stat` — on the self-hosted
+    #   macOS runner that test inside the `bun test ... packages/cloud-runner/src/__tests__` run was
+    #   skipped; on ubuntu it executes.
+    #
+    # Nothing remains on self-hosted from this file.
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

@@ -4,8 +4,12 @@ Request:  {"id": 1, "method": "search", "params": {...}}
 Response: {"id": 1, "result": ...} | {"id": 1, "error": {"code": str, "message": str}}
 
 stdout carries protocol frames only; all logging goes to stderr. Requests are
-handled concurrently (a long ``cognify`` never blocks ``search``), and frames
-are written under a lock so responses never interleave.
+handled concurrently (a long ``cognify`` never blocks ``search``). Backend
+writes (add/delete/cognify) share one lock; search stays unlocked and may see
+a partially-indexed view during writes (host applies a retrieval budget + FTS
+fallback). Frames are written under a lock so responses never interleave.
+Oversized frames are rejected and the remainder of the line is drained so the
+JSON-RPC stream stays in sync.
 """
 from __future__ import annotations
 
@@ -39,10 +43,12 @@ class Backend(Protocol):
     async def status(self) -> dict[str, Any]: ...
 
 
-def validate_docs(raw: Any) -> list[dict[str, Any]]:
+def validate_docs(raw: Any) -> tuple[list[dict[str, Any]], int]:
+    """Return (docs, truncated_count). Docs longer than MAX_DOC_CHARS are clipped."""
     if not isinstance(raw, list) or len(raw) > MAX_DOCS_PER_ADD:
         raise RpcError("bad_params", f"docs must be a list of at most {MAX_DOCS_PER_ADD}")
     out: list[dict[str, Any]] = []
+    truncated = 0
     for d in raw:
         if not isinstance(d, dict):
             raise RpcError("bad_params", "doc must be an object")
@@ -57,26 +63,33 @@ def validate_docs(raw: Any) -> list[dict[str, Any]]:
             raise RpcError("bad_params", "doc.source is not a known source")
         if not isinstance(text, str):
             raise RpcError("bad_params", "doc.text must be a string")
-        # Defence in depth: the host gate already drops untrusted content.
+        # Defence in depth only: the host is the primary untrusted-content gate
+        # and must set provenance.originClass. Missing provenance is treated as
+        # trusted here so a forgetful host is not silently broken; only the
+        # explicit originClass == "untrusted" marker is dropped.
         if origin == "untrusted":
             continue
         if not text.strip():
             continue
-        out.append({"id": doc_id, "source": source, "text": text[:MAX_DOC_CHARS]})
-    return out
+        if len(text) > MAX_DOC_CHARS:
+            truncated += 1
+            text = text[:MAX_DOC_CHARS]
+        out.append({"id": doc_id, "source": source, "text": text})
+    return out, truncated
 
 
 class Server:
     def __init__(self, backend: Backend, out=None):
         self.backend = backend
-        self.out = out or sys.stdout
+        # Binary UTF-8 with explicit \n: no locale code page, no \r\n on Windows.
+        self.out = out or sys.stdout.buffer
         self._lock = asyncio.Lock()
         self._tasks: set[asyncio.Task[None]] = set()
         self.stopping = False
 
     async def _send(self, frame: dict[str, Any]) -> None:
         async with self._lock:
-            self.out.write(json.dumps(frame, ensure_ascii=False) + "\n")
+            self.out.write((json.dumps(frame, ensure_ascii=False) + "\n").encode("utf-8"))
             self.out.flush()
 
     async def dispatch(self, method: str, params: dict[str, Any]) -> Any:
@@ -85,11 +98,18 @@ class Server:
         if method == "status":
             return await self.backend.status()
         if method == "add":
-            return await self.backend.add(validate_docs(params.get("docs")))
+            docs, truncated = validate_docs(params.get("docs"))
+            result = await self.backend.add(docs)
+            if isinstance(result, dict):
+                return {**result, "truncated": truncated}
+            return result
         if method == "cognify":
             sources = params.get("sources")
-            if sources is not None and (not isinstance(sources, list) or not set(sources) <= VALID_SOURCES):
-                raise RpcError("bad_params", "sources must be a list of known sources")
+            if sources is not None:
+                if not isinstance(sources, list) or not all(isinstance(s, str) for s in sources):
+                    raise RpcError("bad_params", "sources must be a list of known sources")
+                if not set(sources) <= VALID_SOURCES:
+                    raise RpcError("bad_params", "sources must be a list of known sources")
             return await self.backend.cognify(sources)
         if method == "search":
             query = params.get("query")
@@ -150,10 +170,32 @@ async def serve(backend: Backend, read_line: Callable[[], Awaitable[bytes]], out
         if not raw:
             break  # parent closed stdin: exit
         if len(raw) > MAX_LINE_BYTES:
+            # readline(limit) returns a partial chunk with no trailing newline when
+            # the line exceeds the limit; drain until newline (or EOF) so the next
+            # frame is not a corrupted remnant of this one.
             await server._send({"id": None, "error": {"code": "too_large", "message": "frame too large"}})
+            while not raw.endswith(b"\n"):
+                raw = await read_line()
+                if not raw:
+                    break
             continue
-        line = raw.decode("utf-8", errors="replace").strip()
+        try:
+            line = raw.decode("utf-8").strip()
+        except UnicodeDecodeError:
+            await server._send({"id": None, "error": {"code": "bad_json", "message": "invalid UTF-8"}})
+            continue
         if line:
+            # Handle shutdown inline so we exit without waiting for another
+            # read_line() (host may wait for process exit without closing stdin).
+            is_shutdown = False
+            try:
+                peek = json.loads(line)
+                is_shutdown = isinstance(peek, dict) and peek.get("method") == "shutdown"
+            except json.JSONDecodeError:
+                pass
+            if is_shutdown:
+                await server.handle_line(line)
+                break
             server.submit(line)
             await asyncio.sleep(0)
     await server.drain()

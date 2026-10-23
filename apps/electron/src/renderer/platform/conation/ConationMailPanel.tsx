@@ -24,7 +24,7 @@ export function ConationMailPanel({ enabled = true }: Props) {
   }
 
   return (
-    <div data-conation-mail="blocked" data-conation-mail-live="false" data-evidence="U1">
+    <div data-conation-mail="blocked" data-conation-mail-live="false" data-evidence="U1" data-glass-slot="panel">
       <p>{t('common.unavailable')}</p>
       <p>{t('workbench.mode.unavailable')}</p>
       <p>{t('meetings.notApplied')}</p>

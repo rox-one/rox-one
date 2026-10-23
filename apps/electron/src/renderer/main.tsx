@@ -16,12 +16,17 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import './index.css'
 import './chat-chrome-clarity.css'
 import './components/app-shell/titlebar-mode-pill.css'
+import './components/onboarding/onboarding-start.css'
 import { installRendererPerfHarness } from './perf/install'
 import { startRoxQueryRuntime } from './lib/query/runtime'
 import { syncMainProcessLanguage } from './lib/main-language-sync'
 import { ShellStoreBridge } from './platform/ShellStoreBridge'
 import { RenderProfileMotionConfig } from './lib/render-profile-motion'
 import { seedRenderProfile, startRenderProfileSync } from './lib/render-profile-dom'
+import { installErrorJournal, routeForJournal } from './lib/error-journal'
+import { seedLiteMode } from './lib/lite-mode'
+import { getDefaultStore } from 'jotai'
+import { focusedPanelRouteAtom } from './atoms/panel-stack'
 import { seedDensity } from './lib/density-preference'
 import { seedEntitiesLinksGate } from './lib/entities-links-sync'
 import { subscribeNavigateEvents } from './lib/navigate'
@@ -32,7 +37,16 @@ const rendererPerfHarness = installRendererPerfHarness()
 // PERF-07: own `data-render-profile` at the root, before React and AppShell,
 // so every startup screen (loading, onboarding, reauth, workspace picker)
 // renders with the active profile. The snapshot request starts right here.
+// Route is reduced to its path (routeForJournal): no query, draft text or callback params.
+installErrorJournal(() => routeForJournal(getDefaultStore().get(focusedPanelRouteAtom)))
+seedLiteMode()
 seedDensity()
+// Glass tier + Arc Glass skin: a lazy chunk, off the startup closure.
+// installGlassSkin() itself fires an un-awaited import() of the skin CSS; until
+// it lands (or if either chunk fails) the app keeps the plain, non-glass look.
+void import('@rox/ui/glass/install')
+  .then((m) => m.installGlassSkin())
+  .catch((error: unknown) => console.warn('[glass] skin unavailable, using the plain look', error))
 seedRenderProfile(document.documentElement, window.electronAPI, navigator.userAgent)
 const stopRenderProfileSync = startRenderProfileSync(window.electronAPI, document.documentElement)
 import.meta.hot?.dispose(stopRenderProfileSync)
@@ -217,6 +231,7 @@ import.meta.hot?.dispose(stopRoxQueryRuntime)
 const QuickComposerSurface = React.lazy(
   () => import('./features/native-integrations/QuickComposerSurface'),
 )
+const MiniGlassSurface = React.lazy(() => import('./features/mini-glass/MiniGlassSurface'))
 const rendererSurface = new URLSearchParams(window.location.search).get('surface')
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -227,6 +242,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <ThemeProvider activeWorkspaceId={null}>
             <React.Suspense fallback={null}>
               <QuickComposerSurface />
+            </React.Suspense>
+          </ThemeProvider>
+        ) : rendererSurface === 'mini-glass' ? (
+          <ThemeProvider activeWorkspaceId={null}>
+            <React.Suspense fallback={null}>
+              <MiniGlassSurface />
             </React.Suspense>
           </ThemeProvider>
         ) : (

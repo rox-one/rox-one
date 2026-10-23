@@ -303,7 +303,20 @@ export type OpenAnnotationRequest = {
   nonce: number
 }
 
+/** Extra overflow action on a completed response (e.g. «Создать задачу»). */
+export interface ResponseExtraAction {
+  id: string
+  label: string
+  icon?: React.ReactNode
+  onSelect: (text: string, messageId?: string) => void
+}
+
 export interface TurnCardProps {
+  /** Extra overflow actions for the response card. */
+  responseActions?: ResponseExtraAction[]
+  /** Optional row rendered under the response text (e.g. object chips). */
+  renderResponseFooter?: (text: string, messageId?: string) => React.ReactNode
+
   /** Session ID for state persistence (optional in shared context) */
   sessionId?: string
   /** Turn ID for state persistence */
@@ -997,6 +1010,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
       <div className="flex items-stretch">
         <TreeViewConnector depth={depth} isLastChild={isLastChild} />
         <div
+          data-glass-slot="row"
           className={cn(
             "group/row flex items-center gap-2 py-0.5 text-foreground/75 flex-1 min-w-0",
             SIZE_CONFIG.fontSize
@@ -1116,6 +1130,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
       <div className="flex items-stretch">
         <TreeViewConnector depth={depth} isLastChild={isLastChild} />
         <div
+          data-glass-slot="row"
           className={cn(
             "group/row flex items-center gap-2 py-0.5 text-muted-foreground flex-1 min-w-0",
             SIZE_CONFIG.fontSize
@@ -1180,6 +1195,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
     <div className="flex items-stretch">
       <TreeViewConnector depth={depth} isLastChild={isLastChild} />
       <div
+        data-glass-slot="row"
         className={cn(
           "group/row flex items-center gap-2 py-0.5 text-text-secondary flex-1 min-w-0",
           SIZE_CONFIG.fontSize
@@ -1449,6 +1465,7 @@ function ActivityGroupRow({
     >
       {/* Task header row - no left padding, chevron aligned with activity row icons */}
       <div
+        data-glass-slot="row"
         className={cn(
           "group/row flex items-center gap-2 py-0.5 rounded-md cursor-pointer text-text-secondary",
           "hover:text-foreground transition-colors",
@@ -1612,6 +1629,8 @@ export interface ResponseCardProps {
   compactMode?: boolean
   /** Callback to branch the session from this response */
   onBranch?: (options?: { newPanel?: boolean }) => void
+  extraActions?: ResponseExtraAction[]
+  footer?: React.ReactNode
   onShowRuntimeMap?: () => void
   onQuote?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
@@ -1826,6 +1845,8 @@ export function ResponseCard({
   showAcceptPlan = true,
   compactMode = false,
   onBranch,
+  extraActions,
+  footer,
   onShowRuntimeMap,
   onQuote,
   onLearnFromMessage,
@@ -2645,6 +2666,9 @@ export function ResponseCard({
         onSelect: () => onBranch({ newPanel: true }),
       })
     }
+    for (const action of extraActions ?? []) {
+      overflowActions.push({ id: action.id, label: action.label, icon: action.icon, onSelect: () => action.onSelect(text, messageId) })
+    }
     const hoverDock = (
       <MessageHoverDock
           reactionCounts={reactionCounts}
@@ -2662,7 +2686,7 @@ export function ResponseCard({
 
     return (
       <>
-        <div data-g05-card-chrome className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden relative group group-focus-within:opacity-100" tabIndex={-1}>
+        <div data-g05-card-chrome data-glass-slot="card" className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden relative group group-focus-within:opacity-100" tabIndex={-1}>
           {/* Fullscreen button - desktop only; compact mode keeps message chrome minimal */}
           {!compactMode && (
           <button
@@ -2724,6 +2748,7 @@ export function ResponseCard({
               </Markdown>
               {annotationOverlayLayer}
             </div>
+            {footer && !isStreaming ? <div className="mt-2">{footer}</div> : null}
           </div>
 
           {/* Desktop footer with actions (Copy / Markdown / Accept Plan / Branch).
@@ -2812,7 +2837,7 @@ export function ResponseCard({
   // Streaming response - show throttled content with spinner
   return (
     <>
-      <div data-g05-card-chrome className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden group">
+      <div data-g05-card-chrome data-glass-slot="card" className="bg-background shadow-minimal rounded-[var(--radius-card)] overflow-hidden group">
         {/* Content area - uses displayedText (throttled) for performance */}
         {/* Subtle fade at top and bottom edges (dark mode only) */}
         <div
@@ -2988,6 +3013,8 @@ export const TurnCard = React.memo(function TurnCard({
   animateResponse = false,
   compactMode = false,
   onBranch,
+  responseActions,
+  renderResponseFooter,
   onShowRuntimeMap,
   onQuote,
   onLearnFromMessage,
@@ -3172,6 +3199,7 @@ export const TurnCard = React.memo(function TurnCard({
           {/* Collapsed Header / Toggle */}
           <button
             onClick={toggleExpanded}
+            data-glass-slot="row"
             className={cn(
               "flex items-center gap-2 w-full pl-2.5 pr-1.5 py-1.5 rounded-[var(--radius-control)] text-left",
               SIZE_CONFIG.fontSize,
@@ -3428,6 +3456,8 @@ export const TurnCard = React.memo(function TurnCard({
                 compactMode={compactMode}
                 onShowRuntimeMap={onShowRuntimeMap && response.messageId ? () => onShowRuntimeMap(response.messageId!) : undefined}
                 onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
+            extraActions={responseActions}
+            footer={renderResponseFooter?.(response.text, response.messageId)}
                 sendMessageKey={sendMessageKey}
                 onQuote={onQuote}
                 onLearnFromMessage={onLearnFromMessage}
@@ -3468,6 +3498,8 @@ export const TurnCard = React.memo(function TurnCard({
             compactMode={compactMode}
             onShowRuntimeMap={onShowRuntimeMap && response.messageId ? () => onShowRuntimeMap(response.messageId!) : undefined}
             onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
+            extraActions={responseActions}
+            footer={renderResponseFooter?.(response.text, response.messageId)}
             sendMessageKey={sendMessageKey}
             onQuote={onQuote}
             onLearnFromMessage={onLearnFromMessage}

@@ -291,7 +291,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
           type="button"
           onClick={handleBack}
           aria-label={t('pages.backToPages')}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-[var(--state-hover)] hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -326,7 +326,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
               onClick={() => setShareOpen(true)}
               aria-label={t('pages.share.title')}
               title={config.share ? t('pages.shared') : t('pages.share.title')}
-              className="flex h-7 items-center gap-1.5 rounded-md px-2 text-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
+              className="flex h-7 items-center gap-1.5 rounded-md px-2 text-foreground/60 transition-colors hover:bg-[var(--state-hover)] hover:text-foreground"
             >
               <Globe2 className={config.share ? 'h-4 w-4 text-sky-600 dark:text-sky-400' : 'h-4 w-4'} />
               {config.share && (
@@ -339,7 +339,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
               <button
                 type="button"
                 aria-label={t('common.more')}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground data-[state=open]:bg-foreground/5"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-[var(--state-hover)] hover:text-foreground data-[state=open]:bg-foreground/5"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </button>
@@ -468,7 +468,7 @@ function ScopedPageView({ pageSlug }: PageViewProps) {
             <LoadingIndicator label={t('common.loading')} />
           </div>
         ) : (
-          <div ref={pageHostTarget} className="h-full w-full overflow-hidden rounded-lg border border-border/60 shadow-minimal">
+          <div ref={pageHostTarget} className="h-full w-full overflow-hidden rounded-lg border border-border/60 shadow-minimal" data-glass-slot="editor">
             <PageFrame
               key={currentLease.lease.leaseId}
               workspaceId={activeWorkspaceId}

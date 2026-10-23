@@ -97,7 +97,7 @@ export function OverviewRow({
   testId?: string
 }) {
   return (
-    <li className="flex items-center gap-3 px-4 py-3" data-testid={testId ?? 'connections-overview-row'}>
+    <li className="flex items-center gap-3 px-4 py-3" data-glass-slot="row" data-testid={testId ?? 'connections-overview-row'}>
       <div className="flex h-6 w-6 shrink-0 items-center justify-center">{icon}</div>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium text-foreground" title={title}>{title}</div>
@@ -129,7 +129,7 @@ export function OverviewGroup({
         </h3>
         {action}
       </div>
-      <ul className="overflow-hidden rounded-[var(--radius-card)] bg-foreground/[0.02] py-1">{children}</ul>
+      <ul data-glass-slot="table" className="overflow-hidden rounded-[var(--radius-card)] bg-foreground/[0.02] py-1">{children}</ul>
     </section>
   )
 }

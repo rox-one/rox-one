@@ -225,7 +225,7 @@ export function MarkdownImageBlock({ code, className, onCreateRegionAnnotation: 
 
   return (
     <ImageBlockErrorBoundary fallback={fallback}>
-      <div className={cn('relative group rounded-[var(--radius-card)] overflow-visible', className)}>
+      <div data-glass-slot="card" className={cn('relative group rounded-[var(--radius-card)] overflow-visible', className)}>
         <div className="relative h-[320px] overflow-visible flex items-center justify-center p-3">
           <button
             onClick={() => setIsFullscreen(true)}

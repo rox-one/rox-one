@@ -610,6 +610,7 @@ function DossierDetail({
             key={`${touch.kind}:${touch.id}`}
             type="button"
             onClick={() => openTouch(touch)}
+            data-glass-slot="row"
             className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-1.5 py-1 text-left hover:bg-foreground/5"
           >
             <span aria-hidden className="w-4 shrink-0 text-center text-muted-foreground">{touchIcon(touch.kind)}</span>

@@ -6,7 +6,7 @@ import { ChatDisplay } from '@/components/app-shell/ChatDisplay'
 import { AppShellProvider, type AppShellContextType } from '@/context/AppShellContext'
 import { FocusProvider } from '@/context/FocusContext'
 import { ModalProvider } from '@/context/ModalContext'
-import { NavigationContext } from '@/contexts/NavigationContext'
+import { NavigationContext, NavigationProvider } from '@/contexts/NavigationContext'
 import { definePlaygroundStory } from '@/playground/registry/story-loader'
 import { PLAYGROUND_VIEWPORT_PRESETS, type PlaygroundViewportPresetId } from '@/playground/registry/types'
 import { ensureMockElectronAPI, mockSources } from '@/playground/mock-utils'
@@ -19,6 +19,16 @@ import type { SessionStatus } from '@/config/session-status-config'
 
 const WORKSPACE_ID = 'screen-chat-continuum-workspace'
 const SESSION_ID = 'screen-chat-continuum-session'
+
+/** onCreateSession mock (mirrors the chat-display story / settings.tsx). */
+const createPlaygroundSession = async () => ({
+  id: 'playground-session',
+  workspaceId: WORKSPACE_ID,
+  workspaceName: 'Playground',
+  messages: [],
+  isProcessing: false,
+  lastMessageAt: Date.now(),
+})
 const FIXED_NOW = new Date('2026-09-01T10:30:00.000Z').getTime()
 
 /** A real 1×1 PNG, base64 — the only inline image the fixture carries. */
@@ -286,6 +296,13 @@ function ChatContinuumScreenStory() {
   return (
     <JotaiProvider store={store}>
       <HydrateDialogFlags>
+        <NavigationProvider
+          workspaceId={WORKSPACE_ID}
+          workspaceSlug="playground"
+          onCreateSession={createPlaygroundSession}
+          isReady
+          isSessionsReady
+        >
         <NavigationContext.Provider value={playgroundNavigationContext}>
           <FocusProvider>
             <AppShellProvider value={playgroundContext}>
@@ -325,6 +342,7 @@ function ChatContinuumScreenStory() {
             </AppShellProvider>
           </FocusProvider>
         </NavigationContext.Provider>
+        </NavigationProvider>
       </HydrateDialogFlags>
     </JotaiProvider>
   )

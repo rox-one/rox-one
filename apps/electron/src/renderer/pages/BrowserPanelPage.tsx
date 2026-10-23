@@ -89,7 +89,7 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = true }
 
   if (removed) {
     return (
-      <div data-testid={`browser-surface-${kind}`} data-browser-instance={instanceId} role="status" className="flex flex-col items-center justify-center h-full w-full gap-3 bg-background text-muted-foreground">
+      <div data-testid={`browser-surface-${kind}`} data-browser-instance={instanceId} role="status" data-glass-slot="empty" className="flex flex-col items-center justify-center h-full w-full gap-3 bg-background text-muted-foreground">
         <p className="text-sm">{t(kind === 'loading' ? 'common.loading' : kind === 'missing' ? 'browser.closed' : 'common.unavailable')}</p>
         {kind !== 'loading' && (
           <button type="button" onClick={() => setAttempt((value) => value + 1)} className="rounded-md border px-3 py-1 text-xs focus-visible:ring-2 focus-visible:ring-ring">

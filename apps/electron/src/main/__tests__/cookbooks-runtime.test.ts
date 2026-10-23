@@ -5,6 +5,10 @@ import { join } from 'node:path'
 import { clearRegisteredSecretValues, registerSecretValues } from '@rox/shared/secrets'
 import {
   CookbooksRuntime,
+  DISPLAY_MAX_RECORD_CHARS,
+  DISPLAY_MAX_RECORDS,
+  DISPLAY_MAX_TOTAL_CHARS,
+  DISPLAY_TRUNCATION_MARKER,
   buildCookbooksChildEnv,
   computeCookbooksBackoffMs,
   computeCookbooksRunAllTimeoutMs,
@@ -12,7 +16,7 @@ import {
   redactCookbooksLogLine,
   type CookbooksChild,
 } from '../cookbooks-runtime'
-import { CookbooksApiError, parseCookbooksStartupLine } from '../../shared/cookbooks'
+import { CookbooksApiError, parseCookbooksStartupLine, type CookbooksMutateInput } from '../../shared/cookbooks'
 
 const TOKEN = 'A'.repeat(32)
 const line = (port: number, token = TOKEN) => `http://127.0.0.1:${port}/lab.html?token=${token}\n`
@@ -453,7 +457,17 @@ const DOCUMENT_RAW = {
     {
       cell_type: 'code',
       source: ['print(1)\n', 'print(2)'],
-      outputs: [{ text: ['a', 'b'] }, { traceback: ['Traceback\n', 'Error: boom'] }],
+      execution_count: 3,
+      outputs: [
+        { text: ['a', 'b'] },
+        { traceback: ['Traceback\n', 'Error: boom'] },
+        // Wave 11: a persisted `display_data` keeps its mime bundle in `data`.
+        {
+          output_type: 'display_data',
+          metadata: {},
+          data: { 'text/plain': '42', 'image/png': 'QUJD', 'application/json': { answer: 42 } },
+        },
+      ],
     },
     { cell_type: 'markdown', source: '# Heading', outputs: [] },
   ],
@@ -468,6 +482,11 @@ const RUN_RAW = {
   returncode: 0,
   timed_out: false,
   missing: ['pinecone.api_key'],
+  // Wave 11: the runner's own record list, straight from its results file.
+  displays: [
+    { mime: 'text/plain', data: '42' },
+    { mime: 'image/png', data: 'QUJD' },
+  ],
 }
 
 const RUN_ALL_RAW = {
@@ -476,10 +495,47 @@ const RUN_ALL_RAW = {
   returncode: 0,
   missing: [],
   cells: [
-    { index: 0, status: 'ok', ok: true, stdout: 'first\n', stderr: '', error: null, timed_out: false, duration_ms: 3 },
+    {
+      index: 0,
+      status: 'ok',
+      ok: true,
+      stdout: 'first\n',
+      stderr: '',
+      error: null,
+      timed_out: false,
+      duration_ms: 3,
+      displays: [{ mime: 'image/png', data: 'QUJD' }],
+    },
     { index: 2, status: 'skipped', ok: false, stdout: null, stderr: null, error: null, timed_out: false, duration_ms: null },
   ],
 }
+
+/** Wave 11 (G4-F1): a 2 MiB payload — four times the per-record cap. */
+const HUGE_DISPLAY = 'a'.repeat(2 * 1024 * 1024)
+
+/** One mime bundle holding more entries than the per-cell record cap allows. */
+const MANY_MIME_RECORDS: Record<string, string> = Object.fromEntries(
+  Array.from({ length: 20 }, (_unused, index) => [`application/x-record-${index}`, `record-${index}`]),
+)
+
+/** The capped form of `MANY_MIME_RECORDS`: the first 12 records, in order. */
+const MANY_MIME_RECORDS_CAPPED = Array.from({ length: DISPLAY_MAX_RECORDS }, (_unused, index) => ({
+  mime: `application/x-record-${index}`,
+  data: `record-${index}`,
+}))
+
+/**
+ * The run path's own over-cap payload: one giant record, then 20 more. The
+ * mimes are distinct on purpose — one mime maps to one record, so a repeated
+ * mime would legitimately collapse in `dedupeDisplays` before the cap applies.
+ */
+const HUGE_RUN_DISPLAYS = [
+  { mime: 'image/png', data: HUGE_DISPLAY },
+  ...Array.from({ length: 20 }, (_unused, index) => ({
+    mime: `application/x-record-${index}`,
+    data: `record-${index}`,
+  })),
+]
 
 function startStub(options: { storeRejects?: boolean } = {}) {
   const requests: Array<{ path: string; authorization: string | null }> = []
@@ -491,6 +547,8 @@ function startStub(options: { storeRejects?: boolean } = {}) {
   const firstStore = Promise.withResolvers<Record<string, string>>()
   const runBodies: Array<Record<string, unknown>> = []
   const runAllBodies: Array<Record<string, unknown>> = []
+  // Wave 10: structural cell mutations — the method, path and JSON body each op sent.
+  const cellsBodies: Array<{ path: string; method: string; body: Record<string, unknown> }> = []
   const server = Bun.serve({
     hostname: '127.0.0.1',
     port: 0,
@@ -505,7 +563,82 @@ function startStub(options: { storeRejects?: boolean } = {}) {
           return Response.json([CATALOG_CARD_RAW])
         case '/document/probe-item':
           return Response.json(DOCUMENT_RAW)
-        // 400 with no `error` field — the client must fall back to the status text.
+        // Wave 11: a `display_data` bundle with a non-string mime value, one
+        // whose `data` is not a bundle at all, and a plain stream output.
+        case '/document/bad-displays':
+          return Response.json({
+            kind: 'ipynb',
+            title: 'Malformed',
+            cells: [
+              {
+                cell_type: 'code',
+                source: 'x',
+                execution_count: null,
+                outputs: [
+                  { output_type: 'display_data', metadata: {}, data: { 'application/json': [1, 2] } },
+                  { output_type: 'display_data', metadata: {}, data: 'not-a-bundle' },
+                  { output_type: 'stream', name: 'stdout', text: 'plain\n' },
+                ],
+              },
+            ],
+            missing: [],
+            supported: true,
+          })
+        // Wave 11 (G4-F1): the read path must cap an untrusted copy — one 2 MiB
+        // record, and one mime bundle with more entries than the record cap.
+        case '/document/huge-displays':
+          return Response.json({
+            kind: 'ipynb',
+            title: 'Huge',
+            cells: [
+              {
+                cell_type: 'code',
+                source: 'x',
+                execution_count: 1,
+                outputs: [{ output_type: 'display_data', metadata: {}, data: { 'text/plain': HUGE_DISPLAY } }],
+              },
+            ],
+            missing: [],
+            supported: true,
+          })
+        case '/document/many-displays':
+          return Response.json({
+            kind: 'ipynb',
+            title: 'Many',
+            cells: [
+              {
+                cell_type: 'code',
+                source: 'x',
+                execution_count: 1,
+                outputs: [{ output_type: 'display_data', metadata: {}, data: MANY_MIME_RECORDS }],
+              },
+            ],
+            missing: [],
+            supported: true,
+          })
+        // Wave 11 (G3-3): one mime spelled four ways — case, whitespace and an
+        // exact repeat must collapse to the two canonical records.
+        case '/document/mime-case':
+          return Response.json({
+            kind: 'ipynb',
+            title: 'Mime case',
+            cells: [
+              {
+                cell_type: 'code',
+                source: 'x',
+                execution_count: 1,
+                outputs: [
+                  {
+                    output_type: 'display_data',
+                    metadata: {},
+                    data: { 'IMAGE/PNG': 'QUJD', ' image/png ': 'QUJD', '': 'dropped', 'Text/Plain ': '42' },
+                  },
+                ],
+              },
+            ],
+            missing: [],
+            supported: true,
+          })
         case '/document/no-error':
           return new Response(null, { status: 400 })
         // 200 that is not JSON at all — a broken sidecar, not a request error.
@@ -531,15 +664,100 @@ function startStub(options: { storeRejects?: boolean } = {}) {
           if (body.itemId === 'unsupported') {
             return Response.json({ error: 'no kernel for this item' }, { status: 400 })
           }
+          // Wave 11: a payload without `displays` at all (a pre-wave-11 sidecar)…
+          if (body.itemId === 'legacy-run') {
+            return Response.json({ ok: true, stdout: 'hi\n', timed_out: false, missing: [] })
+          }
+          // …and one whose record list is not `[{mime, data}]` strings.
+          if (body.itemId === 'garbage-displays') {
+            return Response.json({
+              ok: true,
+              stdout: '',
+              timed_out: false,
+              missing: [],
+              displays: [{ mime: 1, data: null }, 'nope', null],
+            })
+          }
+          // Wave 11 (G4-F1): an over-cap record list from the runner.
+          if (body.itemId === 'huge-displays') {
+            return Response.json({
+              ok: true,
+              stdout: '',
+              timed_out: false,
+              missing: [],
+              displays: HUGE_RUN_DISPLAYS,
+            })
+          }
+          // Wave 11 (G3-3): the run path normalises and dedupes mimes too — and
+          // keeps two payloads that share one mime (a cell may display twice).
+          if (body.itemId === 'mime-case') {
+            return Response.json({
+              ok: true,
+              stdout: '',
+              timed_out: false,
+              missing: [],
+              displays: [
+                { mime: 'IMAGE/PNG', data: 'QUJD' },
+                { mime: 'image/png', data: 'QUJD' },
+                { mime: '  Text/Plain ', data: 'a' },
+                { mime: 'text/plain', data: 'b' },
+                { mime: '   ', data: 'dropped' },
+              ],
+            })
+          }
           return Response.json(RUN_RAW)
         }
         case '/run-all': {
-          runAllBodies.push((await request.json()) as Record<string, unknown>)
+          const body = (await request.json()) as { itemId?: string }
+          runAllBodies.push(body as Record<string, unknown>)
+          if (body.itemId === 'garbage-displays') {
+            return Response.json({
+              cells: [{ index: 0, status: 'ok', stdout: '', error: null, displays: 'nope' }],
+            })
+          }
+          // Wave 13: only a finite numeric `duration_ms` becomes a `durationMs`
+          // — a string, a JSON null and a missing key all map to `undefined`,
+          // and a fractional value rounds to whole milliseconds.
+          if (body.itemId === 'durations-item') {
+            return Response.json({
+              cells: [
+                { index: 0, status: 'ok', stdout: '', error: null, duration_ms: 'nope' },
+                { index: 1, status: 'ok', stdout: '', error: null, duration_ms: 1.6 },
+                { index: 2, status: 'ok', stdout: '', error: null, duration_ms: null },
+                { index: 3, status: 'ok', stdout: '', error: null },
+              ],
+            })
+          }
           return Response.json(RUN_ALL_RAW)
         }
         case '/save':
         case '/reset':
           return Response.json({ ok: true })
+        // Wave 10: the four structural cell ops (SPEC wave 10 §Контракт HTTP).
+        // Wave 13 adds the fifth, `convert`.
+        case '/cells/add':
+        case '/cells/delete':
+        case '/cells/move':
+        case '/cells/duplicate':
+        case '/cells/convert': {
+          const body = (await request.json()) as Record<string, unknown>
+          cellsBodies.push({ path: url.pathname, method: request.method, body })
+          // Run-guard: an active run makes every mutation conflict.
+          if (body.itemId === 'busy-item') {
+            return Response.json({ error: 'notebook is running' }, { status: 409 })
+          }
+          // Bounds/validation failure with the sidecar's own text.
+          if (body.itemId === 'reject-item') {
+            return Response.json({ error: 'index out of range' }, { status: 400 })
+          }
+          // G3 F1: a 200 that violates the `{ok:true, index:int}` contract.
+          if (body.itemId === 'no-ok') return Response.json({ index: 0 })
+          if (body.itemId === 'string-index') return Response.json({ ok: true, index: '0' })
+          if (body.itemId === 'not-ok') return Response.json({ ok: false, index: 0 })
+          // The focus index is per-op; duplicate lands right after its source.
+          const index = typeof body.index === 'number' ? body.index : 0
+          return Response.json({ ok: true, index: url.pathname === '/cells/duplicate' ? index + 1 : index })
+        }
         default:
           return Response.json({ error: 'not found' }, { status: 404 })
       }
@@ -547,7 +765,7 @@ function startStub(options: { storeRejects?: boolean } = {}) {
   })
   const port = server.port
   if (port === undefined) throw new Error('stub sidecar did not bind a port')
-  return { port, requests, storeBodies, firstStore: firstStore.promise, runBodies, runAllBodies, stop: () => server.stop(true) }
+  return { port, requests, storeBodies, firstStore: firstStore.promise, runBodies, runAllBodies, cellsBodies, stop: () => server.stop(true) }
 }
 
 /** Build a runtime on the injected fake spawn and drive it to `running`. */
@@ -640,16 +858,117 @@ describe('CookbooksRuntime data plane', () => {
           {
             cellType: 'code',
             source: 'print(1)\nprint(2)',
+            executionCount: 3,
             outputs: [
-              { text: 'ab', traceback: null },
-              { text: '', traceback: 'Traceback\nError: boom' },
+              { text: 'ab', traceback: null, displays: [] },
+              { text: '', traceback: 'Traceback\nError: boom', displays: [] },
+              {
+                text: '',
+                traceback: null,
+                displays: [
+                  { mime: 'text/plain', data: '42' },
+                  { mime: 'image/png', data: 'QUJD' },
+                  // Wave 11: a JSON bundle nbformat stored parsed comes back as a string.
+                  { mime: 'application/json', data: '{"answer":42}' },
+                ],
+              },
             ],
           },
-          { cellType: 'markdown', source: '# Heading', outputs: [] },
+          { cellType: 'markdown', source: '# Heading', executionCount: null, outputs: [] },
         ],
         text: null,
       })
       expect(stub.requests[0].path).toBe('/document/probe-item')
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiDocument normalises a display bundle and drops a malformed one', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const document = await runtime.apiDocument('bad-displays')
+      expect(document.cells[0].executionCount).toBeNull()
+      expect(document.cells[0].outputs).toEqual([
+        // A non-string mime value is re-serialised, not lost.
+        { text: '', traceback: null, displays: [{ mime: 'application/json', data: '[1,2]' }] },
+        // `data` that is not a mime bundle at all contributes no display.
+        { text: '', traceback: null, displays: [] },
+        // A stream output never carries displays.
+        { text: 'plain\n', traceback: null, displays: [] },
+      ])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('reads a display bundle that fits byte-identical, with no marker (G4-F1)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const document = await runtime.apiDocument('probe-item')
+      expect(document.cells[0].outputs[2].displays).toEqual([
+        { mime: 'text/plain', data: '42' },
+        { mime: 'image/png', data: 'QUJD' },
+        { mime: 'application/json', data: '{"answer":42}' },
+      ])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('caps a giant display record read from the document (G4-F1)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const document = await runtime.apiDocument('huge-displays')
+      const displays = document.cells[0].outputs[0].displays
+      // The clipped record survives — the cap never drops data silently — and
+      // exactly one marker follows it.
+      expect(displays).toEqual([
+        { mime: 'text/plain', data: HUGE_DISPLAY.slice(0, DISPLAY_MAX_RECORD_CHARS) },
+        { mime: 'text/plain', data: DISPLAY_TRUNCATION_MARKER },
+      ])
+      expect(displays.reduce((total, display) => total + display.data.length, 0)).toBeLessThanOrEqual(
+        DISPLAY_MAX_TOTAL_CHARS,
+      )
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('stops a document display list at the record cap and appends one marker (G4-F1)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const document = await runtime.apiDocument('many-displays')
+      const displays = document.cells[0].outputs[0].displays
+      expect(displays).toEqual([
+        ...MANY_MIME_RECORDS_CAPPED,
+        { mime: 'text/plain', data: DISPLAY_TRUNCATION_MARKER },
+      ])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('normalises mime spellings to one canonical record (G3-3)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const document = await runtime.apiDocument('mime-case')
+      // `IMAGE/PNG` → `image/png`, ` image/png ` is the same record, the empty
+      // key is not a record at all, `Text/Plain ` → `text/plain`.
+      expect(document.cells[0].outputs[0].displays).toEqual([
+        { mime: 'image/png', data: 'QUJD' },
+        { mime: 'text/plain', data: '42' },
+      ])
     } finally {
       await runtime.stop()
       stub.stop()
@@ -681,7 +1000,83 @@ describe('CookbooksRuntime data plane', () => {
         error: null,
         timedOut: false,
         missing: ['pinecone.api_key'],
+        // Wave 11: the runner's records pass straight through.
+        displays: [
+          { mime: 'text/plain', data: '42' },
+          { mime: 'image/png', data: 'QUJD' },
+        ],
       })
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiRun maps an absent or malformed display list to []', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      // A pre-wave-11 sidecar: the field is simply not there.
+      expect(await runtime.apiRun('legacy-run', 'print(1)', 0)).toEqual({
+        ok: true,
+        stdout: 'hi\n',
+        error: null,
+        timedOut: false,
+        missing: [],
+        displays: [],
+      })
+      // A record list that is not `[{mime, data}]` strings is dropped whole.
+      expect(await runtime.apiRun('garbage-displays', 'print(1)', 0)).toEqual({
+        ok: true,
+        stdout: '',
+        error: null,
+        timedOut: false,
+        missing: [],
+        displays: [],
+      })
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('caps an over-cap run display list the same way (G4-F1)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const result = await runtime.apiRun('huge-displays', 'print(1)', 0)
+      // Defense in depth over the sidecar's own caps: the first record is
+      // clipped in place, the list stops at the cap and one marker follows.
+      expect(result.displays).toHaveLength(DISPLAY_MAX_RECORDS + 1)
+      expect(result.displays[0]).toEqual({
+        mime: 'image/png',
+        data: HUGE_DISPLAY.slice(0, DISPLAY_MAX_RECORD_CHARS),
+      })
+      expect(result.displays[DISPLAY_MAX_RECORDS]).toEqual({
+        mime: 'text/plain',
+        data: DISPLAY_TRUNCATION_MARKER,
+      })
+      expect(result.displays.reduce((total, display) => total + display.data.length, 0)).toBeLessThanOrEqual(
+        DISPLAY_MAX_TOTAL_CHARS,
+      )
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('normalises and dedupes the run path’s record list the same way (G3-3)', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const result = await runtime.apiRun('mime-case', 'print(1)', 0)
+      // Case/whitespace normalised, the exact repeat collapsed, the empty mime
+      // dropped — while two payloads under one mime both survive.
+      expect(result.displays).toEqual([
+        { mime: 'image/png', data: 'QUJD' },
+        { mime: 'text/plain', data: 'a' },
+        { mime: 'text/plain', data: 'b' },
+      ])
     } finally {
       await runtime.stop()
       stub.stop()
@@ -692,11 +1087,50 @@ describe('CookbooksRuntime data plane', () => {
     const stub = startStub()
     const runtime = await runtimeOnPort(stub.port)
     try {
-      expect(await runtime.apiRunAll('probe-item', [{ index: 0, source: 'print(1)' }])).toEqual({
+      const result = await runtime.apiRunAll('probe-item', [{ index: 0, source: 'print(1)' }])
+      expect(result).toEqual({
         cells: [
-          { index: 0, status: 'ok', stdout: 'first\n', error: null },
-          { index: 2, status: 'skipped', stdout: '', error: null },
+          {
+            index: 0,
+            status: 'ok',
+            stdout: 'first\n',
+            error: null,
+            displays: [{ mime: 'image/png', data: 'QUJD' }],
+            // Wave 13: the sidecar's per-cell timing now reaches the renderer.
+            durationMs: 3,
+          },
+          // Wave 11: a cell without displays (or a pre-wave-11 record) maps to [].
+          { index: 2, status: 'skipped', stdout: '', error: null, displays: [] },
         ],
+      })
+      // A record without a timing keeps the field absent rather than 0 ms.
+      expect(result.cells[1].durationMs).toBeUndefined()
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiRunAll rounds a fractional duration and drops a non-finite one', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      // Wave 13: `duration_ms` is trusted only as a finite number; everything
+      // else (a string, NaN, Infinity, null, a missing key) is `undefined`.
+      const result = await runtime.apiRunAll('durations-item', [{ index: 0, source: 'x' }])
+      expect(result.cells.map((cell) => cell.durationMs)).toEqual([undefined, 2, undefined, undefined])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiRunAll drops a cell display list that is not a record array', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      expect(await runtime.apiRunAll('garbage-displays', [{ index: 0, source: 'x' }])).toEqual({
+        cells: [{ index: 0, status: 'ok', stdout: '', error: null, displays: [] }],
       })
     } finally {
       await runtime.stop()
@@ -711,6 +1145,154 @@ describe('CookbooksRuntime data plane', () => {
       await runtime.apiSave({ itemId: 'probe-item', index: 0, source: 'print(1)' })
       await runtime.apiReset('probe-item')
       expect(stub.requests.map((r) => r.path)).toEqual(['/save', '/reset'])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate posts each op to /cells/<op> with its op-specific body only', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'add', cellType: 'code', index: 1 })
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'add', cellType: 'markdown', index: 0, source: '# Hi' })
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'delete', index: 1 })
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'move', from: 0, to: 1 })
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'duplicate', index: 0 })
+      // Wave 13: convert carries the target type, never a `source`.
+      await runtime.apiMutate({ itemId: 'probe-item', op: 'convert', index: 1, cellType: 'markdown' })
+      expect(stub.cellsBodies).toEqual([
+        // No `op` field, and an absent `source` stays absent.
+        { path: '/cells/add', method: 'POST', body: { itemId: 'probe-item', cellType: 'code', index: 1 } },
+        { path: '/cells/add', method: 'POST', body: { itemId: 'probe-item', cellType: 'markdown', index: 0, source: '# Hi' } },
+        { path: '/cells/delete', method: 'POST', body: { itemId: 'probe-item', index: 1 } },
+        { path: '/cells/move', method: 'POST', body: { itemId: 'probe-item', from: 0, to: 1 } },
+        { path: '/cells/duplicate', method: 'POST', body: { itemId: 'probe-item', index: 0 } },
+        { path: '/cells/convert', method: 'POST', body: { itemId: 'probe-item', index: 1, cellType: 'markdown' } },
+      ])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate convert re-reads the document and keeps the converted index', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const result = await runtime.apiMutate({
+        itemId: 'probe-item',
+        op: 'convert',
+        index: 1,
+        cellType: 'markdown',
+      })
+      expect(result.index).toBe(1)
+      expect(result.document.itemId).toBe('probe-item')
+      expect(stub.requests.map((r) => r.path)).toEqual(['/cells/convert', '/document/probe-item'])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate convert surfaces the sidecar 400/409 with its own message', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const conflict = await runtime
+        .apiMutate({ itemId: 'busy-item', op: 'convert', index: 0, cellType: 'markdown' })
+        .catch((err: unknown) => err)
+      expect(conflict).toBeInstanceOf(CookbooksApiError)
+      expect((conflict as CookbooksApiError).status).toBe(409)
+      expect((conflict as CookbooksApiError).message).toBe('notebook is running')
+
+      const badRequest = await runtime
+        .apiMutate({ itemId: 'reject-item', op: 'convert', index: 9, cellType: 'code' })
+        .catch((err: unknown) => err)
+      expect(badRequest).toBeInstanceOf(CookbooksApiError)
+      expect((badRequest as CookbooksApiError).status).toBe(400)
+      expect((badRequest as CookbooksApiError).message).toBe('index out of range')
+
+      // A refused conversion never re-reads the document.
+      expect(stub.requests.map((r) => r.path)).toEqual(['/cells/convert', '/cells/convert'])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate re-reads the document after the op and returns {document, index}', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const result = await runtime.apiMutate({ itemId: 'probe-item', op: 'duplicate', index: 0 })
+      expect(result.index).toBe(1)
+      expect(result.document.itemId).toBe('probe-item')
+      expect(result.document.cells).toHaveLength(2)
+      // Exactly two calls: the mutation, then a fresh document read.
+      expect(stub.requests.map((r) => r.path)).toEqual(['/cells/duplicate', '/document/probe-item'])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate rejects an op outside the five routes before any request', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const err = await runtime
+        .apiMutate({ itemId: 'probe-item', op: 'rename' } as unknown as CookbooksMutateInput)
+        .catch((e: unknown) => e)
+      expect(err).toBeInstanceOf(CookbooksApiError)
+      expect((err as CookbooksApiError).status).toBe(400)
+      expect((err as CookbooksApiError).message).toBe('unknown op')
+      // No URL is built from an unknown op — nothing reaches the sidecar.
+      expect(stub.requests).toEqual([])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate rejects a malformed /cells response before re-reading the document', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      for (const itemId of ['no-ok', 'string-index', 'not-ok']) {
+        const err = await runtime
+          .apiMutate({ itemId, op: 'add', cellType: 'code', index: 0 })
+          .catch((e: unknown) => e)
+        expect(err).toBeInstanceOf(CookbooksApiError)
+        expect((err as CookbooksApiError).status).toBe(0)
+        expect((err as CookbooksApiError).message).toBe('malformed /cells response')
+      }
+      // The malformed answer aborts the call — the document is never re-read.
+      expect(stub.requests.map((r) => r.path)).toEqual(['/cells/add', '/cells/add', '/cells/add'])
+    } finally {
+      await runtime.stop()
+      stub.stop()
+    }
+  })
+
+  it('apiMutate surfaces a sidecar 400/409 as CookbooksApiError with its own message', async () => {
+    const stub = startStub()
+    const runtime = await runtimeOnPort(stub.port)
+    try {
+      const conflict = await runtime
+        .apiMutate({ itemId: 'busy-item', op: 'delete', index: 0 })
+        .catch((err: unknown) => err)
+      expect(conflict).toBeInstanceOf(CookbooksApiError)
+      expect((conflict as CookbooksApiError).status).toBe(409)
+      expect((conflict as CookbooksApiError).message).toBe('notebook is running')
+
+      const badRequest = await runtime
+        .apiMutate({ itemId: 'reject-item', op: 'move', from: 0, to: 9 })
+        .catch((err: unknown) => err)
+      expect(badRequest).toBeInstanceOf(CookbooksApiError)
+      expect((badRequest as CookbooksApiError).status).toBe(400)
+      expect((badRequest as CookbooksApiError).message).toBe('index out of range')
     } finally {
       await runtime.stop()
       stub.stop()
@@ -857,6 +1439,12 @@ describe('CookbooksRuntime data plane', () => {
 // logged, never returned in a status/IPC payload and never written to disk.
 // ---------------------------------------------------------------------------
 
+/** Stage a minimal catalog at `<dir>/resources/cookbooks/catalog.json`. */
+async function writeCatalog(dir: string, secretMap: Record<string, string>): Promise<void> {
+  await mkdir(join(dir, 'resources', 'cookbooks'), { recursive: true })
+  await writeFile(join(dir, 'resources', 'cookbooks', 'catalog.json'), JSON.stringify({ secretMap }))
+}
+
 describe('defaultCookbooksStore', () => {
   it('reads the catalog secretMap through the bundled dir and resolves ROX_SECRET_* refs', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'rox-cookbooks-catalog-'))
@@ -884,6 +1472,57 @@ describe('defaultCookbooksStore', () => {
 
   it('returns an empty store when the catalog cannot be read', async () => {
     expect(await defaultCookbooksStore('/nonexistent-cookbooks-root')).toEqual({})
+  })
+
+  it('falls back to the embedded ROX gateway key when the chain resolves nothing', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'rox-cookbooks-catalog-'))
+    try {
+      // No provider holds this ref, so the credential chain resolves nothing.
+      await writeCatalog(dir, { 'openai.api_key': 'ROX_LAB_TEST_MISSING_OPENAI_KEY' })
+      const store = await defaultCookbooksStore(dir, { ROX_API_KEY: '  sk-rox-embedded  ' })
+      expect(store).toEqual({ 'openai.api_key': 'sk-rox-embedded' })
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('keeps the credential-chain value when the chain resolved a user key', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'rox-cookbooks-catalog-'))
+    const ref = 'ROX_SECRET_ROX_LAB_TEST_USER_OPENAI_KEY'
+    const previous = process.env[ref]
+    try {
+      await writeCatalog(dir, { 'openai.api_key': 'ROX_LAB_TEST_USER_OPENAI_KEY' })
+      process.env[ref] = 'sk-user'
+      const store = await defaultCookbooksStore(dir, { ROX_API_KEY: 'sk-rox-embedded' })
+      expect(store).toEqual({ 'openai.api_key': 'sk-user' })
+    } finally {
+      if (previous === undefined) delete process.env[ref]
+      else process.env[ref] = previous
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('leaves openai.api_key absent when ROX_API_KEY is missing or blank', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'rox-cookbooks-catalog-'))
+    try {
+      await writeCatalog(dir, { 'openai.api_key': 'ROX_LAB_TEST_MISSING_OPENAI_KEY' })
+      expect(await defaultCookbooksStore(dir, {})).toEqual({})
+      // Whitespace is not a key: a blank embedded value must not show a
+      // "present" key the lab cannot use.
+      expect(await defaultCookbooksStore(dir, { ROX_API_KEY: '   ' })).toEqual({})
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('never invents openai.api_key for a catalog that does not map it', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'rox-cookbooks-catalog-'))
+    try {
+      await writeCatalog(dir, { 'other.api_key': 'ROX_LAB_TEST_MISSING_OTHER_KEY' })
+      expect(await defaultCookbooksStore(dir, { ROX_API_KEY: 'sk-rox-embedded' })).toEqual({})
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
   })
 })
 
@@ -1152,5 +1791,81 @@ describe('CookbooksRuntime secret bridge', () => {
     } finally {
       clearRegisteredSecretValues()
     }
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Notebook / script export (SPEC wave 9 §3; wave 14 §8)
+//
+// `exportNotebook` never touches the sidecar — it only drives the injected
+// save dialog and writer, so these tests exercise it without a running child.
+// ---------------------------------------------------------------------------
+
+describe('CookbooksRuntime.exportNotebook', () => {
+  /** Drive one export, capturing the dialog options and the disk write. */
+  async function exportWith(filename: string, options: { canceled?: boolean; filePath?: string } = {}) {
+    const dialogs: { defaultPath: string; filters: { name: string; extensions: string[] }[] }[] = []
+    const writes: { path: string; data: string; encoding: string }[] = []
+    const { runtime } = harness()
+    const result = await runtime.exportNotebook(
+      { itemId: 'probe-item', filename, content: 'BODY' },
+      {
+        showSaveDialog: async (dialogOptions) => {
+          dialogs.push(dialogOptions)
+          return { canceled: options.canceled ?? false, filePath: options.filePath ?? '/tmp/out' }
+        },
+        writeFile: async (path, data, encoding) => {
+          writes.push({ path, data, encoding })
+        },
+      },
+    )
+    return { dialogs, writes, result }
+  }
+
+  it('filters a .py export as a Python script and writes the content verbatim', async () => {
+    const { dialogs, writes, result } = await exportWith('probe.py')
+    expect(dialogs).toEqual([
+      { defaultPath: 'probe.py', filters: [{ name: 'Python Script', extensions: ['py'] }] },
+    ])
+    expect(writes).toEqual([{ path: '/tmp/out', data: 'BODY', encoding: 'utf8' }])
+    expect(result).toEqual({ saved: true, path: '/tmp/out' })
+  })
+
+  it('keeps the Jupyter filter for an .ipynb export', async () => {
+    const { dialogs } = await exportWith('probe.ipynb')
+    expect(dialogs[0].filters).toEqual([{ name: 'Jupyter Notebook', extensions: ['ipynb'] }])
+  })
+
+  it('filters an .html export as HTML', async () => {
+    const { dialogs } = await exportWith('probe.html')
+    expect(dialogs[0].filters).toEqual([{ name: 'HTML', extensions: ['html'] }])
+  })
+
+  it('falls back to the All Files filter for an unknown or absent extension', async () => {
+    expect((await exportWith('probe.txt')).dialogs[0].filters).toEqual([{ name: 'All Files', extensions: ['*'] }])
+    expect((await exportWith('README')).dialogs[0].filters).toEqual([{ name: 'All Files', extensions: ['*'] }])
+  })
+
+  it('reads the extension case-insensitively', async () => {
+    expect((await exportWith('PROBE.PY')).dialogs[0].filters).toEqual([
+      { name: 'Python Script', extensions: ['py'] },
+    ])
+  })
+
+  it('always passes the renderer-supplied filename as defaultPath', async () => {
+    const { dialogs } = await exportWith('custom-name.py')
+    expect(dialogs[0].defaultPath).toBe('custom-name.py')
+  })
+
+  it('resolves saved:false and writes nothing when the dialog is dismissed', async () => {
+    const { writes, result } = await exportWith('probe.py', { canceled: true })
+    expect(result).toEqual({ saved: false })
+    expect(writes).toEqual([])
+  })
+
+  it('resolves saved:false when the dialog returns no path', async () => {
+    const { writes, result } = await exportWith('probe.py', { filePath: '' })
+    expect(result).toEqual({ saved: false })
+    expect(writes).toEqual([])
   })
 })

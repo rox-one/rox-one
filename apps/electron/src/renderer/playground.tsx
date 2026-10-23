@@ -18,6 +18,13 @@ import { EscapeInterruptProvider } from './context/EscapeInterruptContext'
 import { PlaygroundAppShellProvider } from './playground/PlaygroundAppShellProvider'
 import './index.css'
 
+// Render the production look: main.tsx installs the Arc Glass skin lazily, so
+// the playground (dev gallery + visual baselines) must install it too — without
+// this, stories render with the theme layers but without the glass materials.
+void import('@rox/ui/glass/install')
+  .then((m) => m.installGlassSkin())
+  .catch(() => {})
+
 // Initialize i18n before any React rendering. `useTranslation()` reads from
 // the shared global instance, so we don't need an <I18nextProvider>.
 setupI18n([initReactI18next])

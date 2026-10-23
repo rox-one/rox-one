@@ -175,7 +175,7 @@ export function CloudVmSurface({ host, onOpenRun, onGoToChat }: CloudVmSurfacePr
     cloud.status === 'available' || cloud.status === 'unavailable' ? cloud.provider : undefined
 
   return (
-    <div className="flex min-h-screen items-start justify-center bg-background px-6 py-10 font-sans text-foreground">
+    <div className="flex min-h-screen items-start justify-center px-6 py-10 font-sans text-foreground">
       <div className="flex w-full max-w-2xl flex-col gap-6">
         <header className="flex flex-col gap-2">
           <div className="flex flex-wrap items-start justify-between gap-2">
@@ -206,14 +206,14 @@ export function CloudVmSurface({ host, onOpenRun, onGoToChat }: CloudVmSurfacePr
         )}
 
         {cloud.status === 'error' && (
-          <div role="alert" className={`${CARD_CLASS} text-destructive`}>
+          <div role="alert" data-glass-slot="card" className={`${CARD_CLASS} text-destructive`}>
             <p className="text-sm">{t('webui.cloudVm.unavailable')}</p>
             <p className="text-xs text-destructive/90">{t(cloudVmStateMessageKey(cloud))}</p>
           </div>
         )}
 
         {cloud.status === 'unavailable' && (
-          <div role="alert" className={CARD_CLASS}>
+          <div role="alert" data-glass-slot="card" className={CARD_CLASS}>
             <p className="text-sm text-destructive/90">
               {t(cloudVmStateMessageKey(cloud), { provider: cloudProvider ?? '' })}
             </p>
@@ -225,7 +225,7 @@ export function CloudVmSurface({ host, onOpenRun, onGoToChat }: CloudVmSurfacePr
 
         {cloud.status === 'available' && (
           <>
-            <section className={CARD_CLASS} aria-label={t('webui.cloudVm.newRun')}>
+            <section data-glass-slot="card" className={CARD_CLASS} aria-label={t('webui.cloudVm.newRun')}>
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-medium" htmlFor="cloud-vm-topic">
                   {t('webui.cloudVm.topicLabel')}
@@ -282,7 +282,7 @@ export function CloudVmSurface({ host, onOpenRun, onGoToChat }: CloudVmSurfacePr
                   const state = run.status?.state
                   const progress = run.status?.progress
                   return (
-                    <li key={run.id} className={`${CARD_CLASS} gap-2 p-4`}>
+                    <li key={run.id} data-glass-slot="card" className={`${CARD_CLASS} gap-2 p-4`}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-mono text-xs text-text-muted" title={run.id}>
                           {shortRunId(run.id)}

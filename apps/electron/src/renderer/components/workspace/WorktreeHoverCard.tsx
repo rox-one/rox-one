@@ -20,6 +20,7 @@ export function WorktreeHoverCard({ branch, className }: WorktreeHoverCardProps)
         'rounded-lg border border-white/10 bg-[rgb(from_var(--paper)_r_g_b_/_1)] px-3 py-2 text-xs shadow-strong',
         className,
       )}
+      data-glass-slot="card"
       data-testid="worktree-hover-card"
     >
       <div className="font-medium text-foreground">{branch.name}</div>

@@ -64,6 +64,12 @@ const storedWorkspaces = [
   { id: foreignWorkspaceId, name: 'Ungrantable fixture', rootPath: foreignWorkspaceRoot },
 ]
 const sessionStore = {
+  // 878547bf4 made every session read projection consult this gate
+  // (SessionManager.canReadSession, packages/server-core/src/sessions/SessionManager.ts:9993):
+  // an unknown session is readable, and only visibility withholds a record. The
+  // fixture seeds no private draft and keeps no in-memory session map, so every
+  // canonical session above is readable by the bound actor.
+  canReadSession: (): boolean => true,
   waitForInit: async () => {}, // Both canonical seed writes above have completed.
   getSessions: (id?: string): Session[] => storedWorkspaces.filter(item => !id || item.id === id).flatMap(item =>
     listSessions(item.rootPath).map(metadata => ({ ...metadata, workspaceId: item.id, workspaceName: item.name,

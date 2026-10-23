@@ -54,6 +54,7 @@ export function SubtaskRow({ subtask, className, onClick }: SubtaskRowProps) {
     <div
       role={interactive ? 'button' : undefined}
       tabIndex={interactive ? 0 : undefined}
+      data-glass-slot={interactive ? 'row' : undefined}
       onClick={
         interactive
           ? e => {

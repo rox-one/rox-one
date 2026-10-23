@@ -15,6 +15,33 @@ const root = resolve(import.meta.dir, '../../../../../../../..')
 const indexCss = readFileSync(resolve(root, 'packages/ui/src/styles/index.css'), 'utf8')
 const zCss = readFileSync(resolve(root, 'packages/ui/src/styles/tokens/z.css'), 'utf8')
 
+// Reduced-motion overrides are content-addressed, never positional. The sheet already carries
+// more than one `@media (prefers-reduced-motion: reduce)` block (a later shared primitive appended
+// its own after the motion-token block), so a positional lookup such as `lastIndexOf` lets any
+// later, unrelated media block shadow the tour rules and the spec silently stops checking them.
+// Collect every block and pick the one that actually governs the selector under test.
+const reducedMotionBlocks = (css: string): string[] => {
+  const prelude = '@media (prefers-reduced-motion: reduce)'
+  const blocks: string[] = []
+  for (let at = css.indexOf(prelude); at !== -1; at = css.indexOf(prelude, at + prelude.length)) {
+    const open = css.indexOf('{', at)
+    if (open === -1) break
+    // Brace-count to the matching close so nested rules inside the block survive intact.
+    let depth = 0
+    let end = open
+    for (; end < css.length; end += 1) {
+      if (css[end] === '{') depth += 1
+      else if (css[end] === '}' && --depth === 0) break
+    }
+    blocks.push(css.slice(open + 1, end))
+  }
+  return blocks
+}
+
+// Empty when no reduced-motion block mentions the selector — i.e. the rule is genuinely gone.
+const reducedMotionScopeFor = (selector: string): string =>
+  reducedMotionBlocks(indexCss).find((block) => block.includes(selector)) ?? ''
+
 const rect = { x: 0, y: 0, left: 0, top: 0, right: 100, bottom: 40, width: 100, height: 40 }
 const geometry: TargetGeometry = { rect, spotlightRect: rect, viewport: { width: 800, height: 600 } }
 const target = { id: 'devspace.repo.overview', registrationToken: 'token', scope: 'bound-panel', context: { workspaceId: 'w', panelId: 'p' }, variant: 'regular', element: undefined as unknown as HTMLElement } as TourTargetRegistration
@@ -49,7 +76,7 @@ describe('TOUR-DEMO vignette spec (D10)', () => {
   test('TOUR-DEMO-02 reduced motion keeps a static gradient and stops the target pulse', () => {
     expect(indexCss).toContain('@keyframes tour-target-pulse')
     expect(indexCss).toMatch(/\.tour-target-pulse\s*\{[^}]*animation:\s*tour-target-pulse/s)
-    const reduced = indexCss.slice(indexCss.lastIndexOf('@media (prefers-reduced-motion: reduce)'))
+    const reduced = reducedMotionScopeFor('.tour-vignette')
     expect(reduced).toContain('.tour-vignette')
     expect(reduced).toContain('.tour-target-pulse')
     expect(reduced).toMatch(/\.tour-vignette,\s*\.tour-target-pulse\s*\{\s*animation:\s*none\s*!important/)

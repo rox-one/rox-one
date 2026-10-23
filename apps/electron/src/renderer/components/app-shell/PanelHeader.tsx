@@ -34,6 +34,7 @@ import { useAtomValue } from 'jotai'
 import { motion } from '@/lib/deferred-motion'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 import { ChevronDown, Menu } from 'lucide-react'
+import './app-shell.glass.css'
 import { cn } from '@/lib/utils'
 import { useCompensateForStoplight } from '@/context/StoplightContext'
 import { useAppShellContext } from '@/context/AppShellContext'
@@ -56,6 +57,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
+import { useDedupedPanelTitle } from './ShellSidebarPortal'
 import { AccountMenu, useWorkspaceCreationFlow } from './AccountMenu'
 
 // Padding to compensate for macOS traffic lights (stoplight buttons)
@@ -291,7 +293,7 @@ export interface PanelHeaderProps {
  * Standardized panel header with title and actions
  */
 export function PanelHeader({
-  title,
+  title: rawTitle,
   badge,
   titleMenu,
   compactTitleMenu,
@@ -307,6 +309,8 @@ export function PanelHeader({
   identity,
   status,
 }: PanelHeaderProps) {
+  // Bare split panels already show the surface name in the tile header.
+  const title = useDedupedPanelTitle(rawTitle)
   const reduceMotion = usePrefersReducedMotion()
   const lanesEnabled = useAtomValue(featureSessionLanesV1Atom)
   // Fall back to AppShellContext.leadingAction so per-panel back buttons (set by
@@ -583,6 +587,7 @@ export function PanelHeader({
       animate={{ paddingLeft: shouldCompensate ? STOPLIGHT_PADDING : basePadding }}
       transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }}
       data-layout="panel-header"
+      data-glass-slot="toolbar"
       className={baseClassName}
     >
       {content}

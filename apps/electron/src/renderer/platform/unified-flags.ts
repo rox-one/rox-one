@@ -35,11 +35,12 @@ import {
 import { isSurfaceActive } from './surface-activity'
 import { getShellStore, isShellStoreConnected, setShellStore, type ShellStore } from './shell-store'
 
-/** Flags owned by W1-07; all default OFF. */
+/** Flags owned by W1-07; default OFF except Мессенджер (default ON, see DEFAULT_ON_GENERIC_FLAG_IDS). */
 export const W1_07_FLAG_IDS = [
   WORKBENCH_FLAG.modeMessengerV1,
   WORKBENCH_FLAG.modeCalendarV1,
   WORKBENCH_FLAG.modeGoalsV1,
+  WORKBENCH_FLAG.modeCanvasV1,
   WORKBENCH_FLAG.modeContactsV1,
   WORKBENCH_FLAG.docsSharedV1,
 ] as const
@@ -101,10 +102,18 @@ const DEDICATED_ATOM_FLAG_IDS: ReadonlySet<string> = new Set([
   WORKBENCH_FLAG.conationSessionApply,
 ])
 
-/** Flag ids served by the generic store (default-OFF, no dedicated atom). */
+/**
+ * Default-ON flags still served by the generic store: their storage key and
+ * `workbenchFlagAtom` stay the same, the atom just starts from the registry
+ * default (true), so `craft-workbench-flag:<id> = false` still turns them off.
+ * Мессенджер (team channels) is live on real data and a default top pill.
+ */
+const DEFAULT_ON_GENERIC_FLAG_IDS: ReadonlySet<string> = new Set([WORKBENCH_FLAG.modeMessengerV1])
+
+/** Flag ids served by the generic store (default-OFF or DEFAULT_ON_GENERIC_FLAG_IDS, no dedicated atom). */
 export function genericFlagIds(): string[] {
   return WORKBENCH_FEATURE_FLAGS
-    .filter((definition) => definition.defaultValue === false && !DEDICATED_ATOM_FLAG_IDS.has(definition.id))
+    .filter((definition) => (definition.defaultValue === false || DEFAULT_ON_GENERIC_FLAG_IDS.has(definition.id)) && !DEDICATED_ATOM_FLAG_IDS.has(definition.id))
     .map((definition) => definition.id)
 }
 
@@ -192,6 +201,23 @@ export function currentShellFlags(): ReadonlySet<string> {
   return getShellStore().get(enabledShellFlagsAtom)
 }
 
+let lastCanvasFlag: boolean | undefined
+/**
+ * Mirror the real `workbench.mode.canvas.v1` value (true AND false) into main,
+ * which gates every canvas:* handler and persists it for the next start.
+ * Pushed at start-up and on every change; deduped.
+ */
+export function pushCanvasFlagToMain(enabled: boolean): void {
+  if (lastCanvasFlag === enabled) return
+  lastCanvasFlag = enabled
+  try {
+    const api = typeof window !== 'undefined' ? (window as unknown as { electronAPI?: { canvas?: { setEnabled?: (on: boolean) => Promise<unknown> } } }).electronAPI : undefined
+    api?.canvas?.setEnabled?.(enabled)?.catch(err => { lastCanvasFlag = undefined; console.warn('[unified-flags] canvas flag push to main failed', err) })
+  } catch (err) { lastCanvasFlag = undefined; console.warn('[unified-flags] canvas flag push to main failed', err) }
+}
+/** Tests only. */
+export function __resetCanvasFlagPushForTests(): void { lastCanvasFlag = undefined }
+
 let activeBridge: { store: ShellStore; dispose: () => void } | null = null
 
 /**
@@ -226,6 +252,7 @@ export function installShellFlagBridges(store: ShellStore = getShellStore()): ()
     const ids = enabledUnifiedSurfaces(store.get(enabledShellFlagsAtom))
     setUnifiedSurfaceRoutesEnabled(ids)
     pushSurfaceRoutesToMain(ids)
+    pushCanvasFlagToMain(store.get(enabledShellFlagsAtom).has(WORKBENCH_FLAG.modeCanvasV1))
   }
   sync()
   const unsubscribe = store.sub(enabledShellFlagsAtom, sync)

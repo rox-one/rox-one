@@ -43,7 +43,7 @@ import {
   type StatusFacet,
   type UsageBucket,
 } from '@/lib/memory-model'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import { MemoryListPanel } from '@/components/app-shell/MemoryListPanel'
 import { ImportReviewDialog } from './ImportReviewDialog'
 import { toErrorMessage } from '@/lib/errors'
@@ -80,6 +80,8 @@ function FacetItem({ label, count, active, onClick, tone, testId, icon: Icon }: 
       type="button"
       aria-pressed={active}
       data-testid={testId}
+      data-glass-slot="row"
+      data-state={active ? 'selected' : undefined}
       onClick={onClick}
       className={cn(
         'flex min-h-8 w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-base outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent',
@@ -177,7 +179,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const { t, i18n } = useTranslation()
   const { navigate } = useNavigation()
   const sessionMap = useAtomValue(sessionMetaMapAtom)
-  const sidebarTarget = useShellSidebarTarget()
+  const sidebarTarget = useSidebarHandledOutside()
   const knowledgeSignals = useKnowledgeSignals({ workspaceId })
   const memoryListTarget = useTourTarget('memory.list', { workspaceId })
   const memoryScopeTarget = useTourTarget('memory.scope', { workspaceId })
@@ -613,7 +615,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
   const categoryLabel = (c: string) => (BUILTIN.includes(c as LessonCategory) ? t(`memory.category.${c}`) : c)
   const statusLabel = (id: StatusFacet) => (id === 'awaitingDream' ? t('memory.repo.facet.awaitingDream') : t(`memory.screen.statusFacet.${id}`))
   const facets = (
-    <ShellSidebarPortal className={cn(
+    <ShellSidebarPortal bareLabelKey="navigation.barePanel.filters" className={cn(
       'w-[208px] shrink-0 flex-col overflow-y-auto bg-surface-rail px-2 pb-3 pt-2',
       selected ? 'hidden @[920px]/memory:flex' : 'hidden @[760px]/memory:flex',
       filtersOpen && 'absolute inset-y-0 left-0 z-30 flex w-[min(280px,100%)] shadow-modal-small @[760px]/memory:static @[760px]/memory:w-[208px] @[760px]/memory:shadow-none',
@@ -1086,7 +1088,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       </div>
     )
   })() : (
-    <div className="flex flex-col gap-2 px-5 py-6 text-sm text-text-muted" data-testid="memory-detail-empty">
+    <div data-glass-slot="empty" className="flex flex-col gap-2 px-5 py-6 text-sm text-text-muted" data-testid="memory-detail-empty">
       <p className="text-base">{t('memory.screen.selectHint')}</p>
       <p>{t('memory.screen.keysHint', { selectAll: formatHotkeyDisplay('mod+a') })}</p>
       <p>{t('memory.screen.meterHint', { limit: LESSON_LIMITS.context })}</p>
@@ -1157,7 +1159,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
           ) : (
             <ul className="flex flex-col gap-2">
               {archivedLessons.map((entry) => (
-                <li key={entry.id} data-testid="memory-archive-row" className="flex items-start gap-3 rounded-[var(--radius-control)] bg-surface-hover p-3">
+                <li key={entry.id} data-testid="memory-archive-row" data-glass-slot="card" className="flex items-start gap-3 rounded-[var(--radius-control)] bg-surface-hover p-3">
                   <div className="min-w-0 flex-1">
                     <p className="whitespace-pre-wrap break-words">{entry.lesson.rule}</p>
                     <p className="mt-1 text-xs text-text-muted">{t(entry.lesson.scope === 'global' ? 'memory.screen.scopeGlobal' : 'memory.screen.scopeWorkspace')} · {fmt(entry.lesson.ts)}</p>
@@ -1171,7 +1173,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
       ) : (
         <>
           {list}
-          {selected ? <section className="flex min-w-0 w-full flex-1 flex-col overflow-y-auto bg-background @[920px]/memory:w-[clamp(300px,36%,440px)] @[920px]/memory:flex-none @[920px]/memory:border-l @[920px]/memory:border-foreground/7" onKeyDown={(event) => { if (event.key === 'Escape' && !editing) { event.stopPropagation(); closeDetails() } }} aria-label={t('memory.screen.properties')}>{detail}</section> : null}
+          {selected ? <section data-glass-slot="panel" className="flex min-w-0 w-full flex-1 flex-col overflow-y-auto bg-background @[920px]/memory:w-[clamp(300px,36%,440px)] @[920px]/memory:flex-none @[920px]/memory:border-l @[920px]/memory:border-foreground/7" onKeyDown={(event) => { if (event.key === 'Escape' && !editing) { event.stopPropagation(); closeDetails() } }} aria-label={t('memory.screen.properties')}>{detail}</section> : null}
         </>
       )}
       {confirmDialog}

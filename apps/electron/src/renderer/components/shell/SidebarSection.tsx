@@ -7,7 +7,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronRight, Loader2, MoreHorizontal, Circle } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui/tooltip'
 import { cn } from '@/lib/utils'
 import * as storage from '@/lib/local-storage'
 import { announce } from '@/lib/a11y/announcer'
@@ -151,6 +151,11 @@ function SidebarRow({ item, mode }: { item: SidebarItem; mode: Exclude<SidebarMo
   const { t } = useTranslation()
   const { over, handlers } = useRowDrop(item)
   const aria = rowAria(item)
+  // Arc Glass: the interactive row carries `data-glass-slot="row"` (the frozen
+  // recipe paints the transparent base plus hover/selection and reads selection
+  // from `data-state="selected"`). The recipe owns `box-shadow: none`, which
+  // would erase the drop-target ring below — so while a drag hovers the row the
+  // ring wins and the row publishes no slot. Both states are paint-only.
   const base = cn(
     'relative flex w-full items-center gap-2 rounded-[var(--radius-control)] text-left text-body outline-none focus-visible:ring-1 focus-visible:ring-ring',
     item.active ? 'bg-[var(--state-selected)] text-foreground font-medium' : 'text-text-secondary hover:bg-[var(--state-hover)] hover:text-foreground',
@@ -166,6 +171,8 @@ function SidebarRow({ item, mode }: { item: SidebarItem; mode: Exclude<SidebarMo
               aria-label={item.label}
               {...aria}
               {...handlers}
+              data-glass-slot={over ? undefined : 'row'}
+              data-state={item.active ? 'selected' : undefined}
               data-tour={item.dataTour}
               data-sidebar-item={item.id}
               onClick={item.onSelect}
@@ -186,6 +193,8 @@ function SidebarRow({ item, mode }: { item: SidebarItem; mode: Exclude<SidebarMo
         type="button"
         {...aria}
         {...handlers}
+        data-glass-slot={over ? undefined : 'row'}
+        data-state={item.active ? 'selected' : undefined}
         data-drop-over={over || undefined}
         data-tour={item.dataTour}
         data-sidebar-item={item.id}
@@ -245,7 +254,7 @@ export const SidebarSection = React.memo(function SidebarSection({ screenId, gro
   return (
     <section aria-labelledby={group.title ? headingId : undefined} data-sidebar-group={group.id} className="py-1">
       {group.title && (
-        <div className="group/head flex h-7 items-center gap-1 pl-2 pr-1">
+        <div className="group/head flex h-7 items-center gap-1 pl-2 pr-1" data-glass-slot="toolbar">
           <h3 id={headingId} className="min-w-0 flex-1">
             {collapsible ? (
               <button
@@ -271,14 +280,14 @@ export const SidebarSection = React.memo(function SidebarSection({ screenId, gro
             {t('shell.sidebar.loading')}
           </p>
         ) : state.kind === 'error' ? (
-          <div role="alert" className="flex items-center gap-2 px-2 py-1 text-caption text-destructive" data-sidebar-group-state="error">
+          <div role={state.announce === false ? undefined : 'alert'} className="flex items-center gap-2 px-2 py-1 text-caption text-destructive" data-sidebar-group-state="error">
             <span className="min-w-0 flex-1 truncate">{state.label}</span>
             <button type="button" onClick={state.onRetry} className="shrink-0 rounded-[var(--radius-control)] px-1.5 text-foreground underline-offset-2 hover:underline focus-visible:ring-1 focus-visible:ring-ring">
               {t('shell.sidebar.retry')}
             </button>
           </div>
         ) : state.kind === 'empty' ? (
-          <div className="flex items-center gap-2 px-2 py-1 text-caption text-muted-foreground" data-sidebar-group-state="empty">
+          <div className="flex items-center gap-2 px-2 py-1 text-caption text-muted-foreground" data-sidebar-group-state="empty" data-glass-slot="empty">
             <span className="min-w-0 flex-1 truncate">{state.label}</span>
             {state.action && (
               <button type="button" onClick={state.action.onSelect} className="shrink-0 rounded-[var(--radius-control)] px-1.5 text-foreground hover:underline focus-visible:ring-1 focus-visible:ring-ring">

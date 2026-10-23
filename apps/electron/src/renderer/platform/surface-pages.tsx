@@ -10,16 +10,23 @@
  * `meetings`/`contacts` aliases. Reached only after `SurfaceHost` is loaded,
  * so the seeder always targets the live singleton.
  */
-import type { ComponentType } from 'react'
+import { lazy, Suspense, type ComponentType } from 'react'
 import type { UnifiedSurfaceId } from '../../shared/surface-routes'
 import { addSlotRegistrySeeder, type SlotRegistry } from './slots'
 import { CalendarSurfacePage } from '@/pages/CalendarSurfacePage'
 import { TeamSurfacePage } from '@/pages/TeamSurfacePage'
 import type { SurfacePageProps } from './SurfaceHost'
 
+// «Доска» is a separate lazy chunk: no cost to app startup or other screens.
+const LazyCanvasSurfacePage = lazy(() => import('@/pages/canvas/CanvasSurfacePage'))
+function CanvasSurfacePage(props: SurfacePageProps) {
+  return <Suspense fallback={<div className="h-full bg-background" data-testid="canvas-loading" />}><LazyCanvasSurfacePage {...props} /></Suspense>
+}
+
 const SURFACE_PAGES: Partial<Record<UnifiedSurfaceId, ComponentType<SurfacePageProps>>> = {
   calendar: CalendarSurfacePage,
   messenger: TeamSurfacePage,
+  canvas: CanvasSurfacePage,
 }
 
 export function registerMergedSurfacePages(registry: SlotRegistry): void {

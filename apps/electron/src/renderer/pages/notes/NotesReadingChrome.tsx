@@ -177,6 +177,8 @@ export function NotesToc({
       className="notes-side-surface sticky top-0 flex shrink-0 flex-col self-stretch overflow-y-auto px-3 py-4"
       style={{ width: width ?? 180 }}
       data-testid="notes-toc-rail"
+      /* Arc Glass: the outline rail is a content panel (tint + seam hairline). */
+      data-glass-slot="panel"
     >
       <div className="mb-2 px-1.5 text-xs font-semibold uppercase caps-label text-foreground/60">
         {t('notes.toc.title')}
@@ -248,6 +250,9 @@ export function NotesCommentComposer({
   }, [focusRequested, onFocusHandled])
   return (
     <form
+      /* Arc Glass: floating composer surface — the skin's readable popover fill
+         (blur + spring pop), never a local opaque card. */
+      data-glass-slot="popover"
       className={cn(
         'w-[240px] max-w-[calc(100%-16px)] rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background p-2 shadow-thin',
         className,
@@ -308,6 +313,7 @@ export function NotesCommentTooltip({
 }) {
   return (
     <div
+      data-glass-slot="popover"
       className="pointer-events-none absolute z-20 max-w-[240px] rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background px-2.5 py-2 text-sm shadow-thin"
       data-testid="notes-comment-tooltip"
       style={{ top, left }}
@@ -374,7 +380,7 @@ export function NotesComments({
   }, [body, comments, draftQuote, markdownComments, noteId, onClearDraft, onCommit, setBody])
 
   return (
-    <aside className="notes-side-surface relative flex shrink-0 flex-col" style={{ width: width ?? 220 }} data-testid="notes-comments-rail">
+    <aside className="notes-side-surface relative flex shrink-0 flex-col" style={{ width: width ?? 220 }} data-testid="notes-comments-rail" data-glass-slot="panel">
       <div className="flex h-9 shrink-0 items-center gap-1.5 px-3 text-xs font-semibold uppercase caps-label text-foreground/60">
         <MessageSquarePlus className="h-3.5 w-3.5" />
         {t('notes.comments.title')}
@@ -386,7 +392,7 @@ export function NotesComments({
           </p>
         ) : null}
         {comments.map((comment) => (
-          <article key={comment.id} className="mb-2 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2.5 py-2">
+          <article key={comment.id} data-glass-slot="card" className="mb-2 rounded-[var(--radius-card)] bg-foreground/[0.05] px-2.5 py-2">
             {comment.quote ? (
               <button
                 type="button"

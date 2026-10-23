@@ -22,6 +22,7 @@ function ChoiceCard({ icon, title, description, onClick, variant = 'secondary' }
   return (
     <button
       onClick={onClick}
+      data-glass-slot="card"
       className={cn(
         "flex items-center gap-4 w-full p-4 rounded-lg text-left",
         "bg-background shadow-minimal",

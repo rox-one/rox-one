@@ -22,7 +22,7 @@ export default function ProposalInbox(props: {
   )
 
   return (
-    <div data-testid="proposal-inbox" className="flex flex-col gap-1">
+    <div data-testid="proposal-inbox" data-glass-slot="table" className="flex flex-col gap-1">
       <div className="flex items-center gap-2">
         <h3 className="text-base font-semibold">{t('meetings.proposals')}</h3>
         <Button
@@ -41,7 +41,7 @@ export default function ProposalInbox(props: {
         <EmptyState title={t('meetings.screen.proposalsEmptyTitle')} body={t('meetings.screen.proposalsEmptyBody')} />
       ) : null}
       {props.proposals.map((proposal) => (
-        <article key={proposal.id} data-testid="meeting-proposal" aria-busy={props.pendingId === proposal.id || !!props.pendingIds?.has(proposal.id)} className="flex items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-foreground/[0.04]">
+        <article key={proposal.id} data-testid="meeting-proposal" data-glass-slot="row" aria-busy={props.pendingId === proposal.id || !!props.pendingIds?.has(proposal.id)} className="flex items-start gap-2 rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-foreground/[0.04]">
           {proposal.status === 'proposed' ? (
             <input
               type="checkbox"

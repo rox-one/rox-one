@@ -28,7 +28,7 @@ import type {
 } from '@rox/shared/memory/learning'
 import { cn } from '@/lib/utils'
 import { formatHotkeyDisplay } from '@/lib/platform'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import {
   LEARNING_EVIDENCE_TYPES,
   LEARNING_SCOPES,
@@ -183,7 +183,7 @@ function Confirm({ title, body, confirmLabel, onConfirm, onCancel, children }: {
       onMouseDown={(event) => { if (event.target === event.currentTarget) onCancel() }}
       onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); onCancel() } }}
     >
-      <div role="alertdialog" aria-modal="true" aria-label={title} className="w-[min(520px,92vw)] rounded-[var(--radius-overlay)] bg-background p-4 shadow-modal-small ring-1 ring-foreground/15">
+      <div role="alertdialog" aria-modal="true" aria-label={title} data-glass-slot="dialog" className="w-[min(520px,92vw)] rounded-[var(--radius-overlay)] bg-background p-4 shadow-modal-small ring-1 ring-foreground/15">
         <h3 className="text-lg font-semibold">{title}</h3>
         {body ? <div className="mt-2 text-base text-text-secondary">{body}</div> : null}
         {children}
@@ -214,7 +214,7 @@ const STATUS_TONE: Record<LearningCandidateStatus, 'muted' | 'accent' | 'warning
 
 export function LearningScreen({ workspaceId }: LearningScreenProps) {
   const { t, i18n } = useTranslation()
-  const sidebarTarget = useShellSidebarTarget()
+  const sidebarTarget = useSidebarHandledOutside()
 
   const [view, setView] = React.useState<LearningView>('dashboard')
   const [candidates, setCandidates] = React.useState<LearningCandidate[] | null>(null)
@@ -458,7 +458,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
 
   // ── Facets ───────────────────────────────────────────────────────────────
   const facets = (
-    <ShellSidebarPortal className={cn(
+    <ShellSidebarPortal bareLabelKey="navigation.barePanel.filters" className={cn(
       'w-[208px] shrink-0 flex-col overflow-y-auto bg-surface-rail px-2 pb-3 pt-2',
       selected ? 'hidden @[920px]/learning:flex' : 'hidden @[760px]/learning:flex',
       filtersOpen && 'absolute inset-y-0 left-0 z-30 flex w-[min(280px,100%)] shadow-modal-small @[760px]/learning:static @[760px]/learning:w-[208px] @[760px]/learning:shadow-none',
@@ -514,6 +514,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
         aria-selected={isSelected}
         data-candidate-id={candidate.id}
         data-testid="learning-row"
+        data-glass-slot="row"
         onClick={() => setSelectedId(candidate.id)}
         className={cn(
           'group mx-4 my-2.5 flex max-w-[860px] cursor-pointer items-start gap-3 rounded-[var(--radius-control)] border px-3 py-3.5 transition-colors motion-reduce:transition-none @[1000px]/learning:mx-auto @[1000px]/learning:w-[calc(100%-2rem)]',
@@ -538,7 +539,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
   }
 
   const unavailableSection = (
-    <section className="flex min-w-0 w-full flex-1 flex-col items-center justify-center gap-3 px-6 py-10 text-center" data-testid="learning-unavailable">
+    <section data-glass-slot="empty" className="flex min-w-0 w-full flex-1 flex-col items-center justify-center gap-3 px-6 py-10 text-center" data-testid="learning-unavailable">
       <span className="grid size-10 place-items-center rounded-[var(--radius-control)] bg-foreground/[0.05] text-text-muted"><AlertTriangle aria-hidden="true" className="size-5" /></span>
       <h2 className="text-base font-semibold">{t('learning.screen.title')}</h2>
       <p className="max-w-[440px] text-base leading-6 text-text-secondary">{t('learning.screen.unavailable.body')}</p>
@@ -548,7 +549,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
 
   // ── Candidate list ───────────────────────────────────────────────────────
   const list = (
-    <section className={cn('min-w-0 flex-1 flex-col bg-foreground/[0.025]', selected ? 'hidden @[920px]/learning:flex' : 'flex')} data-testid="learning-list">
+    <section data-glass-slot="panel" className={cn('min-w-0 flex-1 flex-col bg-foreground/[0.025]', selected ? 'hidden @[920px]/learning:flex' : 'flex')} data-testid="learning-list">
       <header className="flex shrink-0 flex-wrap items-center gap-2 px-4 pb-3 pt-4">
         <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent"><GraduationCap aria-hidden="true" className="size-5" /></span>
         <div className="min-w-0">
@@ -613,7 +614,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
         ) : candidates === null ? (
           <div className="px-4 py-6 text-base text-text-muted" data-testid="learning-loading">{t('learning.screen.loading')}</div>
         ) : visible.length === 0 ? (
-          <div className="mx-4 my-6 flex flex-col items-center rounded-[var(--radius-control)] border border-dashed border-foreground/12 bg-background/60 px-5 py-10 text-center" data-testid="learning-empty">
+          <div data-glass-slot="empty" className="mx-4 my-6 flex flex-col items-center rounded-[var(--radius-control)] border border-dashed border-foreground/12 bg-background/60 px-5 py-10 text-center" data-testid="learning-empty">
             <span className="mb-4 grid size-12 place-items-center rounded-[var(--radius-control)] bg-accent/10 text-accent"><GraduationCap aria-hidden="true" className="size-6" /></span>
             <p className="max-w-[360px] text-sm leading-6 text-text-secondary">{all.length ? t('learning.screen.noMatches') : t('learning.screen.empty')}</p>
             {all.length ? <div className="mt-4"><Btn onClick={clearFacets}>{t('learning.screen.clearFilters')}</Btn></div> : null}
@@ -659,7 +660,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
       )
     }
     return (
-      <div role="status" data-testid="learning-result" className="rounded-[var(--radius-control)] border border-foreground/10 bg-foreground/[0.04] p-3 text-sm">
+      <div role="status" data-testid="learning-result" data-glass-slot="card" className="rounded-[var(--radius-control)] border border-foreground/10 bg-foreground/[0.04] p-3 text-sm">
         <p className="font-medium">{t(result.rollback.reverted ? 'learning.screen.result.reverted' : 'learning.screen.result.notReverted')}</p>
         <p className="mt-1 text-text-muted">{t('learning.screen.result.mutationCount', { count: result.rollback.mutationIds.length })}</p>
         {result.rollback.reason ? <p className="mt-1 text-text-secondary">{result.rollback.reason}</p> : null}
@@ -830,7 +831,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
     const report = effectiveness.get(candidate.id)
     const band = effectivenessBand(report?.effectiveness ?? null)
     return (
-      <li key={candidate.id} data-testid="learning-skill-row" className="rounded-[var(--radius-control)] border border-foreground/8 bg-background/70 p-3">
+      <li key={candidate.id} data-testid="learning-skill-row" data-glass-slot="card" className="rounded-[var(--radius-control)] border border-foreground/8 bg-background/70 p-3">
         <p className="break-words text-base">{candidate.hypothesis}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           <Chip tone={STATUS_TONE[candidate.status]}>{statusLabel(candidate.status)}</Chip>
@@ -980,6 +981,7 @@ export function LearningScreen({ workspaceId }: LearningScreenProps) {
               {list}
               {selected ? (
                 <section
+                  data-glass-slot="panel"
                   className="flex w-full min-w-0 flex-1 flex-col overflow-y-auto bg-background @[920px]/learning:w-[clamp(300px,36%,440px)] @[920px]/learning:flex-none @[920px]/learning:border-l @[920px]/learning:border-foreground/7"
                   aria-label={t('learning.screen.properties')}
                   data-testid="learning-detail-pane"

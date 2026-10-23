@@ -55,7 +55,20 @@ jobs:
           manifest = json.loads((owner / 'source-manifest-v3.json').read_text())
           revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
           records = subprocess.check_output(['git', 'ls-tree', '-r', '-z', revision]).split(b'\0')
+
+          def is_generated(path):
+              """True for a tracked artefact a script rewrites, i.e. not a hand-written source."""
+              parts = pathlib.PurePosixPath(path).parts
+              if parts and parts[-1] == 'boot-manifest.json' and 'renderer' in parts:
+                  return True  # scripts/boot-manifest.ts rewrites the renderer boot manifest
+              return path in (
+                  'apps/electron/src/shared/__tests__/ipc-channels.generated.ts',  # scripts/ipc-inventory.ts
+                  'apps/electron/src/renderer/platform/chrome-tokens.ts',  # scripts/generate-chrome-tokens.ts
+                  'apps/electron/src/renderer/playground/registry/sample-icons.ts',  # .../registry/generate-icons.ts
+              )
+
           sources = {}
+          generated = {}
           for record in records:
               if not record:
                   continue
@@ -64,19 +77,33 @@ jobs:
               path = name.decode()
               source = path.startswith(('apps/electron/src/', 'packages/', 'scripts/', '.github/'))
               fixture = path.startswith(str(owner) + '/') and pathlib.Path(path).suffix in ('.ts', '.tsx', '.mjs', '.py')
-              if kind == 'blob' and mode.startswith('100') and (source or fixture or path in ('bun.lock', 'package.json', 'bunfig.toml', 'tsconfig.json')):
-                  sources[path] = oid
+              if not (kind == 'blob' and mode.startswith('100') and (source or fixture or path in ('bun.lock', 'package.json', 'bunfig.toml', 'tsconfig.json'))):
+                  continue
+              # Generated artefacts are collected apart from the gate set: their bytes move whenever a
+              # generator runs, with no source edit behind them, so comparing them here would fail this
+              # gate for something it does not measure. Reported below instead.
+              (generated if is_generated(path) else sources)[path] = oid
           assert sources, 'The committed candidate has no declared source inputs'
-          objects = subprocess.check_output(['git', 'cat-file', '--batch'], input=('\n'.join(sources.values()) + '\n').encode())
+          declared = {**sources, **generated}
+          objects = subprocess.check_output(['git', 'cat-file', '--batch'], input=('\n'.join(declared.values()) + '\n').encode())
           objects = io.BytesIO(objects)
-          expected = {}
-          for path, oid in sources.items():
+          committed = {}
+          for path, oid in declared.items():
               header = objects.readline().decode().split()
               assert len(header) == 3 and header[0] == oid and header[1] == 'blob'
               data = objects.read(int(header[2]))
               assert objects.read(1) == b'\n'
-              expected[path] = hashlib.sha256(data).hexdigest()
+              committed[path] = hashlib.sha256(data).hexdigest()
+          expected = {path: committed[path] for path in sources}
           hashes = {path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest() for path in expected}
+          # Informational only: a generated artefact that no longer matches its committed blob is worth
+          # seeing in the log, but it is never a gate failure — a real source edit still is (the assert
+          # at the end of this step compares `hashes` against `expected`, which holds sources only).
+          regenerated = sorted(path for path, value in generated.items()
+                               if not pathlib.Path(path).is_file() or hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest() != committed[path])
+          print(f'generated artefacts: {len(generated)} tracked, {len(regenerated)} differing from their committed blob (informational, not gated)')
+          for path in regenerated:
+              print(f'::notice::generated artefact differs from its committed blob (not gated): {path}')
           receipt = {'testedRevision': revision,
                      'testedTree': subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip(),
                      'bun': subprocess.check_output(['bun', '--version'], text=True).strip(),
@@ -93,8 +120,10 @@ jobs:
           destination.parent.mkdir(parents=True, exist_ok=True)
           destination.write_text(json.dumps(receipt, indent=2) + '\n')
           print(json.dumps(receipt, indent=2))
-          # Main may advance beyond the historical manifest. Compare every source
-          # with the actual committed candidate and retain historical drift separately.
+          # Main may advance beyond the historical manifest. Compare every hand-written source with the
+          # actual committed candidate and retain historical drift separately; generated artefacts are
+          # reported above and never gated, so a generator run alone cannot fail this step while a real
+          # source edit still does.
           assert receipt['matchesCheckout'] and receipt['matchesCommittedCandidate'], 'Tested sources differ from Git objects at the actual candidate revision'
           PY
       - name: Shell, parser, persistence and navigation regression
@@ -161,6 +190,12 @@ jobs:
       - name: Other shell browser fixtures in separate processes
         run: |
           export CHROMIUM_EXECUTABLE="$(bun -e 'import {chromium} from "@playwright/test"; process.stdout.write(chromium.executablePath())')"
+          # Every fixture must run even when an earlier one fails. The default `bash -e`
+          # aborts this loop at the FIRST failure, which kept five of these six fixtures
+          # from executing in CI at all: panel-workspace had been red since 9a150e2b5, so
+          # the breakage behind it went unnoticed for days (issue #2080). Collect the
+          # results, report them together, then fail.
+          failed=()
           for test_path in \
             apps/electron/src/renderer/components/app-shell/__tests__/panel-workspace.browser.test.ts \
             apps/electron/src/renderer/components/app-shell/__tests__/device-status-chip.browser.test.ts \
@@ -169,10 +204,22 @@ jobs:
             apps/electron/src/renderer/components/app-shell/__tests__/voice-dictation.browser.test.ts \
             apps/electron/src/renderer/components/app-shell/__tests__/zed-appearance/appearance.browser.test.ts
           do
-            bun test --timeout 60000 "$test_path"
+            echo "::group::$test_path"
+            bun test --timeout 60000 "$test_path" || failed+=("$test_path")
+            echo "::endgroup::"
           done
+          if [ ${#failed[@]} -gt 0 ]; then
+            echo "::error::${#failed[@]} of 6 fixture files failed — reproduce each with: bun test --timeout 60000 <path>"
+            printf '::error::  %s\n' "${failed[@]}"
+            exit 1
+          fi
       - name: Confirm the tested source hashes stayed unchanged
-        if: always()
+        # Still runs after a failed step — reporting which source moved is the point — but not after the
+        # run was cancelled: a superseded run (concurrency cancels it in favour of the newer push) must
+        # not write a receipt for a half-executed build. `actualSourceSha256` holds hand-written sources
+        # only (the step above reports generated artefacts without gating them), so a regenerated
+        # boot-manifest cannot make this comparison unstable.
+        if: always() && !cancelled()
         run: |
           python3 - <<'PY'
           import pathlib, hashlib, json
@@ -186,7 +233,10 @@ jobs:
           assert receipt['sourcesStable'] and receipt['matchesCommittedCandidate']
           PY
       - name: Preserve component fixture evidence
-        if: always()
+        # The evidence directory is only meaningful for a run that reached the end: upload it on success
+        # (the default) and never for a cancelled run, whose partial receipt would be superseded by the
+        # run that replaced it anyway. Failures are reported through the step logs above.
+        if: success()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ui-001-component-evidence-${{ github.sha }}

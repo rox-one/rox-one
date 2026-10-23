@@ -52,4 +52,12 @@ function ErrorBoundary({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Arc Glass skin parity: the webui mounts the same shared renderer as the
+// desktop app, so it installs the same lazy skin (mirrors renderer/main.tsx).
+// A lazy chunk off the startup closure; until it lands — or if it fails — the
+// app keeps the plain, non-glass look.
+void import('@rox/ui/glass/install')
+  .then((m) => m.installGlassSkin())
+  .catch((error: unknown) => console.warn('[glass] skin unavailable, using the plain look', error))
+
 void bootstrap()

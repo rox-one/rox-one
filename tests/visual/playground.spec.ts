@@ -102,8 +102,14 @@ for (const story of visualStories) {
       throw error
     }
 
-    await page.addStyleTag({
-      content: `
+    // Append the determinism stylesheet via evaluate, not page.addStyleTag:
+    // the chat stories pull the OpenUI devtools script from jsdelivr, which the
+    // page CSP blocks, and Playwright surfaces that page-level violation as an
+    // addStyleTag failure. The evaluate path has no such bookkeeping (the same
+    // workaround the capture-screens driver uses).
+    await page.evaluate(() => {
+      const style = document.createElement('style')
+      style.textContent = `
         *, *::before, *::after {
           animation: none !important;
           caret-color: transparent !important;
@@ -113,7 +119,8 @@ for (const story of visualStories) {
         html, body, button, input, select, textarea {
           font-family: Arial, sans-serif !important;
         }
-      `,
+      `
+      document.head.appendChild(style)
     })
     await page.evaluate(() => document.fonts.ready)
 

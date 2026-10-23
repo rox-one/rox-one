@@ -83,6 +83,9 @@ export interface BroadcastEventMap {
     },
   ]
   [RPC_CHANNELS.labels.CHANGED]: [workspaceId: string]
+  /** Team messenger changed for an org (channel list, membership or messages). */
+  [RPC_CHANNELS.teamChat.CHANGED]: [change: { orgId: string; channelId?: string }]
+  [RPC_CHANNELS.chatFolders.CHANGED]: [workspaceId: string, state: import('../chat-folders/types.ts').ChatFoldersState]
   [RPC_CHANNELS.statuses.CHANGED]: [workspaceId: string]
   // Entities (W1-02) — local link store changed for a workspace.
   [RPC_CHANNELS.entities.LINKS_CHANGED]: [workspaceId: string]
@@ -225,6 +228,39 @@ export interface BroadcastEventMap {
     state: 'idle' | 'starting' | 'running' | 'stopping' | 'stopped' | 'failed'
     reason: 'python-missing' | 'spawn-failed' | 'ready-timeout' | 'crashed' | null
     port: number | null
+  }]
+
+  // Cookbooks Lab live run frames (wave 15, global, local-only). One push per
+  // NDJSON frame of `/run-stream` / `/run-all-stream`, carrying the renderer's
+  // own `runId` and a monotonic `seq`. Declared inline for the same reason as
+  // STATUS_CHANGED above — the canonical `CookbooksRunStreamEvent` union lives
+  // in apps/electron's shared contract.
+  [RPC_CHANNELS.cookbooksLab.RUN_EVENT]: [payload: {
+    t: 'start' | 'cell-start' | 'stdout' | 'stderr' | 'display' | 'cell-end' | 'end' | 'error'
+    runId: string
+    seq: number
+    /** `start` */
+    itemId?: string
+    index?: number | null
+    cells?: number[] | null
+    timeout?: number
+    /** `stdout` / `stderr` / `display` */
+    data?: string
+    mime?: string
+    /** `cell-end` (`status` is a word) / `error` (`status` is an HTTP code). */
+    status?: number | 'ok' | 'error' | 'skipped'
+    ok?: boolean
+    timedOut?: boolean
+    durationMs?: number | null
+    returncode?: number | null
+    error?: string | null
+    stdout?: string
+    stderr?: string
+    displays?: { mime: string; data: string }[]
+    /** `end` */
+    cancelled?: boolean
+    missing?: string[]
+    result?: unknown
   }]
 
   // Navigation events (per-window)

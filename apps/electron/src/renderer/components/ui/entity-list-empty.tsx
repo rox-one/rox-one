@@ -37,7 +37,7 @@ export function EntityListEmptyScreen({
   const hasActions = primaryAction || docKey || children
 
   return (
-    <Empty className={cn('max-w-[60ch] mx-auto', className)}>
+    <Empty className={cn('max-w-[60ch] mx-auto', className)} data-glass-slot="empty">
       <EmptyHeader>
         <EmptyMedia variant="icon">
           {icon}

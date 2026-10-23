@@ -42,7 +42,7 @@ export function ContentViewer({ label, content, scope, readPayload }: { label: s
   return <section className="runtime-content-section">
     <header><h4>{label}</h4>{tokens && <small title={content?.tokens?.state === 'known' ? content.tokens.source : undefined}>{t('runtimeMap.tokens', { value: tokens })}</small>}{text && <button className="runtime-icon-button" type="button" title={t('runtimeMap.copy')} aria-label={t('runtimeMap.copy')} onClick={copyText}>{copied ? <Check size={13} /> : <Copy size={13} />}</button>}</header>
     {content?.availability === 'redacted' ? <p className="runtime-muted">{t('runtimeMap.redacted')}</p> : !content || content.availability === 'not-recorded' || (!text && !content.payloadRef) ? <p className="runtime-muted">{t('runtimeMap.notRecorded')}</p> : <>
-      {text && <pre className="runtime-payload" data-expanded={expanded} tabIndex={0}>{expanded ? text : text.slice(0, 3000)}</pre>}
+      {text && <pre className="runtime-payload" data-glass-slot="editor" data-expanded={expanded} tabIndex={0}>{expanded ? text : text.slice(0, 3000)}</pre>}
       {text.length > 3000 && !expanded && <button className="runtime-text-button" type="button" onClick={() => setExpanded(true)}><ChevronDown size={13} />{t('runtimeMap.showMore')}</button>}
       {content.payloadRef && !readPayload && <p className="runtime-muted">{t('runtimeMap.payloadUnavailable')}</p>}
       {content.payloadRef && readPayload && nextOffset !== undefined && loaded.length < 262_144 && <button className="runtime-text-button" type="button" disabled={loading} onClick={loadPage}>{loading && <LoaderCircle size={13} />}{t(loaded ? 'runtimeMap.loadNext' : 'runtimeMap.loadContent')}</button>}

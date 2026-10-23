@@ -28,6 +28,7 @@ import { enabledExtraScreenIdsAtom } from '@/atoms/extra-screens'
 import { visibleExtraScreens } from '../pages/extra-screens/registry'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
+import { SHELL_BREAKPOINTS } from './viewport-band'
 import { CHROME_DENSITY } from './chrome-density'
 import { usePillModel } from './usePillNav'
 import { resolvePrimaryNav, type ResolvedPrimaryNavEntry } from '../components/app-shell/primary-nav'
@@ -55,8 +56,9 @@ export function activityRailWidth(collapsed: boolean): number {
  * Below this shell-root width the expanded rail would push sidebar (180) +
  * navigator (240) + centre (420) + workspace/inspector rails past the edge,
  * so the rail auto-collapses to icons (display-only; persisted state kept).
+ * Tied to the shell "regular" breakpoint (--shell-bp-regular, 1280).
  */
-export const RAIL_AUTO_COLLAPSE_BELOW = 1140
+export const RAIL_AUTO_COLLAPSE_BELOW = SHELL_BREAKPOINTS.regular
 
 /**
  * Container-aware narrow check: measures the shell root (the rail's parent)
@@ -157,11 +159,53 @@ function RailSection({ collapsed, children }: { collapsed: boolean; children: Re
   )
 }
 
+export type RailState = 'collapsed' | 'expanding' | 'expanded'
+
+/**
+ * Labels animate only on a collapsed -> expanded transition: the rail reports
+ * `expanding` for that one disclosure, then settles on `expanded`. A rail that
+ * mounts expanded (first paint, surface switch) never animates.
+ */
+export function railStateFor(prevCollapsed: boolean | null, collapsed: boolean): RailState {
+  if (collapsed) return 'collapsed'
+  return prevCollapsed === true ? 'expanding' : 'expanded'
+}
+
+/** Upper bound for the label disclosure (--motion-disclosure is 180ms). */
+const RAIL_EXPANDING_SETTLE_MS = 400
+
+/**
+ * Derived during render (React's "adjust state on prop change" pattern), so
+ * the first expanded frame already carries `expanding`: no paint at opacity 1
+ * before the entrance starts. The timer only settles it to `expanded`.
+ */
+export function useRailState(collapsed: boolean): RailState {
+  const [rail, setRail] = useState<{ collapsed: boolean; state: RailState }>(() => ({
+    collapsed,
+    state: railStateFor(null, collapsed),
+  }))
+  let current = rail
+  if (rail.collapsed !== collapsed) {
+    current = { collapsed, state: railStateFor(rail.collapsed, collapsed) }
+    setRail(current)
+  }
+  const expanding = current.state === 'expanding'
+  useEffect(() => {
+    if (!expanding) return
+    const id = window.setTimeout(() => {
+      setRail((prev) => (prev.state === 'expanding' ? { ...prev, state: 'expanded' } : prev))
+    }, RAIL_EXPANDING_SETTLE_MS)
+    return () => window.clearTimeout(id)
+  }, [expanding])
+  return current.state
+}
+
 export function ActivityRail() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const { collapsed, toggle, railRef } = useEffectiveRailCollapsed()
   const toggleLabel = collapsed ? t('rail.expand') : t('rail.collapse')
+  const railState = useRailState(collapsed)
   const navState = useNavigationState()
   const modeFlags = useAtomValue(modeScreenFlagsAtom)
   const layoutEngineOn = useAtomValue(featureLayoutEngineAtom)
@@ -195,7 +239,7 @@ export function ActivityRail() {
       )}
       style={{ width: activityRailWidth(collapsed) }}
       data-shell-role="activity-rail"
-      data-rail-state={collapsed ? 'collapsed' : 'expanded'}
+      data-rail-state={railState}
     >
       {/* G3 «Миссии» pilot: flag-gated section above the primary group. */}
       <MissionsRailGroup collapsed={collapsed} />

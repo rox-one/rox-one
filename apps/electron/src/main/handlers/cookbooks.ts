@@ -10,6 +10,12 @@
  */
 import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import type {CookbooksStatus} from '../../shared/types'
+import type {
+  CookbooksMutateInput,
+  CookbooksRunAllStreamInput,
+  CookbooksRunStreamEvent,
+  CookbooksRunStreamInput,
+} from '../../shared/cookbooks'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import { getCookbooksRuntime, initializeCookbooksRuntime } from '../cookbooks-runtime'
@@ -23,10 +29,16 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cookbooksLab.DOCUMENT,
   RPC_CHANNELS.cookbooksLab.RUN,
   RPC_CHANNELS.cookbooksLab.RUN_ALL,
+  // Wave 15: fast stream starts — they resolve `{runId}` as soon as the sidecar
+  // accepts the run, so a long run never hits the 60 s transport ceiling.
+  RPC_CHANNELS.cookbooksLab.RUN_STREAM,
+  RPC_CHANNELS.cookbooksLab.RUN_ALL_STREAM,
   RPC_CHANNELS.cookbooksLab.SAVE,
   RPC_CHANNELS.cookbooksLab.RESET,
   RPC_CHANNELS.cookbooksLab.CANCEL,
   RPC_CHANNELS.cookbooksLab.EXPORT,
+  // Wave 10: structural cell mutations (add/delete/move/duplicate).
+  RPC_CHANNELS.cookbooksLab.MUTATE,
 ] as const
 
 function statusKey(status: CookbooksStatus): string {
@@ -69,6 +81,21 @@ export function registerCookbooksHandlers(server: RpcServer, _deps: HandlerDeps)
     (_ctx, input: { itemId: string; cells: { index: number; source: string }[] }) =>
       runtime.apiRunAll(input.itemId, input.cells),
   )
+  // Wave 15: the fast invoke answers `{runId}` as soon as the sidecar accepts
+  // the run; every frame of the stream is pushed on RUN_EVENT verbatim (main
+  // adds `runId` + a monotonic `seq` inside the runtime). No dedup: a live
+  // stream is ordered and the surface needs every fragment.
+  const pushRunEvent = (event: CookbooksRunStreamEvent): void => {
+    pushTyped(server, RPC_CHANNELS.cookbooksLab.RUN_EVENT, { to: 'all' }, event)
+  }
+  server.handle(
+    RPC_CHANNELS.cookbooksLab.RUN_STREAM,
+    (_ctx, input: CookbooksRunStreamInput) => runtime.apiRunStream(input, pushRunEvent),
+  )
+  server.handle(
+    RPC_CHANNELS.cookbooksLab.RUN_ALL_STREAM,
+    (_ctx, input: CookbooksRunAllStreamInput) => runtime.apiRunAllStream(input, pushRunEvent),
+  )
   server.handle(
     RPC_CHANNELS.cookbooksLab.SAVE,
     (_ctx, input: { itemId: string; index?: number; source?: string; text?: string }) => runtime.apiSave(input),
@@ -84,5 +111,10 @@ export function registerCookbooksHandlers(server: RpcServer, _deps: HandlerDeps)
   server.handle(
     RPC_CHANNELS.cookbooksLab.EXPORT,
     (_ctx, input: { itemId: string; filename: string; content: string }) => runtime.exportNotebook(input),
+  )
+  // Wave 10: one handler for the four structural cell ops.
+  server.handle(
+    RPC_CHANNELS.cookbooksLab.MUTATE,
+    (_ctx, input: CookbooksMutateInput) => runtime.apiMutate(input),
   )
 }

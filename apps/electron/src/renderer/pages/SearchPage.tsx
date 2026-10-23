@@ -1,4 +1,5 @@
 import { useAtomValue } from 'jotai'
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/hooks'
@@ -178,8 +179,8 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
 
   return (
     <main className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="border-b px-6 py-5">
-        <h1 className="mb-4 text-xl font-semibold">{t('searchPage.title')}</h1>
+      <div data-glass-slot="toolbar" className="border-b px-6 py-5">
+        <PanelHeading className="mb-4 text-xl font-semibold" titleKey="searchPage.title">{t('searchPage.title')}</PanelHeading>
         <form className="flex gap-2" onSubmit={submit} role="search">
           <div className="relative flex-1">
             <Search aria-hidden="true" className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -207,7 +208,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
               <ul className="space-y-1">
                 {notes.items.map((note) => (
                   <li key={note.id}>
-                    <button className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-muted" onClick={() => void openNote(note)} type="button">
+                    <button data-glass-slot="row" className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-muted" onClick={() => void openNote(note)} type="button">
                       <span className="truncate text-sm font-medium">{note.title || t('searchPage.noteFallback')}</span>
                       <span className="truncate text-xs text-muted-foreground">{note.relativePath}</span>
                     </button>
@@ -222,7 +223,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
                   const metadata = sessionMeta.get(session.sessionId)
                   return (
                     <li key={session.sessionId}>
-                      <button className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-muted" onClick={() => void openSession(session)} type="button">
+                      <button data-glass-slot="row" className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-muted" onClick={() => void openSession(session)} type="button">
                         <span className="truncate text-sm font-medium">{metadata?.name || t('searchPage.sessionFallback')}</span>
                         <span className="line-clamp-2 text-xs text-muted-foreground">{session.matches[0]?.snippet ?? ''}</span>
                       </button>
@@ -236,7 +237,7 @@ export default function SearchPage({ initialQuery }: SearchPageProps) {
               <ul className="space-y-1">
                 {knowledge.items.map((hit) => (
                   <li key={`${hit.ref.kind}:${hit.ref.id}`}>
-                    <button className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-muted" onClick={() => void openKnowledge(hit)} type="button">
+                    <button data-glass-slot="row" className="flex w-full flex-col rounded-md px-3 py-2 text-left hover:bg-muted" onClick={() => void openKnowledge(hit)} type="button">
                       <span className="truncate text-sm font-medium">{hit.title || hit.ref.id}</span>
                       <span className="line-clamp-2 text-xs text-muted-foreground">{hit.snippet || hit.notebookPath}</span>
                     </button>

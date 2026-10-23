@@ -24,6 +24,16 @@ What it asserts (all observed behavior; no product code is imported):
   6. SIGINT stops the host with exit code 0 (`scripts/serve_lab.py:27-32` ->
      `LabHost.stop`, `src/rox_cookbooks/host.py:395-400`).
 
+Wave 15 adds three checks on the streaming routes that need no code to run,
+because a rejected request is answered with the sync route's plain 4xx JSON
+(validation is 1:1 with `/run`/`/run-all`, `src/rox_cookbooks/host.py`):
+
+  7. `POST /run-stream` without a token -> 401;
+  8. `POST /run-stream` with the token and an unknown `itemId` -> 4xx JSON
+     `{"error": …}` (no frame, no execution);
+  9. `POST /run-all-stream` with an unreadable body and with an empty body ->
+     400 JSON `{"error": …}` in both cases.
+
 Exit status: 0 when every check passes, 1 otherwise.
 """
 from __future__ import annotations
@@ -124,6 +134,49 @@ def parse_json_array(status: int, body: bytes):
     return parsed if isinstance(parsed, list) and parsed else None
 
 
+def http_post(port: int, path: str, body=None, token: str | None = None) -> tuple:
+    """One loopback POST; returns ``(status, lowercased headers, body)``.
+
+    ``body`` is JSON-encoded unless it is already ``bytes``/``bytearray``, which
+    is how the probe sends an unreadable payload.
+    """
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    if isinstance(body, (bytes, bytearray)):
+        data = bytes(body)
+    else:
+        data = json.dumps({} if body is None else body).encode("utf-8")
+    conn = HTTPConnection("127.0.0.1", port, timeout=HTTP_TIMEOUT)
+    try:
+        conn.request("POST", path, body=data, headers=headers)
+        response = conn.getresponse()
+        return (
+            response.status,
+            {key.lower(): value for key, value in response.getheaders()},
+            response.read(),
+        )
+    finally:
+        conn.close()
+
+
+def parse_json_object(status: int, body: bytes):
+    """The parsed JSON object a 4xx answer carries, or ``None``."""
+    try:
+        parsed = json.loads(body.decode("utf-8"))
+    except ValueError:
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def json_error(status: int, body: bytes, codes: tuple = (400,)) -> bool:
+    """Whether ``status``/``body`` is the sync routes' ``{"error": str}`` answer."""
+    if status not in codes:
+        return False
+    payload = parse_json_object(status, body)
+    return payload is not None and isinstance(payload.get("error"), str)
+
+
 def run_checks(checks: Checks, port: int, token: str) -> None:
     # 1. The page itself is public: only the Host header is checked, no token.
     status, _headers, body = http_get(port, "/lab.html")
@@ -174,6 +227,37 @@ def run_checks(checks: Checks, port: int, token: str) -> None:
 
     status, _headers, _body = http_get(port, "/nope", token=token)
     checks.check("unknown route -> 404", status == 404, f"status={status}")
+
+    # 3. Wave 15 streaming routes: the gate and the validation parity are
+    #    observable WITHOUT running any code — a request the sync routes reject
+    #    is answered with the same plain 4xx JSON, never an NDJSON frame.
+    unknown_item = {"itemId": "probe-item-that-does-not-exist", "code": "print(1)"}
+
+    status, _headers, _body = http_post(port, "/run-stream", unknown_item)
+    checks.check(
+        "POST /run-stream without token -> 401", status == 401, f"status={status}"
+    )
+
+    status, _headers, body = http_post(port, "/run-stream", unknown_item, token=token)
+    checks.check(
+        "POST /run-stream with token, unknown itemId -> 4xx JSON error",
+        json_error(status, body, codes=(400, 404)),
+        f"status={status} body={body[:120]!r}",
+    )
+
+    status, _headers, body = http_post(port, "/run-all-stream", b"{not json", token=token)
+    checks.check(
+        "POST /run-all-stream with malformed body -> 400 JSON error",
+        json_error(status, body),
+        f"status={status} body={body[:120]!r}",
+    )
+
+    status, _headers, body = http_post(port, "/run-all-stream", {}, token=token)
+    checks.check(
+        "POST /run-all-stream with empty body -> 400 JSON error",
+        json_error(status, body),
+        f"status={status} body={body[:120]!r}",
+    )
 
 
 def finish(checks: Checks, proc, err_lines: list, tmp) -> int:

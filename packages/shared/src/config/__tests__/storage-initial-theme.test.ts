@@ -34,13 +34,13 @@ function isolated<T>(initialContents: string | undefined, operation: string, set
 }
 
 describe('new-install theme selection', () => {
-  it('seeds Rox Ink for a physically missing config and retains it after reload', () => {
+  it('seeds Rox Engineering for a physically missing config and retains it after reload', () => {
     const result = isolated<{ before: string; after: string; stored: string }>(undefined, `
       const before = storage.getColorTheme();
       await storage.seedDefaultLlmConnection();
       process.stdout.write(JSON.stringify({ before, after: storage.getColorTheme(), stored: storage.loadStoredConfig().colorTheme }));
     `)
-    expect(result).toEqual({ before: 'rox-ink', after: 'rox-ink', stored: 'rox-ink' })
+    expect(result).toEqual({ before: 'super-engineering', after: 'super-engineering', stored: 'super-engineering' })
   }, 30_000)
 
   for (const colorTheme of [undefined, 'default', 'custom-user-theme', 'siri-light']) {
@@ -50,7 +50,7 @@ describe('new-install theme selection', () => {
         const config = storage.loadStoredConfig();
         process.stdout.write(JSON.stringify({ selected: storage.getColorTheme(), hasPreference: Object.hasOwn(config, 'colorTheme') }));
       `)
-      expect(result).toEqual({ selected: colorTheme ?? 'rox-ink', hasPreference: colorTheme !== undefined })
+      expect(result).toEqual({ selected: colorTheme ?? 'super-engineering', hasPreference: colorTheme !== undefined })
     }, 30_000)
   }
 
@@ -82,7 +82,7 @@ describe('new-install theme selection', () => {
       mkdirSync(join(dir, 'legacy-home/.craft-agent'), { recursive: true })
       writeFileSync(join(dir, 'legacy-home/.craft-agent/config.json'), imported)
     })
-    expect(result).toEqual({ selected: 'rox-ink', hasPreference: false, original: imported })
+    expect(result).toEqual({ selected: 'super-engineering', hasPreference: false, original: imported })
   }, 30_000)
 
   it('sets the fresh default when the first workspace creates the registry', () => {
@@ -91,7 +91,7 @@ describe('new-install theme selection', () => {
       storage.addWorkspace({ name: 'Theme fixture', rootPath: join(process.env.ROX_CONFIG_DIR, 'workspaces/fixture') });
       process.stdout.write(JSON.stringify({ selected: storage.getColorTheme(), workspaceCount: storage.loadStoredConfig().workspaces.length }));
     `)
-    expect(result).toEqual({ selected: 'rox-ink', workspaceCount: 1 })
+    expect(result).toEqual({ selected: 'super-engineering', workspaceCount: 1 })
   }, 30_000)
 
   it('saves and reads back existing custom theme ids with spaces, dots and Unicode', () => {

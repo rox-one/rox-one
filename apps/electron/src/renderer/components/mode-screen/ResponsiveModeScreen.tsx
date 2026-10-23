@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { ChevronLeft, Menu } from 'lucide-react'
 import type { PanelWorkspaceLayoutMode } from '@/lib/panel-workspace-layout'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 export interface ResponsiveModeScreen {
@@ -26,7 +26,7 @@ export function ResponsiveModeScreenLayout({ navigator, list, detail, status, te
   const lastSelection = React.useRef<string | null>(responsive.selectedId)
   const [panelWidth, setPanelWidth] = React.useState(0)
   const [navigationOpen, setNavigationOpen] = React.useState(false)
-  const sidebarTarget = useShellSidebarTarget()
+  const sidebarTarget = useSidebarHandledOutside()
   React.useLayoutEffect(() => {
     const element = root.current
     if (!element) return
@@ -71,16 +71,16 @@ export function ResponsiveModeScreenLayout({ navigator, list, detail, status, te
   React.useEffect(() => { if (!narrow) setNavigationOpen(false) }, [narrow])
   const hasDetail = narrow && responsive.selectedId !== null
   return <div ref={root} data-testid={testId} data-responsive-mode="true" data-narrow={narrow} data-mode-layout={layout} className="flex h-full min-h-0 min-w-0 flex-col bg-background font-sans text-base text-foreground">
-    {narrow && (!sidebarTarget || hasDetail) ? <div className="flex shrink-0 items-center gap-2 bg-surface-rail p-2">
+    {narrow && (!sidebarTarget || hasDetail) ? <div className="flex shrink-0 items-center gap-2 bg-surface-rail p-2" data-glass-slot="toolbar">
       {hasDetail ? <button type="button" onClick={() => { lastFocus.current = detailPane.current; responsive.onBack() }} className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 outline-none focus-visible:ring-1 focus-visible:ring-ring"><ChevronLeft className="size-4" aria-hidden />{responsive.backLabel}</button> : null}
       {!sidebarTarget ? <button ref={navigationTrigger} type="button" onClick={() => setNavigationOpen(true)} className="inline-flex min-h-8 items-center gap-1 rounded-md px-2 outline-none focus-visible:ring-1 focus-visible:ring-ring"><Menu className="size-4" aria-hidden />{responsive.navigationLabel}</button> : null}
     </div> : null}
     <div className="flex min-h-0 min-w-0 flex-1">
-      {showNavigator ? <div ref={navigatorPane} hidden={narrow && !sidebarTarget} className="flex shrink-0" style={narrow && !sidebarTarget ? { display: 'none' } : undefined}><ShellSidebarPortal className="w-[220px] shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3">{navigator}</ShellSidebarPortal></div> : null}
-      <section ref={listPane} tabIndex={-1} hidden={hasDetail || focusDetail} data-mode-pane="list" className={narrow || detail == null ? 'flex min-w-0 flex-1 flex-col bg-foreground/[0.025] outline-none' : 'flex w-[440px] min-w-[240px] shrink flex-col bg-foreground/[0.025] outline-none'} style={hasDetail || focusDetail ? { display: 'none' } : undefined}>{list}</section>
-      {detail != null ? <section ref={detailPane} tabIndex={-1} hidden={narrow && !hasDetail} aria-label={responsive.detailLabel} data-mode-pane="detail" className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-background outline-none" style={narrow && !hasDetail ? { display: 'none' } : undefined}>{detail}</section> : null}
+      {showNavigator ? <div ref={navigatorPane} hidden={narrow && !sidebarTarget} className="flex shrink-0" style={narrow && !sidebarTarget ? { display: 'none' } : undefined}><ShellSidebarPortal bareLabelKey="navigation.barePanel.folders" className="w-[220px] shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3" data-glass-slot="panel">{navigator}</ShellSidebarPortal></div> : null}
+      <section ref={listPane} tabIndex={-1} hidden={hasDetail || focusDetail} data-mode-pane="list" data-glass-slot="panel" className={narrow || detail == null ? 'flex min-w-0 flex-1 flex-col bg-foreground/[0.025] outline-none' : 'flex w-[440px] min-w-[240px] shrink flex-col bg-foreground/[0.025] outline-none'} style={hasDetail || focusDetail ? { display: 'none' } : undefined}>{list}</section>
+      {detail != null ? <section ref={detailPane} tabIndex={-1} hidden={narrow && !hasDetail} aria-label={responsive.detailLabel} data-mode-pane="detail" data-glass-slot="panel" className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-background outline-none" style={narrow && !hasDetail ? { display: 'none' } : undefined}>{detail}</section> : null}
     </div>
-    {status ? <div className="flex min-h-7 shrink-0 flex-wrap items-center gap-2 bg-surface-rail px-3 text-xs text-text-muted" role="status">{status}</div> : null}
+    {status ? <div className="flex min-h-7 shrink-0 flex-wrap items-center gap-2 bg-surface-rail px-3 text-xs text-text-muted" role="status" data-glass-slot="toolbar">{status}</div> : null}
     <Dialog open={navigationOpen && narrow && !sidebarTarget} onOpenChange={setNavigationOpen}>
       <DialogContent aria-describedby={undefined} onCloseAutoFocus={event => {
         event.preventDefault()

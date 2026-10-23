@@ -343,6 +343,7 @@ export function SessionTableRow({
   return (
     <li
       role="row"
+      data-glass-slot="row"
       className={cn(
         'group flex items-center gap-2 border-b border-border/30 px-3 text-sm hover:bg-foreground/[0.02] focus-within:bg-foreground/[0.03]',
         collectionTableRowClass(density),

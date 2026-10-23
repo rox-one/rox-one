@@ -56,6 +56,10 @@ export function KnowledgeNavigator({ layout }: KnowledgeNavigatorProps = {}) {
     <div
       ref={rootRef}
       data-knowledge-layout={mobile ? 'mobile' : 'desktop'}
+      // Arc Glass: the navigator column is a rail inside the shell — `panel`
+      // (tint + static blur + right-seam hairline, arc-glass-surfaces.css); the
+      // recipe owns the fill, so the `bg-background` paint is glass under Arc.
+      data-glass-slot="panel"
       className="flex h-full w-full flex-col bg-background"
     >
       <header className="border-b border-border px-3 py-2">

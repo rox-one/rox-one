@@ -32,6 +32,11 @@ import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
 import { toast } from "sonner"
 import { SessionMemoryProposalLane } from "./MemoryProposalCard"
 import { SessionTypingIndicator } from "./SessionTypingIndicator"
+import { TurnPhaseBar } from "./agent-flow/TurnPhaseBar"
+import { SessionBranchTree } from "./agent-flow/SessionBranchTree"
+import { deriveTurnPhase } from "./agent-flow/turn-phase"
+import { queueModeFor, type MidStreamMode } from "./agent-flow/mid-stream-mode"
+import type { SteeringVerb } from "@rox/shared/protocol"
 import { useSessionActivityState, useSessionTypingBeacon, useViewerIdentity } from "@/hooks/useSessionPresence"
 import { filterLocalTypingActors } from "@/lib/session-presence"
 
@@ -101,6 +106,7 @@ import { useTurnCardExpansion } from "@/hooks/useTurnCardExpansion"
 import { useContextualSuggestions } from "@/hooks/useContextualSuggestions"
 import { useNavigationActions } from "@/contexts/NavigationContext"
 import { useAppShellContext } from "@/context/AppShellContext"
+import { useObjectActions } from "./object-actions/useObjectActions"
 import { navigate, routes } from "@/lib/navigate"
 import { SideThreadPreviewDialog, type SideThreadPreview } from "@/components/chat/SideThreadPreviewDialog"
 import { buildSideThreadPrompt, type SideThreadAction } from "@rox/shared/side-threads"
@@ -247,7 +253,9 @@ function getTurnKey(turn: Turn): string {
 
 interface ChatDisplayProps {
   session: Session | null
-  onSendMessage: (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => void
+  onSendMessage: (message: string, attachments?: FileAttachment[], skillSlugs?: string[], queueMode?: SteeringVerb) => void
+  /** Host forwards onSendMessage's 4th `queueMode` argument; only then is the queue/steer selector shown. */
+  supportsQueueMode?: boolean
   onOpenFile: (path: string) => void
   onOpenUrl: (url: string) => void
   // Model selection
@@ -376,8 +384,11 @@ export interface ChatDisplayHandle {
   matchCount: number
   currentMatchIndex: number
   isHighlighting: boolean
-  /** Scroll chat to a message/turn by message id (mindmap click-through). */
-  scrollToMessage: (messageId: string) => void
+  /**
+   * Scroll chat to a message/turn by message id (mindmap click-through).
+   * Returns false when the message is not (yet) part of the rendered transcript.
+   */
+  scrollToMessage: (messageId: string) => boolean
 }
 
 /**
@@ -560,6 +571,7 @@ const EMPTY_SKILLS: LoadedSkill[] = []
 export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>(function ChatDisplay({
   session,
   onSendMessage,
+  supportsQueueMode = false,
   onOpenFile,
   onOpenUrl,
   currentModel,
@@ -669,6 +681,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
+  const objectActions = useObjectActions(session)
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
   const runtimePanelId = (appShellContext as typeof appShellContext & { panelId?: string })?.panelId
   const prefersReducedMotion = usePrefersReducedMotion()
@@ -1580,6 +1593,14 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   )
   const typingBeacon = useSessionTypingBeacon(session?.id)
 
+  // #14/#17: live turn phase + queue-or-steer choice for mid-turn messages.
+  const [midStreamMode, setMidStreamMode] = React.useState<MidStreamMode>('auto')
+  React.useEffect(() => { setMidStreamMode('auto') }, [session?.id])
+  const turnPhase = React.useMemo(
+    () => deriveTurnPhase(session?.messages, { isProcessing: session?.isProcessing === true, hasPendingRequest: Boolean(pendingPermission || pendingCredential) }),
+    [session?.messages, session?.isProcessing, pendingPermission, pendingCredential],
+  )
+
   // Handle message submission from InputContainer
   // Backend handles interruption and queueing if currently processing
   const handleSubmit = (message: string, attachments?: FileAttachment[], skillSlugs?: string[]) => {
@@ -1598,7 +1619,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     // Force stick-to-bottom when user sends a message
     isStickToBottomRef.current = true
     beginOutputMotion()
-    onSendMessage(normalizedMessage, attachments, skillSlugs)
+    onSendMessage(normalizedMessage, attachments, skillSlugs, supportsQueueMode ? queueModeFor(midStreamMode, session?.isProcessing === true) : undefined)
 
     // Persist sent marker on follow-up annotations so TurnCard can distinguish
     // sent vs pending follow-ups. If user edits a follow-up later, TurnCard
@@ -1973,8 +1994,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     }
   }, [assistantTurnIndexByMessageId, allTurns, visibleTurnCount, interruptOutputFollow, startJump, finishJump])
 
-  const scrollToMessage = useCallback((messageId: string) => {
-    if (!messageId) return
+  const scrollToMessage = useCallback((messageId: string): boolean => {
+    if (!messageId) return false
 
     // Prefer exact turn keyed by user/system message id.
     let targetTurnIndex = allTurns.findIndex((turn) => {
@@ -1993,7 +2014,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       const mapped = assistantTurnIndexByMessageId.get(messageId)
       if (mapped != null) targetTurnIndex = mapped
     }
-    if (targetTurnIndex < 0) return
+    if (targetTurnIndex < 0) return false
     interruptOutputFollow()
 
     const ensureVisibleCount = allTurns.length - targetTurnIndex
@@ -2026,11 +2047,12 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
           if (!scrollToTurn()) setTimeout(() => { void scrollToTurn() }, 80)
         })
       })
-      return
+      return true
     }
     if (!scrollToTurn()) {
       requestAnimationFrame(() => { void scrollToTurn() })
     }
+    return true
   }, [allTurns, assistantTurnIndexByMessageId, visibleTurnCount, startJump, finishJump])
 
     // Expose navigation via imperative handle (for session list + mindmap click-through)
@@ -2088,7 +2110,7 @@ const handleFollowUpChipClick = useCallback((item: {
         <>
         <div ref={entryTarget} className="flex flex-1 flex-col min-h-0 min-w-0 relative">
           {session.branchFromSessionId ? (
-            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 text-xs text-muted-foreground">
+            <div data-glass-slot="toolbar" className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 text-xs text-muted-foreground">
               <span>
                 {t('sideThread.childBanner', { status: session.sessionStatus || 'in_progress' })}
               </span>
@@ -2101,6 +2123,7 @@ const handleFollowUpChipClick = useCallback((item: {
               </button>
             </div>
           ) : null}
+          <SessionBranchTree sessionId={session.id} />
           {/* Content layer */}
           <div className="flex flex-1 flex-col min-h-0 min-w-0 relative z-10">
           {/* === MESSAGES AREA: Scrollable list of message bubbles === */}
@@ -2153,6 +2176,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         className="flex items-center justify-center h-64 px-4"
                       >
                         <div
+                          data-glass-slot="card"
                           className="max-w-sm rounded-[var(--radius-card)] border border-destructive/20 px-4 py-3 text-center shadow-tinted"
                           style={{
                             backgroundColor: 'oklch(from var(--destructive) l c h / 0.03)',
@@ -2203,7 +2227,7 @@ const handleFollowUpChipClick = useCallback((item: {
                   )}
                   {!compactMode && hasUnrenderedLoadedMessages && (
                     <div className="flex h-64 items-center justify-center px-4 text-center">
-                      <div className="max-w-sm rounded-[var(--radius-card)] border border-border/50 bg-foreground/[0.03] px-4 py-3">
+                      <div data-glass-slot="empty" className="max-w-sm rounded-[var(--radius-card)] border border-border/50 bg-foreground/[0.03] px-4 py-3">
                         <CircleAlert className="mx-auto mb-2 h-4 w-4 text-foreground/50" />
                         <div className="text-sm font-medium text-foreground/70">Conversation loaded, but no renderable messages were found.</div>
                         <p className="mt-1 text-xs text-foreground/50">Try reloading the session. If this persists, the message history may contain an unsupported format.</p>
@@ -2408,6 +2432,8 @@ const handleFollowUpChipClick = useCallback((item: {
                         onOpenUrl={onOpenUrl}
                         onSendPrompt={(text) => handleSubmit(text)}
                         onListen={(text) => { void handleListen(text, turn.turnId) }}
+                        responseActions={objectActions.responseActions}
+                        renderResponseFooter={objectActions.renderResponseFooter}
                         isListening={listeningTurnId === turn.turnId}
                         isLastResponse={isLastResponse}
                         compactMode={compactMode}
@@ -2605,6 +2631,7 @@ const handleFollowUpChipClick = useCallback((item: {
           />
           {/* a2.4: who is typing, directly above the composer. */}
           <SessionTypingIndicator actors={typingActors} />
+          <TurnPhaseBar state={turnPhase} mode={midStreamMode} onModeChange={supportsQueueMode ? setMidStreamMode : undefined} />
           {/* === INPUT CONTAINER: FreeForm or Structured Input === */}
           <ChatInputZone
             compactMode={compactMode}
@@ -2893,6 +2920,7 @@ function ErrorMessage({ message, onOpenUrl, sessionId, onRetry }: { message: Mes
     <div className="flex justify-start mt-4">
       {/* Subtle bg (3% opacity) + tinted shadow for softer error appearance */}
       <div
+        data-glass-slot="card"
         className="max-w-[80%] shadow-tinted rounded-[var(--radius-card)] pl-5 pr-4 pt-2 pb-2.5 break-words"
         style={{
           backgroundColor: 'oklch(from var(--destructive) l c h / 0.03)',
@@ -3011,7 +3039,7 @@ function MessageBubble({
   if (message.role === 'assistant') {
     return (
       <div className="flex justify-start group">
-        <div className="relative max-w-[90%] bg-background shadow-minimal rounded-[var(--radius-card)] pl-6 pr-4 py-3 break-words min-w-0 select-text">
+        <div data-glass-slot="card" className="relative max-w-[90%] bg-background shadow-minimal rounded-[var(--radius-card)] pl-6 pr-4 py-3 break-words min-w-0 select-text">
           {/* Pop-out button - visible on hover */}
           {onPopOut && !message.isStreaming && (
             <button

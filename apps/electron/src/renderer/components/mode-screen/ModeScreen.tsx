@@ -10,7 +10,7 @@ import * as React from 'react'
 import { ResponsiveModeScreenLayout, type ResponsiveModeScreen } from './ResponsiveModeScreen'
 import type { PanelWorkspaceLayoutMode } from '@/lib/panel-workspace-layout'
 import { cn } from '@/lib/utils'
-import { ShellSidebarPortal, useShellSidebarTarget } from '@/components/app-shell/ShellSidebarPortal'
+import { ShellSidebarPortal, useDedupedPanelTitle, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import { Tabs as TabsCore, type TabItem } from '@/components/ui/tabs'
 import { useTranslation } from 'react-i18next'
 import { Archive, Bell, CalendarDays, CheckCheck, ChevronRight, Clock3, Folder, Inbox, ListFilter, Mail, MessageCircle, Newspaper, Radio, ShieldCheck, Sparkles, Tag, Users, type LucideIcon } from 'lucide-react'
@@ -47,7 +47,7 @@ function FallbackModeScreenLayout({
   layout?: PanelWorkspaceLayoutMode
 }) {
   const { t } = useTranslation()
-  const target = useShellSidebarTarget()
+  const target = useSidebarHandledOutside()
   const root = React.useRef<HTMLDivElement | null>(null)
   const [width, setWidth] = React.useState(0)
   const [pane, setPane] = React.useState<'navigation' | 'list' | 'detail'>('list')
@@ -85,29 +85,29 @@ function FallbackModeScreenLayout({
       )}
       <div className="flex min-h-0 flex-1">
         {showNavigator ? (
-          <ShellSidebarPortal className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')}>
+          <ShellSidebarPortal bareLabelKey="navigation.barePanel.folders" className={cn('shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3', narrow ? pane === 'navigation' ? 'w-full' : 'hidden' : 'w-[220px]')} data-glass-slot="panel">
             {navigator}
           </ShellSidebarPortal>
         ) : null}
         {focusDetail ? (
-          <section className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-background">{detail != null ? detail : list}</section>
+          <section className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-background" data-glass-slot="panel">{detail != null ? detail : list}</section>
         ) : detail == null ? (
-          <section className="flex min-w-0 flex-1 flex-col bg-foreground/[0.025]">{list}</section>
+          <section className="flex min-w-0 flex-1 flex-col bg-foreground/[0.025]" data-glass-slot="panel">{list}</section>
         ) : wideList ? (
           <>
-            <section className={cn('min-w-0 flex-1 flex-col bg-foreground/[0.025]', narrow && pane !== 'list' ? 'hidden' : 'flex')}>{list}</section>
-            <section className={cn('min-w-0 flex-col overflow-y-auto bg-background', narrow ? pane === 'detail' ? 'flex flex-1' : 'hidden' : 'flex w-[320px] shrink-0')}>{detail}</section>
+            <section className={cn('min-w-0 flex-1 flex-col bg-foreground/[0.025]', narrow && pane !== 'list' ? 'hidden' : 'flex')} data-glass-slot="panel">{list}</section>
+            <section className={cn('min-w-0 flex-col overflow-y-auto bg-background', narrow ? pane === 'detail' ? 'flex flex-1' : 'hidden' : 'flex w-[320px] shrink-0')} data-glass-slot="panel">{detail}</section>
           </>
         ) : (
           <>
-            <section className={cn('min-w-0 flex-col bg-foreground/[0.025]', narrow ? pane === 'list' ? 'flex flex-1' : 'hidden' : 'flex w-[440px] min-w-[240px] shrink')}>{list}</section>
+            <section className={cn('min-w-0 flex-col bg-foreground/[0.025]', narrow ? pane === 'list' ? 'flex flex-1' : 'hidden' : 'flex w-[440px] min-w-[240px] shrink')} data-glass-slot="panel">{list}</section>
             {/* The detail keeps a readable width; the list gives way first in narrow windows. */}
-            <section className={cn('flex-1 flex-col overflow-y-auto bg-background', narrow ? pane === 'detail' ? 'flex min-w-0' : 'hidden' : 'flex min-w-[320px]')}>{detail}</section>
+            <section className={cn('flex-1 flex-col overflow-y-auto bg-background', narrow ? pane === 'detail' ? 'flex min-w-0' : 'hidden' : 'flex min-w-[320px]')} data-glass-slot="panel">{detail}</section>
           </>
         )}
       </div>
       {status ? (
-        <div className="flex min-h-7 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 bg-surface-rail px-3 py-1 text-xs text-text-muted" role="status">
+        <div className="flex min-h-7 shrink-0 flex-wrap items-center gap-x-2 gap-y-1 bg-surface-rail px-3 py-1 text-xs text-text-muted" role="status" data-glass-slot="toolbar">
           {status}
         </div>
       ) : null}
@@ -115,8 +115,11 @@ function FallbackModeScreenLayout({
   )
 }
 
+/** Screen-reader heading only: the shell's second-sidebar header already shows the screen title. */
 export function NavTitle({ children }: { children: React.ReactNode }) {
-  return <h1 className="px-2 pb-2 text-lg font-semibold">{children}</h1>
+  const shown = useDedupedPanelTitle(children)
+  if (shown == null) return null
+  return <h1 className="sr-only">{shown}</h1>
 }
 
 export function NavSection({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
@@ -212,9 +215,10 @@ export function ListHeader({
   subtitle?: React.ReactNode
   actions?: React.ReactNode
 }) {
+  const shownTitle = useDedupedPanelTitle(title)
   return (
-    <header className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-2 px-3 pt-2">
-      <h2 className="text-lg font-semibold">{title}</h2>
+    <header className="flex min-h-[44px] shrink-0 flex-wrap items-center gap-2 px-3 pt-2" data-glass-slot="toolbar">
+      {shownTitle != null ? <h2 className="text-lg font-semibold">{shownTitle}</h2> : null}
       {subtitle ? <span className="truncate text-sm text-text-muted">{subtitle}</span> : null}
       {/* Wrap instead of overflowing: in a narrow list column the action row drops to its own
           line (and wraps internally) so a later button is never clipped by Panel's overflow-hidden. */}
@@ -248,6 +252,7 @@ export function ListRow({
       aria-selected={selected}
       tabIndex={selected ? 0 : -1}
       data-testid={testId}
+      data-glass-slot="row"
       onClick={onClick}
       onKeyDown={onKeyDown}
       className={cn(
@@ -350,7 +355,7 @@ export function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn('rounded-[var(--radius-card)] bg-foreground/[0.04] p-3', className)}>{children}</div>
+  return <div className={cn('rounded-[var(--radius-card)] bg-foreground/[0.04] p-3', className)} data-glass-slot="card">{children}</div>
 }
 
 export function EmptyState({
@@ -365,7 +370,7 @@ export function EmptyState({
   testId?: string
 }) {
   return (
-    <div className="flex flex-col items-start gap-1.5 px-4 py-8" data-testid={testId} role="status">
+    <div className="flex flex-col items-start gap-1.5 px-4 py-8" data-testid={testId} role="status" data-glass-slot="empty">
       <div className="text-lg font-semibold">{title}</div>
       {body ? <div className="max-w-[420px] text-sm text-text-secondary">{body}</div> : null}
       {action ? <div className="pt-1">{action}</div> : null}

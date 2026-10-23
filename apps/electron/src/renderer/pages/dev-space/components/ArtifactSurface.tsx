@@ -39,9 +39,9 @@ function ArtifactBody({ entry, content, encoding }: ArtifactBodyProps) {
   if (entry.format === 'json' && encoding === 'utf8') {
     let pretty = content
     try { pretty = JSON.stringify(JSON.parse(content), null, 2) } catch { /* keep raw body */ }
-    return <pre className="max-h-[70vh] overflow-auto rounded-lg bg-surface-hover p-3 text-xs"><code data-testid="dev-space-artifact-json">{pretty}</code></pre>
+    return <pre data-glass-slot="editor" className="max-h-[70vh] overflow-auto rounded-lg bg-surface-hover p-3 text-xs"><code data-testid="dev-space-artifact-json">{pretty}</code></pre>
   }
-  return <pre className="max-h-[70vh] overflow-auto rounded-lg bg-surface-hover p-3 text-xs" data-testid="dev-space-artifact-binary"><code>{content}</code></pre>
+  return <pre data-glass-slot="editor" className="max-h-[70vh] overflow-auto rounded-lg bg-surface-hover p-3 text-xs" data-testid="dev-space-artifact-binary"><code>{content}</code></pre>
 }
 
 /** One repo-workspace surface (§B.4–§B.8): artifact list, content, provenance and stale badge. */
@@ -69,7 +69,7 @@ export function ArtifactSurface({ workspaceId, projectSlug, kind, headingKey, en
 
   const headingId = `dev-space-surface-title-${kind}`
   return (
-    <section className="space-y-4 rounded-[var(--radius-card)] border border-border-subtle p-5" data-testid={`dev-space-surface-${kind}`} aria-labelledby={headingId}>
+    <section data-glass-slot="card" className="space-y-4 rounded-[var(--radius-card)] border border-border-subtle p-5" data-testid={`dev-space-surface-${kind}`} aria-labelledby={headingId}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <h2 id={headingId} className="text-sm font-semibold">{t(headingKey)}</h2>
@@ -91,7 +91,7 @@ export function ArtifactSurface({ workspaceId, projectSlug, kind, headingKey, en
       </div>
 
       {entries.length === 0 ? (
-        <div className="flex flex-col items-start gap-3" data-testid={`dev-space-surface-empty-${kind}`}>
+        <div data-glass-slot="empty" className="flex flex-col items-start gap-3" data-testid={`dev-space-surface-empty-${kind}`}>
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><FileCode2 className="icon-caption" aria-hidden />{t('devSpace.artifact.emptyTitle')}</div>
           <p className="max-w-2xl text-sm text-muted-foreground">{t('devSpace.artifact.emptyDescription')}</p>
           <Button type="button" size="sm" disabled={running} onClick={onRun} data-testid={`dev-space-surface-run-${kind}`}>

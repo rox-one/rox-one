@@ -308,7 +308,7 @@ export function PodcastStudio({ open, onOpenChange, projectSlug, seed, onComplet
           </div>
 
           {job ? (
-            <div className="rounded-[var(--radius-card)] border border-border-subtle p-3" aria-live="polite" data-testid="playbooks-podcast-progress">
+            <div data-glass-slot="card" className="rounded-[var(--radius-card)] border border-border-subtle p-3" aria-live="polite" data-testid="playbooks-podcast-progress">
               <div className="mb-2 flex items-center gap-2 text-xs">
                 {running ? <Loader2 className="icon-caption animate-spin motion-reduce:animate-none" aria-hidden /> : <Mic2 className="icon-caption" aria-hidden />}
                 <span className="font-medium">{t(`playbooks.podcast.stage.${job.state}`)}</span>

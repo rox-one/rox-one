@@ -76,7 +76,7 @@ export function ChatRuntimeSplit({ chat, map, open, scopeKey, onRequestExpand, o
         />
         <div className="runtime-map-slot" data-testid="runtime-map-slot">
           {compact && <div className="runtime-narrow-notice"><Maximize2 size={14} /><span>{t('runtimeMap.narrow')}</span>{onRequestExpand && <button type="button" onClick={onRequestExpand}>{t('runtimeMap.expand')}</button>}</div>}
-          <RuntimeMapBoundary key={scopeKey} fallback={retry => <div className="runtime-empty" role="alert"><p>{t('runtimeMap.renderError')}</p><button type="button" onClick={retry}><RotateCcw size={14} />{t('runtimeMap.retry')}</button>{onCloseMap && <button type="button" onClick={onCloseMap}>{t('runtimeMap.close')}</button>}</div>}>{map}</RuntimeMapBoundary>
+          <RuntimeMapBoundary key={scopeKey} fallback={retry => <div className="runtime-empty" data-glass-slot="empty" role="alert"><p>{t('runtimeMap.renderError')}</p><button type="button" onClick={retry}><RotateCcw size={14} />{t('runtimeMap.retry')}</button>{onCloseMap && <button type="button" onClick={onCloseMap}>{t('runtimeMap.close')}</button>}</div>}>{map}</RuntimeMapBoundary>
         </div>
       </>}
     </div>

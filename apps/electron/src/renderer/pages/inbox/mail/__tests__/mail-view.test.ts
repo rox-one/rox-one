@@ -55,3 +55,15 @@ describe('mail-view', () => {
     expect(formatStorageBytes(0, 'ru')).toBe('0 Б')
   })
 })
+
+describe('mail error texts', () => {
+  it('uses specific keys for known codes and the generic text otherwise', async () => {
+    const { mailErrorKey, mailErrorCodeOf, MAIL_RECONNECT_CODES } = await import('../mail-view')
+    expect(mailErrorKey('quota')).toBe('inbox.mail.error.quota')
+    expect(mailErrorKey('keychain-locked')).toBe('inbox.mail.error.keychainLocked')
+    expect(mailErrorKey('something-new')).toBe('inbox.mail.actionFailed')
+    expect(mailErrorKey(null)).toBe('inbox.mail.actionFailed')
+    expect(mailErrorCodeOf(Object.assign(new Error('raw server text'), { code: 'not-found' }))).toBe('not-found')
+    expect(MAIL_RECONNECT_CODES.has('credential-revoked')).toBe(true)
+  })
+})

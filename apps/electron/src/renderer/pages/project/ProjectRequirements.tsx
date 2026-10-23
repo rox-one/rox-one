@@ -149,7 +149,7 @@ export function ProjectRequirements({
       {REQUIREMENT_KINDS.map((kind) => {
         const items = byKind(kind)
         return (
-          <div key={kind} className="@container min-w-0 rounded-lg bg-foreground/[0.025] px-2 py-2" data-testid={`project-requirements-${kind}`}>
+          <div key={kind} data-glass-slot="card" className="@container min-w-0 rounded-lg bg-foreground/[0.025] px-2 py-2" data-testid={`project-requirements-${kind}`}>
             <div className="flex items-baseline gap-2 px-1 pb-1">
               <span className="text-sm font-semibold text-foreground/85">{t(`projectRoadmap.requirementKind.${kind}`)}</span>
               {items.length ? <span className="text-xs numeric text-muted-foreground">{items.length}</span> : null}

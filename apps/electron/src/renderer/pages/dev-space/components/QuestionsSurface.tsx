@@ -159,7 +159,7 @@ export function QuestionsSurface({ workspaceId, repositoryId, projectSlug, stale
   const securityBadgeKey = doc ? devSpaceSecurityBadgeKey(doc.security) : null
 
   return (
-    <section className="space-y-4 rounded-[var(--radius-card)] border border-border-subtle p-5" data-testid="dev-space-surface-questions" aria-labelledby="dev-space-questions-title">
+    <section data-glass-slot="card" className="space-y-4 rounded-[var(--radius-card)] border border-border-subtle p-5" data-testid="dev-space-surface-questions" aria-labelledby="dev-space-questions-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-2">
           <h2 id="dev-space-questions-title" className="text-sm font-semibold">{t('devSpaceQuestions.title')}</h2>
@@ -187,7 +187,7 @@ export function QuestionsSurface({ workspaceId, repositoryId, projectSlug, stale
           <Button type="button" size="sm" variant="outline" onClick={() => void generate()}>{t('devSpaceQuestions.retry')}</Button>
         </div>
       ) : view === 'empty' ? (
-        <div className="flex flex-col items-start gap-3" data-testid="dev-space-questions-empty">
+        <div data-glass-slot="empty" className="flex flex-col items-start gap-3" data-testid="dev-space-questions-empty">
           <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><Sparkles className="icon-caption" aria-hidden />{t('devSpaceQuestions.emptyTitle')}</p>
           <p className="max-w-2xl text-sm text-muted-foreground">{t('devSpaceQuestions.emptyDescription')}</p>
           <Button type="button" size="sm" disabled={generating} onClick={() => void generate()} data-testid="dev-space-questions-generate">
@@ -260,7 +260,7 @@ interface QuestionCardProps {
 function QuestionCard({ question, expandedWhy, answer, tourAvailable, onToggleWhy, onAnswer, onWatchTour }: QuestionCardProps) {
   const { t } = useTranslation()
   return (
-    <article className="rounded-[var(--radius-card)] border border-border-subtle p-3" data-testid={`dev-space-question-${question.block}-${question.id}`}>
+    <article data-glass-slot="card" className="rounded-[var(--radius-card)] border border-border-subtle p-3" data-testid={`dev-space-question-${question.block}-${question.id}`}>
       <h4 className="text-sm font-medium">{question.text}</h4>
       <button type="button" onClick={onToggleWhy} aria-expanded={expandedWhy} className="mt-1 flex items-center gap-1 text-xs text-muted-foreground" data-testid={`dev-space-question-why-${question.id}`}>
         {expandedWhy ? <ChevronDown className="icon-caption" aria-hidden /> : <ChevronRight className="icon-caption" aria-hidden />}
@@ -290,7 +290,7 @@ function QuestionCard({ question, expandedWhy, answer, tourAvailable, onToggleWh
           ) : answer.format === 'md' ? (
             <div className="dev-space-markdown"><Markdown mode="full">{answer.text ?? ''}</Markdown></div>
           ) : (
-            <pre className="max-h-64 overflow-auto rounded-lg bg-surface-hover p-3 text-xs"><code>{answer.text ?? ''}</code></pre>
+            <pre data-glass-slot="editor" className="max-h-64 overflow-auto rounded-lg bg-surface-hover p-3 text-xs"><code>{answer.text ?? ''}</code></pre>
           )}
         </div>
       ) : null}

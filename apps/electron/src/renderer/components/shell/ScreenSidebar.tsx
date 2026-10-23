@@ -3,7 +3,7 @@ import * as React from 'react'
 import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SidebarActions, SidebarSection, type SidebarMode } from './SidebarSection'
-import type { ScreenSidebarConfig } from './screen-sidebar'
+import { isSidebarSearchUsable, registerScreenSidebarSearch, type ScreenSidebarConfig } from './screen-sidebar'
 
 export interface ScreenSidebarProps {
   config: ScreenSidebarConfig
@@ -15,10 +15,13 @@ export interface ScreenSidebarProps {
 export function ScreenSidebar({ config, mode, headerTrailing }: ScreenSidebarProps) {
   const primary = config.primaryAction
   const PrimaryIcon = primary?.icon
+  const screenId = config.screenId
+  const [searchEl, searchRef] = React.useState<HTMLInputElement | null>(null)
+  useUsableSearchRegistration(screenId, searchEl)
   return (
     <div className="flex min-h-0 flex-col gap-1" data-screen-sidebar={config.screenId} data-sidebar-mode={mode}>
       {mode === 'expanded' ? (
-        <div className="flex h-8 items-center gap-1 pl-2 pr-1" data-sidebar-screen-header="">
+        <div className="flex h-8 items-center gap-1 pl-2 pr-1" data-sidebar-screen-header="" data-glass-slot="toolbar">
           <h2 className="min-w-0 flex-1 truncate text-body font-semibold">{config.title}</h2>
           <SidebarActions actions={config.headerActions} />
           {headerTrailing}
@@ -47,6 +50,7 @@ export function ScreenSidebar({ config, mode, headerTrailing }: ScreenSidebarPro
         <label className="relative mx-1 block">
           <Search className="icon-caption pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <input
+            ref={searchRef}
             type="search"
             value={config.search.value}
             onChange={(event) => config.search?.onChange(event.target.value)}
@@ -56,7 +60,7 @@ export function ScreenSidebar({ config, mode, headerTrailing }: ScreenSidebarPro
           />
         </label>
       )}
-      <div className="flex min-h-0 flex-col">
+      <div className="flex min-h-0 flex-col" data-glass-slot="panel">
         {config.groups.map((group) => (
           <SidebarSection key={group.id} screenId={config.screenId} group={group} mode={mode} />
         ))}
@@ -64,4 +68,28 @@ export function ScreenSidebar({ config, mode, headerTrailing }: ScreenSidebarPro
       {mode === 'expanded' && config.footer}
     </div>
   )
+}
+
+/**
+ * Register the search box only while it is really usable (expanded mode is
+ * implied by it being rendered; also visible and wider than 0). Re-checks on
+ * size changes of the box and the sidebar slot and on inert/aria-hidden flips.
+ */
+function useUsableSearchRegistration(screenId: string, el: HTMLInputElement | null): void {
+  React.useLayoutEffect(() => {
+    if (!el) return undefined
+    const check = () => registerScreenSidebarSearch(screenId, isSidebarSearchUsable(el) ? el : null, el)
+    check()
+    const slot = el.closest<HTMLElement>('[data-panel-role="sidebar"]')
+    const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(check) : null
+    ro?.observe(el)
+    if (slot) ro?.observe(slot)
+    const mo = typeof MutationObserver === 'function' ? new MutationObserver(check) : null
+    mo?.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['inert', 'aria-hidden'] })
+    return () => {
+      ro?.disconnect()
+      mo?.disconnect()
+      registerScreenSidebarSearch(screenId, null, el)
+    }
+  }, [screenId, el])
 }

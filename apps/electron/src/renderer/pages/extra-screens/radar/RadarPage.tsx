@@ -226,10 +226,10 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}{t(busy ? 'extraScreens.radar.starting' : 'extraScreens.radar.runNow')}
         </ScreenButton>
       </header>
-      <section data-testid="radar-setup" className="mb-4 rounded-lg bg-foreground/[0.035] p-4">
+      <section data-testid="radar-setup" data-glass-slot="card" className="mb-4 rounded-lg bg-foreground/[0.035] p-4">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><h2 className="font-semibold">{t('extraScreens.radar.setupTitle')}</h2><p className="mt-1 text-xs text-muted-foreground">{t('extraScreens.radar.setupHint')}</p></div><ScreenButton onClick={addTopic}><Plus className="h-4 w-4" />{t('extraScreens.radar.addTopic')}</ScreenButton></div>
         <div className="my-3 flex flex-wrap gap-2">
-          {data.topics.map(topic => <button key={topic.id} type="button" aria-pressed={topic.id === selectedTopicId} onClick={() => select('topic:' + topic.id)} className="flex max-w-full items-center gap-2 rounded-lg bg-foreground/[0.06] px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+          {data.topics.map(topic => <button key={topic.id} type="button" aria-pressed={topic.id === selectedTopicId} data-glass-slot="row" data-state={topic.id === selectedTopicId ? 'selected' : undefined} onClick={() => select('topic:' + topic.id)} className="flex max-w-full items-center gap-2 rounded-lg bg-foreground/[0.06] px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
             <Search className="h-4 w-4 shrink-0 text-violet-500" /><span className="break-words">{topic.label}</span><ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
           </button>)}
         </div>
@@ -244,11 +244,11 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
           <span>{t('extraScreens.radar.timezone', { zone: Intl.DateTimeFormat().resolvedOptions().timeZone })}</span>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">{t('extraScreens.radar.scheduleHint')}</p>
-        {selectedTopic && <div className="mt-4 rounded-lg bg-background/70 p-3"><TopicEditor key={selectedTopic.id} topic={selectedTopic} sources={sources} onUpdate={patch => updateTopic(selectedTopic.id, patch)} onDelete={() => { save({ ...data, topics: data.topics.filter(topic => topic.id !== selectedTopic.id) }); select(null) }} /></div>}
+        {selectedTopic && <div data-glass-slot="editor" className="mt-4 rounded-lg bg-background/70 p-3"><TopicEditor key={selectedTopic.id} topic={selectedTopic} sources={sources} onUpdate={patch => updateTopic(selectedTopic.id, patch)} onDelete={() => { save({ ...data, topics: data.topics.filter(topic => topic.id !== selectedTopic.id) }); select(null) }} /></div>}
       </section>
       {error && <div role="alert" className="mb-3 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{t('extraScreens.radar.error.' + error, { defaultValue: t('extraScreens.radar.error.start-failed') })}</div>}
       <div className={'grid min-w-0 gap-4 ' + (selectedItem ? 'lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)]' : '')}>
-        <section data-testid="radar-digest" className="min-w-0 rounded-lg bg-foreground/[0.025] pb-3">
+        <section data-testid="radar-digest" data-glass-slot="card" className="min-w-0 rounded-lg bg-foreground/[0.025] pb-3">
           <div className="flex flex-wrap items-center gap-2 p-4"><h2 className="min-w-0 flex-1 font-semibold">{t('extraScreens.radar.digest')}</h2>
             {!!data.sweeps.length && <select aria-label={t('extraScreens.radar.history')} value={viewSweepId ?? ''} onChange={event => { setViewSweepId(event.target.value || null); select(null) }} className="max-w-full rounded-lg bg-background px-2 py-1 text-xs">
               <option value="">{t('extraScreens.radar.latest')}</option>{data.sweeps.slice(0, 10).map(history => <option key={history.id} value={history.id}>{relTime(history.startedAt)}</option>)}
@@ -265,7 +265,7 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
             {visibleCount === 0 && (syncState === 'done' || !sweep) && <EmptyState title={t('extraScreens.radar.nothingNew', { n: data.topics.length })} body={t('extraScreens.radar.emptyHint')} />}
           </>}
         </section>
-        {selectedItem && <section className="min-w-0 rounded-lg bg-foreground/[0.035] p-4"><ItemDetail key={`${workspaceId}:${selectedItem.id}`} workspaceId={workspaceId} item={selectedItem} language={language} onDismiss={() => dismiss(selectedItem.id)} /></section>}
+        {selectedItem && <section data-glass-slot="card" className="min-w-0 rounded-lg bg-foreground/[0.035] p-4"><ItemDetail key={`${workspaceId}:${selectedItem.id}`} workspaceId={workspaceId} item={selectedItem} language={language} onDismiss={() => dismiss(selectedItem.id)} /></section>}
       </div>
     </ScreenRoot>
   )

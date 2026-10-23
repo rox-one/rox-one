@@ -322,7 +322,7 @@ export function ProjectInputs({
       </div>
 
       {composer ? (
-        <div className="mt-1 flex min-w-0 flex-col gap-1 rounded-md bg-background/60 p-2">
+        <div data-glass-slot="editor" className="mt-1 flex min-w-0 flex-col gap-1 rounded-md bg-background/60 p-2">
           {composer === 'link' ? (
             <input
               autoFocus
@@ -378,7 +378,7 @@ export function ProjectInputs({
       {total > 0 ? (
         <div className="mt-1 grid min-w-0 grid-cols-1 gap-x-2 @[720px]:grid-cols-2">
           {files.map((asset) => (
-            <div key={`file-${asset.filename}`} className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 hover:bg-foreground/[0.04]">
+            <div key={`file-${asset.filename}`} data-glass-slot="row" className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 hover:bg-foreground/[0.04]">
               <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
               <button
                 type="button"
@@ -398,7 +398,7 @@ export function ProjectInputs({
             const Icon = KIND_ICON[input.kind]
             const title = input.title || (input.kind === 'text' ? input.value.replace(/\s+/g, ' ').slice(0, 120) : input.value)
             return (
-              <div key={input.id} data-testid="project-input" className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 hover:bg-foreground/[0.04]">
+              <div key={input.id} data-testid="project-input" data-glass-slot="row" className="group flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1 hover:bg-foreground/[0.04]">
                 <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <button
                   type="button"

@@ -161,7 +161,8 @@ type ApiToChannelMapKeys = Exclude<
   | 'onOmniboxOpen' // direct IPC listener — embedded BrowserView ⌘K bridge
   | 'remoteTlsInspect' // direct IPC — inspect peer cert before token handshake
   | 'remoteTlsDecide' // direct IPC — accept/reject/rollover enrollment
-  | 'exitMiniWindow' // direct IPC — native window lifecycle
+  | 'miniGlass' // direct IPC — mini glass companion window lifecycle
+  | 'exitMiniWindow' // direct IPC — mini glass companion exit (preload ipcRenderer.invoke('window:exit-mini'))
   | 'publishVoiceLevel' // direct one-way IPC send — renderer-owned overlay level, no WS RPC
   | 'onPanelFocusDirection' // direct IPC — native directional focus shortcut
   | 'getTelemetryConfig' // sync boot config — direct IPC, not a routed channel
@@ -270,5 +271,22 @@ describe('CHANNEL_MAP runtime contract', () => {
   it('wires the voice push channels to listeners', () => {
     expect(CHANNEL_MAP['onTtsStreamChunk']).toMatchObject({ type: 'listener', channel: 'voice:ttsStreamChunk' })
     expect(CHANNEL_MAP['onVoiceTrigger']).toMatchObject({ type: 'listener', channel: 'voice:trigger' })
+  })
+
+  // Wave 11: the transport's 30 s default cut legitimately long runs (a cold
+  // matplotlib import) while the sidecar kept going and persisted, so both run
+  // calls carry a render-side budget strictly above the runtime's own
+  // (runApiTimeoutMs 90 s, run-all cap 15 min).
+  it('gives the cookbooks run calls a render-side budget above the main-side one', () => {
+    expect(CHANNEL_MAP['cookbooksLab.run'].timeoutMs).toBe(120_000)
+    expect(CHANNEL_MAP['cookbooksLab.runAll'].timeoutMs).toBe(16 * 60_000)
+  })
+
+  it('leaves every other cookbooks entry on the transport default', () => {
+    const overridden = Object.entries(CHANNEL_MAP)
+      .filter(([method]) => method.startsWith('cookbooksLab.'))
+      .filter(([, entry]) => 'timeoutMs' in entry)
+      .map(([method]) => method)
+    expect(overridden).toEqual(['cookbooksLab.run', 'cookbooksLab.runAll'])
   })
 })

@@ -54,10 +54,12 @@ import type { EntitiesLinksEffectiveState } from '@rox/shared/feature-flags'
 import { isSshBacked } from '../shared/ssh'
 import { MEETINGS_LOCAL_IPC, type MeetingsLocalApi } from '../shared/meetings-local'
 import { MAIL_IPC, type MailLocalApi } from '../shared/mail-local'
+import { MINI_GLASS_RESET } from '../shared/mini-glass'
 import { OPEN_DESIGN_IPC_CHANNELS } from '../shared/open-design'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 import { createOpenClawHostControlBridge } from './openclaw-host-control'
 import { createDeviceDiagnosticsBridge } from './device-diagnostics'
+import { createHomeFetchBridge } from './home-fetch'
 
 // ---------------------------------------------------------------------------
 // Client interface — common surface for both RoutedClient and WsRpcClient
@@ -731,6 +733,23 @@ const telemetryBootstrapConfig = (() => {
   downloadUrl: process.env.CRAFT_VCREDIST_URL,
 })
 ;(api as ElectronAPI).exitMiniWindow = () => ipcRenderer.invoke('window:exit-mini')
+;(api as ElectronAPI).miniGlass = {
+  setExpanded: (expanded: boolean) => ipcRenderer.invoke('mini-glass:set-expanded', expanded),
+  submit: (text: string | null) => ipcRenderer.invoke('mini-glass:submit', text),
+  getEnabled: () => ipcRenderer.invoke('mini-glass:get-enabled'),
+  setEnabled: (enabled: boolean) => ipcRenderer.invoke('mini-glass:set-enabled', enabled),
+  // The main process pushes the reset through the typed event sink (WS); the
+  // ipcRenderer path stays for the pre-handshake fallback send.
+  onReset: (callback: () => void) => {
+    const handler = () => callback()
+    const unsubscribe = client.on(MINI_GLASS_RESET, handler)
+    ipcRenderer.on(MINI_GLASS_RESET, handler)
+    return () => {
+      unsubscribe()
+      ipcRenderer.removeListener(MINI_GLASS_RESET, handler)
+    }
+  },
+}
 ;(api as ElectronAPI).onPanelFocusDirection = (callback) => {
   const handler = (_event: unknown, direction: unknown) => {
     if (direction === 'left' || direction === 'right' || direction === 'up' || direction === 'down') callback(direction)
@@ -744,6 +763,26 @@ const telemetryBootstrapConfig = (() => {
 // W1-07 (#1504): push the unified surface route gate to main (deep links).
 ;(api as ElectronAPI).setUnifiedSurfaceRoutesEnabled = (ids: string[]) =>
   ipcRenderer.invoke('shell:setSurfaceRoutesEnabled', ids)
+// «Доска» (Canvas): board persistence bridge (workspace resolved in main).
+;(api as ElectronAPI).canvas = {
+  list: (workspaceId) => ipcRenderer.invoke('canvas:list', workspaceId),
+  create: (workspaceId, title) => ipcRenderer.invoke('canvas:create', workspaceId, title),
+  rename: (workspaceId, boardId, title) => ipcRenderer.invoke('canvas:rename', workspaceId, boardId, title),
+  trash: (workspaceId, boardId) => ipcRenderer.invoke('canvas:trash', workspaceId, boardId),
+  open: (workspaceId, boardId) => ipcRenderer.invoke('canvas:open', workspaceId, boardId),
+  apply: (workspaceId, boardId, update) => ipcRenderer.invoke('canvas:apply', workspaceId, boardId, update),
+  close: (workspaceId, boardId) => ipcRenderer.invoke('canvas:close', workspaceId, boardId),
+  setEnabled: (enabled) => ipcRenderer.invoke('canvas:setEnabled', enabled),
+  listTrash: (workspaceId) => ipcRenderer.invoke('canvas:listTrash', workspaceId),
+  restore: (workspaceId, boardId, stamp) => ipcRenderer.invoke('canvas:restore', workspaceId, boardId, stamp),
+  onUpdate: (callback) => {
+    const handler = (_event: unknown, workspaceId: unknown, boardId: unknown, update: unknown) => {
+      if (typeof workspaceId === 'string' && typeof boardId === 'string' && update instanceof Uint8Array) callback(workspaceId, boardId, update)
+    }
+    ipcRenderer.on('canvas:update', handler)
+    return () => ipcRenderer.removeListener('canvas:update', handler)
+  },
+}
 
 // entities.links.v1: the renderer owns the persisted toggle; main owns the
 // EFFECTIVE state (env override > toggle) and returns it, so the renderer
@@ -880,6 +919,9 @@ contextBridge.exposeInMainWorld('electronAPI', api)
 // Host diagnostics always describe this device, including for remote workspaces.
 if (process.isMainFrame) {
   contextBridge.exposeInMainWorld('deviceDiagnostics', createDeviceDiagnosticsBridge(
+    (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  ))
+  contextBridge.exposeInMainWorld('roxHomeFetch', createHomeFetchBridge(
     (channel, ...args) => ipcRenderer.invoke(channel, ...args),
   ))
 }

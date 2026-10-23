@@ -8,7 +8,7 @@ import { KEYS, getKeyString } from '@/lib/local-storage'
 import { AppShellProvider, type AppShellContextType } from '@/context/AppShellContext'
 import { FocusProvider } from '@/context/FocusContext'
 import { ModalProvider } from '@/context/ModalContext'
-import { NavigationContext } from '@/contexts/NavigationContext'
+import { NavigationContext, NavigationProvider } from '@/contexts/NavigationContext'
 import { definePlaygroundStory } from '@/playground/registry/story-loader'
 import { PLAYGROUND_VIEWPORT_PRESETS, type PlaygroundViewportPresetId } from '@/playground/registry/types'
 import { ensureMockElectronAPI, mockSources } from '@/playground/mock-utils'
@@ -18,6 +18,17 @@ import type { SessionStatus } from '@/config/session-status-config'
 
 const WORKSPACE_ID = 'screen-chat-display-workspace'
 const SESSION_ID = 'screen-chat-display-session'
+
+/** onCreateSession mock: the story provides its own navigation state; the
+ *  actions provider only needs a resolvable factory (mirrors settings.tsx). */
+const createPlaygroundSession = async () => ({
+  id: 'playground-session',
+  workspaceId: WORKSPACE_ID,
+  workspaceName: 'Playground',
+  messages: [],
+  isProcessing: false,
+  lastMessageAt: Date.now(),
+})
 const FIXED_NOW = new Date('2026-09-01T10:30:00.000Z').getTime()
 
 const noop = () => {}
@@ -222,7 +233,14 @@ function ChatDisplayScreenStory({ continuum = false }: { continuum?: boolean }) 
   ensureMockElectronAPI()
 
   const tree = (
-    <NavigationContext.Provider value={playgroundNavigationContext}>
+    <NavigationProvider
+      workspaceId={WORKSPACE_ID}
+      workspaceSlug="playground"
+      onCreateSession={createPlaygroundSession}
+      isReady
+      isSessionsReady
+    >
+      <NavigationContext.Provider value={playgroundNavigationContext}>
       <FocusProvider>
         <AppShellProvider value={playgroundContext}>
           <ModalProvider>
@@ -257,6 +275,7 @@ function ChatDisplayScreenStory({ continuum = false }: { continuum?: boolean }) 
         </AppShellProvider>
       </FocusProvider>
     </NavigationContext.Provider>
+    </NavigationProvider>
   )
 
   if (!continuum) return tree

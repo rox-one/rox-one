@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +16,9 @@ UNSUPPORTED_TAG = "unsupported"
 # they are restricted to a conservative charset: a lowercase alphanumeric first
 # character, then lowercase alphanumerics, dots, underscores or dashes.
 ITEM_ID_PATTERN = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
+# Environment variable names in the catalog's ``defaultEnv`` map: a POSIX-ish
+# identifier, matching what a kernel shell can export.
+ENV_NAME_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 class CatalogError(ValueError):
@@ -78,6 +81,12 @@ class Catalog:
     # Declared tag vocabulary (catalog.json ``tags``). Item tags must be drawn
     # from it, mirroring how ``topics`` constrains ``CatalogItem.topics``.
     tags: tuple[str, ...] = ()
+    # Catalog-level environment defaults (catalog.json ``defaultEnv``) applied to
+    # every item's kernel env. Product policy: the ROX gateway is the
+    # always-default OpenAI-compatible provider, so ``OPENAI_BASE_URL`` /
+    # ``OPENAI_API_BASE`` point at ``https://api.rox.one/v1`` unless overridden.
+    # Kept last so positional construction stays valid.
+    default_env: dict[str, str] = field(default_factory=dict)
 
     def item(self, item_id: str) -> CatalogItem:
         for it in self.items:
@@ -114,6 +123,7 @@ def load_catalog(root: Path | None = None) -> Catalog:
         ),
         root=root,
         tags=tuple(data.get("tags") or ()),
+        default_env=dict(data.get("defaultEnv") or {}),
     )
     validate_catalog(catalog)
     return catalog
@@ -133,6 +143,11 @@ def _with_file_status(item: CatalogItem, root: Path) -> CatalogItem:
 def validate_catalog(catalog: Catalog) -> None:
     if catalog.version != 1:
         raise CatalogError(f"unsupported catalog version {catalog.version}")
+    for name, value in catalog.default_env.items():
+        if not ENV_NAME_PATTERN.fullmatch(name):
+            raise CatalogError(f"invalid defaultEnv name: {name!r}")
+        if not isinstance(value, str) or not value:
+            raise CatalogError(f"invalid defaultEnv value for {name}: {value!r}")
     ids: set[str] = set()
     vendors_seen: set[str] = set()
     topic_set = set(catalog.topics)

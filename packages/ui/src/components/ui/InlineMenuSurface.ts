@@ -28,6 +28,11 @@ export class InlineMenuSurface<T> {
 
     this.element = document.createElement('div')
     this.element.className = options.className
+    // Arc Glass slot hook (frozen contract, docs/plans/2026-10-15-glass-all-screens.md):
+    // every surface this factory creates is a floating caret menu, so it carries
+    // the shared `popover` paint slot. Presentational only — the Arc Glass skin
+    // styles `[data-glass-slot="popover"]`.
+    this.element.dataset.glassSlot = 'popover'
     this.element.style.position = 'fixed'
     this.element.style.zIndex = String(options.zIndex ?? 'var(--z-popover, 100)')
     this.element.addEventListener('mousedown', this.handleMouseDown)

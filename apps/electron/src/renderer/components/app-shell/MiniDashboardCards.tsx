@@ -58,7 +58,7 @@ export function MiniDashboardCards({ snapshot, className, variant = 'grid' }: Mi
       data-mini-dashboard=""
     >
       {cards.map((card) => (
-        <div key={card.key} className="rox-card px-2 py-1.5" data-dashboard-card={card.key}>
+        <div key={card.key} data-glass-slot="card" className="rox-card px-2 py-1.5" data-dashboard-card={card.key}>
           <div className="truncate text-xs font-medium uppercase caps-label text-muted-foreground">
             {card.label}
           </div>

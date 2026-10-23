@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Panel } from './Panel'
+import { Skeleton } from '@rox/ui'
 import { MessageSquarePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
@@ -54,7 +55,7 @@ import { buildRouteFromNavigationState } from '../../../shared/route-parser'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
 import { recordRecentSetting } from '@/lib/settings-recent'
 import { automationsAtom } from '@/atoms/automations'
-import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendResourceToWorkspaceDialog'
+import type { SendResourceType } from './SendResourceToWorkspaceDialog'
 import {
   knowledgeActiveViewIdAtom,
   knowledgeHomeViewAtom,
@@ -64,7 +65,12 @@ import { lazyRoutePage, RouteErrorBoundary } from '@/lib/route-recovery'
 import { endRouteSwitch } from '@/lib/startup-perf'
 import { RetainedSurfacePane, surfaceKeepAliveCapacity, useKeepAliveSurfaces } from '@/lib/surface-keepalive'
 import { ROUTE_PAGE_LOADERS } from './route-pages'
+import { SettingsScreenSidebar } from '@/pages/settings/SettingsScreenSidebar'
 export { lazyRoutePage } from '@/lib/route-recovery'
+
+const SendResourceToWorkspaceDialog = React.lazy(() =>
+  import('./SendResourceToWorkspaceDialog').then((m) => ({ default: m.SendResourceToWorkspaceDialog })),
+)
 
 function UnavailableAutomationTour({ workspaceId }: { workspaceId: string | null }) {
   const signals = useTourSignals({ workspaceId: workspaceId ?? '' })
@@ -284,15 +290,19 @@ export function MainContentPanel({
           {entry.node}
         </RetainedSurfacePane>
       ))}
-      <SendResourceToWorkspaceDialog
-        open={sendDialogOpen}
-        onOpenChange={setSendDialogOpen}
-        resourceType={sendResourceType}
-        resourceIds={sendResourceIds}
-        resourceLabel={sendResourceLabel}
-        workspaces={workspaces}
-        activeWorkspaceId={activeWorkspaceId || ''}
-      />
+      {sendDialogOpen && (
+        <React.Suspense fallback={null}>
+          <SendResourceToWorkspaceDialog
+            open
+            onOpenChange={setSendDialogOpen}
+            resourceType={sendResourceType}
+            resourceIds={sendResourceIds}
+            resourceLabel={sendResourceLabel}
+            workspaces={workspaces}
+            activeWorkspaceId={activeWorkspaceId || ''}
+          />
+        </React.Suspense>
+      )}
     </>
   )
 }
@@ -410,8 +420,16 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
 
   const pageFallback = (
     <Panel variant="grow" className={className}>
-      <div className="flex h-full items-center justify-center text-muted-foreground">
-        <p className="text-sm">{t('common.loading')}</p>
+      <div
+        className="flex h-full flex-col items-center justify-center gap-3 px-8 text-muted-foreground"
+        role="status"
+        aria-busy="true"
+        aria-label={t('common.loading')}
+      >
+        <div className="w-full max-w-md space-y-3">
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton lines={4} className="w-full" />
+        </div>
       </div>
     </Panel>
   )
@@ -448,11 +466,20 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
           className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground"
           role="status"
           aria-live="polite"
+          aria-busy={resourceStatus === 'loading' || undefined}
           data-testid={`route-resource-${resourceStatus}`}
           data-route-resource={resourceKind}
           data-route-entity={resourceSlug}
         >
-          <p className="text-sm">{message}</p>
+          {resourceStatus === 'loading' ? (
+            <div className="w-full max-w-md space-y-3 px-8 text-muted-foreground">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton lines={4} className="w-full" />
+              <p className="sr-only">{message}</p>
+            </div>
+          ) : (
+            <p className="text-sm">{message}</p>
+          )}
           {resourceStatus !== 'loading' && (
             <button
               type="button"
@@ -472,6 +499,7 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     if (navState.subpage === null) {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
+          <SettingsScreenSidebar subpage={null} />
           <SettingsOverviewPage />
         </Panel>
       )
@@ -479,6 +507,7 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
     const SettingsPageComponent = getSettingsPageComponent(navState.subpage)
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
+        <SettingsScreenSidebar subpage={navState.subpage} />
         <SettingsPageComponent />
       </Panel>
     )
@@ -910,10 +939,24 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
       if (!isSessionsReady || !belongsToWorkspace) {
         return wrapWithStoplight(
           <Panel variant="grow" className={className}>
-            <div role="status" aria-live="polite" data-testid={isSessionsReady ? 'route-session-missing' : 'route-session-loading'} data-route-entity={sessionId}
-              className="flex h-full items-center justify-center p-4 text-muted-foreground">
-              <div data-testid={isSessionsReady ? 'route-session-unavailable' : undefined} data-session-id={sessionId}>
-                <p className="text-sm">{t(isSessionsReady ? 'chat.sessionNoLongerExists' : 'common.loading')}</p>
+            <div
+              role="status"
+              aria-live="polite"
+              aria-busy={!isSessionsReady || undefined}
+              data-testid={isSessionsReady ? 'route-session-missing' : 'route-session-loading'}
+              data-route-entity={sessionId}
+              className="flex h-full items-center justify-center p-4 text-muted-foreground"
+            >
+              <div data-testid={isSessionsReady ? 'route-session-unavailable' : undefined} data-session-id={sessionId} className="w-full max-w-md">
+                {isSessionsReady ? (
+                  <p className="text-sm">{t('chat.sessionNoLongerExists')}</p>
+                ) : (
+                  <div className="space-y-3 text-muted-foreground">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton lines={4} className="w-full" />
+                    <p className="sr-only">{t('common.loading')}</p>
+                  </div>
+                )}
               </div>
             </div>
             {sessionsBulkBar}

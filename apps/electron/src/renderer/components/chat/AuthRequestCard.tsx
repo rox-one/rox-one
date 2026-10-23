@@ -350,6 +350,7 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
 
     return (
       <div
+        data-glass-slot="card"
         className={cn('rounded-[var(--radius-card)] overflow-hidden w-fit select-none', variantTextClass)}
         style={{
           backgroundColor: variantBg,
@@ -647,6 +648,7 @@ export function AuthRequestCard({ message, onRespondToCredential, sessionId, isI
 
   return (
     <div
+      data-glass-slot="card"
       className={cn('rounded-[var(--radius-card)] overflow-hidden', variantTextClass)}
       style={{
         backgroundColor: variantBg,

@@ -358,7 +358,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                 <p className="text-xs text-muted-foreground mb-3">
                   {t('skillInfo.permissionModesDesc')}
                 </p>
-                <div className="rounded-[var(--radius-card)] border border-border/50 overflow-hidden">
+                <div data-glass-slot="table" className="rounded-[var(--radius-card)] border border-border/50 overflow-hidden">
                   <table className="w-full text-sm">
                     <tbody>
                       <tr className="border-b border-border/30">
@@ -428,7 +428,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
               </div>
             ) : (
               <div className="px-4 py-3">
-                <pre className="whitespace-pre-wrap text-sm text-foreground/80 font-mono bg-muted/20 rounded-md p-3 max-h-[540px] overflow-y-auto border border-border/40">
+                <pre data-glass-slot="editor" className="whitespace-pre-wrap text-sm text-foreground/80 font-mono bg-muted/20 rounded-md p-3 max-h-[540px] overflow-y-auto border border-border/40">
                   {skill.content || t('skillInfo.noInstructions')}
                 </pre>
               </div>

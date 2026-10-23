@@ -126,6 +126,7 @@ export function OnboardingDialog({ workspaceId, presentationAllowed = true }: On
           {drafts.map((draft) => (
             <div
               key={draft.id}
+              data-glass-slot="card"
               className="rounded-[var(--radius-control)] border border-foreground/10 bg-foreground/[0.025] p-3 shadow-minimal"
             >
               <div className="grid gap-3 sm:grid-cols-[1fr_11rem]">

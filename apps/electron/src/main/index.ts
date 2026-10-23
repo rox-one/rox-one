@@ -2,7 +2,7 @@
 import { markStartup, markStartupOnce, recordRendererMark, reportStartupTimelineWhenSettled, whenStartupMark } from './startup-marks'
 import { STARTUP_MARKS, STARTUP_PERF_MARK_CHANNEL, isValidRendererMarkName } from '../shared/startup-perf'
 import { createPocketAccountStore } from './pocket-account-store'
-import { RoxAccountAuthority, setRoxAccountAuthority } from '@rox/shared/auth'
+import { RoxAccountAuthority, selectPocketClient, setRoxAccountAuthority } from '@rox/shared/auth'
 import { validateConfigurationCliEntries } from './configuration-cli-compat'
 import { resolveNumberedUserDataDir } from './numbered-user-data'
 // Load user's shell environment first (before other imports that may use env)
@@ -18,8 +18,12 @@ registerSpawnEnvGate('shell-env', shellEnvSpawnGate)
 markStartup(STARTUP_MARKS.shellEnv)
 
 import './brand-config-boot'
+// Shared ROX gateway key, baked in at build time (gitignored generated module).
+import { ROX_DEFAULTS } from './rox-defaults/rox-defaults.generated'
+import { installRoxDefaults } from './rox-defaults/install-rox-defaults'
+installRoxDefaults(ROX_DEFAULTS)
 
-import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, Notification, safeStorage, session, shell, Tray, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, net, Notification, safeStorage, session, shell, Tray, webContents, type BrowserWindowConstructorOptions, type IpcMainInvokeEvent, type WebContents } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 
 
@@ -124,6 +128,7 @@ import { initModelRefreshService, getModelRefreshService, setFetcherPlatform } f
 import { setSearchPlatform, setImageProcessor } from '@rox/server-core/services'
 import { createApplicationMenu } from './menu'
 import { dispatchShellAction } from './shell-actions'
+import type { ShellActionPayload } from '@rox/shared/protocol'
 import { initQuickComposer, disposeQuickComposer } from './quick-composer'
 import { nativeAccessibilityPrefersSolid } from './shell-material'
 import { setupWorkerPool } from './worker-pool-setup'
@@ -155,6 +160,9 @@ import { OAuthFlowStore } from '@rox/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
 import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog, errorLog } from './logger'
 import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
+import { registerHomeFetchIpc } from './home-fetch/ipc'
+import { HomeFetchService } from './home-fetch/service'
+import { getSharedKeys } from './home-fetch/shared-keys'
 import { registerStorageVisibleRootIpc } from './storage-visible-root-ipc'
 import { registerStorageMigrationNoticeIpc, runVisibleHomeBoot } from './visible-home-boot'
 import { setPerfEnabled, enableDebug } from '@rox/shared/utils'
@@ -195,7 +203,8 @@ import {
 } from '@rox/server-core/service'
 import { registerServiceLifecycleIpc } from './service-lifecycle-ipc'
 import type { MenuBroadcastChannel } from './menu'
-import { TrayController } from './tray'
+import { aggregateTrayReports, RecordingTrayController, sanitizeTrayReport, TrayController } from './tray'
+import { installCallDefaults } from './team-calls/install-call-defaults'
 
 // Initialize electron-log for renderer process support
 log.initialize()
@@ -401,6 +410,9 @@ if (!(process.env.NODE_ENV === 'test' && process.env.ROX_SKIP_PROTOCOL_REGISTRAT
 
 // Apply network proxy settings early (Node-level only — Electron sessions require app.whenReady)
 import { applyConfiguredProxySettings } from './network-proxy'
+
+// Team calls: shared LiveKit/Exa defaults baked in at build time (gitignored module).
+installCallDefaults()
 void applyConfiguredProxySettings()
 
 // Register thumbnail:// custom protocol for file preview thumbnails in the sidebar.
@@ -1028,6 +1040,23 @@ app.whenReady().then(async () => {
       }),
     })
 
+    // Home widgets: all network fetches go through main (cache, rate limits, offline); shared keys stay here.
+    registerHomeFetchIpc({
+      ipcMain,
+      windowManager,
+      rendererFilePath: join(__dirname, 'renderer/index.html'),
+      devServerUrl: process.env.VITE_DEV_SERVER_URL,
+      service: new HomeFetchService({
+        // Dedicated in-memory session with no cookies/credentials, so Home widget
+        // fetches never carry the user's browsing or app session state.
+        fetch: ((input: string | URL | Request, init?: RequestInit) =>
+          session.fromPartition('rox-home-fetch', { cache: false }).fetch(input instanceof URL ? input.toString() : input, { ...init, credentials: 'omit' })) as typeof globalThis.fetch,
+        now: () => Date.now(),
+        isOnline: () => net.isOnline(),
+        getExaKey: () => getSharedKeys().exa,
+      }),
+    })
+
     // Bootstrap IPC handlers — preload uses sendSync for window-local details
     ipcMain.on('__get-web-contents-id', (e) => {
       e.returnValue = e.sender.id
@@ -1079,6 +1108,16 @@ app.whenReady().then(async () => {
     const { registerSurfaceRoutesIpc } = await import('./surface-routes-ipc')
     registerSurfaceRoutesIpc(ipcMain, {
       isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
+    })
+
+    // «Доска» (Canvas): local board persistence in <workspace>/canvas (workspace resolved in main).
+    const { registerCanvasIpc } = await import('./canvas-ipc')
+    registerCanvasIpc(ipcMain, {
+      resolveWorkspaceRoot: (id) => getWorkspaceByNameOrId(id)?.rootPath ?? null,
+      isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
+      listRenderers: () => webContents.getAllWebContents().filter((wc) => isRegisteredRoxRendererWebContents(wc)),
+      rendererById: (id) => webContents.fromId(id) ?? undefined,
+      configDir: CONFIG_DIR,
     })
 
     // Transport diagnostics bridge — preload reports remote WS connection state changes
@@ -1392,7 +1431,7 @@ app.whenReady().then(async () => {
         },
         bindRpcServer: (sm, server) => sm.setRpcServer(server),
         createHandlerDeps: ({ sessionManager: sm, platform: p, oauthFlowStore: ofs, nativeAuthority, nativeJournal, collaborationSync }) => {
-          setRoxAccountAuthority(new RoxAccountAuthority(createPocketAccountStore({ directory: join(app.getPath('userData'), 'pocket-accounts'), safeStorage })))
+          setRoxAccountAuthority(new RoxAccountAuthority(createPocketAccountStore({ directory: join(app.getPath('userData'), 'pocket-accounts'), safeStorage }), selectPocketClient({ name: hostname(), platform: process.platform })))
           localNativeAuthority = nativeAuthority
           const browserCredentialPermissions = createBrowserCredentialPermissionAdapter({
             async confirm(request) {
@@ -2050,6 +2089,7 @@ app.whenReady().then(async () => {
           prefersSolid: nativeAccessibilityPrefersSolid,
         })
         app.once('will-quit', () => disposeQuickComposer())
+        app.once('will-quit', () => windowManager?.disposeMiniGlass())
       }
 
       // Dock menu (macOS): the native integration actions, dispatched as one
@@ -2162,42 +2202,155 @@ app.whenReady().then(async () => {
         }),
       })
 
-      // Menu-bar status shell (e2.1). Only with a real UI; the indicator tracks
-      // the service state.
+      // Menu-bar item: Rox eye + red unread badge, quick commands, and a
+      // separate record/stop item while a capture runs. Only with a real UI.
       if (!isHeadless && process.platform === 'darwin') {
+        const { compositeBadge, renderRecordingDot } = await import('./tray-badge')
+        const { getNotificationsEnabled, setNotificationsEnabled } = await import('@rox/shared/config')
+        const { loadVoicePrefs } = await import('@rox/shared/voice')
+        const autoUpdate = await import('./auto-update')
         const iconPath = resolveAppIconPngPath()
-        const tray = new Tray(iconPath ? nativeImage.createFromPath(iconPath).resize({ width: 18, height: 18 }) : nativeImage.createEmpty())
+        const iconSource = iconPath ? nativeImage.createFromPath(iconPath) : nativeImage.createEmpty()
+        const SCALES = [1, 2] as const
+        // The app icon is a self-contained black/white tile, so it reads on
+        // both light and dark menu bars; it is not a template image.
+        const iconAt = (scale: number) => iconSource.isEmpty()
+          ? null
+          : iconSource.resize({ width: 18 * scale, height: 18 * scale, quality: 'best' })
+        // Plain and badged icons share one canvas (compositeBadge pads at 0), so
+        // the item never shifts when the badge appears.
+        const badgedIcon = (count: number) => {
+          const image = nativeImage.createEmpty()
+          for (const scale of SCALES) {
+            const at = iconAt(scale)
+            if (!at) continue
+            const size = at.getSize()
+            const out = compositeBadge({ width: size.width, height: size.height, data: new Uint8Array(at.toBitmap()) }, count, scale, 'bgra')
+            const bitmap = nativeImage.createFromBitmap(Buffer.from(out.data), { width: out.width, height: out.height, scaleFactor: scale })
+            image.addRepresentation({ scaleFactor: scale, width: out.width, height: out.height, buffer: bitmap.toPNG() })
+          }
+          return image
+        }
+        const plainIcon = badgedIcon(0)
+        const recordingIcon = (() => {
+          const image = nativeImage.createEmpty()
+          for (const scale of SCALES) {
+            const dot = renderRecordingDot(scale, 'bgra')
+            const bitmap = nativeImage.createFromBitmap(Buffer.from(dot.data), { width: dot.width, height: dot.height, scaleFactor: scale })
+            image.addRepresentation({ scaleFactor: scale, width: dot.width, height: dot.height, buffer: bitmap.toPNG() })
+          }
+          return image
+        })()
+
+        const tray = new Tray(plainIcon)
+        const lastActiveWindow = () => windowManager?.getLastActiveWindow() ?? windowManager?.getAllWindows()[0]?.window ?? null
+        const showWindow = () => {
+          const win = lastActiveWindow()
+          if (!win || win.isDestroyed()) return
+          if (win.isMinimized()) win.restore()
+          win.show()
+          win.focus()
+        }
+        const translate = (key: string, params?: Record<string, string | number>) => i18n.t(key, params)
+        const trayReports = new Map<number, import('@rox/shared/protocol').TrayStateReport>()
+        let recordingOwner: number | null = null
+        const pushToWebContents = (webContentsId: number, payload: ShellActionPayload) => {
+          const win = windowManager?.getWindowByWebContentsId(webContentsId)
+          if (!win || win.isDestroyed() || win.webContents.isDestroyed()) return false
+          windowManager!.pushToWindow(win, RPC_CHANNELS.shell.ACTION, payload)
+          return true
+        }
         const trayController = new TrayController({
           tray,
-          buildMenu: template => Menu.buildFromTemplate([...template]),
-          translate: key => i18n.t(key),
+          buildMenu: template => Menu.buildFromTemplate(template as Electron.MenuItemConstructorOptions[]),
+          translate,
+          setBadge: count => { tray.setImage(count > 0 ? badgedIcon(count) : plainIcon) },
           // The channel set comes from the tray model, never from IPC input.
           dispatchChannel: channel => dispatchMenuChannel(channel as MenuBroadcastChannel),
-          dispatchShellAction: action => { dispatchShellAction(windowManager, { action }) },
-          showWindow: () => {
-            const win = windowManager?.getLastActiveWindow() ?? windowManager?.getAllWindows()[0]?.window ?? null
-            if (!win || win.isDestroyed()) return
-            if (win.isMinimized()) win.restore()
-            win.show()
-            win.focus()
+          dispatchShellAction: payload => {
+            // Stopping targets the window that owns the capture.
+            if (payload.action === 'toggle-meeting-recording' && recordingOwner != null && pushToWebContents(recordingOwner, payload)) return
+            dispatchShellAction(windowManager, payload)
           },
+          toggleVoice: () => {
+            const owner = trayController.getView().report.recording?.kind === 'voice' ? recordingOwner : null
+            sendVoiceCommand('toggle', owner ?? undefined)
+          },
+          setDoNotDisturb: enabled => { setNotificationsEnabled(!enabled) },
+          checkForUpdates: () => { void autoUpdate.checkForUpdates({ autoDownload: true, manual: true }) },
+          installUpdate: () => { void autoUpdate.installUpdate() },
+          showWindow,
+          toggleMini: () => { if (!windowManager?.toggleMiniWindow()) showWindow() },
           quit: () => app.quit(),
         })
-        let lastTrayState: string | null = null
+        const recordingTray = new RecordingTrayController({
+          createTray: () => {
+            const item = new Tray(recordingIcon)
+            return {
+              setTitle: title => item.setTitle(title, { fontType: 'monospacedDigit' }),
+              setToolTip: text => item.setToolTip(text),
+              onClick: handler => { item.on('click', handler) },
+              destroy: () => item.destroy(),
+            }
+          },
+          translate,
+          stop: kind => {
+            if (kind === 'voice') {
+              sendVoiceCommand('toggle', recordingOwner ?? undefined)
+              return
+            }
+            const payload: ShellActionPayload = { action: 'toggle-meeting-recording' }
+            if (recordingOwner == null || !pushToWebContents(recordingOwner, payload)) dispatchShellAction(windowManager, payload)
+          },
+        })
+        const applyReports = () => {
+          const activeId = lastActiveWindow()?.webContents.id ?? null
+          const aggregated = aggregateTrayReports(trayReports, activeId)
+          recordingOwner = aggregated.recordingOwner
+          trayController.update({
+            report: aggregated.report,
+            activeWorkspaceId: activeId != null ? windowManager?.getWorkspaceForWindow(activeId) ?? null : null,
+          })
+          recordingTray.set(aggregated.report.recording)
+        }
+        instance.wsServer.handle(RPC_CHANNELS.tray.REPORT_STATE, async (ctx, input: unknown) => {
+          const id = ctx.webContentsId
+          if (id == null) return
+          if (!trayReports.has(id)) {
+            const wc = windowManager?.getWindowByWebContentsId(id)?.webContents
+            // Reports from a webContents we can't track would never be cleaned
+            // up (and could pin a stale recording), so ignore them.
+            if (!wc || wc.isDestroyed()) return
+            wc.once('destroyed', () => { trayReports.delete(id); applyReports() })
+          }
+          trayReports.set(id, sanitizeTrayReport(input))
+          applyReports()
+        })
         const refreshTray = async () => {
           const status = await serviceManager.getStatus()
-          if (status.state === lastTrayState) return
-          lastTrayState = status.state
-          trayController.setStatus({
+          const info = autoUpdate.getUpdateInfo()
+          const prefs = loadVoicePrefs()
+          trayController.update({
             agentState: status.state === 'failed' || status.state === 'degraded' ? 'error' : 'idle',
             serviceState: status.state,
+            workspaces: getWorkspaces().map(ws => ({ id: ws.id, name: ws.name })),
+            doNotDisturb: !getNotificationsEnabled(),
+            updateReadyVersion: info.available && info.downloadState === 'ready' ? info.latestVersion ?? null : null,
+            accelerators: {
+              askRox: getQuickComposerShortcut() || undefined,
+              voice: prefs.toggleAccelerator || undefined,
+            },
           })
         }
         void refreshTray()
+        // Opening the menu re-reads workspaces / DND / update state first.
+        tray.on('mouse-down', () => { void refreshTray() })
         const trayTimer = setInterval(() => { void refreshTray() }, 30_000)
         trayTimer.unref?.()
+        app.on('browser-window-focus', applyReports)
         app.once('will-quit', () => {
           clearInterval(trayTimer)
+          recordingTray.dispose()
           trayController.dispose()
         })
       }
