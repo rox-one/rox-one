@@ -6,7 +6,7 @@
  * journal already carries content, author, time and byte size — we list and
  * read those, never mutate them.
  *
- * Secondary source: `.rox/revisions/<note>.json` snapshots recorded on native
+ * Secondary source: notes-root `.rox/revisions/<note>.json` snapshots recorded on native
  * journal saves that do not write a MarkdownCommitStore journal, so history
  * stays available on both save paths. Snapshots are append-only; restore
  * creates a NEW save (new journal / snapshot), never rewrites an old one.
@@ -34,7 +34,6 @@ export type NoteHistoryRevision = NoteHistoryEntry & {
 type SidecarRevision = NoteHistoryRevision & { schemaVersion: 1 }
 type SidecarFile = { schemaVersion: 1; noteId: string; revisions: SidecarRevision[] }
 
-const ROX_META = '.rox'
 const REVISIONS_DIR = 'revisions'
 const COMMITS_ROOT = join('.rox-docs', 'commits')
 
@@ -46,7 +45,9 @@ function encodeNoteFileName(noteId: string): string {
 }
 
 function sidecarPath(notesRoot: string, noteId: string): string {
-  return join(notesRoot, ROX_META, REVISIONS_DIR, `${encodeNoteFileName(noteId)}.json`)
+  // Workspace-relative meta dir (same pattern as entity-links / contacts stores).
+  const dir = join(notesRoot, '.rox', REVISIONS_DIR)
+  return join(dir, `${encodeNoteFileName(noteId)}.json`)
 }
 
 async function assertSafeMetaPath(notesRoot: string, candidate: string): Promise<void> {
@@ -92,7 +93,7 @@ async function readSidecar(notesRoot: string, noteId: string): Promise<SidecarFi
 
 async function writeSidecarAtomic(notesRoot: string, file: SidecarFile): Promise<void> {
   const path = sidecarPath(notesRoot, file.noteId)
-  await mkdir(join(notesRoot, ROX_META, REVISIONS_DIR), { recursive: true })
+  await mkdir(join(notesRoot, '.rox', REVISIONS_DIR), { recursive: true })
   await assertSafeMetaPath(notesRoot, path)
   const tmp = `${path}.${process.pid}.${Date.now()}.tmp`
   await writeFile(tmp, `${JSON.stringify(file, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 })

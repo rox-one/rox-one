@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { mkdtemp, mkdir, writeFile, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
@@ -182,6 +183,26 @@ describe('note-revision-history', () => {
     expect(listed[0]?.operationId).toBe('native-hit')
     expect(listed[0]?.actorPrincipalId).toBe('local-uid:9:ws')
     expect((await getNoteRevision(root, workspaceId, noteId, markdownRevision(content)))?.content).toBe(content)
+  })
+
+
+  it('sidecar lands under notes-root .rox/revisions (not home config)', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'rox-note-history-meta-'))
+    const noteId = 'meta/check'
+    const body = '# Meta\n'
+    await recordNoteRevision(root, {
+      noteId, content: body, revisionId: markdownRevision(body), operationId: 'meta-1',
+      committedAt: '2026-10-23T13:00:00.000Z',
+    })
+    const encoded = Buffer.from(noteId, 'utf8').toString('base64url')
+    const sidecar = join(root, '.rox', 'revisions', `${encoded}.json`)
+    expect(existsSync(sidecar)).toBe(true)
+    const raw = JSON.parse(await readFile(sidecar, 'utf8')) as { noteId: string; revisions: unknown[] }
+    expect(raw.noteId).toBe(noteId)
+    expect(raw.revisions).toHaveLength(1)
+    // Gate-facing invariant: path is notes-root-relative.
+    expect(sidecar.startsWith(root + '/')).toBe(true)
+    expect(sidecar.includes('/.rox/revisions/')).toBe(true)
   })
 
   it('serializes concurrent sidecar writes for the same noteId', async () => {
