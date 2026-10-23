@@ -159,7 +159,7 @@ export function ConfirmDialog({
         {body ? <div className="mt-1.5 text-sm text-text-secondary">{body}</div> : null}
       </div>
       <div className="flex justify-end gap-1.5 px-4 pb-4">
-        <button type="button" onClick={onCancel} className="h-7 rounded-[var(--radius-control)] px-3 text-sm text-text-secondary hover:bg-foreground/[0.06]">
+        <button type="button" onClick={onCancel} className="h-7 rounded-[var(--radius-control)] px-3 text-sm text-text-secondary hover:bg-surface-hover">
           {t('common.cancel')}
         </button>
         <button
@@ -210,9 +210,9 @@ export function MiniCalendar({
   return (
     <div className="select-none" data-testid="mini-calendar">
       <div className="flex items-center justify-between px-1 pb-1">
-        <button type="button" aria-label="‹" onClick={() => shift(-1)} className="size-6 rounded-[var(--radius-control)] text-text-secondary hover:bg-foreground/[0.07]">‹</button>
+        <button type="button" aria-label="‹" onClick={() => shift(-1)} className="size-6 rounded-[var(--radius-control)] text-text-secondary hover:bg-surface-hover">‹</button>
         <span className="text-sm font-semibold capitalize">{monthFmt.format(first)}</span>
-        <button type="button" aria-label="›" onClick={() => shift(1)} className="size-6 rounded-[var(--radius-control)] text-text-secondary hover:bg-foreground/[0.07]">›</button>
+        <button type="button" aria-label="›" onClick={() => shift(1)} className="size-6 rounded-[var(--radius-control)] text-text-secondary hover:bg-surface-hover">›</button>
       </div>
       <div className="grid grid-cols-7 gap-0.5 text-center text-xs">
         {heads.map((head, i) => <div key={i} className="h-5 leading-5 text-text-muted">{head}</div>)}
@@ -222,7 +222,7 @@ export function MiniCalendar({
             type="button"
             onClick={() => onPick(at)}
             className={cn(
-              'h-6 rounded-[var(--radius-control)] numeric outline-none hover:bg-foreground/[0.08] focus-visible:ring-2 focus-visible:ring-accent',
+              'h-6 rounded-[var(--radius-control)] numeric outline-none hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-accent',
               new Date(at).toDateString() === valueKey && 'bg-accent font-semibold text-[var(--accent-foreground,white)] hover:bg-accent',
               new Date(at).toDateString() === todayKey && new Date(at).toDateString() !== valueKey && 'font-semibold text-accent',
               at < new Date(now).setHours(0, 0, 0, 0) && 'text-text-muted',

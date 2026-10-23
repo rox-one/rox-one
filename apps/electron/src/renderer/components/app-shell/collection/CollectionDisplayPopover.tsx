@@ -160,7 +160,7 @@ export function CollectionDisplayPopover({
               onClick={() => patch({ orderBy: value })}
             />
           ))}
-          <div className="mx-2 mt-1 flex rounded-sm bg-foreground/[0.04] p-0.5">
+          <div className="mx-2 mt-1 flex rounded-sm bg-surface-hover p-0.5">
             {(['asc', 'desc'] as CollectionOrderDir[]).map((dir) => {
               const active = display.orderDir === dir
               return (
@@ -250,7 +250,7 @@ export function CollectionDisplayToggleRow({
   return (
     <label
       htmlFor={id}
-      className="flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-control)] px-2 py-1.5 text-base text-foreground/90 transition-colors hover:bg-foreground/[0.04] hover:text-foreground has-[:focus-visible]:bg-foreground/[0.07] has-[:focus-visible]:text-foreground motion-reduce:transition-none"
+      className="flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-control)] px-2 py-1.5 text-base text-text-secondary transition-colors hover:bg-surface-hover hover:text-foreground has-[:focus-visible]:bg-surface-hover has-[:focus-visible]:text-foreground motion-reduce:transition-none"
     >
       <span>{label}</span>
       <Switch id={id} data-collection-dialog-item checked={checked} onCheckedChange={onCheckedChange} />

@@ -3,7 +3,7 @@ import { Check, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const COLLECTION_MENU_ROW =
-  'group/row flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left text-base text-foreground/90 outline-none transition-[background-color,color,opacity] duration-150 hover:bg-foreground/[0.055] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 motion-reduce:transition-none'
+  'group/row flex w-full cursor-pointer items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-left text-base text-text-secondary outline-none transition-[background-color,color,opacity] duration-150 hover:bg-surface-hover hover:text-foreground focus-visible:bg-surface-hover focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 motion-reduce:transition-none'
 
 export function CollectionMenuCheck({
   selected,
@@ -61,7 +61,7 @@ export function CollectionMenuRow({
       aria-pressed={!asMenuItem ? selected : undefined}
       data-collection-dialog-item={!asMenuItem ? true : undefined}
       onClick={onClick}
-      className={cn(COLLECTION_MENU_ROW, selected && 'bg-foreground/[0.035] text-foreground', className)}
+      className={cn(COLLECTION_MENU_ROW, selected && 'bg-surface-selected text-foreground', className)}
     >
       <CollectionMenuCheck selected={selected} />
       <span className="min-w-0 flex-1 truncate" title={typeof label === 'string' ? label : undefined}>{label}</span>
@@ -93,7 +93,7 @@ export function CollectionMenuRadioRow({
       aria-pressed={!asMenuItem ? selected : undefined}
       data-collection-dialog-item={!asMenuItem ? true : undefined}
       onClick={onClick}
-      className={cn(COLLECTION_MENU_ROW, selected && 'bg-foreground/[0.035] text-foreground', className)}
+      className={cn(COLLECTION_MENU_ROW, selected && 'bg-surface-selected text-foreground', className)}
     >
       <CollectionMenuCheck selected={selected} variant="radio" />
       <span className="min-w-0 flex-1 truncate" title={typeof label === 'string' ? label : undefined}>{label}</span>

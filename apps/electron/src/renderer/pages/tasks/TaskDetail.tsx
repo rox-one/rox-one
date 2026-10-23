@@ -154,7 +154,7 @@ export function TaskDetail(props: TaskDetailProps) {
     const session = link.kind === 'session' ? props.sessionMap.get(link.id) : undefined
     const label = session ? (session.name || session.preview || link.id) : (link.label || link.id)
     return (
-      <li key={`${link.kind}:${link.id}`} className="flex items-center gap-2 rounded-[var(--radius-control)] bg-foreground/[0.04] px-2 py-1.5">
+      <li key={`${link.kind}:${link.id}`} className="flex items-center gap-2 rounded-[var(--radius-control)] bg-surface-hover px-2 py-1.5">
         <span className="shrink-0 text-text-muted">{t(`tasks.linkKind.${link.kind}`)}</span>
         <button type="button" className="min-w-0 flex-1 truncate text-left hover:underline" onClick={() => props.onOpenSource(link)}>
           «{label}»
@@ -226,7 +226,7 @@ export function TaskDetail(props: TaskDetailProps) {
           {editingNotes ? (
             <textarea
               ref={notesRef}
-              className="min-h-[96px] rounded-[var(--radius-card)] bg-foreground/[0.04] p-2 text-base outline-none focus:bg-foreground/[0.06]"
+              className="min-h-[96px] rounded-[var(--radius-card)] bg-surface-hover p-2 text-base outline-none focus:bg-surface-pressed"
               value={notes}
               placeholder={t('tasks.notesPlaceholder')}
               onChange={(event) => update({ notes: mergeNotesMarkers(task.notes, event.target.value) })}
@@ -245,7 +245,7 @@ export function TaskDetail(props: TaskDetailProps) {
             <button
               type="button"
               onClick={() => setEditingNotes(true)}
-              className="min-h-[40px] rounded-[var(--radius-control)] px-2 py-1.5 text-left text-base hover:bg-foreground/[0.04]"
+              className="min-h-[40px] rounded-[var(--radius-control)] px-2 py-1.5 text-left text-base hover:bg-surface-hover"
               aria-label={t('tasks.notesEdit')}
               data-testid="task-notes"
             >
@@ -331,7 +331,7 @@ export function TaskDetail(props: TaskDetailProps) {
                 ))}
               </ul>
               <form className="mt-1 flex" onSubmit={(event) => { event.preventDefault(); if (!subDraft.trim()) return; mutate((current) => { current.addSubtask(task.id, subDraft.trim()) }); setSubDraft('') }}>
-                <input value={subDraft} onChange={(event) => setSubDraft(event.target.value)} placeholder={t('tasks.addSubtaskPlaceholder')} aria-label={t('tasks.addSubtaskPlaceholder')} className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] bg-foreground/[0.04] px-2 text-sm outline-none" />
+                <input value={subDraft} onChange={(event) => setSubDraft(event.target.value)} placeholder={t('tasks.addSubtaskPlaceholder')} aria-label={t('tasks.addSubtaskPlaceholder')} className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] bg-surface-hover px-2 text-sm outline-none" />
               </form>
             </>
           ) : null}
@@ -347,10 +347,10 @@ export function TaskDetail(props: TaskDetailProps) {
               </>
             ), 'task-field-when')}
             {props.popover === 'when' ? (
-              <div className="mt-1 w-[260px] max-w-full rounded-[var(--radius-card)] sm:ml-[120px] bg-foreground/[0.04] p-2" data-testid="task-when-popover">
+              <div className="mt-1 w-[260px] max-w-full rounded-[var(--radius-card)] sm:ml-[120px] bg-surface-hover p-2" data-testid="task-when-popover">
                 <div className="flex flex-col gap-0.5">
-                  <button type="button" className="flex h-7 items-center gap-2 rounded-[var(--radius-control)] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'today' })}>{Glyph.star}{t('tasks.when.today')}<span className="ml-auto text-xs text-text-muted">{formatHotkeyDisplay('mod+t')}</span></button>
-                  <button type="button" className="flex h-7 items-center gap-2 rounded-[var(--radius-control)] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'evening' })}>{Glyph.moon}{t('tasks.when.evening')}<span className="ml-auto text-xs text-text-muted">{formatHotkeyDisplay('mod+e')}</span></button>
+                  <button type="button" className="flex h-7 items-center gap-2 rounded-[var(--radius-control)] px-2 text-left hover:bg-surface-hover" onClick={() => setWhen({ kind: 'today' })}>{Glyph.star}{t('tasks.when.today')}<span className="ml-auto text-xs text-text-muted">{formatHotkeyDisplay('mod+t')}</span></button>
+                  <button type="button" className="flex h-7 items-center gap-2 rounded-[var(--radius-control)] px-2 text-left hover:bg-surface-hover" onClick={() => setWhen({ kind: 'evening' })}>{Glyph.moon}{t('tasks.when.evening')}<span className="ml-auto text-xs text-text-muted">{formatHotkeyDisplay('mod+e')}</span></button>
                 </div>
                 <div className="mt-1.5"><MiniCalendar value={task.startAt} now={now} locale={i18n.language} onPick={(at) => setWhen({ kind: 'date', at })} /></div>
                 <form className="mt-1.5" onSubmit={(event) => {
@@ -361,9 +361,9 @@ export function TaskDetail(props: TaskDetailProps) {
                   <input value={nlDate} onChange={(event) => setNlDate(event.target.value)} placeholder={t('tasks.when.nlPlaceholder')} aria-label={t('tasks.when.nlPlaceholder')} className="h-7 w-full rounded-[var(--radius-control)] bg-background px-2 text-sm outline-none placeholder:text-text-muted" />
                 </form>
                 <div className="mt-1.5 flex flex-col gap-0.5">
-                  <button type="button" className="flex h-7 items-center rounded-[var(--radius-control)] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'anytime' })}>{t('tasks.when.anytime')}</button>
-                  <button type="button" className="flex h-7 items-center rounded-[var(--radius-control)] px-2 text-left hover:bg-foreground/[0.07]" onClick={() => setWhen({ kind: 'someday' })}>{t('tasks.when.someday')}</button>
-                  <button type="button" className="flex h-7 items-center rounded-[var(--radius-control)] px-2 text-left text-text-muted hover:bg-foreground/[0.07]" onClick={() => setWhen(task.projectId || task.areaId ? { kind: 'anytime' } : { kind: 'inbox' })}>{t('tasks.when.clear')}</button>
+                  <button type="button" className="flex h-7 items-center rounded-[var(--radius-control)] px-2 text-left hover:bg-surface-hover" onClick={() => setWhen({ kind: 'anytime' })}>{t('tasks.when.anytime')}</button>
+                  <button type="button" className="flex h-7 items-center rounded-[var(--radius-control)] px-2 text-left hover:bg-surface-hover" onClick={() => setWhen({ kind: 'someday' })}>{t('tasks.when.someday')}</button>
+                  <button type="button" className="flex h-7 items-center rounded-[var(--radius-control)] px-2 text-left text-text-muted hover:bg-surface-hover" onClick={() => setWhen(task.projectId || task.areaId ? { kind: 'anytime' } : { kind: 'inbox' })}>{t('tasks.when.clear')}</button>
                 </div>
               </div>
             ) : null}
@@ -376,7 +376,7 @@ export function TaskDetail(props: TaskDetailProps) {
               </>
             ), 'task-field-deadline')}
             {props.popover === 'deadline' ? (
-              <div className="mt-1 w-[260px] max-w-full rounded-[var(--radius-card)] sm:ml-[120px] bg-foreground/[0.04] p-2">
+              <div className="mt-1 w-[260px] max-w-full rounded-[var(--radius-card)] sm:ml-[120px] bg-surface-hover p-2">
                 <MiniCalendar value={task.dueAt} now={now} locale={i18n.language} onPick={(at) => { mutate((current) => { current.setDeadline(task.id, at) }); props.setPopover(null) }} />
               </div>
             ) : null}
@@ -384,7 +384,7 @@ export function TaskDetail(props: TaskDetailProps) {
               <>
                 <input
                   type="datetime-local"
-                  className="h-7 rounded-[var(--radius-card)] bg-foreground/[0.07] px-2 text-sm outline-none"
+                  className="h-7 rounded-[var(--radius-card)] bg-surface-hover px-2 text-sm outline-none"
                   aria-label={t('tasks.field.reminder')}
                   data-testid="task-reminder"
                   value={task.reminderAt != null ? toLocalInput(task.reminderAt) : ''}
@@ -409,7 +409,7 @@ export function TaskDetail(props: TaskDetailProps) {
                     type="button"
                     aria-pressed={(task.recurrence?.rule ?? 'none') === rule}
                     onClick={() => update({ recurrence: rule === 'none' ? undefined : { rule, interval: task.recurrence?.interval ?? 1, mode: task.recurrence?.mode, weekdays: rule === 'weekly' ? task.recurrence?.weekdays : undefined, timeZone: task.recurrence?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone } })}
-                    className={cn('h-6 rounded-[var(--radius-control)] px-2 text-sm', (task.recurrence?.rule ?? 'none') === rule ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary hover:bg-foreground/[0.09]')}
+                    className={cn('h-6 rounded-[var(--radius-control)] px-2 text-sm', (task.recurrence?.rule ?? 'none') === rule ? 'bg-accent/15 font-semibold' : 'bg-surface-hover text-text-secondary hover:bg-surface-hover')}
                   >
                     {t(`tasks.recurrence.${rule}`)}
                   </button>
@@ -426,7 +426,7 @@ export function TaskDetail(props: TaskDetailProps) {
                   value={task.recurrence.interval}
                   onChange={(event) => update({ recurrence: { ...task.recurrence!, interval: Math.max(1, Number(event.target.value) || 1) } })}
                   aria-label={t('tasks.repeat.interval')}
-                  className="h-6 w-12 rounded-[var(--radius-card)] bg-foreground/[0.07] px-1.5 text-center outline-none"
+                  className="h-6 w-12 rounded-[var(--radius-card)] bg-surface-hover px-1.5 text-center outline-none"
                 />
                 <span>{t(`tasks.repeat.unit.${task.recurrence.rule}`, { count: task.recurrence.interval })}</span>
                 {task.recurrence.rule === 'weekly' ? (
@@ -443,7 +443,7 @@ export function TaskDetail(props: TaskDetailProps) {
                             if (on) set.delete(wd); else set.add(wd)
                             update({ recurrence: { ...task.recurrence!, weekdays: [...set].sort() } })
                           }}
-                          className={cn('size-6 rounded-[var(--radius-control)] text-xs', on ? 'bg-accent text-[var(--accent-foreground,white)]' : 'bg-foreground/[0.05] text-text-secondary')}
+                          className={cn('size-6 rounded-[var(--radius-control)] text-xs', on ? 'bg-accent text-[var(--accent-foreground,white)]' : 'bg-surface-hover text-text-secondary')}
                         >
                           {new Intl.DateTimeFormat(i18n.language, { weekday: 'narrow' }).format(new Date(2024, 0, wd === 0 ? 7 : wd))}
                         </button>
@@ -458,7 +458,7 @@ export function TaskDetail(props: TaskDetailProps) {
                       type="button"
                       aria-pressed={(task.recurrence!.mode ?? 'fixed') === mode}
                       onClick={() => update({ recurrence: { ...task.recurrence!, mode } })}
-                      className={cn('h-6 rounded-[var(--radius-card)] px-2', (task.recurrence!.mode ?? 'fixed') === mode ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary')}
+                      className={cn('h-6 rounded-[var(--radius-card)] px-2', (task.recurrence!.mode ?? 'fixed') === mode ? 'bg-accent/15 font-semibold' : 'bg-surface-hover text-text-secondary')}
                     >
                       {t(`tasks.repeat.${mode}`)}
                     </button>
@@ -476,7 +476,7 @@ export function TaskDetail(props: TaskDetailProps) {
             {fieldRow(t('tasks.tags'), (
               <>
                 {task.tags.map((tag) => (
-                  <span key={tag} className="inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] bg-foreground/[0.07] pl-2 pr-1 text-sm">
+                  <span key={tag} className="inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] bg-surface-hover pl-2 pr-1 text-sm">
                     #{tag}
                     <button type="button" aria-label={t('tasks.tagRemove', { tag })} className="px-0.5 text-text-muted hover:text-foreground" onClick={() => update({ tags: task.tags.filter((x) => x !== tag) })}>×</button>
                   </span>
@@ -497,12 +497,12 @@ export function TaskDetail(props: TaskDetailProps) {
                     placeholder={t('tasks.tagAdd')}
                     aria-label={t('tasks.tagAdd')}
                     data-testid="task-tag-input"
-                    className="h-6 w-[120px] rounded-[var(--radius-card)] bg-foreground/[0.04] px-2 text-sm outline-none placeholder:text-text-muted"
+                    className="h-6 w-[120px] rounded-[var(--radius-card)] bg-surface-hover px-2 text-sm outline-none placeholder:text-text-muted"
                   />
                   {tagSuggestions.length ? (
                     <span className="absolute left-0 top-7 z-10 flex min-w-[140px] flex-col rounded-[var(--radius-card)] bg-background p-1 shadow-modal-small">
                       {tagSuggestions.map((tag) => (
-                        <button key={tag} type="button" onMouseDown={(event) => { event.preventDefault(); addTag(tag) }} className="h-6 rounded-[var(--radius-control)] px-2 text-left text-sm hover:bg-foreground/[0.07]">#{tag}</button>
+                        <button key={tag} type="button" onMouseDown={(event) => { event.preventDefault(); addTag(tag) }} className="h-6 rounded-[var(--radius-control)] px-2 text-left text-sm hover:bg-surface-hover">#{tag}</button>
                       ))}
                     </span>
                   ) : null}
@@ -517,7 +517,7 @@ export function TaskDetail(props: TaskDetailProps) {
                     type="button"
                     aria-pressed={task.priority === priority}
                     onClick={() => update({ priority })}
-                    className={cn('h-6 rounded-[var(--radius-control)] px-2 text-sm', task.priority === priority ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary hover:bg-foreground/[0.09]')}
+                    className={cn('h-6 rounded-[var(--radius-control)] px-2 text-sm', task.priority === priority ? 'bg-accent/15 font-semibold' : 'bg-surface-hover text-text-secondary hover:bg-surface-hover')}
                   >
                     {t(`tasks.priority.${priority}`)}
                   </button>
@@ -525,7 +525,7 @@ export function TaskDetail(props: TaskDetailProps) {
               </span>
             ))}
             {source ? fieldRow(t('tasks.field.source'), (
-              <button type="button" onClick={() => props.onOpenSource(source)} className="inline-flex h-7 min-w-0 items-center gap-1.5 rounded-[var(--radius-control)] px-2 text-sm hover:bg-foreground/[0.06]" data-testid="task-source">
+              <button type="button" onClick={() => props.onOpenSource(source)} className="inline-flex h-7 min-w-0 items-center gap-1.5 rounded-[var(--radius-control)] px-2 text-sm hover:bg-surface-hover" data-testid="task-source">
                 {Glyph.link}
                 <span className="text-text-muted">{t(`tasks.linkKind.${source.kind}`)}</span>
                 <span className="min-w-0 truncate underline-offset-2 hover:underline" title={source.label || source.id}>{source.label || source.id}</span>
@@ -568,13 +568,13 @@ export function TaskDetail(props: TaskDetailProps) {
           <SectionLabel>{t('tasks.addLink')}</SectionLabel>
           <div className="flex flex-wrap gap-1" role="group" aria-label={t('tasks.addLink')}>
             {LINK_KINDS.map((kind) => (
-              <button key={kind} type="button" aria-pressed={linkKind === kind} onClick={() => setLinkKind(kind)} className={cn('h-6 rounded-[var(--radius-control)] px-2 text-sm', linkKind === kind ? 'bg-accent/15 font-semibold' : 'bg-foreground/[0.05] text-text-secondary')}>
+              <button key={kind} type="button" aria-pressed={linkKind === kind} onClick={() => setLinkKind(kind)} className={cn('h-6 rounded-[var(--radius-control)] px-2 text-sm', linkKind === kind ? 'bg-accent/15 font-semibold' : 'bg-surface-hover text-text-secondary')}>
                 {t(`tasks.linkKind.${kind}`)}
               </button>
             ))}
           </div>
           <div className="mt-1.5 flex gap-1">
-            <input className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] bg-foreground/[0.04] px-2 text-sm outline-none" value={linkId} onChange={(event) => setLinkId(event.target.value)} placeholder={t('tasks.linkIdPlaceholder')} aria-label={t('tasks.linkIdPlaceholder')} />
+            <input className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] bg-surface-hover px-2 text-sm outline-none" value={linkId} onChange={(event) => setLinkId(event.target.value)} placeholder={t('tasks.linkIdPlaceholder')} aria-label={t('tasks.linkIdPlaceholder')} />
             <Button onClick={() => { if (!props.isDraftCurrent() || !linkId.trim()) return; const id = linkId.trim(); mutate((current) => { current.link(task.id, { kind: linkKind, id }) }); props.onDraftSubmit('linkId', linkId) }}>{t('tasks.addLink')}</Button>
           </div>
           <TaskEntityBacklinks taskId={task.id} />
