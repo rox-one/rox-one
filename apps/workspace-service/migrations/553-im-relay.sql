@@ -37,8 +37,13 @@ $rox_im_schema_preflight$;
 CREATE TABLE IF NOT EXISTS im.im_identity (
   user_id uuid PRIMARY KEY,
   pubkey text NOT NULL UNIQUE CHECK (pubkey ~ '^[0-9a-f]{64}$'),
-  created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  -- Token TTL: when set, workspace-service revokeExpiredMembers drops the
+  -- relay membership once expires_at is in the past (contract short-lived token).
+  expires_at timestamptz
 );
+CREATE INDEX IF NOT EXISTS im_identity_expires_at ON im.im_identity (expires_at)
+  WHERE expires_at IS NOT NULL;
 
 -- One row per published service event; `(call_id, type)` is the idempotency
 -- key so a repeat POST returns the same `event_id` instead of re-publishing.

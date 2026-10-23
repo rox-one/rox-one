@@ -1,7 +1,7 @@
 /**
  * Relay-bridge persistence: the `im.im_identity` (rox userId ↔ relay pubkey)
  * and `im.im_service_event` (`(call_id, type)` idempotency) tables from
- * `553-im-relay.sql` / `554-im-identity-expires.sql`, plus the read-only
+ * `553-im-relay.sql`, plus the read-only
  * directory port the routes need for org/channel membership.
  *
  * The bridge tables live in the dedicated `im` schema (independent of the
