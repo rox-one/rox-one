@@ -780,6 +780,21 @@ export interface UpdateNoteCommentInput {
   resolved?: boolean
 }
 
+/** One note version in history (list row; no body). */
+export interface NoteHistoryEntry {
+  revisionId: string
+  operationId: string
+  previousRevision: string | null
+  committedAt: string
+  actorPrincipalId: string | null
+  byteSize: number
+}
+
+/** Historical note body for preview / restore. */
+export interface NoteHistoryRevision extends NoteHistoryEntry {
+  content: string
+}
+
 
 export interface NoteAsset {
   name: string
