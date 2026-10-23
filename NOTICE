@@ -59,3 +59,14 @@ per-user runtime on first use — it is not vendored in this repository. See
 packages/cognee-sidecar/NOTICE for the reproduced cognee NOTICE and dependency
 notes (fastembed / MiniLM embeddings, Apache-2.0).
 
+---
+
+Portions derived from Buzz, Copyright Block, Inc., Apache-2.0.
+
+The Rox chat relay deployment (deploy/rox-chat/) and the native chat client
+(native/crates/rox-chat-core/, packages/chat-core/) are based on Block's Buzz
+(https://github.com/block/buzz), licensed under the Apache License, Version 2.0.
+Ported files retain their original Apache-2.0 headers; modifications are marked
+in-file and are licensed under Apache-2.0 along with the rest of this project.
+The product name and logo of the upstream project are not used in any
+user-facing string or interface.

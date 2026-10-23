@@ -957,6 +957,20 @@ export const CHANNEL_MAP = {
   teamChatPresence: invoke(RPC_CHANNELS.teamChat.PRESENCE),
   teamChatSearch: invoke(RPC_CHANNELS.teamChat.SEARCH),
   onTeamChatChanged: listener(RPC_CHANNELS.teamChat.CHANGED),
+
+  // Native chat-core messenger relay (deliverable 4) — LOCAL_ONLY; when the
+  // native module is absent the renderer falls back to the teamChat:* store.
+  imStatus: invoke(RPC_CHANNELS.im.STATUS),
+  imSubscribeChannel: invoke(RPC_CHANNELS.im.SUBSCRIBE_CHANNEL),
+  imUnsubscribeChannel: invoke(RPC_CHANNELS.im.UNSUBSCRIBE_CHANNEL),
+  imListMessages: invoke(RPC_CHANNELS.im.LIST_MESSAGES),
+  imSendMessage: invoke(RPC_CHANNELS.im.SEND_MESSAGE),
+  imMarkRead: invoke(RPC_CHANNELS.im.MARK_READ),
+  imPublishTyping: invoke(RPC_CHANNELS.im.PUBLISH_TYPING),
+  onImMessage: listener(RPC_CHANNELS.im.MESSAGE),
+  onImPresence: listener(RPC_CHANNELS.im.PRESENCE),
+  onImTyping: listener(RPC_CHANNELS.im.TYPING),
+  onImStatusChanged: listener(RPC_CHANNELS.im.STATUS_CHANGED),
   createOrganization: invoke(RPC_CHANNELS.orgs.CREATE),
   inviteToOrganization: invoke(RPC_CHANNELS.orgs.INVITE),
   acceptOrganizationInvite: invoke(RPC_CHANNELS.orgs.ACCEPT),

@@ -203,6 +203,15 @@ mac:
     # real file outside ASAR for Electron's native loader.
     - from: release-native/@tursodatabase
       to: app/node_modules/@tursodatabase
+    # Native messenger chat-core (napi). Staged by `bun run build:native:chat-core`
+    # into packages/chat-core/rox-chat-core.node. Absent → team-chat fallback.
+    - from: ../../packages/chat-core
+      to: app/node_modules/@rox/chat-core
+      filter:
+        - package.json
+        - index.js
+        - index.d.ts
+        - rox-chat-core.node
     # WhatsApp worker subprocess (self-contained; Baileys bundled in).
     - from: ../../packages/messaging-whatsapp-worker/dist/worker.cjs
       to: messaging-whatsapp-worker/worker.cjs
@@ -318,6 +327,15 @@ win:
       to: app/node_modules/@vscode/ripgrep
     - from: release-native/@tursodatabase
       to: app/node_modules/@tursodatabase
+    # Native messenger chat-core (napi). Staged by `bun run build:native:chat-core`
+    # into packages/chat-core/rox-chat-core.node. Absent → team-chat fallback.
+    - from: ../../packages/chat-core
+      to: app/node_modules/@rox/chat-core
+      filter:
+        - package.json
+        - index.js
+        - index.d.ts
+        - rox-chat-core.node
     - from: vendor/bun/bun.exe
       to: vendor/bun/bun.exe
     - from: resources/bin/win32-x64
@@ -374,6 +392,14 @@ linux:
       to: app/node_modules/@anthropic-ai/claude-agent-sdk-binary
     - from: node_modules/@vscode/ripgrep
       to: app/node_modules/@vscode/ripgrep
+    # Native messenger chat-core (napi).
+    - from: ../../packages/chat-core
+      to: app/node_modules/@rox/chat-core
+      filter:
+        - package.json
+        - index.js
+        - index.d.ts
+        - rox-chat-core.node
     # WhatsApp worker subprocess (self-contained; Baileys bundled in).
     - from: ../../packages/messaging-whatsapp-worker/dist/worker.cjs
       to: messaging-whatsapp-worker/worker.cjs

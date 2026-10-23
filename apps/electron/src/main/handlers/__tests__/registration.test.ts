@@ -228,7 +228,7 @@ import('@rox/server-core/playbooks/jobs'),
     import('@rox/server-core/handlers/rpc/board'),
   ])
 
-  const [browser, browserIntel, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface, voiceClipboard, clipboardHistory, nativeIntegration, zedThemes] = await Promise.all([
+  const [browser, browserIntel, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface, voiceClipboard, clipboardHistory, nativeIntegration, zedThemes, cookbooks, im] = await Promise.all([
     import('../browser'),
     import('../browser-intel'),
     import('../system'),
@@ -241,6 +241,8 @@ import('@rox/server-core/playbooks/jobs'),
     import('../clipboard-history'),
     import('../native-integration'),
     import('../zed-themes'),
+    import('../cookbooks'),
+    import('../../im'),
   ])
 
   const [meetings, personalTasks, feed, privacy, runtimeTrace, entities, tgLink, keeper, rovers, googleMeet] = await Promise.all([
@@ -348,6 +350,8 @@ import('@rox/server-core/playbooks/jobs'),
     ...keeper.KEEPER_CHANNELS,
     ...nativeIntegration.HANDLED_CHANNELS,
     ...zedThemes.HANDLED_CHANNELS,
+    ...cookbooks.HANDLED_CHANNELS,
+    ...im.HANDLED_CHANNELS,
     ...rovers.ROVERS_HANDLED_CHANNELS,
     ...googleMeet.HANDLED_CHANNELS,
   ])
