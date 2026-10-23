@@ -26,7 +26,7 @@ import {
 } from './ink-path'
 import { bindTextArea } from './live-text'
 import { StyleInspector } from './StyleInspector'
-import { applyStyleField, normalizeColorInput, type FieldValue, type StyleField } from './style-model'
+import { applyStyleField, FIELD_MAX, normalizeColorInput, type FieldValue, type StyleField } from './style-model'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
@@ -835,11 +835,13 @@ function strokeColor(o: CanvasObject): string | undefined {
 }
 function strokeWidthOf(o: CanvasObject, fallback: number): number {
   const w = o.style?.stroke?.width
-  return typeof w === 'number' && Number.isFinite(w) ? w : fallback
+  if (typeof w !== 'number' || !Number.isFinite(w) || w < 0) return fallback
+  return Math.min(FIELD_MAX.strokeWidth, w)
 }
 function cornerRadiusOf(o: CanvasObject, fallback: number): number {
   const r = o.props.radius
-  return typeof r === 'number' && Number.isFinite(r) ? r : fallback
+  if (typeof r !== 'number' || !Number.isFinite(r) || r < 0) return fallback
+  return Math.min(FIELD_MAX.cornerRadius, r)
 }
 
 function ObjectView({ o, selected, editing, placeholder, onDown, onEdit }: { o: CanvasObject; selected: boolean; editing: boolean; placeholder: string; onDown: (e: ReactPointerEvent) => void; onEdit: () => void }) {
@@ -849,7 +851,8 @@ function ObjectView({ o, selected, editing, placeholder, onDown, onEdit }: { o: 
   const transform = o.rotation ? `rotate(${o.rotation} ${o.x + o.w / 2} ${o.y + o.h / 2})` : undefined
   const fill = solidFill(o)
   const stroke = strokeColor(o)
-  const fontSize = typeof o.style?.font?.size === 'number' ? o.style.font.size : undefined
+  const fontSize = typeof o.style?.font?.size === 'number' && Number.isFinite(o.style.font.size) && o.style.font.size > 0
+    ? Math.min(FIELD_MAX.fontSize, o.style.font.size) : undefined
   const fontWeight = typeof o.style?.font?.weight === 'number' ? o.style.font.weight : undefined
   if (o.type === 'sticky' || o.type === 'text') {
     const sticky = o.type === 'sticky'
