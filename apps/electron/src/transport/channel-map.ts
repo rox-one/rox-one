@@ -485,6 +485,8 @@ export const CHANNEL_MAP = {
   getNoteBacklinks: invoke(RPC_CHANNELS.notes.GET_BACKLINKS),
   listNoteComments: invoke(RPC_CHANNELS.notes.LIST_COMMENTS),
   createNoteComment: invoke(RPC_CHANNELS.notes.CREATE_COMMENT),
+  getNoteShare: invoke(RPC_CHANNELS.notes.GET_SHARE),
+  updateNoteShare: invoke(RPC_CHANNELS.notes.UPDATE_SHARE),
   updateNoteComment: invoke(RPC_CHANNELS.notes.UPDATE_COMMENT),
   deleteNoteComment: invoke(RPC_CHANNELS.notes.DELETE_COMMENT),
   listNoteRevisions: invoke(RPC_CHANNELS.notes.LIST_REVISIONS),

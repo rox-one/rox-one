@@ -670,6 +670,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'notes:getInsights',
   'notes:getRenameImpact',
   'notes:getRevision',
+  'notes:getShare',
   'notes:importAsset',
   'notes:list',
   'notes:listAssets',
@@ -691,6 +692,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'notes:unwatch',
   'notes:updateComment',
   'notes:updateProperties',
+  'notes:updateShare',
   'notes:watch',
   'notesImport:execute',
   'notesImport:preview',
@@ -1152,4 +1154,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1148
+export const EXPECTED_CHANNEL_COUNT = 1150

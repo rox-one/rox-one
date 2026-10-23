@@ -251,6 +251,8 @@ export const RPC_CHANNELS = {
     CREATE_COMMENT: 'notes:createComment',
     UPDATE_COMMENT: 'notes:updateComment',
     DELETE_COMMENT: 'notes:deleteComment',
+    GET_SHARE: 'notes:getShare',
+    UPDATE_SHARE: 'notes:updateShare',
     LIST_REVISIONS: 'notes:listRevisions',
     GET_REVISION: 'notes:getRevision',
     RESTORE_REVISION: 'notes:restoreRevision',

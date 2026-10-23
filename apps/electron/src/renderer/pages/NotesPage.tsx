@@ -13,7 +13,7 @@ import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/
 import { matchesNoteReceipt, notesReadCapability } from '@/features/product-tour/adapters/knowledge'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
-import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, LayoutTemplate, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, LayoutTemplate, Paperclip, Pencil, Plus, Search, Share2, SquarePen, Tags, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useStore } from 'jotai'
 import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
@@ -71,6 +71,7 @@ import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
 import { NoteCoverIconChrome, NoteFavoriteButton } from './notes/NoteLibraryChrome'
 import { NotesTemplatesDialog } from './notes/NotesTemplatesDialog'
+import { NoteShareDialog } from './notes/NoteShareDialog'
 import { patchNoteLibraryChromeContent, readNoteCover, readNoteIcon, withNoteLibraryProperties } from './notes/note-library'
 import type { NoteTemplateSummary } from '../../shared/types'
 import {
@@ -949,6 +950,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId])
   const [contentResolution, setContentResolution] = React.useState<ContentResolution | ContentFailure | null>(null)
   const [sourceInfoOpen, setSourceInfoOpen] = React.useState(false)
+  const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
   const [committedBlockTree, setCommittedBlockTree] = React.useState<BlockTreeResult | null>(null)
   const [markerPreview, setMarkerPreview] = React.useState<{ preview: NativeMarkerMappingPreview; operationId: string } | null>(null)
   const [markerBusy, setMarkerBusy] = React.useState(false)
@@ -3378,6 +3380,9 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
           <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote || Boolean(assetsUnavailable)} title={t('notes.toolbar.attachAsset')}>
             <Paperclip className="h-4 w-4" />
           </button>
+          <button type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" data-testid="notes-share-open" aria-haspopup="dialog" onClick={() => setShareDialogOpen(true)} disabled={!activeNote || !activeWorkspaceId} aria-label={t('notes.toolbar.share')}>
+            <Share2 className="icon-toolbar" aria-hidden="true" />
+          </button>
           <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
             <FileDown className="h-4 w-4" />
           </button>
@@ -4089,6 +4094,13 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
         </pre>
       </DialogContent>
     </Dialog>
+    <NoteShareDialog
+      open={shareDialogOpen && Boolean(activeNote)}
+      workspaceId={activeWorkspaceId ?? null}
+      noteId={activeNote?.id ?? null}
+      noteTitle={activeNote?.title}
+      onOpenChange={setShareDialogOpen}
+    />
     <NotesTemplatesDialog
       open={templatesDialogOpen}
       mode={templatesDialogMode}
