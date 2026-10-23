@@ -146,17 +146,18 @@
   --glass-overlay-mix: max(84%, calc(74% + 12% * var(--glass-intensity)));
 }
 
-/* SE chrome accents only: fixed 20px blur scale (do not use --chrome-glass-blur /
-   --chrome-plate-blur — wallpaper glass multiplies those by intensity already,
-   which would square intensity here). */
+/* SE chrome accents only: fixed SE canon blur (~20px / tight 10px) when accents
+   are on. Intensity gates on/off + fill mixes; do not scale blur by intensity
+   and do not use --chrome-glass-blur/--chrome-plate-blur (wallpaper already
+   multiplies those → intensity²). */
 html[data-ui-profile="super-engineering"][data-glass-accents] :is(
   .rox-mode-pill,
   [data-glass-slot="popover"],
   [data-glass-slot="composer"],
   [data-glass-slot="mini-button"]
 ) {
-  --glass-blur: calc(20px * var(--glass-intensity));
-  --glass-blur-tight: calc(10px * var(--glass-intensity));
+  --glass-blur: 20px;
+  --glass-blur-tight: 10px;
 }
 
 /* Light palettes lift the glass; dark palettes keep the source lightness. The
