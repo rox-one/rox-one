@@ -20,8 +20,9 @@ describe('notes comments threads wiring', () => {
 
   it('NotesPage clears rpcCommentThreads on note/workspace change', () => {
     expect(notesPage).toContain('setRpcCommentThreads([])')
+    expect(notesPage).toContain('React.useLayoutEffect')
     expect(notesPage).toContain('[activeWorkspaceId, activeNote?.id]')
-    expect(notesPage).toMatch(/Collapsed comments rail unmounts NotesCommentThreads/)
+    expect(notesPage).toMatch(/Clear highlights before paint/)
   })
 
   it('overlay create gates listNoteComments setState on still-active note', () => {
@@ -56,7 +57,7 @@ describe('notes comments threads wiring', () => {
     expect(threadsPanel).toContain('anchorFromQuote(liveText, quote, draftAnchor)')
     expect(threadsPanel).toContain('throw err')
     expect(threadsPanel).toContain('beginCreate')
-    expect(threadsPanel).toContain('endCreate(flightKey)')
+    expect(threadsPanel).toContain('endCreate(flightToken)')
   })
 
   it('composers disable while create is in flight', () => {
@@ -68,9 +69,13 @@ describe('notes comments threads wiring', () => {
     expect(notesPage).toContain('createBusy={commentCreateBusy}')
     expect(notesPage).toContain('beginCreate={() => tryBeginCommentCreate(activeWorkspaceId, activeNote.id)}')
     expect(notesPage).toContain('endCreate={endCommentCreate}')
-    // Shared parent lock clears/re-keys on note switch (overlay + rail).
-    expect(notesPage).toContain('setCommentCreateBusyKey(null)')
-    expect(notesPage).toMatch(/commentCreateFlightKeyRef\.current = null/)
+    // Unique tokens + in-flight note set; note switch must NOT drop in-flight tracking.
+    expect(notesPage).toContain('commentCreateFlightsRef')
+    expect(notesPage).toContain('commentCreateInFlightNotesRef')
+    expect(notesPage).toContain('commentCreateFlightSeqRef')
+    expect(notesPage).toContain('commentCreateInFlightNotes.has(activeCommentCreateKey)')
+    expect(notesPage).not.toMatch(/useLayoutEffect\([\s\S]*commentCreateFlightsRef/)
+    expect(notesPage).not.toMatch(/useLayoutEffect\([\s\S]*commentCreateInFlightNotesRef/)
     const reading = readFileSync(join(import.meta.dir, '../NotesReadingChrome.tsx'), 'utf8')
     expect(reading).toContain('creating = false')
     expect(reading).toContain('disabled={busy || !body.trim()}')
@@ -86,7 +91,7 @@ describe('notes comments threads wiring', () => {
   it('create success clears draft for requestKey even after note switch', () => {
     expect(threadsPanel).toContain('clearComposer(requestKey)')
     expect(notesPage).toContain('clearCommentDraftAt(requestWorkspaceId, requestNoteId)')
-    expect(notesPage).toContain('commentCreateFlightKeyRef')
+    expect(notesPage).toContain('commentCreateFlightsRef')
     expect(notesPage).toMatch(/Markdown-embedded.*highlight-only/s)
   })
 
