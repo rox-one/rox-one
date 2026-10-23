@@ -2422,6 +2422,14 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       } catch {
         /* keep note properties when frontmatter is temporarily invalid */
       }
+      // Coerce Dates/etc to JSON-safe values (ISO strings) so previewPropertyDictionary's
+      // isJsonValue does not reject cover/icon Apply when frontmatter has timestamps.
+      try {
+        base = JSON.parse(JSON.stringify(base)) as Record<string, unknown>
+      } catch {
+        toast.error(t('notes.toast.updatePropertiesFailed'))
+        return false
+      }
       const next = withNoteLibraryProperties(base, patch)
       try {
         // Cover/icon are trusted one-click: still sanitize via withNoteLibraryProperties /
