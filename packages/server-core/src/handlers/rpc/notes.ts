@@ -7,7 +7,7 @@ import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
 import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import matter from 'gray-matter'
 import yaml from 'js-yaml'
-import { RPC_CHANNELS, type CreateNoteCommentInput, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteCommentAnchor, type NoteCommentThread, type NoteDocument, type NoteHistoryEntry, type NoteHistoryRevision, type NoteIndexHealth, type NoteLink, type NoteMutationOptions, type NoteRenameImpact, type NoteSummary, type UpdateNoteCommentInput } from '@rox/shared/protocol'
+import { RPC_CHANNELS, type CreateNoteCommentInput, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteCommentAnchor, type NoteCommentReaction, type NoteCommentThread, type NoteDocument, type NoteHistoryEntry, type NoteHistoryRevision, type NoteIndexHealth, type NoteLink, type NoteMutationOptions, type NoteRenameImpact, type NoteSummary, type UpdateNoteCommentInput } from '@rox/shared/protocol'
 import type { NativeReplicaCreatePlan } from '@rox/shared/protocol/native-replica'
 import { pushTyped, type RpcServer, type RequestContext } from '@rox/server-core/transport'
 import { sanitizeFilename } from '@rox/server-core/handlers'
@@ -471,6 +471,66 @@ function sanitizeCommentAnchor(anchor: unknown): NoteCommentAnchor {
   return { selectedText, selectors }
 }
 
+/** Null/undefined/empty → whole-document (or reply without its own selection). */
+function sanitizeOptionalCommentAnchor(anchor: unknown): NoteCommentAnchor | null {
+  if (anchor === undefined || anchor === null) return null
+  return sanitizeCommentAnchor(anchor)
+}
+
+function sanitizeCommentReactionEmoji(value: unknown): string {
+  if (typeof value !== 'string') throw new Error('Invalid reaction emoji')
+  const emoji = value.trim().slice(0, 16)
+  if (!emoji) throw new Error('Invalid reaction emoji')
+  return emoji
+}
+
+function sanitizeCommentReactions(value: unknown): NoteCommentReaction[] {
+  if (!Array.isArray(value)) return []
+  const out: NoteCommentReaction[] = []
+  for (const item of value) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue
+    const record = item as Record<string, unknown>
+    let emoji: string
+    try {
+      emoji = sanitizeCommentReactionEmoji(record.emoji)
+    } catch {
+      continue
+    }
+    const authorsRaw = Array.isArray(record.authors) ? record.authors : []
+    const authors = Array.from(new Set(
+      authorsRaw
+        .filter((author): author is string => typeof author === 'string')
+        .map(author => author.trim().slice(0, 80))
+        .filter(Boolean),
+    ))
+    if (authors.length === 0) continue
+    out.push({ emoji, authors })
+  }
+  return out
+}
+
+function toggleCommentReaction(
+  reactions: NoteCommentReaction[],
+  emoji: string,
+  author: string,
+): NoteCommentReaction[] {
+  const next = reactions.map(reaction => ({ emoji: reaction.emoji, authors: reaction.authors.slice() }))
+  const index = next.findIndex(reaction => reaction.emoji === emoji)
+  if (index === -1) {
+    next.push({ emoji, authors: [author] })
+    return next
+  }
+  const authors = next[index]!.authors
+  if (authors.includes(author)) {
+    const remaining = authors.filter(name => name !== author)
+    if (remaining.length === 0) next.splice(index, 1)
+    else next[index] = { emoji, authors: remaining }
+  } else {
+    next[index] = { emoji, authors: [...authors, author] }
+  }
+  return next
+}
+
 function normalizeComment(comment: unknown, fallbackNoteId: string): NoteCommentThread | null {
   if (!comment || typeof comment !== 'object' || Array.isArray(comment)) return null
   const record = comment as Record<string, unknown>
@@ -478,13 +538,16 @@ function normalizeComment(comment: unknown, fallbackNoteId: string): NoteComment
   try {
     const id = cleanCommentText(record.id, 'comment id', 140)
     const body = cleanCommentText(record.body, 'comment body', 20_000)
-    const anchor = sanitizeCommentAnchor(record.anchor)
+    const anchor = sanitizeOptionalCommentAnchor(record.anchor)
     const noteId = typeof record.noteId === 'string' && record.noteId.trim()
       ? assertSafeNoteId(record.noteId)
       : fallbackNoteId
     const createdAt = Number(record.createdAt)
     const updatedAt = Number(record.updatedAt)
     const resolvedAt = Number(record.resolvedAt)
+    const parentId = typeof record.parentId === 'string' && record.parentId.trim()
+      ? record.parentId.trim().slice(0, 140)
+      : undefined
 
     return {
       id,
@@ -492,6 +555,8 @@ function normalizeComment(comment: unknown, fallbackNoteId: string): NoteComment
       author: typeof record.author === 'string' && record.author.trim() ? record.author.trim().slice(0, 80) : 'Вы',
       body,
       anchor,
+      parentId,
+      reactions: sanitizeCommentReactions(record.reactions),
       createdAt: Number.isFinite(createdAt) ? createdAt : Date.now(),
       updatedAt: Number.isFinite(updatedAt) ? updatedAt : Date.now(),
       resolvedAt: Number.isFinite(resolvedAt) ? resolvedAt : undefined,
@@ -548,13 +613,26 @@ export async function createNoteCommentForRoot(notesRoot: string, input: CreateN
     await ensureNotesDirs(notesRoot)
     if (!existsSync(notePathFromId(notesRoot, safeNoteId))) throw new Error(`Note not found: ${safeNoteId}`)
     const file = await readNoteCommentsFile(notesRoot, safeNoteId)
+    const parentId = typeof input.parentId === 'string' && input.parentId.trim()
+      ? input.parentId.trim().slice(0, 140)
+      : undefined
+    if (parentId) {
+      const parent = file.comments.find(comment => comment.id === parentId)
+      if (!parent) throw new Error(`Comment not found: ${parentId}`)
+      if (parent.parentId) throw new Error('Replies cannot nest deeper than one level')
+    }
     const now = Date.now()
     const comment: NoteCommentThread = {
       id: randomUUID(),
       noteId: safeNoteId,
-      author: typeof input.author === 'string' && input.author.trim() ? input.author.trim().slice(0, 80) : 'Вы',
+      // Bind author to the local principal — ignore any client-supplied author (same as reactions).
+      author: 'Вы',
       body: cleanCommentText(input.body, 'comment body', 20_000),
-      anchor: sanitizeCommentAnchor(input.anchor),
+      // Replies always inherit context from the parent in the UI — never store a
+      // selection anchor on a reply, even if the client sent one.
+      anchor: parentId ? null : sanitizeOptionalCommentAnchor(input.anchor),
+      parentId,
+      reactions: [],
       createdAt: now,
       updatedAt: now,
     }
@@ -571,11 +649,18 @@ export async function updateNoteCommentForRoot(notesRoot: string, input: UpdateN
     const index = file.comments.findIndex(comment => comment.id === input.commentId)
     if (index === -1) throw new Error(`Comment not found: ${input.commentId}`)
 
-    const previous = file.comments[index]
+    const previous = file.comments[index]!
     const now = Date.now()
+    let reactions = previous.reactions ?? []
+    if (input.reaction) {
+      const emoji = sanitizeCommentReactionEmoji(input.reaction.emoji)
+      // Bind toggles to the local principal only — ignore any client-supplied author.
+      reactions = toggleCommentReaction(reactions, emoji, 'Вы')
+    }
     const next: NoteCommentThread = {
       ...previous,
       body: typeof input.body === 'string' ? cleanCommentText(input.body, 'comment body', 20_000) : previous.body,
+      reactions,
       updatedAt: now,
       resolvedAt: typeof input.resolved === 'boolean'
         ? input.resolved ? previous.resolvedAt ?? now : undefined
@@ -593,7 +678,8 @@ export async function deleteNoteCommentForRoot(notesRoot: string, noteId: string
   await withNoteCommentsLock(notesRoot, safeNoteId, async () => {
     await ensureNotesDirs(notesRoot)
     const file = await readNoteCommentsFile(notesRoot, safeNoteId)
-    const comments = file.comments.filter(comment => comment.id !== commentId)
+    // Drop the comment and any direct replies (one-level threads).
+    const comments = file.comments.filter(comment => comment.id !== commentId && comment.parentId !== commentId)
     if (comments.length === file.comments.length) throw new Error(`Comment not found: ${commentId}`)
     await writeNoteCommentsFile(notesRoot, safeNoteId, comments)
   })

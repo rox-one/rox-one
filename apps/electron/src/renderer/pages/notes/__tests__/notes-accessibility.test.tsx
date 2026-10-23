@@ -37,6 +37,13 @@ describe('Notes controls rendered semantics', () => {
     expect(empty).toMatch(/<button[^>]*type="submit"[^>]*disabled=""/)
   })
 
+  test('creating disables submit and marks the composer busy', () => {
+    const html = render(<NotesCommentComposer quote="Quote" body="Unsent text" creating onBodyChange={noop} onSubmit={noop} />)
+    expect(html).toContain('data-creating="true"')
+    expect(html).toMatch(/<button[^>]*type="submit"[^>]*disabled=""/)
+    expect(html).toMatch(/<textarea[^>]*disabled=""/)
+  })
+
   test('the rail composer uses the same controlled unsent draft', () => {
     const html = render(<NotesComments noteId="note" markdownComments={[]} draftQuote="Quote" draftBody="Unsent text" onDraftBodyChange={noop} onClearDraft={noop} />)
     expect(html).toContain('Unsent text</textarea>')
