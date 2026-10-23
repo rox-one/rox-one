@@ -2353,3 +2353,15 @@ html[data-ui-profile="super-engineering"] .rox-mode-pill-item:not([aria-disabled
 html[data-ui-profile="super-engineering"] [data-layout="panel-header"] h1 {
   color: var(--foreground);
 }
+
+/* P8.3: Tasks status secondary (import/export) + hint — hide until panel mid-band. */
+@container panel (max-width: 719px) {
+  [data-tasks-status-secondary] {
+    display: none !important;
+  }
+}
+@container panel (min-width: 960px) {
+  [data-tasks-status-hint] {
+    display: inline !important;
+  }
+}

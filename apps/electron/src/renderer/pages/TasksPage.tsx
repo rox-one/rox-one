@@ -1698,7 +1698,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           <div className="flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <span className="min-w-0 flex-[1_1_160px] break-words">{t('tasks.status.summary', { today: todayCount, agents: agentLinked })}</span>
             <span data-testid="tasks-sync-state" className="min-w-0 break-words">{t(`tasks.status.sync.${sync}`)}</span>
-            <div className="ml-auto flex shrink-0 items-center gap-2">
+            <div className="ml-auto flex min-w-0 shrink-0 items-center gap-2" data-tasks-status-secondary="">
               <button type="button" className="hover:text-foreground" onClick={onExport}>{t('tasks.export')}</button>
               <label className="cursor-pointer hover:text-foreground">
                 {t('tasks.import')}
@@ -1716,7 +1716,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
                 />
               </label>
             </div>
-            <span className="hidden xl:inline">· {t('tasks.status.hint', { new: formatHotkeyDisplay('mod+n'), move: formatHotkeyDisplay('mod+k') })}</span>
+            <span className="hidden" data-tasks-status-hint="">· {t('tasks.status.hint', { new: formatHotkeyDisplay('mod+n'), move: formatHotkeyDisplay('mod+k') })}</span>
           </div>
         )}
       />
