@@ -9,15 +9,18 @@
  *   `currentUserId` comes from the server (`whoami`, derived from the session's
  *   auth context), so reconcile can remove only our links.
  */
+import { getDefaultStore } from 'jotai'
 import { EntityKindRegistry, EntitySnapshotResolver, type EntityKindAdapter, type EntityLinker, type EntityRef } from '@rox/canvas-core'
 import { ENTITY_KINDS, kindDescriptor, type EntityKind, type EntityPreview, type EntityLink } from '@rox/core/entities'
 import { openEntity } from '@/components/entities/open-entity'
+import { featureEntitiesLinksV1Atom } from '@/atoms/entities-links'
+import { pushEntitiesLinksFlag } from '@/lib/entities-links-sync'
 import { createPersonalTaskConfirmed } from '@/lib/extra-screens/personal-task-bridge'
 
 interface Bridge {
   entitiesResolve?: (ws: string, input: { refs: Array<{ kind: EntityKind; id: string; fragment?: string }> }) => Promise<EntityPreview[]>
   entitiesLinks?: (ws: string, input: unknown) => Promise<unknown>
-  createNote?: (ws: string, title: string) => Promise<{ id: string; title: string }>
+  createNote?: (ws: string, title: string, folder?: string) => Promise<{ id: string; title?: string }>
   createPage?: (ws: string, input: { name: string; kind?: 'static' | 'interactive' | 'live' }) => Promise<{ id: string; slug: string; name: string }>
   createSession?: (ws: string, options?: { name?: string }) => Promise<{ id: string; name?: string }>
   listNotes?: (ws: string) => Promise<Array<{ id: string; title: string }>>
@@ -31,6 +34,29 @@ interface Bridge {
 }
 const api = (): Bridge => ((window as unknown as { electronAPI?: Bridge }).electronAPI) ?? {}
 
+let linksEnableAttempt: Promise<void> | null = null
+
+/**
+ * Board cards write through `entities:links`. While `entities.links.v1` is off
+ * the RPC returns `{ ok: false, reason: 'disabled' }` and the picker toast
+ * «Не удалось добавить карточку». Turn the flag on (jotai persist + main) so
+ * the next add/remove can succeed and App's sync does not flip it back off.
+ * Env override `CRAFT_FEATURE_ENTITIES_LINKS=0` still wins in main.
+ */
+export async function ensureEntityLinksEnabled(): Promise<void> {
+  if (!linksEnableAttempt) {
+    linksEnableAttempt = (async () => {
+      getDefaultStore().set(featureEntitiesLinksV1Atom, true)
+      const state = await pushEntitiesLinksFlag(true)
+      if (state.enabled === false && state.envOverride === false) return
+    })().finally(() => { linksEnableAttempt = null })
+  }
+  await linksEnableAttempt
+}
+
+/** Tests only. */
+export function __resetEntityLinksEnsureForTests(): void { linksEnableAttempt = null }
+
 /** Kinds that can be minted from the board, in picker order. `dashboard` is a live page. */
 export const CREATABLE_KINDS = ['note', 'page', 'dashboard', 'session', 'task'] as const
 export type CreatableKind = (typeof CREATABLE_KINDS)[number]
@@ -39,7 +65,12 @@ export const creatableEntityKind = (k: CreatableKind): EntityKind => (k === 'das
 export async function createEntity(workspaceId: string, kind: CreatableKind, title: string): Promise<EntityRef> {
   const a = api()
   switch (kind) {
-    case 'note': { if (!a.createNote) throw new Error('notes unavailable'); const n = await a.createNote(workspaceId, title); return { kind: 'note', id: n.id } }
+    case 'note': {
+      if (!a.createNote) throw new Error('notes unavailable')
+      const n = await a.createNote(workspaceId, title)
+      if (!n?.id || typeof n.id !== 'string') throw new Error('notes create returned no id')
+      return { kind: 'note', id: n.id }
+    }
     case 'page':
     case 'dashboard': {
       if (!a.createPage) throw new Error('pages unavailable')
@@ -212,8 +243,13 @@ export function createEntityLinker(workspaceId: string, currentUserId?: string):
   const call = async (input: unknown) => {
     const l = api().entitiesLinks
     if (!l) throw new Error('entity links unavailable')
-    const res = await l(workspaceId, input) as { ok: boolean; link?: EntityLink } | undefined
-    if (!res?.ok) throw new Error('entity links disabled')
+    let res = await l(workspaceId, input) as { ok: boolean; reason?: string; link?: EntityLink } | undefined
+    const op = input && typeof input === 'object' ? (input as { op?: string }).op : undefined
+    if (!res?.ok && res?.reason === 'disabled' && op !== 'whoami') {
+      await ensureEntityLinksEnabled()
+      res = await l(workspaceId, input) as { ok: boolean; reason?: string; link?: EntityLink } | undefined
+    }
+    if (!res?.ok) throw new Error(res?.reason === 'disabled' ? 'entity links disabled' : 'entity links failed')
     return res
   }
   const from = (f: { boardId: string; objectId: string }) => ({ kind: 'canvas', id: f.boardId, fragment: f.objectId })

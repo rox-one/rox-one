@@ -49,7 +49,7 @@ beforeEach(() => {
 
 describe('DEFAULT_PILL_SURFACES', () => {
   it('declares the documented starter order', () => {
-    expect(DEFAULT_PILL_SURFACES.map((s) => s.id)).toEqual(['feed', 'team', 'agent', 'notes', 'browser'])
+    expect(DEFAULT_PILL_SURFACES.map((s) => s.id)).toEqual(['feed', 'team', 'agent', 'notes', 'canvas', 'browser'])
   })
 })
 
