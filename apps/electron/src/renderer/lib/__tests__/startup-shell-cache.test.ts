@@ -52,7 +52,7 @@ describe('read/write/clearStartupShellCache', () => {
     expect(readStartupShellCache()).toBeNull()
     writeStartupShellCache({ workspaceId: 'ws-1', authority: 'local' })
     expect(readStartupShellCache()).toEqual({ workspaceId: 'ws-1', authority: 'local' })
-    expect(storage.get(storage.KEYS.startupShellCache, null)).toEqual({
+    expect(storage.get<{ workspaceId: string; authority: string } | null>(storage.KEYS.startupShellCache, null)).toEqual({
       workspaceId: 'ws-1',
       authority: 'local',
     })
@@ -61,7 +61,8 @@ describe('read/write/clearStartupShellCache', () => {
   })
 
   it('ignores write of invalid entry', () => {
-    writeStartupShellCache({ workspaceId: '', authority: 'local' } as never)
+    // Bypass the public type so parseStartupShellCache can reject empty ids.
+    writeStartupShellCache({ workspaceId: '', authority: 'local' } as { workspaceId: string; authority: 'local' })
     expect(readStartupShellCache()).toBeNull()
   })
 })
