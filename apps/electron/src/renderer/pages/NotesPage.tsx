@@ -1542,6 +1542,18 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         nativeRevisionByNoteRef.current.set(revisionKey, saved.nativeRevision ?? null)
         expectedRevisionByNoteRef.current.set(revisionKey, contentHash(saved.content))
         if (saved.revision) revisionsRef.current.set(revisionKey, saved.revision)
+        // Rebuild content resolution after restore so a prior error does not leave canEditContent false.
+        let restoredResolution: ContentResolution | ContentFailure | null = null
+        if (window.electronAPI.isChannelAvailable(RPC_CHANNELS.content.RESOLVE)) {
+          try {
+            restoredResolution = await window.electronAPI.resolveContent({
+              workspaceId: activeWorkspaceId,
+              entityId: `note:${saved.nativeId ?? saved.id}`,
+            })
+          } catch {
+            restoredResolution = { status: 'error', code: 'denied' }
+          }
+        }
         if (isCurrentDocument()) {
           contentRef.current = saved.content
           dirtyRef.current = false
@@ -1551,10 +1563,29 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
           setTagDraft(saved.tags.join(', '))
           setSaveNeedsReload(false)
           saveBlockedRef.current = false
-          setContentResolution(previous => previous && previous.status !== 'error' ? {
-            ...previous, content: saved.content, revision: saved.revision!, contentHash: contentHash(saved.content),
-            canonicalRef: { ...previous.canonicalRef, revisionId: saved.revision },
-          } : previous)
+          if (restoredResolution && restoredResolution.status !== 'error') {
+            if (restoredResolution.origin.nativeId !== (saved.nativeId ?? saved.id)) {
+              throw Object.assign(new Error(t('notes.content.authorityChanged')), { code: 'DOCUMENT_AUTHORITY_CHANGED' })
+            }
+            saved.sourceStoreId = restoredResolution.origin.sourceStoreId
+            setContentResolution({
+              ...restoredResolution,
+              content: saved.content,
+              revision: saved.revision ?? restoredResolution.revision,
+              contentHash: contentHash(saved.content),
+              canonicalRef: {
+                ...restoredResolution.canonicalRef,
+                revisionId: saved.revision ?? restoredResolution.canonicalRef.revisionId,
+              },
+            })
+          } else if (restoredResolution) {
+            setContentResolution(restoredResolution)
+          } else {
+            setContentResolution(previous => previous && previous.status !== 'error' ? {
+              ...previous, content: saved.content, revision: saved.revision!, contentHash: contentHash(saved.content),
+              canonicalRef: { ...previous.canonicalRef, revisionId: saved.revision },
+            } : previous)
+          }
         }
         if (workspaceIdRef.current === activeWorkspaceId) {
           setNotes(prev => prev.map(n => n.id === saved.id ? saved : n))
