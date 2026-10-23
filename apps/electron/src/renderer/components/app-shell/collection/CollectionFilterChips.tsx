@@ -278,7 +278,7 @@ export function CollectionFilterChips({
           type="button"
           onClick={clearAll}
           className={cn(
-            'inline-flex items-center gap-1 rounded-[var(--radius-control)] text-xs font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground',
+            'inline-flex items-center gap-1 rounded-[var(--radius-control)] text-xs font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground',
             stacked ? 'mx-1 h-7 px-2' : 'h-6 px-1.5',
           )}
         >
@@ -325,8 +325,8 @@ function FilterChip({
       className={cn(
         'inline-flex h-6 max-w-[10rem] items-center truncate rounded-full border px-2 text-xs transition-colors',
         selected
-          ? 'border-foreground/20 bg-foreground/[0.08] font-medium text-foreground'
-          : 'border-transparent bg-foreground/[0.03] text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground/80',
+          ? 'border-border-strong bg-surface-selected font-medium text-foreground'
+          : 'border-transparent bg-surface-hover text-muted-foreground hover:bg-surface-pressed hover:text-foreground',
       )}
     >
       {label}
