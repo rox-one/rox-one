@@ -168,6 +168,14 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     return (store.calls ?? []).find(c => c.channelId === channelId && !c.endedAt)
   }
 
+  function activeCallByRoomName(store: TeamChatStoreFile, roomName: string): { channel: TeamChannel; call: TeamChannelCall } | undefined {
+    const call = (store.calls ?? []).find(c => c.roomName === roomName && !c.endedAt)
+    if (!call) return undefined
+    const channel = store.channels.find(c => c.id === call.channelId)
+    if (!channel || channel.archivedAt) return undefined
+    return { channel, call }
+  }
+
   /** Append a message of any kind; trims the channel to the retention cap. */
   function appendMessage(store: TeamChatStoreFile, channel: TeamChannel, message: Omit<TeamChannelMessage, 'id' | 'seq' | 'channelId' | 'createdAt'>): TeamChannelMessage {
     channel.lastSeq += 1
@@ -508,6 +516,53 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       call.summaryMessageId = appendMessage(store, channel, { senderId: 'system', kind: 'summary', callId: call.id, text }).id
       save(store)
       return true
+    },
+
+    /**
+     * Authoritative end from LiveKit `room_finished` (last leave RPC lost / empty timeout).
+     * Idempotent: a second call for an already-ended room is a no-op.
+     * No actor — LiveKit is the authority after JWT verification upstream.
+     */
+    endCallByRoomName(roomNameInput: unknown): { orgId: string; channelId: string; call: TeamChannelCall | null; ended: boolean } {
+      const roomName = cleanText(roomNameInput, 200, 'roomName')
+      const store = load()
+      const hit = activeCallByRoomName(store, roomName)
+      if (!hit) {
+        // Already ended (or unknown room): surface the latest matching call if any.
+        const ended = (store.calls ?? []).filter(c => c.roomName === roomName && c.endedAt).sort((a, b) => (b.endedAt ?? 0) - (a.endedAt ?? 0))[0]
+        const channel = ended ? store.channels.find(c => c.id === ended.channelId) : undefined
+        return { orgId: channel?.orgId ?? '', channelId: channel?.id ?? '', call: ended ?? null, ended: false }
+      }
+      endCall(store, hit.channel, hit.call)
+      save(store)
+      return { orgId: hit.channel.orgId, channelId: hit.channel.id, call: hit.call, ended: true }
+    },
+
+    /**
+     * LiveKit `participant_left`: drop that identity from the live roster.
+     * When the roster is empty, end the call (faster than waiting for room_finished).
+     * Idempotent for unknown rooms / already-left identities.
+     */
+    applyLiveKitParticipantLeft(roomNameInput: unknown, identityInput: unknown): { orgId: string; channelId: string; call: TeamChannelCall | null; ended: boolean } {
+      const roomName = cleanText(roomNameInput, 200, 'roomName')
+      const identity = requireId(identityInput, 'identity')
+      const store = load()
+      const hit = activeCallByRoomName(store, roomName)
+      if (!hit) {
+        const ended = (store.calls ?? []).filter(c => c.roomName === roomName && c.endedAt).sort((a, b) => (b.endedAt ?? 0) - (a.endedAt ?? 0))[0]
+        const channel = ended ? store.channels.find(c => c.id === ended.channelId) : undefined
+        return { orgId: channel?.orgId ?? '', channelId: channel?.id ?? '', call: ended ?? null, ended: false }
+      }
+      const before = hit.call.participantIds.length
+      hit.call.participantIds = hit.call.participantIds.filter(id => id !== identity)
+      if (hit.call.participantIds.length === before) {
+        // Identity was not on our roster (never joinCall'd, or already left via RPC) — leave state as-is.
+        return { orgId: hit.channel.orgId, channelId: hit.channel.id, call: hit.call, ended: false }
+      }
+      const ended = hit.call.participantIds.length === 0
+      if (ended) endCall(store, hit.channel, hit.call)
+      save(store)
+      return { orgId: hit.channel.orgId, channelId: hit.channel.id, call: hit.call, ended }
     },
 
     /** Calls of a channel, newest first (visible channels only). */
