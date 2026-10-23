@@ -51,7 +51,7 @@ describe('settings presentation', () => {
 
   it('places permissions in Agent after ai (not Application)', () => {
     const agent = SETTINGS_GROUPS.find(group => group.id === 'agent')
-    expect(agent?.pageIds).toEqual(['runtime', 'context', 'ai', 'permissions', 'input'])
+    expect(agent?.pageIds).toEqual(['runtime', 'context', 'memory', 'ai', 'permissions', 'input'])
     const application = SETTINGS_GROUPS.find(group => group.id === 'application')
     expect(application?.pageIds).not.toContain('permissions')
   })

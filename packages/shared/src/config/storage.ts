@@ -200,6 +200,9 @@ export interface StoredConfig {
     redactExtraPatterns?: string[]; // extra literal strings masked by redactSecrets (project names, paths, …), case-insensitive (default: [])
     ftsLimit?: number;           // top-K results from memory FTS queries (default: 20)
     semantic?: boolean;          // M2: semantic (episodic) memory via local embeddings model, lazy-downloaded to {configDir}/models (default: true; set false to opt out)
+    graph?: boolean;             // Graph-memory (cognee) layer (default: true; set false to opt out)
+    graphDailyCostCapUsd?: number; // Daily USD cap for cognify (default: 2)
+    graphSources?: Partial<Record<string, boolean>>; // per-source graph ingest (default: all on)
     dreamIntervalHours?: number; // dream §9: hours between background dream runs (default: 4)
     dreamModel?: string;         // dream: distillation mini-model id (absent → default mini-model)
     dreamNotes?: boolean;        // dream: run the notes→proposals step (default: true)
@@ -1638,6 +1641,22 @@ export function getMemoryConfig(): MemoryConfig {
         ? Math.floor(raw.ftsLimit)
         : DEFAULT_MEMORY_CONFIG.ftsLimit,
     semantic: typeof raw.semantic === 'boolean' ? raw.semantic : DEFAULT_MEMORY_CONFIG.semantic,
+    graph: typeof raw.graph === 'boolean' ? raw.graph : DEFAULT_MEMORY_CONFIG.graph,
+    graphDailyCostCapUsd: typeof raw.graphDailyCostCapUsd === 'number' && raw.graphDailyCostCapUsd >= 0
+      ? raw.graphDailyCostCapUsd
+      : DEFAULT_MEMORY_CONFIG.graphDailyCostCapUsd,
+    graphSources: (() => {
+      const rawSources = raw.graphSources
+      if (!rawSources || typeof rawSources !== 'object' || Array.isArray(rawSources)) return undefined
+      const allowed = new Set(['session', 'notes', 'tasks', 'chats', 'calls', 'mail', 'files', 'lessons'])
+      const out: Partial<Record<'session' | 'notes' | 'tasks' | 'chats' | 'calls' | 'mail' | 'files' | 'lessons', boolean>> = {}
+      for (const [k, v] of Object.entries(rawSources as Record<string, unknown>)) {
+        if (allowed.has(k) && typeof v === 'boolean') {
+          out[k as 'session' | 'notes' | 'tasks' | 'chats' | 'calls' | 'mail' | 'files' | 'lessons'] = v
+        }
+      }
+      return Object.keys(out).length > 0 ? out : undefined
+    })(),
     dreamIntervalHours:
       typeof raw.dreamIntervalHours === 'number' && Number.isFinite(raw.dreamIntervalHours) && raw.dreamIntervalHours > 0
         ? raw.dreamIntervalHours
@@ -1654,6 +1673,55 @@ export function getMemoryConfig(): MemoryConfig {
  * Gate for auto-creating skills from distilled session candidates.
  * Defaults to FALSE (opt-in) — when false, skill candidates from distillation are dropped.
  */
+
+const GRAPH_SOURCE_KEYS = ['session', 'notes', 'tasks', 'chats', 'calls', 'mail', 'files', 'lessons'] as const
+export type GraphSourceKey = (typeof GRAPH_SOURCE_KEYS)[number]
+
+export type MemoryConfigPatch = Partial<{
+  enabled: boolean
+  semantic: boolean
+  graph: boolean
+  graphDailyCostCapUsd: number
+  graphSources: Partial<Record<GraphSourceKey, boolean>>
+}>
+
+/**
+ * Merge a patch into StoredConfig.memory and persist.
+ * Returns the resolved MemoryConfig after write (or null if config missing).
+ */
+export function updateMemoryConfig(patch: MemoryConfigPatch): MemoryConfig | null {
+  const config = loadStoredConfig()
+  if (!config) return null
+  const prev = config.memory ?? {}
+  const next: NonNullable<typeof config.memory> = { ...prev }
+  if (typeof patch.enabled === 'boolean') next.enabled = patch.enabled
+  if (typeof patch.semantic === 'boolean') next.semantic = patch.semantic
+  if (typeof patch.graph === 'boolean') next.graph = patch.graph
+  if (typeof patch.graphDailyCostCapUsd === 'number' && patch.graphDailyCostCapUsd >= 0) {
+    next.graphDailyCostCapUsd = patch.graphDailyCostCapUsd
+  }
+  if (patch.graphSources && typeof patch.graphSources === 'object') {
+    const merged: Partial<Record<GraphSourceKey, boolean>> = { ...(prev.graphSources as Partial<Record<GraphSourceKey, boolean>> | undefined) }
+    for (const key of GRAPH_SOURCE_KEYS) {
+      const v = patch.graphSources[key]
+      if (typeof v === 'boolean') merged[key] = v
+    }
+    next.graphSources = merged
+  }
+  config.memory = next
+  saveConfig(config)
+  return getMemoryConfig()
+}
+
+/** True when a graph source is enabled for ingest (missing key → on). */
+export function isGraphSourceEnabled(
+  sources: MemoryConfig['graphSources'] | undefined,
+  source: GraphSourceKey,
+): boolean {
+  if (!sources) return true
+  return sources[source] !== false
+}
+
 export function getSkillsAutoCreateFromSessions(): boolean {
   return loadStoredConfig()?.skills?.autoCreateFromSessions === true;
 }

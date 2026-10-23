@@ -193,6 +193,19 @@ export interface MemoryConfig {
    */
   semantic: boolean
   /**
+   * Graph-memory (cognee) layer. Default true; Settings → Память can toggle
+   * later (PR6). When false, the resolver returns null and FTS/semantic stay.
+   * Optional on the type so older fixtures stay valid; getMemoryConfig always returns a boolean.
+   */
+  graph?: boolean
+  /** Daily USD cap for LLM-heavy graph cognify (default 2). */
+  graphDailyCostCapUsd?: number
+  /**
+   * Per-source graph ingest toggles (Settings → Память). Missing keys default ON.
+   * Keys match GraphMemorySource.
+   */
+  graphSources?: Partial<Record<'session' | 'notes' | 'tasks' | 'chats' | 'calls' | 'mail' | 'files' | 'lessons', boolean>>
+  /**
    * Dream (spec §9): hours between background memory-dream runs, default 4.
    * One DreamScheduler per process ticks banks (main + active workspaces) and
    * runs at most once per bank per interval window.
@@ -224,6 +237,8 @@ export const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
   redactExtraPatterns: [],
   ftsLimit: 20,
   semantic: true,
+  graph: true,
+  graphDailyCostCapUsd: 2,
   dreamIntervalHours: 4,
   dreamNotes: true,
 }

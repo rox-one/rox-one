@@ -7,6 +7,7 @@
 export { default as SettingsNavigator } from './SettingsNavigator'
 export { default as RuntimeSettingsPage, meta as RuntimeMeta } from './RuntimeSettingsPage'
 export { default as ContextSettingsPage, meta as ContextMeta } from './ContextSettingsPage'
+export { default as MemorySettingsPage, meta as MemoryMeta } from './MemorySettingsPage'
 export { default as MarketplaceSettingsPage, meta as MarketplaceMeta } from './MarketplaceSettingsPage'
 export { default as ImportSettingsPage, meta as ImportMeta } from './ImportSettingsPage'
 export { default as AppSettingsPage, meta as AppSettingsMeta } from './AppSettingsPage'
