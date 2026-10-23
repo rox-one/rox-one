@@ -125,6 +125,22 @@ function normalizeTitle(title: string | undefined): string | undefined {
   return normalized ? normalized : undefined
 }
 
+
+/**
+ * Slash-menu search aliases for a Rox callout kind: the canonical kind name,
+ * every inbound Obsidian alias that canonicalizes to it, plus optional extras
+ * (e.g. `callout` / `annotation` on note). Keeps parse and slash in sync.
+ */
+export function slashAliasesForRoxBlockKind(
+  kind: RoxBlockKind,
+  extras: readonly string[] = [],
+): string[] {
+  const inbound = Object.entries(ROX_BLOCK_KIND_ALIASES)
+    .filter(([, canonical]) => canonical === kind)
+    .map(([alias]) => alias)
+  return [...new Set([kind, ...inbound, ...extras])]
+}
+
 export function canonicalizeRoxBlockKind(raw: string): RoxBlockKind | null {
   const lower = raw.toLowerCase()
   if (ROX_BLOCK_KIND_SET.has(lower)) return lower as RoxBlockKind

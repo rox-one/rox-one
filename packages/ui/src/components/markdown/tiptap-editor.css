@@ -720,7 +720,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   background: color-mix(in oklch, var(--foreground) 4%, transparent);
 }
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--note > p:first-child {
-  color: color-mix(in oklch, var(--foreground) 88%, var(--accent));
+  color: color-mix(in oklch, var(--foreground) 88%, transparent);
 }
 
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--info,

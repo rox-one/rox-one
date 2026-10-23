@@ -7,7 +7,11 @@ import { InlineMenuSurface } from '../ui/InlineMenuSurface'
 import { RICH_BLOCK_EDIT_EVENT } from './rich-block-events'
 import { insertRoxColumnsContent } from './extensions/ColumnsBlock'
 import { insertRoxTabsContent } from './extensions/TabsBlock'
-import { createRoxBlockContent, type RoxBlockKind } from './extensions/rox-block-syntax'
+import {
+  createRoxBlockContent,
+  slashAliasesForRoxBlockKind,
+  type RoxBlockKind,
+} from './extensions/rox-block-syntax'
 
 export interface SlashCommandItem {
   id: string
@@ -245,7 +249,8 @@ type CalloutSlashSpec = {
   titleFallback: string
   descriptionKey: string
   descriptionFallback: string
-  aliases: string[]
+  /** Slash-only extras beyond the kind name + inbound Obsidian aliases. */
+  extraAliases?: readonly string[]
 }
 
 /** Semantic callouts (expanded `+` via createRoxBlockContent). Spoiler stays special-cased. */
@@ -257,7 +262,7 @@ const CALLOUT_SLASH_SPECS: CalloutSlashSpec[] = [
     titleFallback: 'Note',
     descriptionKey: 'notes.slash.noteDescription',
     descriptionFallback: 'Insert a note callout',
-    aliases: ['note', 'callout', 'annotation'],
+    extraAliases: ['callout', 'annotation'],
   },
   {
     kind: 'info',
@@ -266,7 +271,7 @@ const CALLOUT_SLASH_SPECS: CalloutSlashSpec[] = [
     titleFallback: 'Info',
     descriptionKey: 'notes.slash.infoDescription',
     descriptionFallback: 'Insert an info callout',
-    aliases: ['info', 'information'],
+    extraAliases: ['information'],
   },
   {
     kind: 'warning',
@@ -275,7 +280,6 @@ const CALLOUT_SLASH_SPECS: CalloutSlashSpec[] = [
     titleFallback: 'Warning',
     descriptionKey: 'notes.slash.warningDescription',
     descriptionFallback: 'Insert a warning callout',
-    aliases: ['warning', 'caution', 'attention'],
   },
   {
     kind: 'tip',
@@ -284,7 +288,6 @@ const CALLOUT_SLASH_SPECS: CalloutSlashSpec[] = [
     titleFallback: 'Tip',
     descriptionKey: 'notes.slash.tipDescription',
     descriptionFallback: 'Insert a tip callout',
-    aliases: ['tip', 'hint', 'important'],
   },
   {
     kind: 'success',
@@ -293,7 +296,6 @@ const CALLOUT_SLASH_SPECS: CalloutSlashSpec[] = [
     titleFallback: 'Success',
     descriptionKey: 'notes.slash.successDescription',
     descriptionFallback: 'Insert a success callout',
-    aliases: ['success', 'check', 'done'],
   },
   {
     kind: 'question',
@@ -302,7 +304,6 @@ const CALLOUT_SLASH_SPECS: CalloutSlashSpec[] = [
     titleFallback: 'Question',
     descriptionKey: 'notes.slash.questionDescription',
     descriptionFallback: 'Insert a question callout',
-    aliases: ['question', 'help', 'faq'],
   },
   {
     kind: 'details',
@@ -311,7 +312,7 @@ const CALLOUT_SLASH_SPECS: CalloutSlashSpec[] = [
     titleFallback: 'Details',
     descriptionKey: 'notes.slash.detailsDescription',
     descriptionFallback: 'Insert a foldable details callout',
-    aliases: ['details', 'expand', 'more'],
+    extraAliases: ['expand', 'more'],
   },
 ]
 
@@ -324,7 +325,7 @@ function createCalloutSlashItems(): SlashCommandItem[] {
       description: slashTitle(spec.descriptionKey, spec.descriptionFallback),
       icon: 'quote' as const,
       group: 'Blocks' as const,
-      aliases: spec.aliases,
+      aliases: slashAliasesForRoxBlockKind(spec.kind, spec.extraAliases ?? []),
       run: (e, insertPos) => {
         e.chain().focus().insertContentAt(
           insertPos ?? e.state.selection.from,

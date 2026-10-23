@@ -80,6 +80,7 @@ export {
   ROX_BLOCK_KINDS,
   ROX_BLOCK_KIND_ALIASES,
   canonicalizeRoxBlockKind,
+  slashAliasesForRoxBlockKind,
   createRoxBlockContent,
   type RoxBlockKind,
   type RoxBlockMarker,
