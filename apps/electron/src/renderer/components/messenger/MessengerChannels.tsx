@@ -26,6 +26,7 @@ import { useTeamCall } from './use-team-call'
 import { Avatar, ChannelInfoPanel, type Presence } from './ChannelInfoPanel'
 import { CallStage } from './CallStage'
 import { MessageBody } from './message-cards'
+import { MessengerListSkeleton } from './MessengerListSkeleton'
 
 const NAME_MAX = 80
 const MESSAGE_MAX = 4000
@@ -193,6 +194,8 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
         <div className="min-h-0 flex-1 overflow-y-auto px-2 py-2">
           {query.trim().length >= 2 ? (
             <SearchResults search={search} channels={channels.channels} nameOf={nameOf} onOpen={(id) => { setSelectedId(id); setQuery('') }} label={c => channelLabel(c, t)} />
+          ) : channels.loading ? (
+            <MessengerListSkeleton rows={7} testId="messenger-channel-list-loading" />
           ) : (
             <>
               <SectionHeader title={t('messenger.channels.channels')} onAdd={() => setCreating('channel')} addLabel={t('messenger.channels.newChannel')} />
@@ -229,7 +232,7 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
 
       <section className="flex min-w-0 flex-1 flex-col" aria-label={selected ? channelLabel(selected, t) : t('messenger.channels.title')}>
         {channels.loading ? (
-          <p className="p-4 text-small text-text-secondary" role="status">{t('teamCollab.loading')}</p>
+          <MessengerListSkeleton rows={8} className="px-4 py-3" testId="messenger-conversation-loading" />
         ) : channels.error ? (
           <p className="p-4 text-small text-destructive" role="alert">{channels.error}</p>
         ) : !selected ? (
@@ -373,7 +376,7 @@ function SearchResults({ search, channels, nameOf, onOpen, label }: {
 }) {
   const { t } = useTranslation()
   const byId = new Map(channels.map(c => [c.id, c]))
-  if (search.loading) return <p className="px-2 text-caption text-text-muted" role="status">{t('teamCollab.loading')}</p>
+  if (search.loading) return <MessengerListSkeleton rows={5} testId="messenger-search-loading" />
   if (search.error) return <p className="px-2 text-caption text-destructive" role="alert">{search.error}</p>
   if (!search.results.length) return <p className="px-2 text-caption text-text-muted">{t('messenger.channels.searchEmpty')}</p>
   return (
@@ -540,7 +543,7 @@ function MessageThread({
   return (
     <>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3" data-testid="messenger-messages" aria-live="polite">
-        {loading ? <p className="text-small text-text-secondary" role="status">{t('teamCollab.loading')}</p> : null}
+        {loading ? <MessengerListSkeleton rows={6} testId="messenger-thread-loading" /> : null}
         {error ? <p className="text-small text-destructive" role="alert">{error}</p> : null}
         {!loading && !error && messages.length === 0 ? (
           <div data-glass-slot="empty" className="flex h-full flex-col items-center justify-center gap-2 text-center text-text-muted">
