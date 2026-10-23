@@ -73,6 +73,7 @@ function dispatch(route: string): React.ReactElement {
     useAtomValue: (atom: symbol | Parameters<typeof store.get>[0]) => typeof atom === 'symbol' ? atom === sessionMetaMapAtom ? new Map() : [] : store.get(atom), useSetAtom: () => () => {},
     useSession: () => [{ selected: null }, () => {}], useStore: () => store,
     runtimeTraceScopeKey, runtimeTraceSessionAtomFamily, runtimeCatalogCapabilities, runtimeCatalogScope, loadRuntimeTrace,
+    Skeleton: (props: Record<string, unknown>) => React.createElement('span', { 'data-skeleton': true, ...props }),
     knowledgeHomeViewAtom: Symbol(), knowledgeActiveViewIdAtom: Symbol(),
     TourPanelScope: ({ children }: { children: React.ReactNode }) => children, sourceSelection: selection, skillSelection: selection, automationSelection: selection,
     useSelectedResourceAvailability: () => ({ status: 'ready', retry() {} }),

@@ -1,0 +1,20 @@
+Rox cognee sidecar
+Copyright 2026 Rox
+
+This package depends on, and at runtime downloads, cognee
+(https://github.com/topoteretes/cognee), licensed under the Apache License, Version 2.0. cognee is not
+vendored in this repository; it is installed into a per-user runtime on first
+use. Its own LICENSE and NOTICE files ship inside the installed distribution
+and are retained unmodified.
+
+Embeddings use fastembed (Apache-2.0) with
+sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 (Apache-2.0).
+
+You may obtain a copy of the Apache License 2.0 at
+http://www.apache.org/licenses/LICENSE-2.0
+
+---- cognee NOTICE (reproduced) ----
+topoteretes - cognee
+Copyright (c) 2024 Topoteretes UG. (haftungsbeschraenkt), Schonehauser Allee 163, Berlin.
+
+This project includes software developed at Topoteretes UG. (https://www.cognee.ai/).
