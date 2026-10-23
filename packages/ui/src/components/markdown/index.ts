@@ -81,8 +81,10 @@ export {
   ROX_BLOCK_KIND_ALIASES,
   canonicalizeRoxBlockKind,
   slashAliasesForRoxBlockKind,
-  createRoxBlockContent,
   type RoxBlockKind,
+} from './extensions/rox-block-kinds'
+export {
+  createRoxBlockContent,
   type RoxBlockMarker,
   type RoxBlockToggle,
 } from './extensions/rox-block-syntax'

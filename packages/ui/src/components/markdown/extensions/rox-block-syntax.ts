@@ -13,15 +13,20 @@ import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey, type EditorState } from '@tiptap/pm/state'
 import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view'
 
-export type RoxBlockKind =
-  | 'note'
-  | 'info'
-  | 'warning'
-  | 'tip'
-  | 'success'
-  | 'question'
-  | 'spoiler'
-  | 'details'
+export type { RoxBlockKind } from './rox-block-kinds'
+export {
+  ROX_BLOCK_KINDS,
+  ROX_BLOCK_KIND_ALIASES,
+  canonicalizeRoxBlockKind,
+  slashAliasesForRoxBlockKind,
+} from './rox-block-kinds'
+import {
+  ROX_BLOCK_KINDS,
+  ROX_BLOCK_KIND_ALIASES,
+  canonicalizeRoxBlockKind,
+  type RoxBlockKind,
+} from './rox-block-kinds'
+
 
 export type RoxBlockToggle = '+' | '-'
 
@@ -65,35 +70,6 @@ export interface RoxBlockCalloutOptions {
   labels: RoxBlockLabels
 }
 
-/** Canonical kinds accepted by Rox (Obsidian-compatible callouts). */
-export const ROX_BLOCK_KINDS: readonly RoxBlockKind[] = [
-  'note',
-  'info',
-  'warning',
-  'tip',
-  'success',
-  'question',
-  'spoiler',
-  'details',
-] as const
-
-/**
- * Optional inbound Obsidian aliases → canonical Rox kind.
- * Serialize only the canonical kind.
- */
-export const ROX_BLOCK_KIND_ALIASES: Readonly<Record<string, RoxBlockKind>> = {
-  hint: 'tip',
-  important: 'tip',
-  check: 'success',
-  done: 'success',
-  help: 'question',
-  faq: 'question',
-  caution: 'warning',
-  attention: 'warning',
-}
-
-const ROX_BLOCK_KIND_SET = new Set<string>(ROX_BLOCK_KINDS)
-
 /** Marker kinds accepted on parse: canonical + inbound aliases. */
 const ROX_BLOCK_MARKER_KINDS = [
   ...ROX_BLOCK_KINDS,
@@ -104,6 +80,7 @@ const ROX_BLOCK_MARKER = new RegExp(
   `^\\[!(${ROX_BLOCK_MARKER_KINDS})\\]([+-])(?:[ \\t]+(.*))?$`,
   'i',
 )
+
 
 const DEFAULT_ROX_BLOCK_LABELS: RoxBlockLabels = {
   collapse: i18n.t('notes.blocks.collapse'),
@@ -125,27 +102,6 @@ function normalizeTitle(title: string | undefined): string | undefined {
   return normalized ? normalized : undefined
 }
 
-
-/**
- * Slash-menu search aliases for a Rox callout kind: the canonical kind name,
- * every inbound Obsidian alias that canonicalizes to it, plus optional extras
- * (e.g. `callout` / `annotation` on note). Keeps parse and slash in sync.
- */
-export function slashAliasesForRoxBlockKind(
-  kind: RoxBlockKind,
-  extras: readonly string[] = [],
-): string[] {
-  const inbound = Object.entries(ROX_BLOCK_KIND_ALIASES)
-    .filter(([, canonical]) => canonical === kind)
-    .map(([alias]) => alias)
-  return [...new Set([kind, ...inbound, ...extras])]
-}
-
-export function canonicalizeRoxBlockKind(raw: string): RoxBlockKind | null {
-  const lower = raw.toLowerCase()
-  if (ROX_BLOCK_KIND_SET.has(lower)) return lower as RoxBlockKind
-  return ROX_BLOCK_KIND_ALIASES[lower] ?? null
-}
 
 /**
  * Parses exactly one Obsidian-compatible callout marker line.

@@ -15,6 +15,7 @@
     "./chat/TurnCard": "./src/components/chat/TurnCard.tsx",
     "./chat/turn-utils": "./src/components/chat/turn-utils.ts",
     "./markdown": "./src/components/markdown/index.ts",
+    "./markdown/rox-block-kinds": "./src/components/markdown/extensions/rox-block-kinds.ts",
     "./annotations/follow-up-state": "./src/components/annotations/follow-up-state.ts",
     "./ui/drawer": "./src/components/ui/drawer.tsx",
     "./context": "./src/context/index.ts",
