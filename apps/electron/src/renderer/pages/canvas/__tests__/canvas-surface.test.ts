@@ -219,3 +219,137 @@ describe('delete entity only for own created cards (review 6 #7)', () => {
     expect(await canDeleteCardEntity({ ...l, list: async () => { throw new Error('x') } }, 'b', { id: 'c1', props: { kind: 'note', entityId: 'n1', origin: 'created' } })).toBe(false)
   })
 })
+
+
+describe('entity preview: unavailable must not become «Удалено» (run10)', () => {
+  const frameRun = async (b: { get(r: any): Promise<any> }, frames: Array<() => void>, ref: { kind: string; id: string }) => {
+    const p = b.get(ref)
+    frames.splice(0).forEach(f => f())
+    return p
+  }
+  it('falls back to readNote when entitiesResolve returns unavailable', async () => {
+    const resolveCalls: string[][] = []
+    ;(globalThis as any).window = {
+      electronAPI: {
+        entitiesResolve: async (_ws: string, q: { refs: { id: string }[] }) => {
+          resolveCalls.push(q.refs.map(r => r.id))
+          return q.refs.map(r => ({
+            ref: { kind: 'note', id: r.id },
+            status: 'unavailable',
+            title: '',
+            kindLabel: 'entities.kind.note',
+            icon: 'link',
+            authority: 'local',
+            etag: '',
+          }))
+        },
+        readNote: async (_ws: string, id: string) => {
+          if (id === 'note-run10') return { id, title: 'Заметка с доски run10' }
+          throw new Error('missing')
+        },
+      },
+    }
+    const { createPreviewBatcher, createEntityRegistry, EntitySnapshotResolver } = await import('../entity-wiring')
+    const frames: Array<() => void> = []
+    const batcher = createPreviewBatcher('ws', cb => { frames.push(cb) })
+    const preview = await frameRun(batcher, frames, { kind: 'note', id: 'note-run10' })
+    expect(preview?.status).toBe('ok')
+    expect(preview?.title).toBe('Заметка с доски run10')
+    expect(resolveCalls.length).toBe(1)
+
+    const registry = createEntityRegistry('ws', batcher)
+    const resolver = new EntitySnapshotResolver(registry)
+    const resolved = await resolver.resolve({ kind: 'note', id: 'note-run10' })
+    expect(resolved).toEqual({ state: 'ok', snapshot: { title: 'Заметка с доски run10', icon: expect.any(String) } })
+  })
+
+  it('does not cache unavailable; a later local hit paints the title', async () => {
+    let notesReady = false
+    const calls: number[] = []
+    ;(globalThis as any).window = {
+      electronAPI: {
+        entitiesResolve: async (_ws: string, q: { refs: { id: string }[] }) => {
+          calls.push(q.refs.length)
+          return q.refs.map(r => ({
+            ref: { kind: 'note', id: r.id },
+            status: 'unavailable' as const,
+            title: '',
+            kindLabel: 'note',
+            icon: 'link',
+            authority: 'local' as const,
+            etag: '',
+          }))
+        },
+        readNote: async (_ws: string, id: string) => {
+          if (!notesReady) throw new Error('not yet')
+          return { id, title: 'Appeared' }
+        },
+      },
+    }
+    const { createPreviewBatcher, createEntityRegistry, EntitySnapshotResolver } = await import('../entity-wiring')
+    const frames: Array<() => void> = []
+    const batcher = createPreviewBatcher('ws', cb => { frames.push(cb) })
+    const flush = () => { frames.splice(0).forEach(f => f()) }
+    const registry = createEntityRegistry('ws', batcher)
+    const resolver = new EntitySnapshotResolver(registry)
+
+    const firstP = resolver.resolve({ kind: 'note', id: 'n1' })
+    flush()
+    const first = await firstP
+    // read throws, no listNotes → unknown → null → canView false → forbidden (not deleted)
+    expect(first.state).not.toBe('deleted')
+
+    notesReady = true
+    resolver.invalidate({ kind: 'note', id: 'n1' })
+    batcher.invalidate({ kind: 'note', id: 'n1' })
+    const secondP = resolver.resolve({ kind: 'note', id: 'n1' })
+    flush()
+    expect(await secondP).toMatchObject({ state: 'ok', snapshot: { title: 'Appeared' } })
+    expect(calls.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('seedCreatedCardPreview makes resolve ok without waiting on entitiesResolve', async () => {
+    ;(globalThis as any).window = {
+      electronAPI: {
+        entitiesResolve: async () => { throw new Error('should not be required after seed') },
+      },
+    }
+    const { createPreviewBatcher, createEntityRegistry, EntitySnapshotResolver, seedCreatedCardPreview } = await import('../entity-wiring')
+    const batcher = createPreviewBatcher('ws', () => {})
+    seedCreatedCardPreview(batcher, { kind: 'note', id: 'fresh' }, 'Заметка с доски run10')
+    const resolver = new EntitySnapshotResolver(createEntityRegistry('ws', batcher))
+    expect(await resolver.resolve({ kind: 'note', id: 'fresh' })).toMatchObject({
+      state: 'ok',
+      snapshot: { title: 'Заметка с доски run10' },
+    })
+  })
+
+  it('confirmed local miss becomes deleted; no_access stays forbidden', async () => {
+    ;(globalThis as any).window = {
+      electronAPI: {
+        entitiesResolve: async (_ws: string, q: { refs: { id: string }[] }) => q.refs.map(r => ({
+          ref: { kind: 'note', id: r.id },
+          status: r.id === 'denied' ? 'no_access' : 'unavailable',
+          title: '',
+          kindLabel: 'note',
+          icon: 'link',
+          authority: 'local',
+          etag: '',
+        })),
+        listNotes: async () => [],
+        readNote: async () => { throw new Error('gone') },
+      },
+    }
+    const { createPreviewBatcher, createEntityRegistry, EntitySnapshotResolver } = await import('../entity-wiring')
+    const frames: Array<() => void> = []
+    const batcher = createPreviewBatcher('ws', cb => { frames.push(cb) })
+    const flush = () => { frames.splice(0).forEach(f => f()) }
+    const resolver = new EntitySnapshotResolver(createEntityRegistry('ws', batcher))
+    const goneP = resolver.resolve({ kind: 'note', id: 'gone' })
+    flush()
+    expect(await goneP).toEqual({ state: 'deleted' })
+    const deniedP = resolver.resolve({ kind: 'note', id: 'denied' })
+    flush()
+    expect(await deniedP).toEqual({ state: 'forbidden' })
+  })
+})
