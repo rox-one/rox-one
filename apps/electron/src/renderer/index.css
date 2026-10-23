@@ -985,7 +985,7 @@ html[data-shell-style="zen"] .header-icon-btn svg {
 }
 
 html[data-shell-style="zen"] .sidebar-disclosure {
-  transition: opacity var(--shell-motion-fast, 120ms) ease;
+  transition: opacity var(--shell-motion-fast, var(--motion-fast)) var(--ease-standard);
 }
 
 html[data-shell-style="zen"] .shell-sash-active {
