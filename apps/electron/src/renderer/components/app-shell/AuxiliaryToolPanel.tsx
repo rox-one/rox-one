@@ -12,6 +12,7 @@ import { automationsAtom } from '@/atoms/automations'
 import { MainContentPanel } from './MainContentPanel'
 import { activeWorkspaceContextAtom } from '@/atoms/workspace-context'
 import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
+import { Skeleton } from '@rox/ui'
 
 export function AuxiliaryToolPanel({ entry, onClose }: { entry: PanelStackEntry; onClose: () => void }) {
   const { t } = useTranslation()
@@ -76,7 +77,12 @@ export function AuxiliaryToolPanel({ entry, onClose }: { entry: PanelStackEntry;
       {!availableSkills.length && <p className="text-sm text-muted-foreground">{t('navigation.noSkills')}</p>}
     </div>
   )
-  if (workspaceId && shell.activeWorkspaceId !== workspaceId) return <div role="status" className="p-4">{t('common.loading')}</div>
+  if (workspaceId && shell.activeWorkspaceId !== workspaceId) return (
+    <div role="status" aria-busy="true" aria-label={t('common.loading')} className="space-y-2 p-4 text-muted-foreground">
+      <Skeleton className="h-4 w-1/3" />
+      <Skeleton lines={3} className="w-full" />
+    </div>
+  )
   return (
     <div className="flex h-full min-h-0 flex-col" data-tool-panel={entry.tool}>
       <header className="flex shrink-0 items-center gap-2 border-b border-foreground/5 px-3 py-2">
