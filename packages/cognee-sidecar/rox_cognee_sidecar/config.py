@@ -11,6 +11,19 @@ DEFAULT_EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-
 DEFAULT_EMBEDDING_DIMS = 384
 
 
+
+def _parse_positive_int(raw: str | None, default: int, name: str) -> int:
+    if raw is None or not str(raw).strip():
+        return default
+    try:
+        value = int(str(raw).strip())
+    except ValueError as err:
+        raise ValueError(f"{name} must be a positive integer, got {raw!r}") from err
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive integer, got {value}")
+    return value
+
+
 @dataclass(frozen=True)
 class SidecarConfig:
     root: str
@@ -33,7 +46,9 @@ class SidecarConfig:
             llm_fallback_model=env.get("ROX_COGNEE_LLM_FALLBACK_MODEL") or DEFAULT_FALLBACK_MODEL,
             llm_api_key=env.get("ROX_COGNEE_LLM_API_KEY", ""),
             embedding_model=env.get("ROX_COGNEE_EMBEDDING_MODEL") or DEFAULT_EMBEDDING_MODEL,
-            embedding_dims=int(env.get("ROX_COGNEE_EMBEDDING_DIMS") or DEFAULT_EMBEDDING_DIMS),
+            embedding_dims=_parse_positive_int(
+                env.get("ROX_COGNEE_EMBEDDING_DIMS"), DEFAULT_EMBEDDING_DIMS, "ROX_COGNEE_EMBEDDING_DIMS"
+            ),
         )
 
     def cognee_env(self) -> dict[str, str]:

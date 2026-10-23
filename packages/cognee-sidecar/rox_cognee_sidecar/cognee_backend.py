@@ -133,23 +133,35 @@ class CogneeBackend:
             return await self._add(docs)
 
     async def _add(self, docs: list[dict[str, Any]]) -> dict[str, Any]:
-        by_source: dict[str, list[str]] = {}
+        # Stage files first; only commit id-map entries for sources cognee accepted
+        # so status()/search() dataset lists do not advertise docs the graph never got.
+        staged: dict[str, list[tuple[str, str, str]]] = {}  # source -> [(name, path, id)]
         for d in docs:
             name = doc_file_name(d["id"])
             path = os.path.join(self.docs_dir, name)
             with open(path, "w", encoding="utf-8") as f:
                 f.write(d["text"])
-            by_source.setdefault(d["source"], []).append(path)
-            self._ids[name] = {"id": d["id"], "source": d["source"]}
-        try:
-            for source, paths in by_source.items():
+            staged.setdefault(d["source"], []).append((name, path, d["id"]))
+        added = 0
+        first_err: BaseException | None = None
+        for source, items in staged.items():
+            paths = [p for _, p, _ in items]
+            try:
                 await self.cognee.add(paths, dataset_name=dataset_for(source))
-        finally:
-            # Persist even on partial failure so map and doc files stay aligned.
-            # Re-adding the same ids rewrites the same file names; cognee-level
-            # dedup of duplicate graph nodes is not assumed here.
-            self._save_map()
-        return {"added": len(docs)}
+            except Exception as err:  # noqa: BLE001
+                first_err = first_err or err
+                print(f"[rox-cognee] add failed for dataset {dataset_for(source)}: {type(err).__name__}", file=sys.stderr)
+                continue
+            for name, _path, doc_id in items:
+                self._ids[name] = {"id": doc_id, "source": source}
+                added += 1
+        self._save_map()
+        if first_err is not None and added == 0:
+            raise first_err
+        # Partial success: map reflects accepted sources; host may retry the rest.
+        # Re-adding the same ids rewrites the same file names; cognee-level
+        # dedup of duplicate graph nodes is not assumed here.
+        return {"added": added}
 
     async def cognify(self, sources: list[str] | None) -> dict[str, Any]:
         datasets = sorted({dataset_for(v["source"]) for v in self._ids.values() if not sources or v["source"] in sources})
@@ -223,24 +235,31 @@ class CogneeBackend:
         removed = 0
         if not wanted_ds:
             return {"removed": 0}
-        all_ds = await ds_api.list_datasets()
-        for ds in all_ds:
-            if str(getattr(ds, "name", "")) not in wanted_ds:
-                continue
-            for data in await ds_api.list_data(ds.id):
-                name = os.path.basename(str(getattr(data, "name", "")))
-                if not name.endswith(".txt"):
-                    name += ".txt"
-                if name in wanted:
-                    await ds_api.delete_data(dataset_id=ds.id, data_id=data.id, delete_dataset_if_empty=False)
-                    removed += 1
-        for name in wanted:
-            self._ids.pop(name, None)
-            try:
-                os.remove(os.path.join(self.docs_dir, name))
-            except OSError:
-                pass
-        self._save_map()
+        # Names successfully removed from cognee — cleared from the map in finally
+        # so a mid-loop raise still keeps status()/search() honest about what left.
+        gone: set[str] = set()
+        try:
+            all_ds = await ds_api.list_datasets()
+            for ds in all_ds:
+                if str(getattr(ds, "name", "")) not in wanted_ds:
+                    continue
+                for data in await ds_api.list_data(ds.id):
+                    name = os.path.basename(str(getattr(data, "name", "")))
+                    if not name.endswith(".txt"):
+                        name += ".txt"
+                    if name in wanted:
+                        await ds_api.delete_data(dataset_id=ds.id, data_id=data.id, delete_dataset_if_empty=False)
+                        gone.add(name)
+                        removed += 1
+        finally:
+            for name in gone:
+                self._ids.pop(name, None)
+                try:
+                    os.remove(os.path.join(self.docs_dir, name))
+                except OSError:
+                    pass
+            if gone:
+                self._save_map()
         return {"removed": removed}
 
     async def status(self) -> dict[str, Any]:

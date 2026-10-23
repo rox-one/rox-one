@@ -63,7 +63,10 @@ def validate_docs(raw: Any) -> tuple[list[dict[str, Any]], int]:
             raise RpcError("bad_params", "doc.source is not a known source")
         if not isinstance(text, str):
             raise RpcError("bad_params", "doc.text must be a string")
-        # Defence in depth: the host gate already drops untrusted content.
+        # Defence in depth only: the host is the primary untrusted-content gate
+        # and must set provenance.originClass. Missing provenance is treated as
+        # trusted here so a forgetful host is not silently broken; only the
+        # explicit originClass == "untrusted" marker is dropped.
         if origin == "untrusted":
             continue
         if not text.strip():
@@ -173,7 +176,11 @@ async def serve(backend: Backend, read_line: Callable[[], Awaitable[bytes]], out
                 if not raw:
                     break
             continue
-        line = raw.decode("utf-8", errors="replace").strip()
+        try:
+            line = raw.decode("utf-8").strip()
+        except UnicodeDecodeError:
+            await server._send({"id": None, "error": {"code": "bad_json", "message": "invalid UTF-8"}})
+            continue
         if line:
             server.submit(line)
             await asyncio.sleep(0)

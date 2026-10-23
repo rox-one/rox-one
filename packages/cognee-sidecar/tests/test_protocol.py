@@ -117,6 +117,37 @@ class OversizedFrameTest(unittest.TestCase):
         self.assertEqual(len(frames), 2)
 
 
+
+class Utf8AndConfigTest(unittest.TestCase):
+    def test_invalid_utf8_frame_rejected(self):
+        sys.path.insert(0, HERE)
+        from rox_cognee_sidecar.fake_backend import FakeBackend
+        from rox_cognee_sidecar.server import serve
+
+        hello = (json.dumps({"id": 9, "method": "hello"}) + "\n").encode("utf-8")
+        chunks = [b"\xff\xfe not utf8\n", hello, b""]
+        idx = {"i": 0}
+
+        async def read_line() -> bytes:
+            i = idx["i"]; idx["i"] = i + 1
+            return chunks[i] if i < len(chunks) else b""
+
+        buf = io.BytesIO()
+        asyncio.run(serve(FakeBackend(), read_line, out=buf))
+        frames = [json.loads(line) for line in buf.getvalue().decode().splitlines()]
+        self.assertEqual(frames[0]["error"]["code"], "bad_json")
+        self.assertIn("UTF-8", frames[0]["error"]["message"])
+        self.assertEqual(frames[1]["id"], 9)
+
+    def test_embedding_dims_bad_value(self):
+        sys.path.insert(0, HERE)
+        from rox_cognee_sidecar.config import SidecarConfig
+        with self.assertRaises(ValueError) as ctx:
+            SidecarConfig.from_env({"ROX_COGNEE_ROOT": "/tmp/x", "ROX_COGNEE_EMBEDDING_DIMS": "nope"})
+        self.assertIn("ROX_COGNEE_EMBEDDING_DIMS", str(ctx.exception))
+
+
+
 class LlmErrorClassifyTest(unittest.TestCase):
     def test_is_llm_error_prefers_type_and_status(self):
         sys.path.insert(0, HERE)
