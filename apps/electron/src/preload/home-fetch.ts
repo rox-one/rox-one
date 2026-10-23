@@ -16,5 +16,7 @@ export function createHomeFetchBridge(invoke: (channel: string, ...args: unknown
         ...(typeof request.numResults === 'number' ? { numResults: request.numResults } : {}),
       }) as ReturnType<HomeFetchApi['search']>,
     status: () => invoke(HOME_FETCH_CHANNELS.STATUS) as ReturnType<HomeFetchApi['status']>,
+    system: () => invoke(HOME_FETCH_CHANNELS.SYSTEM) as ReturnType<HomeFetchApi['system']>,
+    docker: () => invoke(HOME_FETCH_CHANNELS.DOCKER) as ReturnType<HomeFetchApi['docker']>,
   }) as HomeFetchApi
 }
