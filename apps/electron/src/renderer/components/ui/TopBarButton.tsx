@@ -15,6 +15,7 @@ interface TopBarButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
  *
  * Compact 24×24 control (design-compact), centered content, soft hover.
  * Used for: Craft logo, back/forward navigation, sidebar toggle, etc.
+ * SE focus via `.header-icon-btn` (#2211) — no second Tailwind ring.
  */
 export const TopBarButton = React.forwardRef<HTMLButtonElement, TopBarButtonProps>(
   ({ children, isActive, className, disabled, ...props }, ref) => {
@@ -25,10 +26,7 @@ export const TopBarButton = React.forwardRef<HTMLButtonElement, TopBarButtonProp
         disabled={disabled}
         className={cn(
           "header-icon-btn h-6 w-6 flex items-center justify-center rounded-[var(--radius-control)] titlebar-no-drag",
-          // Subtle glass so top buttons read as clickable (Mark, t78).
-          "border border-border-subtle bg-surface-hover shadow-[inset_0_0_0_1px_color-mix(in_oklch,var(--foreground)_6%,transparent)]",
-          "[backdrop-filter:blur(var(--chrome-glass-blur))] [-webkit-backdrop-filter:blur(var(--chrome-glass-blur))]",
-          "hover:bg-surface-pressed focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "bg-surface-hover hover:bg-surface-pressed focus:outline-none",
           "disabled:[&_svg]:text-text-disabled disabled:pointer-events-none disabled:opacity-50",
           "transition-colors duration-[var(--motion-fast)]",
           isActive && "bg-surface-selected",
