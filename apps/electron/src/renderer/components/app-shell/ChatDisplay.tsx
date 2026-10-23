@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
+import { SE_MOTION_SEC } from "@/lib/motion/super-engineering-springs"
 import { toast } from "sonner"
 import { SessionMemoryProposalLane } from "./MemoryProposalCard"
 import { SessionTypingIndicator } from "./SessionTypingIndicator"
@@ -471,6 +472,7 @@ interface ProcessingIndicatorProps {
  */
 function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorProps) {
   const { t } = useTranslation()
+  const reduceMotion = usePrefersReducedMotion()
   const [elapsed, setElapsed] = React.useState(0)
   const [messageIndex, setMessageIndex] = React.useState(() =>
     Math.floor(Math.random() * PROCESSING_MESSAGE_KEYS.length)
@@ -521,7 +523,7 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: 'easeInOut' }}
+            transition={{ duration: reduceMotion ? 0 : SE_MOTION_SEC.disclosure, ease: 'easeInOut' }}
           >
             {displayMessage}
           </motion.span>

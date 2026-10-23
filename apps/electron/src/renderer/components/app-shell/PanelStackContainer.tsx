@@ -12,6 +12,7 @@ import { visibleWorkspacePanels } from './auxiliary-layout'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { motion } from '@/lib/deferred-motion'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
+import { SE_MOTION_SEC } from '@/lib/motion/super-engineering-springs'
 import { panelStackAtom, primaryPanelIdAtom, lastAuxiliaryToolAtom, focusedPanelIdAtom, focusedPanelRouteAtom, findPanelInDirection, expandedPanelIdAtom, type PanelSpatialDirection, type PanelStackEntry } from '@/atoms/panel-stack'
 import { bottomTerminalOpenAtom, featureLayoutEngineAtom, featurePanelSwapV1Atom } from '@/atoms/unified-shell'
 import { panelLayoutGeometryAtom } from '@/atoms/panel-workspace'
@@ -85,7 +86,8 @@ export function resolveSwapNeighborId(
   return stack[index + 1]?.id ?? stack[index - 1]?.id ?? null
 }
 
-const PANEL_TRANSITION = { type: 'tween' as const, duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as [number, number, number, number] }
+/** Panel open/close — SE disclosure tween (opacity+width already GPU-friendly). */
+const PANEL_TRANSITION = { type: 'tween' as const, duration: SE_MOTION_SEC.disclosure, ease: [0.2, 0.8, 0.2, 1] as [number, number, number, number] }
 /** Compact and desktop panes share the same continuous chrome boundary. */
 const COMPACT_PANEL_TOP_GAP = 0
 
