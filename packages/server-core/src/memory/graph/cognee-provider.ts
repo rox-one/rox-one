@@ -196,8 +196,7 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
     if (typeof frame.id !== 'number') return
     const p = this.pending.get(frame.id)
     if (!p) return
-    this.pending.delete(frame.id)
-    clearTimeout(p.timer)
+    // resolve/reject wrappers (see request) clear the pending entry + timer.
     if (frame.error) p.reject(new Error(`sidecar ${String(frame.error.code ?? 'error')}`))
     else p.resolve(frame.result)
   }
@@ -215,23 +214,38 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
     this.idleTimer = null
   }
 
-  private request(method: string, params: Record<string, unknown>, timeoutMs?: number): Promise<unknown> {
+  private request(
+    method: string,
+    params: Record<string, unknown>,
+    timeoutMs?: number,
+    signal?: AbortSignal,
+  ): Promise<unknown> {
     const child = this.child
     if (!child?.stdin || child.stdin.destroyed) return Promise.reject(new Error('sidecar not running'))
     if (this.pending.size >= MAX_PENDING) return Promise.reject(new Error('sidecar busy'))
+    if (signal?.aborted) return Promise.reject(new Error('sidecar aborted'))
     const id = this.nextId++
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
+      const settle = (fn: () => void) => {
+        if (!this.pending.has(id)) return
+        clearTimeout(timer)
+        signal?.removeEventListener('abort', onAbort)
         this.pending.delete(id)
-        reject(new Error('sidecar timeout'))
-      }, timeoutMs ?? this.deps.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS)
-      this.pending.set(id, { resolve, reject, timer })
-      child.stdin!.write(`${JSON.stringify({ id, method, params })}\n`, err => {
-        if (err) {
-          clearTimeout(timer)
-          this.pending.delete(id)
-          reject(new Error('sidecar write failed'))
-        }
+        fn()
+      }
+      const onAbort = () => settle(() => reject(new Error('sidecar aborted')))
+      const timer = setTimeout(
+        () => settle(() => reject(new Error('sidecar timeout'))),
+        timeoutMs ?? this.deps.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
+      )
+      this.pending.set(id, {
+        resolve: v => settle(() => resolve(v)),
+        reject: e => settle(() => reject(e)),
+        timer,
+      })
+      signal?.addEventListener('abort', onAbort, { once: true })
+      child.stdin!.write(`${JSON.stringify({ id, method, params })}` + '\n', err => {
+        if (err) settle(() => reject(new Error('sidecar write failed')))
       })
     })
   }
@@ -288,11 +302,22 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
       return []
     }
     this.touch()
-    const raw = (await this.request('search', {
-      query,
-      mode: opts?.mode ?? 'chunks',
-      limit: Math.min(50, Math.max(1, opts?.limit ?? 8)),
-    })) as unknown
+    let raw: unknown
+    try {
+      raw = await this.request(
+        'search',
+        {
+          query,
+          mode: opts?.mode ?? 'chunks',
+          limit: Math.min(50, Math.max(1, opts?.limit ?? 8)),
+        },
+        undefined,
+        opts?.signal,
+      )
+    } catch (err) {
+      this.deps.logger?.warn('cognee search failed', err)
+      return []
+    }
     if (opts?.signal?.aborted || !Array.isArray(raw)) return []
     const observedAt = new Date().toISOString()
     return raw

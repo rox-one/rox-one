@@ -11,7 +11,7 @@
  * missing steps. A failed install leaves the native memory stack untouched.
  */
 import { createHash } from 'crypto'
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 
@@ -127,12 +127,40 @@ export class CogneeRuntimeManager {
 
   private stamp(): string {
     let lockHash = 'nolock'
+    let srcHash = 'nosrc'
     try {
       lockHash = createHash('sha256').update(readFileSync(join(this.deps.sidecarSourceDir, 'requirements.lock'))).digest('hex').slice(0, 16)
     } catch {
       /* missing lock -> venv step will fail loudly */
     }
-    return `v${RUNTIME_LAYOUT_VERSION}:uv${UV_VERSION}:py${PYTHON_VERSION}:${lockHash}`
+    try {
+      srcHash = this.hashSidecarSources().slice(0, 16)
+    } catch {
+      /* missing sources -> sidecar step will fail loudly */
+    }
+    return `v${RUNTIME_LAYOUT_VERSION}:uv${UV_VERSION}:py${PYTHON_VERSION}:${lockHash}:${srcHash}`
+  }
+
+  /** Content hash of pyproject + Python package so code updates invalidate the sidecar step. */
+  private hashSidecarSources(): string {
+    const h = createHash('sha256')
+    const root = this.deps.sidecarSourceDir
+    const files: string[] = [join(root, 'pyproject.toml')]
+    const pkg = join(root, 'rox_cognee_sidecar')
+    if (existsSync(pkg)) {
+      for (const name of readdirSync(pkg).sort()) {
+        if (name.endsWith('.py')) files.push(join(pkg, name))
+      }
+    }
+    for (const f of files) {
+      try {
+        h.update(f)
+        h.update(readFileSync(f))
+      } catch {
+        /* skip missing */
+      }
+    }
+    return h.digest('hex')
   }
 
   isInstalled(): boolean {
@@ -212,7 +240,12 @@ export class CogneeRuntimeManager {
           join(this.deps.sidecarSourceDir, 'requirements.lock'),
         ])
       case 'sidecar':
-        return this.mustRun(['pip', 'install', '--no-deps', '--python', this.pythonPath(), this.deps.sidecarSourceDir])
+        // --no-build-isolation: build backend (setuptools) comes from the
+        // hash-locked venv sync, so we never fetch an unpinned hatchling/etc.
+        return this.mustRun([
+          'pip', 'install', '--no-deps', '--no-build-isolation',
+          '--python', this.pythonPath(), this.deps.sidecarSourceDir,
+        ])
     }
   }
 
