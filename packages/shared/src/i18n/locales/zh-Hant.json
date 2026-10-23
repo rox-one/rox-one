@@ -11575,6 +11575,7 @@
   "tasks.modeGenerate": "生成",
   "tasks.modeManual": "手動",
   "tasks.move.lists": "Lists",
+  "tasks.move.noArea": "無領域",
   "tasks.move.noPlace": "No project",
   "tasks.move.none": "Nothing found",
   "tasks.move.other": "Other",

@@ -11613,6 +11613,7 @@
   "tasks.modeGenerate": "Generuj",
   "tasks.modeManual": "Ręcznie",
   "tasks.move.lists": "Lists",
+  "tasks.move.noArea": "Bez obszaru",
   "tasks.move.noPlace": "No project",
   "tasks.move.none": "Nothing found",
   "tasks.move.other": "Other",
