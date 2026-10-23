@@ -53,22 +53,25 @@
     },
     {
       "id": "worktree-hover-delay",
-      "title": "Compact WorktreeHoverCard 250ms hover delay (spec 200\u2013300ms)",
+      "title": "Compact WorktreeHoverCard 250ms hover delay (spec 200–300ms)",
       "paths": [
+        "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx"
+      ]
+    },
+    {
+      "id": "icons-se-v2",
+      "title": "Optional packages/ui/src/icons/se SVG extract (v2, stroke 1.5)",
+      "paths": [
+        "packages/ui/src/icons/se/",
+        "apps/electron/src/renderer/components/icons/se/index.ts",
         "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx"
       ]
     }
   ],
   "gaps": [
     {
-      "id": "G1",
-      "spec": "\u00a74 icons v2",
-      "title": "Optional packages/ui/src/icons/se SVG extract missing",
-      "severity": "optional"
-    },
-    {
       "id": "G3",
-      "spec": "\u00a73 width",
+      "spec": "§3 width",
       "title": "Workspace navigator ~260 design width not contract-locked",
       "severity": "shell"
     },

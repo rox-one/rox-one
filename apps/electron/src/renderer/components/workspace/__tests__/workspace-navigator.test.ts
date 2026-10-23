@@ -19,4 +19,9 @@ describe('WorkspaceNavigator', () => {
     // Must not open the card synchronously on mouse enter.
     expect(source).not.toMatch(/onMouseEnter=\{\(\) => layout === 'compact' && setHoverBranchId\(/)
   })
+
+  it('uses SE icons v2 extract for workspace glyphs', () => {
+    expect(source).toContain("from '@rox/ui/icons/se'")
+    expect(source).not.toMatch(/from 'lucide-react'/)
+  })
 })

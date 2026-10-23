@@ -25,6 +25,7 @@ Glass / blur is **optional and pointwise** (blur ~20px on chrome accents). Not a
 | Skeleton in shared shell loading | DONE | Skeleton primitive + shell wire |
 | Rail collapse below 1280 | DONE | shell width tokens |
 | Compact WorktreeHoverCard **200–300ms** delay | DONE | `WORKTREE_HOVER_DELAY_MS=250` in WorkspaceNavigator |
+| Optional icons v2 SVG extract | DONE | `packages/ui/src/icons/se/` (stroke 1.5; WorkspaceNavigator wired) |
 
 ## Pointwise glass / popover blur (DONE — do not re-PR)
 
@@ -44,7 +45,6 @@ Lock tests: `packages/ui/src/components/glass/__tests__/glass.test.ts`, `se-acce
 
 | ID | Spec § | Gap | Owner hint |
 |----|--------|-----|------------|
-| G1 | §4 icons v2 | Optional SVG extract → `packages/ui/src/icons/se/` not present (v1 Lucide + `apps/electron/.../icons/se/` stub only) | Design / icons — optional |
 | G3 | §3 width | Design width ~260 for workspace nav — verify live SE build vs token/CSS (no dedicated contract assert) | Shell layout |
 | G4 | Frame map / parity | Manual PNG QA vs reference frames still optional (`super-engineering-parity.md`) | QA on Mac |
 | G5 | Product | Default SE ships with glass accents **off**; enabling by default would be a product change, not a Design polish PR | Product / New Bot |
