@@ -2176,3 +2176,18 @@ html[data-ui-profile="super-engineering"] .rox-mode-pill[data-ready] .rox-mode-p
 html[data-ui-profile="super-engineering"][data-shell-style="zen"] .sidebar-disclosure {
   transition: opacity var(--motion-fast) var(--ease-standard);
 }
+
+/* Rox Engineering mode-pill density (radius 8). Base titlebar-mode-pill.css
+   keeps radius-full for other profiles; under SE the plate, segments, sliding
+   indicator, and the «Все экраны» overflow trigger (.rox-mode-pill-item) use
+   --radius-md (8px). Counters stay radius-full (token role: badges). Motion,
+   press scale, and focus-visible already SE-scoped (#2210/#2211) and zero
+   under html[data-resizing] / prefers-reduced-motion. Overflow still comes
+   only from resolveModePillLayout + AllScreensMenu — no second system. */
+html[data-ui-profile="super-engineering"] :is(
+  .rox-mode-pill,
+  .rox-mode-pill-item,
+  .rox-mode-pill-indicator
+) {
+  border-radius: var(--radius-md);
+}
