@@ -18,6 +18,7 @@ import {
   type EntityRef,
 } from '@rox/canvas-core'
 import { isValidBoardId } from '@rox/canvas-core/node'
+import { isEntityKind, type EntityRef as CoreEntityRef } from '@rox/core/entities'
 import type {
   CanvasCreateEntityCardInput,
   CanvasEntityCardResult,
@@ -123,6 +124,11 @@ function buildRegistry(
   return registry
 }
 
+function coreRef(kind: string, id: string): CoreEntityRef {
+  if (!isEntityKind(kind)) coded('CANVAS_BAD_ENTITY', `unknown entity kind: ${kind}`)
+  return { kind, id }
+}
+
 function buildLinker(
   workspaceRoot: string,
   actorId: string,
@@ -137,7 +143,7 @@ function buildLinker(
       }
       getEntityLinkStore(workspaceRoot).add({
         from: { kind: 'canvas', id: from.boardId, fragment: from.objectId },
-        to: { kind: to.kind, id: to.id },
+        to: coreRef(to.kind, to.id),
         relation: 'embeds',
         createdBy: actorId,
       })
@@ -146,7 +152,7 @@ function buildLinker(
       if (!isEntitiesLinksEnabled(linksFlags())) return
       getEntityLinkStore(workspaceRoot).remove({
         from: { kind: 'canvas', id: from.boardId, fragment: from.objectId },
-        to: { kind: to.kind, id: to.id },
+        to: coreRef(to.kind, to.id),
         relation: 'embeds',
       })
     },

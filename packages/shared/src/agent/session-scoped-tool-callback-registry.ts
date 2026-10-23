@@ -15,7 +15,7 @@ import type { SpawnSessionFn } from './spawn-session-tool.ts';
 import type { BrowserPaneFns } from './browser-tools.ts';
 import type { AuthRequest, MemoryToolCallbacks } from '@rox/session-tools-core';
 import type { VisitorToolCallbacks } from '@rox/session-tools-core';
-import type { BoardWidgetToolCallbacks } from '@rox/session-tools-core';
+import type { BoardWidgetToolCallbacks, CanvasToolCallbacks } from '@rox/session-tools-core';
 import { debug } from '../utils/debug.ts';
 
 /**
@@ -101,6 +101,12 @@ export interface SessionScopedToolCallbacks {
    * session's workspace.
    */
   boardWidgets?: BoardWidgetToolCallbacks;
+  /**
+   * Canvas entity-card tools (canvas_create_entity_card / canvas_link_entity) —
+   * place live entity cards on a «Доска» board. Wired by SessionManager over
+   * the same CanvasFileStore + entity-links path as the surface UI.
+   */
+  canvas?: CanvasToolCallbacks;
   /**
    * Memory recall tools (memory_search / memory_get) — grouped because the two
    * operations always ship together. Wired by SessionManager to the invoking
