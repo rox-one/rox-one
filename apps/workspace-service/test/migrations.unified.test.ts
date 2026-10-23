@@ -25,6 +25,8 @@ const EXPECTED_FILES = [
   '516-drive-quota.sql', '517-collab.sql', '520-work-item.sql', '521-calendar.sql', '522-goals.sql',
   '523-projects.sql', '524-check-ins-reviews.sql', '525-kpi.sql', '526-templates.sql', '530-vc.sql',
   '551-workplace.sql', '552-mail.sql',
+  // W1-15 (#2042) relay bridge: `im` schema tables.
+  '553-im-relay.sql',
 ]
 
 // Every migration that exists today, in sorted order. Databases apply them as an exact
@@ -108,7 +110,7 @@ function containsCompact(haystack: string, needle: string): boolean {
 }
 
 describe('W1-05 unified DDL static checks (no DB required)', () => {
-  test('all 26 files exist and sort after 48-license-audit.sql', async () => {
+  test('all 27 files exist and sort after 48-license-audit.sql', async () => {
     const sources = await loadSources()
     const sorted = sortedNames(sources)
     const pivot = sorted.indexOf('48-license-audit.sql')
@@ -145,11 +147,11 @@ describe('W1-05 unified DDL static checks (no DB required)', () => {
     }
   })
 
-  test('94 new tables across the 26 files (103 with #1295 tables file, 553+)', async () => {
+  test('96 new tables across the 27 files (105 with #1295 tables file, 554+)', async () => {
     const sources = await loadSources()
     const tables = EXPECTED_FILES.flatMap(n => createdTables(sources.get(n)!))
     expect(new Set(tables).size).toBe(tables.length)
-    expect(tables.length).toBe(94)
+    expect(tables.length).toBe(96)
   })
 
   test('every FK / ALTER target exists earlier in sort order (or is a documented deferral)', async () => {
@@ -343,9 +345,10 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
         expect(first.retained).toEqual([])
         const replay = await applyWorkspaceMigrations(db, migrations, schema)
         expect(replay.applied).toEqual([])
-        // Table inventory: every new table exists.
+        // Table inventory: every new table exists. 553-im-relay.sql keeps its
+        // tables in the dedicated `im` schema, so include it here.
         const rows = await db.unsafe<{ tablename: string }[]>(
-          `SELECT tablename FROM pg_tables WHERE schemaname = '${schema}' AND tablename <> 'rox_schema_migration'`)
+          `SELECT tablename FROM pg_tables WHERE schemaname IN ('${schema}', 'im') AND tablename <> 'rox_schema_migration'`)
         const names = new Set(rows.map(r => r.tablename))
         const sources = await loadSources()
         for (const file of EXPECTED_FILES) {
@@ -694,10 +697,12 @@ describe('W1-05 unified DDL migrate-up (Postgres; skips without a database)', ()
       const [history] = await dba.unsafe<{ t: string | null }[]>(`SELECT to_regclass('app.rox_schema_migration')::text AS t`)
       expect(history?.t).toBeNull()
 
-      // (2) A DBA pre-installs the extensions in public: the same role now migrates.
+      // (2) A DBA pre-installs the extensions in public (and the shared `im`
+      // schema 553-im-relay.sql writes to): the same role now migrates.
       await dba.unsafe('CREATE EXTENSION citext WITH SCHEMA public')
       await dba.unsafe('CREATE EXTENSION pg_trgm WITH SCHEMA public')
       await dba.unsafe('CREATE EXTENSION unaccent WITH SCHEMA public')
+      await dba.unsafe(`CREATE SCHEMA IF NOT EXISTS im AUTHORIZATION "${role}"`)
       const ok = await applyWorkspaceMigrations(limited, migrations, 'app')
       expect(ok.applied.length).toBe(migrations.length)
 

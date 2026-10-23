@@ -27,6 +27,8 @@ import { createWorkspaceCommandBus, type WorkspaceCommandBusConfiguration } from
 // W1-12 (#1509)
 import { createWorkspaceRules, type WorkspaceRulesOptions } from './modules/rules/runtime.ts'
 import type { WorkspaceCommandService } from './modules/commands/service.ts'
+// W1-15 (#2042)
+import { createImModule, imFeedDomainEvent, type ImModuleOptions } from './modules/im/index.ts'
 
 const DEFAULT_SCHEMA = 'public'
 const DEFAULT_HOST = '127.0.0.1'
@@ -63,7 +65,17 @@ export interface WorkspaceServerConfiguration {
    * `automation_rule` settings API. Absent → no consumer, no routes (404).
    */
   readonly rules?: WorkspaceRulesConfiguration
+  // W1-15 (#2042)
+  /**
+   * Relay bridge (`/v1/im/*`). Opt-in; absent → no module, every im path
+   * answers 404. Relay URL + service key come from the environment unless
+   * injected (`config`/`relay`) — never a literal.
+   */
+  readonly im?: WorkspaceImConfiguration
 }
+
+/** W1-15: the `im` module's configuration minus what the server already owns. */
+export type WorkspaceImConfiguration = Omit<ImModuleOptions, 'database' | 'schema'>
 
 /** W1-12: everything the `rules` consumer group needs beyond the database. */
 export type WorkspaceRulesConfiguration = Omit<WorkspaceRulesOptions, 'database' | 'schema' | 'dispatchFor'>
@@ -197,6 +209,19 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
   }) : undefined
   await commandBus?.ready
   if (commandBus) rulesExecutor.service = commandBus.service
+  // W1-15 (#2042): relay bridge. Inert unless a relay config is injected or in
+  // the environment; the feed fan-out reuses the existing notify module.
+  const imNotify = commandBus?.notify
+  const im = configuration.im
+    ? createImModule({
+        database: configuration.database,
+        schema,
+        ...configuration.im,
+        ...(configuration.im.feed || !imNotify
+          ? {}
+          : { feed: async item => { await imNotify.ingest([imFeedDomainEvent(item)]) } }),
+      })
+    : undefined
   const httpHandler = createWorkspaceHttpHandler({
     authority,
     collaborationAuthority,
@@ -208,6 +233,8 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
     ...(rules ? { automation: { rules, enabled: () => rules.enabled() } } : {}),
     // W1-09 (#1506): notify routes only exist while the module is configured.
     ...(commandBus?.notify ? { notify: commandBus.notify.http } : {}),
+    // W1-15 (#2042): relay bridge routes only exist while the module is configured.
+    ...(im ? { im: im.http } : {}),
   })
   async function authenticationPhase<T>(operation: () => Promise<T>): Promise<T> {
     if (lifecycle && !lifecycle.begin()) throw new AuthenticationError()
@@ -245,7 +272,7 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
   if (licenseAuthority) registerLicenseHandlers(server, licenseAuthority, lifecycle)
   // W1-03 (#1500)
   const realtimeGateway = commandBus?.attach(server)
-  return { server, authority, commandBus, realtimeGateway, rules, repository, collaborationAuthority, licenseAuthority, licenseRepository, identity, actorResolver, migrations, observability: Object.freeze({ snapshot: () => observability.snapshot() }) }
+  return { server, authority, commandBus, realtimeGateway, rules, im, repository, collaborationAuthority, licenseAuthority, licenseRepository, identity, actorResolver, migrations, observability: Object.freeze({ snapshot: () => observability.snapshot() }) }
 }
 
 function requireLocalIssuer(value: Awaited<ReturnType<typeof createLocalIssuer>> | undefined) {

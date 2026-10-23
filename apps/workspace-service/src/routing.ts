@@ -22,6 +22,7 @@ import type { WorkspaceBroInvitationAuthority } from './modules/collaboration/in
 import type { WorkspaceCommandHttpAuthority } from './modules/commands/routes.ts'
 import type { WorkspaceAutomationHttpAuthority } from './modules/rules/routes.ts'
 import type { WorkspaceNotifyHttpAuthority } from './modules/notify/service.ts'
+import type { WorkspaceImHttpAuthority } from './modules/im/service.ts'
 
 export type WorkspaceActorResolver = ReturnType<typeof createVerifiedActorResolver<AuthenticatedActor>>
 export type WorkspaceLocalIssuer = Awaited<ReturnType<typeof createLocalIssuer>>
@@ -47,6 +48,9 @@ export interface WorkspaceHttpOptions {
   // W1-09 (#1506)
   /** Notification list / mark-read routes; absent → both paths answer 404. */
   notify?: WorkspaceNotifyHttpAuthority
+  // W1-15 (#2042)
+  /** Relay bridge (`/v1/im/*`); absent → every im path answers 404. */
+  im?: WorkspaceImHttpAuthority
 }
 
 export class HttpFailure extends Error {

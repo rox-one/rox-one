@@ -1,0 +1,36 @@
+[package]
+name = "rox-chat-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "NIP-01 relay client with durable SQLite cache/outbox for the Rox messenger"
+
+[lib]
+# rlib for the Rust consumers / tests, cdylib for the napi addon build.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# `sync` is not in the workspace tokio feature set; the run loop needs channels
+# and `Notify`. `net`/`io-util` (already enabled workspace-wide) carry the
+# WebSocket transport. wss:// relays use the OS TLS stack via the workspace
+# `native-tls` feature, so no OpenSSL/rustls build step is required.
+tokio = { workspace = true, features = ["sync"] }
+tokio-tungstenite.workspace = true
+futures-util.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rusqlite.workspace = true
+sha2.workspace = true
+hex.workspace = true
+secp256k1.workspace = true
+# Optional: the core never depends on napi, only the `napi-bindings` module does.
+napi = { workspace = true, optional = true, features = ["napi8", "tokio_rt"] }
+napi-derive = { workspace = true, optional = true }
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[features]
+default = []
+napi-bindings = ["dep:napi", "dep:napi-derive"]

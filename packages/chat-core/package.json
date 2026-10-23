@@ -1,0 +1,25 @@
+{
+  "name": "@rox/chat-core",
+  "version": "0.11.8",
+  "license": "Apache-2.0",
+  "description": "Native NIP-01 chat core for the Rox messenger: relay client, SQLite message cache and durable outbox (Rust + napi-rs)",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "default": "./index.js"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "rox-chat-core.node"
+  ],
+  "scripts": {
+    "build:native": "cd ../../native && cargo build -p rox-chat-core --features napi-bindings --release"
+  }
+}

@@ -1,0 +1,27 @@
+# Caddy site block for the rox-chat relay.
+#
+# On the host this lives at /etc/caddy/chat-rox-one.caddy and is pulled into
+# the main config with:
+#     import chat-rox-one.caddy
+# inside /etc/caddy/Caddyfile.
+#
+# TLS is terminated here (Caddy issues the Let's Encrypt certificate for
+# chat.rox.one automatically). Nothing else on the host listens on 443.
+
+chat.rox.one {
+	encode zstd gzip
+
+	# WebSocket / HTTP Upgrade support.
+	#
+	# Caddy v2's reverse_proxy forwards HTTP/1.1 `Connection: Upgrade` +
+	# `Upgrade: websocket` requests to the upstream unchanged, so the relay
+	# (which serves the NIP-01 relay protocol over wss://chat.rox.one) needs no
+	# extra matcher or header rewriting here. This single upstream block carries
+	# both the plain REST/HTTPS traffic and the long-lived WebSocket traffic.
+	reverse_proxy 127.0.0.1:3300
+
+	log {
+		output file /var/log/caddy/chat.rox.one.log
+		format console
+	}
+}

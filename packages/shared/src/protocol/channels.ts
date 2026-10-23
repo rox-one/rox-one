@@ -1039,6 +1039,28 @@ export const RPC_CHANNELS = {
     MARK_READ: 'teamChat:markRead',
     CHANGED: 'teamChat:changed',
   },
+  /**
+   * im — native chat-core messenger relay (deliverable 4). LOCAL_ONLY: the
+   * `@rox/chat-core` client and its local store run in the Electron main
+   * process, which forwards `onMessage` / `onPresence` / `onTyping` /
+   * `onStatus` callbacks to the renderer as `im:message` / `im:presence` /
+   * `im:typing` / `im:statusChanged` events. When the native module is absent
+   * (or the `workbench.mode.messenger.v1` flag is off) these handlers no-op and
+   * the renderer falls back to the JSON team-chat store (`teamChat:*`).
+   */
+  im: {
+    STATUS: 'im:status',
+    SUBSCRIBE_CHANNEL: 'im:subscribeChannel',
+    UNSUBSCRIBE_CHANNEL: 'im:unsubscribeChannel',
+    LIST_MESSAGES: 'im:listMessages',
+    SEND_MESSAGE: 'im:sendMessage',
+    MARK_READ: 'im:markRead',
+    PUBLISH_TYPING: 'im:publishTyping',
+    MESSAGE: 'im:message',
+    PRESENCE: 'im:presence',
+    TYPING: 'im:typing',
+    STATUS_CHANGED: 'im:statusChanged',
+  },
   views: {
     LIST: 'views:list',
     SAVE: 'views:save',

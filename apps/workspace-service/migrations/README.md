@@ -1,8 +1,10 @@
 # Workspace-service migrations (unified DDL, W1-05)
 
-Issue #1502 · unified spec **v2** (DATA-MODEL §12). 26 files land here; the 27th
-(spec `40-tables.sql`, 9 tables) is owned by Unified Tables (#1295) and is **not
-authored** in this package. It has no reserved slot: see "Adding a migration".
+Issue #1502 · unified spec **v2** (DATA-MODEL §12). 26 files land here, plus the
+relay-bridge integration file `553-im-relay.sql` (W1-15, #2042 — 2 tables, no
+spec number). The remaining spec file `40-tables.sql` (9 tables) is owned by
+Unified Tables (#1295) and is **not** authored in this package. It has no
+reserved slot: see "Adding a migration".
 
 ## Startup loading (always the full sorted set)
 
@@ -65,19 +67,22 @@ Every new file therefore keeps the spec's logical number as `5NN`:
 | `40-tables.sql` | — (no slot; lands as `553+`, see below) | owned by #1295 — do not author here |
 | `51-workplace.sql` | `551-workplace.sql` | workplace_app, workplace_favorite |
 | `52-mail.sql` | `552-mail.sql` | mail_account |
+| — (relay bridge, W1-15 #2042) | `553-im-relay.sql` | `im` schema: im_identity, im_service_event (rox userId ↔ relay pubkey, `(call_id, type)` idempotency) |
 
 94 new tables here + 9 from #1295's tables file = **103** (DATA-MODEL §12 totals).
+`553-im-relay.sql` adds 2 more (`im.im_identity`, `im.im_service_event`) in a
+dedicated `im` schema, so the packaged set is **96 + 9 = 105**.
 4 extended tables: `principal`, `project`, `workspace`, `workspace_member`.
 
 ## Adding a migration (#1295, #1314 and everything later)
 
 A new file must sort **after the last file in this directory** (today
-`552-mail.sql`, so `553-…` or higher), never in the middle. Because the applied
+`553-im-relay.sql`, so `554-…` or higher), never in the middle. Because the applied
 history must be an exact sorted prefix, a mid-sequence name breaks every database
 that already applied a later file: `540-tables.sql` would fail once 551/552 are
 applied, and `40-tables.sql` sorts before 48 and fails everywhere. #1295's tables
 (spec `40-tables.sql`) and #1314's tables therefore land as the next free number
-(`553-tables.sql`, then `554-…`), in whichever order they merge.
+(`554-tables.sql`, then `555-…`), in whichever order they merge.
 
 Append the new name to `LOCKED_MIGRATIONS` in `../test/migrations.unified.test.ts`
 and to `workspace-service:package` in the same change. The static test fails if a
@@ -137,6 +142,14 @@ CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
 
 The startup transaction rolls back on a preflight failure, so nothing is
 recorded and the next start retries cleanly. See also `../DEPLOYMENT.md`.
+
+`553-im-relay.sql` also creates the shared `im` schema (the relay bridge's
+bookkeeping tables). Creating a top-level schema needs database-level `CREATE`
+as well; a DBA who pre-installs the extensions should pre-create it too:
+
+```sql
+CREATE SCHEMA IF NOT EXISTS im;
+```
 
 ## FTS configs
 
@@ -260,7 +273,7 @@ spaces → `509` · docs → `510` · wiki → `511` · messenger → `512` ·
 identity → `513` · agents → `513(agent_binding), 514` · automation → `515` ·
 tasks → `520` · calendar → `521, 517(calendar_member)` · goals → `522, 524` ·
 projects → `523, 526` · kpis → `525` · meetings → `530` · workplace → `551` ·
-mail → `552` · collab → `517` · tables → `553+` (#1295).
+mail → `552` · messenger relay bridge → `553` · collab → `517` · tables → `554+` (#1295).
 
 ## Tests
 

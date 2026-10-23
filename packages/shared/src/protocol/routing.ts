@@ -616,6 +616,20 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.teamChat.MARK_READ,
   RPC_CHANNELS.teamChat.CHANGED,
 
+  // im — the native chat-core client + its local store live in the Electron
+  // main process (deliverable 4), so these are host-local and never proxied.
+  RPC_CHANNELS.im.STATUS,
+  RPC_CHANNELS.im.SUBSCRIBE_CHANNEL,
+  RPC_CHANNELS.im.UNSUBSCRIBE_CHANNEL,
+  RPC_CHANNELS.im.LIST_MESSAGES,
+  RPC_CHANNELS.im.SEND_MESSAGE,
+  RPC_CHANNELS.im.MARK_READ,
+  RPC_CHANNELS.im.PUBLISH_TYPING,
+  RPC_CHANNELS.im.MESSAGE,
+  RPC_CHANNELS.im.PRESENCE,
+  RPC_CHANNELS.im.TYPING,
+  RPC_CHANNELS.im.STATUS_CHANGED,
+
   // identity — profile + service connections (Identity Center, S-07)
   RPC_CHANNELS.identity.CONNECT,
   RPC_CHANNELS.identity.DISCONNECT,
