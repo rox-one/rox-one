@@ -53,7 +53,7 @@
   font: inherit;
   cursor: default;
   outline: none;
-  transition: color 160ms ease, background-color 160ms ease;
+  transition: color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard);
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
@@ -145,9 +145,9 @@ html[data-contrast="high"] .rox-mode-pill-badge {
 
 .rox-mode-pill[data-ready] .rox-mode-pill-indicator {
   transition:
-    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    width 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 120ms ease;
+    transform var(--motion-disclosure) var(--ease-standard),
+    width var(--motion-disclosure) var(--ease-standard),
+    opacity var(--motion-fast) var(--ease-standard);
 }
 
 @media (prefers-reduced-motion: reduce) {

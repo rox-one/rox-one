@@ -30,7 +30,7 @@ export const TopBarButton = React.forwardRef<HTMLButtonElement, TopBarButtonProp
           "[backdrop-filter:blur(var(--chrome-glass-blur))] [-webkit-backdrop-filter:blur(var(--chrome-glass-blur))]",
           "hover:bg-surface-pressed focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           "disabled:[&_svg]:text-text-disabled disabled:pointer-events-none disabled:opacity-50",
-          "transition-colors duration-100",
+          "transition-colors duration-[var(--motion-fast)]",
           isActive && "bg-surface-selected",
           className
         )}

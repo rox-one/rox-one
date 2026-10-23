@@ -4,6 +4,7 @@ import { useEffect, useMemo, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getMenuIcon } from './menu-icons'
 import { motion, AnimatePresence } from '@/lib/deferred-motion'
+import { SE_SPRING_PANEL } from '@/lib/motion/super-engineering-springs'
 import { useRegisterDismissibleLayer } from '@/context/DismissibleLayerContext'
 import { RoxTileMark } from '../icons/RoxTileMark'
 import { SquarePenRounded } from '../icons/SquarePenRounded'
@@ -20,7 +21,6 @@ import {
 import type { AppMenuProps } from './types'
 import { isWebUI } from '@/lib/platform'
 
-const SNAPPY_SPRING = { type: 'spring' as const, stiffness: 400, damping: 36, mass: 0.8 }
 const BACKDROP_FADE = { duration: 0.18 }
 
 type StackAction =
@@ -236,7 +236,7 @@ function MobileMenuSheet({ state, pages, onPop, onClose, onActivateRow, t }: She
           <motion.div
             className="absolute inset-0 bg-background overflow-hidden"
             variants={{ open: { y: '0%' }, closed: { y: '100%' } }}
-            transition={SNAPPY_SPRING}
+            transition={SE_SPRING_PANEL}
           >
             <PageStack
               pages={pages}
@@ -281,7 +281,7 @@ function PageStack({ pages, stack, onPop, onClose, onActivateRow, t }: PageStack
             initial={depth === 0 ? false : { x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={SNAPPY_SPRING}
+            transition={SE_SPRING_PANEL}
           >
             <MobileMenuPage
               title={t(page.titleKey)}

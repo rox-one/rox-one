@@ -18,6 +18,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react'
 import { AnimatePresence, motion } from '@/lib/deferred-motion'
+import { SE_MOTION_SEC, SE_SPRING_LIST } from '@/lib/motion/super-engineering-springs'
 import type { Variants } from 'motion/react'
 import { File, Folder, FolderOpen, FileText, Image, FileCode, ChevronRight, ExternalLink } from 'lucide-react'
 import {
@@ -56,39 +57,30 @@ export function flattenSessionFileRows(entries: SessionFile[], expandedPaths: Re
   return rows
 }
 
-/**
- * Stagger animation variants for child items - matches LeftSidebar pattern
- * Creates a pleasing "cascade" effect when expanding folders
- */
+/** Nested file-tree enter/exit — opacity + transform only; no stagger spam (P7). */
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.025,
-      delayChildren: 0.01,
-    },
+    transition: { duration: SE_MOTION_SEC.fast },
   },
   exit: {
     opacity: 0,
-    transition: {
-      staggerChildren: 0.015,
-      staggerDirection: -1,
-    },
+    transition: { duration: SE_MOTION_SEC.fast },
   },
 }
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, x: -8 },
+  hidden: { opacity: 0, x: -6 },
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.15, ease: 'easeOut' },
+    transition: SE_SPRING_LIST,
   },
   exit: {
     opacity: 0,
-    x: -8,
-    transition: { duration: 0.1, ease: 'easeIn' },
+    x: -6,
+    transition: { duration: SE_MOTION_SEC.fast },
   },
 }
 
@@ -409,11 +401,11 @@ function FileTreeItem({
         <AnimatePresence initial={false}>
           {isExpanded && (
             <motion.div
-              initial={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
-              animate={{ height: 'auto', opacity: 1, marginTop: 2, marginBottom: 8 }}
-              exit={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
-              transition={{ duration: 0.2, ease: 'easeInOut' }}
-              className="overflow-hidden"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={SE_SPRING_LIST}
+              className="mt-0.5 mb-2"
             >
               {/* Wrapper div matches LeftSidebar recursive structure - min-w-0 allows shrinking */}
               <div className="flex flex-col select-none min-w-0">
