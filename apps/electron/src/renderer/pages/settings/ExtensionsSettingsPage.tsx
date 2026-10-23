@@ -30,6 +30,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { VirtualList } from '@/components/ui/virtual-list'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Spinner } from '@rox/ui'
+import { SettingsLoadingSkeleton } from '@/components/settings'
 import { navigate, routes } from '@/lib/navigate'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
 import { isClaimableLive } from '@rox/core/rox2'
@@ -978,10 +979,7 @@ export default function ExtensionsSettingsPage() {
           ) : null}
 
           {loading ? (
-            <div className="flex items-center gap-2 text-sm opacity-70 py-10 justify-center">
-              <Spinner className="w-4 h-4" />
-              {t('extensions.loading')}
-            </div>
+            <SettingsLoadingSkeleton className="py-10" />
           ) : null}
 
           {!loading && unifiedCenter ? (

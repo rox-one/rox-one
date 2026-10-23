@@ -15,7 +15,13 @@ import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Spinner, PremiumMenuSelect } from '@rox/ui'
-import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
+import {
+  SettingsCard,
+  SettingsRow,
+  SettingsSection,
+  SettingsToggle,
+  SettingsLoadingSkeleton,
+} from '@/components/settings'
 import { Button } from '@/components/ui/button'
 import { routes } from '@/lib/navigate'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
@@ -407,9 +413,13 @@ export default function ImportSettingsPage() {
             <p className="text-xs text-muted-foreground">{t('settings.import.selectedCount', { count: selectedCount })}</p>
           ) : null}
           {loading ? (
-            <div className="flex items-center gap-2 text-sm opacity-70">
-              <Spinner className="w-4 h-4" />
-              {persistProgress ? <span data-testid="session-import-progress">{persistProgress.done}/{persistProgress.total}</span> : null}
+            <div className="space-y-2">
+              <SettingsLoadingSkeleton className="py-4" />
+              {persistProgress ? (
+                <span className="text-sm text-muted-foreground opacity-70" data-testid="session-import-progress">
+                  {persistProgress.done}/{persistProgress.total}
+                </span>
+              ) : null}
             </div>
           ) : null}
           {error ? <div className="text-xs text-destructive">{error}</div> : null}

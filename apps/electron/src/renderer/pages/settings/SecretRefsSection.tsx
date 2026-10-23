@@ -8,7 +8,12 @@ import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PremiumMenuSelect, Spinner } from '@rox/ui'
-import { SettingsSection, SettingsCard, SettingsCardFooter } from '@/components/settings'
+import {
+  SettingsSection,
+  SettingsCard,
+  SettingsCardFooter,
+  SettingsLoadingSkeleton,
+} from '@/components/settings'
 import type { SecretRefEntry, SecretRefsSettingsPayload } from '../../../shared/types'
 import { SecretProviderStatusRow, secretRefRowShowsUnavailable } from './secret-refs-ui'
 import { toErrorMessage } from '@/lib/errors'
@@ -168,9 +173,7 @@ export function SecretRefsSection({ onError }: { onError?: (message: string | nu
         )}
         <div className="p-3 space-y-2">
           {drafts === null ? (
-            <div className="flex justify-center py-4">
-              <Spinner className="w-4 h-4" />
-            </div>
+            <SettingsLoadingSkeleton className="py-4" />
           ) : (
             <>
               {drafts.map((draft, index) => (

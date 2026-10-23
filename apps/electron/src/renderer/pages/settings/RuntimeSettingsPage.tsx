@@ -26,6 +26,7 @@ import {
   SettingsRow,
   SettingsToggle,
   SettingsMenuSelectRow,
+  SettingsLoadingSkeleton,
 } from '@/components/settings'
 import { useToolchainStatus } from '@/hooks/useToolchainStatus'
 import { ROX_VISIBLE_TERMS } from '@rox/shared/identity'
@@ -705,9 +706,7 @@ export default function RuntimeSettingsPage() {
               <SettingsCard>
                 {permissionMode === null ? (
                   activeWorkspaceId ? (
-                    <div className="flex justify-center py-8">
-                      <Spinner className="w-4 h-4" />
-                    </div>
+                    <SettingsLoadingSkeleton className="py-8" />
                   ) : (
                     <div className="px-4 py-6 text-center text-sm text-muted-foreground">
                       {t('settings.runtime.approvalSelectWorkspace')}
@@ -742,9 +741,7 @@ export default function RuntimeSettingsPage() {
                   description={t('settings.toolchain.toolsDesc')}
                 >
                   {isLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Spinner className="w-4 h-4" />
-                    </div>
+                    <SettingsLoadingSkeleton className="py-8" />
                   ) : orderedTools.length === 0 ? (
                     <div className="px-4 py-6 text-center text-sm text-muted-foreground">
                       {t('settings.toolchain.empty')}
@@ -768,9 +765,7 @@ export default function RuntimeSettingsPage() {
                   description={t('settings.toolchain.enabledDesc')}
                 >
                   {isLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Spinner className="w-4 h-4" />
-                    </div>
+                    <SettingsLoadingSkeleton className="py-8" />
                   ) : (
                     <SettingsCard>
                       {/*
@@ -802,9 +797,7 @@ export default function RuntimeSettingsPage() {
               <SettingsCard divided={false}>
                 <div className="p-3 space-y-2">
                   {envEntries === null ? (
-                    <div className="flex justify-center py-4">
-                      <Spinner className="w-4 h-4" />
-                    </div>
+                    <SettingsLoadingSkeleton className="py-4" />
                   ) : (
                     <>
                       {envEntries.map((entry, index) => (
