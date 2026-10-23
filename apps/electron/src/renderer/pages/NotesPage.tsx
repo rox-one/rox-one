@@ -632,6 +632,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [rpcCommentThreads, setRpcCommentThreads] = React.useState<NoteCommentThread[]>([])
   const commentCreateInFlightRef = React.useRef(false)
   const commentCreateFlightKeyRef = React.useRef<string | null>(null)
+  // React state mirrors the flight lock so the overlay composer can disable while busy.
+  const [commentCreateBusy, setCommentCreateBusy] = React.useState(false)
   // Collapsed comments rail unmounts NotesCommentThreads — clear highlights here so a
   // prior note's threads cannot paint on the newly opened body.
   React.useEffect(() => {
@@ -3528,9 +3530,11 @@ h1,h2,h3{margin-top:1.5em}
                   quote={commentDraftQuote}
                   body={commentComposerBody}
                   onBodyChange={setCommentComposerBody}
+                  creating={commentCreateBusy}
                   focusRequested={focusCommentComposer}
                   onFocusHandled={() => setFocusCommentComposer(false)}
                   onCancel={() => {
+                    if (commentCreateInFlightRef.current) return
                     setCommentDraftQuote('')
                     setCommentComposerBody('')
                   }}
@@ -3544,6 +3548,7 @@ h1,h2,h3{margin-top:1.5em}
                     const flightKey = JSON.stringify([requestWorkspaceId, requestNoteId])
                     commentCreateInFlightRef.current = true
                     commentCreateFlightKeyRef.current = flightKey
+                    setCommentCreateBusy(true)
                     void (async () => {
                       const stillActive = () => (
                         workspaceIdRef.current === requestWorkspaceId
@@ -3585,6 +3590,7 @@ h1,h2,h3{margin-top:1.5em}
                         if (commentCreateFlightKeyRef.current === flightKey) {
                           commentCreateFlightKeyRef.current = null
                           commentCreateInFlightRef.current = false
+                          setCommentCreateBusy(false)
                         }
                       }
                     })()

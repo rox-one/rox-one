@@ -14,10 +14,13 @@ import {
   anchorFromQuote,
   isDocumentNoteComment,
   nestNoteCommentThreads,
+  noteThreadsToHighlightComments,
   removeNoteCommentFromList,
   resolveNoteCommentAnchors,
   upsertNoteCommentInList,
 } from './note-comments'
+
+export { noteThreadsToHighlightComments }
 
 const LOCAL_AUTHOR = 'Вы'
 const CREATE_BUSY = '__create__'
@@ -37,22 +40,6 @@ function toCommentItem(comment: NoteCommentThread, viewer = LOCAL_AUTHOR): Comme
     })),
     replies: [],
   }
-}
-
-export function noteThreadsToHighlightComments(comments: readonly NoteCommentThread[]): Array<{
-  id: string
-  quote: string
-  body: string
-  createdAt: number
-}> {
-  return comments
-    .filter(comment => !comment.parentId && comment.anchor?.selectedText)
-    .map(comment => ({
-      id: comment.id,
-      quote: comment.anchor!.selectedText,
-      body: comment.body,
-      createdAt: comment.createdAt,
-    }))
 }
 
 function normalizeChangedPayload(payload: NoteChangedPayload | string): NoteChangedPayload {
@@ -488,8 +475,9 @@ export function NotesCommentThreads({
           quote={draftQuote}
           body={body}
           onBodyChange={setBody}
+          creating={creating}
           onSubmit={() => { if (!createInFlightRef.current) void createRoot() }}
-          onCancel={() => clearComposer()}
+          onCancel={() => { if (!createInFlightRef.current) clearComposer() }}
           focusRequested={focusRequested || showDocComposer}
           onFocusHandled={onFocusHandled}
         />
