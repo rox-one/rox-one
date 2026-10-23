@@ -38,13 +38,13 @@ function setupConfigDir(memory?: unknown): string {
 }
 
 describe('memory graph config (PR6)', () => {
-  it('defaults graph true with no graphSources', { timeout: 30_000 }, () => {
+  it('defaults graph true with no graphSources', () => {
     const out = JSON.parse(runEval(setupConfigDir({}), 'console.log(JSON.stringify(getMemoryConfig()))'))
     expect(out.graph).toBe(true)
     expect(out.graphSources).toBeUndefined()
   })
 
-  it('updateMemoryConfig persists graphSources; missing keys stay on', { timeout: 30_000 }, () => {
+  it('updateMemoryConfig persists graphSources; missing keys stay on', () => {
     const dir = setupConfigDir({ graph: true })
     const out = JSON.parse(
       runEval(
@@ -64,7 +64,7 @@ describe('memory graph config (PR6)', () => {
     expect(out.re.mail).toBe(false)
   })
 
-  it('graph:false round-trips', { timeout: 30_000 }, () => {
+  it('graph:false round-trips', () => {
     const out = JSON.parse(
       runEval(
         setupConfigDir({}),

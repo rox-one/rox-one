@@ -407,6 +407,7 @@ const SETTINGS_ICONS: Record<SettingsSubpage, string> = {
   privacy: 'Shield',
   runtime: 'Settings',
   context: 'FileText',
+  memory: 'Brain',
   knowledge: 'BookOpen',
   marketplace: 'ShoppingBag',
   extensions: 'Blocks',

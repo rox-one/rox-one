@@ -34,7 +34,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroupDefinition[] = [
   {
     id: 'agent',
     labelKey: 'settings.navigator.groupAgent',
-    pageIds: ['runtime', 'context', 'ai', 'permissions', 'input'],
+    pageIds: ['runtime', 'context', 'memory', 'ai', 'permissions', 'input'],
   },
   {
     id: 'workspace',

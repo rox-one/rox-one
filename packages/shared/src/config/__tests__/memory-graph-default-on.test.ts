@@ -40,17 +40,17 @@ describe('memory.graph default-on (PR8)', () => {
     expect(DEFAULT_MEMORY_CONFIG.graph).toBe(true)
   })
 
-  it('getMemoryConfig() returns graph true when memory key absent', { timeout: 30_000 }, () => {
+  it('getMemoryConfig() returns graph true when memory key absent', () => {
     const out = JSON.parse(runEval(setup(), 'console.log(JSON.stringify(getMemoryConfig()))'))
     expect(out.graph).toBe(true)
   })
 
-  it('getMemoryConfig() returns graph true when memory object empty', { timeout: 30_000 }, () => {
+  it('getMemoryConfig() returns graph true when memory object empty', () => {
     const out = JSON.parse(runEval(setup({}), 'console.log(JSON.stringify(getMemoryConfig()))'))
     expect(out.graph).toBe(true)
   })
 
-  it('explicit graph:false is respected', { timeout: 30_000 }, () => {
+  it('explicit graph:false is respected', () => {
     const out = JSON.parse(runEval(setup({ graph: false }), 'console.log(JSON.stringify(getMemoryConfig()))'))
     expect(out.graph).toBe(false)
   })
