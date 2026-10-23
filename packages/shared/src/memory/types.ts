@@ -198,6 +198,8 @@ export interface MemoryConfig {
    * Optional on the type so older fixtures stay valid; getMemoryConfig always returns a boolean.
    */
   graph?: boolean
+  /** Daily USD cap for LLM-heavy graph cognify (default 2). */
+  graphDailyCostCapUsd?: number
   /**
    * Dream (spec §9): hours between background memory-dream runs, default 4.
    * One DreamScheduler per process ticks banks (main + active workspaces) and
@@ -231,6 +233,7 @@ export const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
   ftsLimit: 20,
   semantic: true,
   graph: true,
+  graphDailyCostCapUsd: 2,
   dreamIntervalHours: 4,
   dreamNotes: true,
 }
