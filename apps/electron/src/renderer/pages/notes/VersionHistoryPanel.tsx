@@ -38,14 +38,15 @@ export function VersionHistoryPanel({
   currentContent,
   currentRevision,
   width,
-  onRestored,
+  onRestore,
 }: {
   workspaceId: string
   noteId: string
   currentContent: string
   currentRevision: string | null | undefined
   width?: number
-  onRestored: (note: { content: string; revision?: string }) => void
+  /** Flush dirty edits, then restore under the shared save queue. */
+  onRestore: (revisionId: string) => Promise<unknown>
 }) {
   const { t, i18n } = useTranslation()
   const [entries, setEntries] = React.useState<NoteHistoryEntry[]>([])
@@ -105,13 +106,7 @@ export function VersionHistoryPanel({
     setRestoring(true)
     setError(null)
     try {
-      const note = await window.electronAPI.restoreNoteRevision(
-        workspaceId,
-        noteId,
-        selectedId,
-        currentRevision,
-      )
-      onRestored(note)
+      await onRestore(selectedId)
       setConfirmRestore(false)
       await reload()
     } catch (err) {
@@ -119,7 +114,7 @@ export function VersionHistoryPanel({
     } finally {
       setRestoring(false)
     }
-  }, [selectedId, currentRevision, workspaceId, noteId, onRestored, reload])
+  }, [selectedId, currentRevision, onRestore, reload])
 
   return (
     <aside
