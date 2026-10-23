@@ -17,13 +17,16 @@ export function readNoteCover(properties: Record<string, unknown> | null | undef
   if (typeof raw !== 'string') return null
   const value = raw.trim()
   if (!value || value.length > 2048) return null
-  // Sole http(s) / data:image URL (whole value). Reject multi-layer values that embed url(...).
+  // Deny SVG data URLs (scriptable); allow other sole http(s) / data:image values.
+  if (/^data:image\/svg\+xml/i.test(value)) return null
   if (/^https?:\/\/\S+$/i.test(value) || /^data:image\/[a-z0-9.+-]+;base64,\S+$/i.test(value) || /^data:image\/[a-z0-9.+-]+,.+/i.test(value)) {
     return value
   }
   // Reject CSS escapes (e.g. \75rl(file:///...)) that bypass the url(...) check.
   if (value.includes('\\')) return null
   if (/url\s*\(/i.test(value)) return null
+  // Reject CSS image*() functions that can smuggle urls inside gradients.
+  if (/\b(?:image|image-set|cross-fade)\s*\(/i.test(value)) return null
   // Solid hex or url-free gradients only.
   if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return value
   if (/^(linear|radial)-gradient\(/i.test(value)) return value
@@ -35,6 +38,7 @@ export function readNoteIcon(properties: Record<string, unknown> | null | undefi
   if (typeof raw !== 'string') return null
   const value = raw.trim()
   if (!value || value.length > 32) return null
+  if (/[\x00-\x1f\x7f]/.test(value)) return null
   return value
 }
 

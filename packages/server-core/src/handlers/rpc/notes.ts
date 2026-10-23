@@ -104,6 +104,7 @@ const NOTES_DIR = 'notes'
 const ASSETS_DIR = 'assets'
 const DAILY_DIR = DAILY_FOLDER
 const TEMPLATES_DIR = 'templates'
+const TEMPLATE_STRIP_PROPERTY_KEYS = ['createdAt', 'cover', 'icon'] as const
 const PROJECTS_DIR = 'projects'
 const ROX_META_DIR = '.rox'
 const COMMENTS_DIR = 'comments'
@@ -1074,7 +1075,7 @@ function updateFrontmatterProperties(content: string, nextProperties: Record<str
 
 async function createNote(notesRoot: string, title: string, writeNative: NativeNoteWriter, folder?: string): Promise<NoteDocument> {
   await ensureNotesDirs(notesRoot)
-  const safeFolder = folder ? assertSafeNoteId(folder) : ''
+  const safeFolder = assertSafeCreateFolder(folder)
   const dir = safeFolder ? resolve(notesRoot, safeFolder) : notesRoot
   if (!isInsidePath(notesRoot, dir)) throw new Error('Invalid note folder')
   await ensureSafeNoteDirectory(notesRoot, dir)
@@ -1971,7 +1972,12 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
   async function walk(dir: string, prefix: string): Promise<void> {
     await assertSafeExistingTemplatesPath(notesRoot, dir)
     let entries
-    try { entries = await readdir(dir, { withFileTypes: true }) } catch { return }
+    try {
+      entries = await readdir(dir, { withFileTypes: true })
+    } catch (error) {
+      if (isErrnoException(error, 'ENOENT')) return
+      throw error
+    }
     for (const entry of entries) {
       if (entry.name.startsWith('.')) continue
       const abs = join(dir, entry.name)
@@ -2030,9 +2036,11 @@ export async function saveNoteAsTemplateForRoot(
   if (rawProperties != null && (typeof rawProperties !== 'object' || Array.isArray(rawProperties))) {
     throw new Error('Invalid template properties')
   }
-  const properties: Record<string, unknown> = { ...(rawProperties ?? {}), title: input.title.trim() || titleFromId(id) }
+  const title = input.title.trim() || titleFromId(id)
+  const properties: Record<string, unknown> = { ...(rawProperties ?? {}), title }
+  properties.tags = coerceTemplateTags(properties.tags)
   // Templates keep content identity only — drop path/runtime-ish keys.
-  for (const key of ['createdAt', 'cover', 'icon']) delete properties[key]
+  for (const key of TEMPLATE_STRIP_PROPERTY_KEYS) delete properties[key]
   const content = stringifyNoteContent(input.body ?? '', properties)
   if (input.confirmReplace === true) {
     await writeAtomicFileNoFollow(notesRoot, filePath, content)
@@ -2041,10 +2049,13 @@ export async function saveNoteAsTemplateForRoot(
     const created = await writeNewNoteFile(filePath, content)
     if (!created) throw new CodedError('CONFLICT', 'Template already exists')
   }
-  const listed = await listNoteTemplatesForRoot(notesRoot)
-  const hit = listed.find(item => item.id === id)
-  if (!hit) throw new Error('Template save failed')
-  return hit
+  const info = await stat(filePath).catch(() => null)
+  return {
+    id,
+    title,
+    relativePath: `${TEMPLATES_DIR}/${id}.md`,
+    updatedAt: info?.mtimeMs ?? Date.now(),
+  }
 }
 
 
@@ -2061,7 +2072,7 @@ export async function materializeTemplateNoteContent(
     tags: coerceTemplateTags(template.properties.tags),
   }
   // Do not inherit template identity/runtime keys (same strip set as saveAsTemplate).
-  for (const key of ['createdAt', 'cover', 'icon']) delete properties[key]
+  for (const key of TEMPLATE_STRIP_PROPERTY_KEYS) delete properties[key]
   properties.createdAt = Date.now()
   return { noteTitle, initialContent: stringifyNoteContent(template.body, properties) }
 }
@@ -2383,7 +2394,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (!ctx.principal) return null // Explicit legacy response; authorization failures never fall back.
     const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
     if (typeof title !== 'string' || (folder != null && typeof folder !== 'string')) throw new Error('invalid native note creation intent')
-    const safeFolder = folder ? assertSafeNoteId(folder) : ''
+    const safeFolder = assertSafeCreateFolder(folder)
     const filename = safeNoteFilename(title || 'Untitled')
     const nativeId = safeFolder ? `${safeFolder}/${stripMdExtension(filename)}` : stripMdExtension(filename)
     const path = `${NOTES_DIR}/${nativeId}.md`
@@ -2402,7 +2413,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (!isClaimableLive(act)) throw new Error('note create is not live')
     if (ctx.principal) {
       const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
-      const safeFolder = folder ? assertSafeNoteId(folder) : ''
+      const safeFolder = assertSafeCreateFolder(folder)
       const filename = safeNoteFilename(title || 'Untitled')
       const relativeId = safeFolder ? `${safeFolder}/${stripMdExtension(filename)}` : stripMdExtension(filename)
       const path = `${NOTES_DIR}/${relativeId}.md`

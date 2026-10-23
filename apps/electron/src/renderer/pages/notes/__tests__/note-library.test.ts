@@ -19,8 +19,12 @@ describe('note-library', () => {
     // CSS hex-escape bypass of url(...) — backslash must be rejected on non-URL covers.
     expect(readNoteCover({ cover: 'linear-gradient(red, \\75rl(file:///etc/passwd))' })).toBeNull()
     expect(readNoteCover({ cover: 'linear-gradient(red, blue)' })).toContain('linear-gradient')
+    expect(readNoteCover({ cover: 'data:image/svg+xml;base64,PHN2Zy8+' })).toBeNull()
+    expect(readNoteCover({ cover: 'linear-gradient(red, image(https://evil.example/x.png))' })).toBeNull()
+    expect(readNoteCover({ cover: 'linear-gradient(red, image-set(url(https://evil.example/x.png) 1x))' })).toBeNull()
     expect(readNoteIcon({ icon: '📝' })).toBe('📝')
     expect(readNoteIcon({ icon: 'x'.repeat(40) })).toBeNull()
+    expect(readNoteIcon({ icon: `ok${String.fromCharCode(0)}bad` })).toBeNull()
   })
 
   it('patches cover/icon properties without dropping siblings', () => {

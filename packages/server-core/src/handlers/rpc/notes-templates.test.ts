@@ -197,4 +197,23 @@ describe('note templates library', () => {
     expect(assertSafeCreateFolder(undefined)).toBe('')
   })
 
+
+  it('coerces string tags when saving as template and returns constructed summary', async () => {
+    const saved = await saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'tagged',
+      title: 'Tagged',
+      body: 'body',
+      properties: { tags: 'alpha' },
+    })
+    expect(saved).toMatchObject({
+      id: 'tagged',
+      title: 'Tagged',
+      relativePath: 'templates/tagged.md',
+    })
+    expect(saved.updatedAt).toBeGreaterThan(0)
+    const raw = readFileSync(join(notesRoot, 'templates', 'tagged.md'), 'utf-8')
+    expect(raw).toMatch(/tags:\s*\n\s*-\s*alpha/)
+    expect(raw).not.toContain('tags: alpha')
+  })
+
 })

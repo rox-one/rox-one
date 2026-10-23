@@ -6427,6 +6427,7 @@
   "notes.library.templatesCreateDesc": "Выберите шаблон хранилища и создайте заметку.",
   "notes.library.templatesCreateTitle": "Новая заметка из шаблона",
   "notes.library.templatesEmpty": "Шаблонов пока нет. Сохраните текущую заметку как шаблон.",
+  "notes.library.templatesLoadFailed": "Не удалось загрузить шаблоны",
   "notes.library.templatesReplaceDesc": "Файл templates/{{id}}.md уже есть. Замена перезапишет его. Отмена оставит файл без изменений.",
   "notes.library.templatesReplaceHint": "Шаблон «{{id}}» уже существует. При сохранении потребуется подтверждение замены.",
   "notes.library.templatesReplaceRequired": "Подтвердите замену, чтобы перезаписать шаблон",

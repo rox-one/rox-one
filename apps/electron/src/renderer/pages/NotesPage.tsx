@@ -204,22 +204,22 @@ function parseDailyNoteDate(noteId?: string): string | null {
 }
 
 function propertiesFromNoteContent(content: string): Record<string, unknown> {
-  try {
-    const source = retainSource(content)
-    if (!source.frontmatter) return {}
-    const yamlSource = retainedText(source, {
-      start: source.frontmatter.contentStart,
-      end: source.frontmatter.contentEnd,
-    })
-    // Full YAML document — keep nested maps/seqs (projectFrontmatter is leaf-scalars only).
-    const doc = parseDocument(yamlSource.replace(/\r(?!\n)/g, '\n'), { uniqueKeys: true })
-    if (doc.errors.length || doc.contents == null) return {}
-    const data = doc.toJS({ maxAliasCount: 0 })
-    if (!data || typeof data !== 'object' || Array.isArray(data)) return {}
-    return data as Record<string, unknown>
-  } catch {
-    return {}
+  const source = retainSource(content)
+  if (!source.frontmatter) return {}
+  const yamlSource = retainedText(source, {
+    start: source.frontmatter.contentStart,
+    end: source.frontmatter.contentEnd,
+  })
+  // Full YAML document — keep nested maps/seqs (projectFrontmatter is leaf-scalars only).
+  const doc = parseDocument(yamlSource.replace(/\r(?!\n)/g, '\n'), { uniqueKeys: true })
+  if (doc.errors.length || doc.contents == null) {
+    throw new Error('Invalid note frontmatter')
   }
+  const data = doc.toJS({ maxAliasCount: 0 })
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('Invalid note frontmatter')
+  }
+  return data as Record<string, unknown>
 }
 
 function splitFrontmatter(value: string): { frontmatter: string; body: string } {
@@ -2978,10 +2978,11 @@ h1,h2,h3{margin-top:1.5em}
     }
     try {
       setNoteTemplates(await window.electronAPI.listNoteTemplates(activeWorkspaceId))
-    } catch {
-      setNoteTemplates([])
+    } catch (error) {
+      // Keep the prior list so a transient LIST failure does not wipe the dialog.
+      toast.error(error instanceof Error ? error.message : t('notes.library.templatesLoadFailed'))
     }
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, t])
   refreshNoteTemplatesRef.current = refreshNoteTemplates
 
   const openTemplatesDialog = React.useCallback(async (mode: 'create' | 'save') => {
