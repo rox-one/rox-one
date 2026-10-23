@@ -27,6 +27,7 @@ import { Avatar, ChannelInfoPanel, type Presence } from './ChannelInfoPanel'
 import { CallStage } from './CallStage'
 import { MessageBody } from './message-cards'
 import { MessengerListSkeleton } from './MessengerListSkeleton'
+import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 
 const NAME_MAX = 80
 const MESSAGE_MAX = 4000
@@ -236,7 +237,12 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
         ) : channels.error ? (
           <p className="p-4 text-small text-destructive" role="alert">{channels.error}</p>
         ) : !selected ? (
-          <p className="p-4 text-small text-text-secondary">{t('messenger.channels.empty')}</p>
+          <EntityListEmptyScreen
+            icon={<Hash />}
+            title={t('messenger.channels.empty')}
+            description=""
+            className="h-full"
+          />
         ) : (
           <>
             <header data-glass-slot="toolbar" className="flex shrink-0 items-center gap-2 border-b border-border/60 px-4 py-2">
@@ -378,7 +384,16 @@ function SearchResults({ search, channels, nameOf, onOpen, label }: {
   const byId = new Map(channels.map(c => [c.id, c]))
   if (search.loading) return <MessengerListSkeleton rows={5} testId="messenger-search-loading" />
   if (search.error) return <p className="px-2 text-caption text-destructive" role="alert">{search.error}</p>
-  if (!search.results.length) return <p className="px-2 text-caption text-text-muted">{t('messenger.channels.searchEmpty')}</p>
+  if (!search.results.length) {
+    return (
+      <EntityListEmptyScreen
+        icon={<Search />}
+        title={t('messenger.channels.searchEmpty')}
+        description=""
+        className="py-6"
+      />
+    )
+  }
   return (
     <ul className="flex flex-col gap-1" data-testid="messenger-search-results">
       {search.results.map(m => {
@@ -546,10 +561,12 @@ function MessageThread({
         {loading ? <MessengerListSkeleton rows={6} testId="messenger-thread-loading" /> : null}
         {error ? <p className="text-small text-destructive" role="alert">{error}</p> : null}
         {!loading && !error && messages.length === 0 ? (
-          <div data-glass-slot="empty" className="flex h-full flex-col items-center justify-center gap-2 text-center text-text-muted">
-            <MessagesSquare className="icon-empty" aria-hidden />
-            <p className="text-small">{t('messenger.channels.noMessages')}</p>
-          </div>
+          <EntityListEmptyScreen
+            icon={<MessagesSquare />}
+            title={t('messenger.channels.noMessages')}
+            description=""
+            className="h-full"
+          />
         ) : null}
         <ul className="flex flex-col gap-2">
           {messages.map((m, i) => {
