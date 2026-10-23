@@ -41,7 +41,8 @@ describe('messenger-feed-channels', () => {
     expect(matchesMessengerChannelFilter({ channelId: 'a' }, null)).toBe(true)
     expect(matchesMessengerChannelFilter({ channelId: 'a' }, 'a')).toBe(true)
     expect(matchesMessengerChannelFilter({ channelId: 'a' }, 'b')).toBe(false)
-    expect(matchesMessengerChannelFilter({}, 'a')).toBe(false)
+    // Untagged rows always pass so the team tab is not emptied pre-fan-out.
+    expect(matchesMessengerChannelFilter({}, 'a')).toBe(true)
   })
 
   it('hydrates followed channels from the roster', () => {

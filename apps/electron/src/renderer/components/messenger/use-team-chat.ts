@@ -2,8 +2,9 @@
  * Team messenger data hooks. Channel roster stays on teamChat:* (org store).
  * Message list/send prefer native im:* when the relay reports live; otherwise
  * fall back to the JSON team-chat store (eu-swiss offline / no native addon).
- * Successful im sends (and inbound im:message pushes) dual-write into
- * team-chat.json so history stays durable when the relay flaps.
+ * Own sends dual-write into team-chat.json after a successful imSendMessage so
+ * history stays durable when the relay flaps. Inbound im:message is UI-only
+ * until sender-preserving ingest exists (teamChatPost stamps actor.userId).
  */
 import * as React from 'react'
 import type { TeamChannelMessage, TeamChannelView } from '@rox/shared/team-chat'
@@ -17,7 +18,7 @@ function errorText(error: unknown): string {
   return raw.replace(/^.*?Error:\s*/s, '').trim() || raw
 }
 
-/** Keys of own dual-writes so an im:message echo does not post a second local copy. */
+/** Keys of own dual-writes (channelId+text, 8s TTL) — reserved for echo dedupe. */
 const recentDualWrites = new Set<string>()
 function dualWriteKey(channelId: string, text: string): string {
   return `${channelId}\0${text}`
@@ -98,17 +99,13 @@ export function useTeamMessages(channelId: string | null) {
     return () => { version.current++; off?.() }
   }, [channelId, reload])
 
+  // Inbound im:message is UI-only — do not teamChatPost (stamps actor.userId).
   useImMessageListener(channelId, live, (message: ImMessageEvent) => {
     setState((prev) => {
       if (prev.messages.some((m) => m.id === message.id)) return prev
       const seq = (prev.messages.at(-1)?.seq ?? 0) + 1
       return { ...prev, messages: [...prev.messages, imMessageToTeam(message, seq)] }
     })
-    // Durable mirror into team-chat.json (skip echo of a send we already dual-wrote).
-    // teamChatPost attributes to the local actor — dedicated ingest is PR3.
-    if (!recentDualWrites.has(dualWriteKey(message.channelId, message.text))) {
-      void window.electronAPI.teamChatPost(message.channelId, message.text).catch(() => {})
-    }
   })
 
   return { ...state, reload, relay: status, live }
@@ -136,15 +133,16 @@ export function useTeamSearch(orgId: string | null, query: string) {
 }
 
 /**
- * Post via im:* when live, then always dual-write into team-chat.json.
+ * Post via im:* when live, then dual-write into team-chat.json on success.
  * imSendMessage throw / ok:false falls through to teamChatPost alone.
  */
 export async function postTeamMessage(channelId: string, text: string, live: boolean): Promise<void> {
   if (live && window.electronAPI.imSendMessage) {
+    // Remember before await so a fast im:message echo cannot race a residual path.
+    rememberDualWrite(channelId, text)
     try {
       const result = await window.electronAPI.imSendMessage(channelId, text)
       if (result.ok) {
-        rememberDualWrite(channelId, text)
         try {
           await window.electronAPI.teamChatPost(channelId, text)
         } catch {

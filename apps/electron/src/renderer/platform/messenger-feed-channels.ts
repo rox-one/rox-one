@@ -84,18 +84,22 @@ export function reloadMessengerFeedChannels(): void {
   for (const listener of listeners) listener()
 }
 
-/** Pure filter helper for FeedView / FeedItem rows that carry `channelId`. */
+/**
+ * Pure filter helper: untagged items (no channelId) always pass so the team
+ * tab is not emptied before PR3 messenger fan-out sets channelId on rows.
+ */
 export function matchesMessengerChannelFilter(
   item: { channelId?: string | null },
   channelId: string | null | undefined,
 ): boolean {
   if (!channelId) return true
+  if (item.channelId == null || item.channelId === '') return true
   return item.channelId === channelId
 }
 
 /**
- * Sync Лента channel filters from the team-chat roster (viewerSubscribed),
- * not only from the follow-button click path.
+ * Sync Лента channel filters from the team-chat roster (viewerSubscribed).
+ * One publish of the full next map (other orgs preserved).
  */
 export function hydrateMessengerFeedChannelsFromRoster(
   orgId: string,
@@ -103,26 +107,19 @@ export function hydrateMessengerFeedChannelsFromRoster(
   labelOf: (channel: { id: string; name: string; isDefault?: boolean }) => string,
 ): void {
   if (!orgId) return
-  const subscribedIds = new Set<string>()
+  const keptOtherOrgs = cache.filter((c) => c.orgId !== orgId)
+  const prevById = new Map(cache.filter((c) => c.orgId === orgId).map((c) => [c.channelId, c]))
+  const now = Date.now()
+  const nextForOrg: MessengerFeedChannel[] = []
   for (const channel of channels) {
     if (!channel.viewerSubscribed) continue
-    subscribedIds.add(channel.id)
-    setMessengerFeedChannel({
+    const prev = prevById.get(channel.id)
+    nextForOrg.push({
       channelId: channel.id,
       name: labelOf(channel),
       orgId,
-      subscribed: true,
+      subscribedAt: prev?.subscribedAt ?? now,
     })
   }
-  for (const stored of [...listMessengerFeedChannels()]) {
-    if (stored.orgId === orgId && !subscribedIds.has(stored.channelId)) {
-      setMessengerFeedChannel({
-        channelId: stored.channelId,
-        name: stored.name,
-        orgId: stored.orgId,
-        subscribed: false,
-      })
-    }
-  }
+  publish([...keptOtherOrgs, ...nextForOrg])
 }
-
