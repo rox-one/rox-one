@@ -41,7 +41,7 @@ export interface CommentComposerProps {
 export interface CommentsThreadProps {
   comments: readonly CommentItem[]
   onCreate?: (body: string, parentId?: string) => void | Promise<void>
-  onEdit?: (id: string, body: string) => void
+  onEdit?: (id: string, body: string) => void | Promise<void>
   onDelete?: (id: string) => void
   onToggleReaction?: (id: string, emoji: string) => void
   renderBody?: (comment: CommentItem) => React.ReactNode
@@ -163,7 +163,19 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
             submitLabel={t('entities.ui.comments.save')}
             cancelLabel={t('entities.ui.comments.cancel')}
             onCancel={() => { setEditing(false); setEditDraft(comment.body) }}
-            onSubmit={() => { const body = editDraft.trim(); if (body) { thread.onEdit?.(comment.id, body); setEditing(false) } }}
+            onSubmit={() => {
+              const body = editDraft.trim()
+              const edit = thread.onEdit
+              if (!body || !edit) return
+              void (async () => {
+                try {
+                  await edit(comment.id, body)
+                  setEditing(false)
+                } catch {
+                  // Keep the editor open with the draft on failure.
+                }
+              })()
+            }}
           />
         ) : (
           <div className="whitespace-pre-wrap break-words text-base">{thread.renderBody?.(comment) ?? comment.body}</div>

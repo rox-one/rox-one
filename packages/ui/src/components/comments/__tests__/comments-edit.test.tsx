@@ -64,6 +64,58 @@ describe('CommentsThread edit draft', () => {
     container.remove()
   })
 
+  it('awaits onEdit before closing the editor', async () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    let resolveEdit!: () => void
+    const pending = new Promise<void>((resolve) => { resolveEdit = resolve })
+    const onEdit = mock(() => pending)
+    await act(async () => {
+      root.render(<CommentsThread comments={[comment('Original')] as never} timeZone="UTC" onEdit={onEdit} />)
+    })
+    await act(async () => { editButton(container).click() })
+    const textarea = container.querySelector('textarea')!
+    expect(textarea).toBeTruthy()
+    await act(async () => {
+      const native = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')!
+      native.set!.call(textarea, 'Edited body')
+      textarea.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    const save = [...container.querySelectorAll('button')].find((b) => /save/i.test(b.textContent ?? ''))
+    if (!save) throw new Error('no save button')
+    await act(async () => { (save as HTMLButtonElement).click() })
+    // Still editing while the promise is pending.
+    expect(container.querySelector('textarea')).toBeTruthy()
+    expect(onEdit).toHaveBeenCalled()
+    await act(async () => { resolveEdit() })
+    expect(container.querySelector('textarea')).toBeNull()
+    await act(async () => { root.unmount() })
+    container.remove()
+  })
 
-
+  it('keeps the editor open with the draft when onEdit rejects', async () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    const onEdit = mock(async () => { throw new Error('boom') })
+    await act(async () => {
+      root.render(<CommentsThread comments={[comment('Original')] as never} timeZone="UTC" onEdit={onEdit} />)
+    })
+    await act(async () => { editButton(container).click() })
+    const textarea = container.querySelector('textarea')!
+    await act(async () => {
+      const native = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')!
+      native.set!.call(textarea, 'Failed edit')
+      textarea.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    const save = [...container.querySelectorAll('button')].find((b) => /save/i.test(b.textContent ?? ''))
+    if (!save) throw new Error('no save button')
+    await act(async () => { (save as HTMLButtonElement).click() })
+    const still = container.querySelector('textarea')
+    expect(still).toBeTruthy()
+    expect(still!.value).toBe('Failed edit')
+    await act(async () => { root.unmount() })
+    container.remove()
+  })
 })
