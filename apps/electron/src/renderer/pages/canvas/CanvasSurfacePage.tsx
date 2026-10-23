@@ -309,6 +309,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const svgRef = useRef<SVGSVGElement>(null)
   const drag = useRef<Drag | null>(null)
   const undo = useMemo(() => (board ? createUndoManager(board, LOCAL) : null), [board])
+  useEffect(() => () => { if (undo) undo.captureTimeout = 400 }, [undo])
   const index = useMemo(() => (board ? new SpatialIndex(board) : null), [board])
   useEffect(() => () => index?.dispose(), [index])
   // Entity cards: doc holds only {kind, entityId, origin}; previews batched per frame, per viewer.
@@ -539,15 +540,16 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const onUp = () => {
     const d = drag.current
     drag.current = null
-    if (board && d && (d.kind === 'draw-line' || d.kind === 'draw-ink')) {
+    if (d && (d.kind === 'draw-line' || d.kind === 'draw-ink')) {
+      if (undo) undo.captureTimeout = 400
+      if (!board) { undo?.stopCapturing(); setTool('select'); return }
       const o = board.get(d.id)
       const pts = o ? readPoints(o.props) : []
       undo?.stopCapturing()
-      if (undo) undo.captureTimeout = 400
       if (!o || isTinyStroke(o, pts.length / 2)) {
         // Roll back the in-progress stroke so Undo is not left with a stub.
         while (undo && undo.undoStack.length > d.undoLen) undo.undo()
-        // undo() parks the stub on redoStack — clear it or Ctrl+Shift+Z resurrects crumbs.
+        // undo() parks the stub on redoStack — clear it or Ctrl+Shift+Z cannot resurrect crumbs.
         undo?.clear(false, true)
         setSelected(null)
       } else {
