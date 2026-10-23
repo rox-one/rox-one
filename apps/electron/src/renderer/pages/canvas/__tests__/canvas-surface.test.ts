@@ -85,6 +85,40 @@ describe('preview batcher cache policy (review 6 #4)', () => {
   })
 })
 
+describe('entity links enable for board cards', () => {
+  it('turns entities.links.v1 on and retries when add returns disabled', async () => {
+    const ops: Array<{ op: string }> = []
+    let enabled = false
+    const store = new Map<string, string>()
+    ;(globalThis as any).localStorage = {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => { store.set(k, v) },
+      removeItem: (k: string) => { store.delete(k) },
+    }
+    ;(globalThis as any).window = {
+      electronAPI: {
+        setEntitiesLinksEnabled: async (on: boolean) => {
+          enabled = on
+          return { enabled: on, persisted: on, envOverride: undefined }
+        },
+        entitiesLinks: async (_ws: string, input: { op: string }) => {
+          ops.push({ op: input.op })
+          if (input.op === 'whoami') return { ok: true, op: 'whoami', actorId: 'u1' }
+          if (!enabled) return { ok: false, reason: 'disabled' }
+          return { ok: true, op: input.op, link: { relation: 'embeds', from: { kind: 'canvas', id: 'b', fragment: 'o' }, to: { kind: 'note', id: 'n1' }, createdBy: 'u1' } }
+        },
+      },
+    }
+    const { createEntityLinker, __resetLinkActorCacheForTests, __resetEntityLinksEnsureForTests } = await import('../entity-wiring')
+    __resetLinkActorCacheForTests()
+    __resetEntityLinksEnsureForTests()
+    const linker = createEntityLinker('ws')
+    await linker.link({ boardId: 'b', objectId: 'o' }, { kind: 'note', id: 'n1' })
+    expect(enabled).toBe(true)
+    expect(ops.filter(o => o.op === 'add').length).toBe(2)
+  })
+})
+
 describe('link actor from the auth context (review 6 #5)', () => {
   it('asks the server (whoami) and never reads localStorage', async () => {
     const ops: string[] = []

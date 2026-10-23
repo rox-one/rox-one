@@ -49,7 +49,7 @@ export function CallStage({ call }: { call: ReturnType<typeof useTeamCall> }) {
             </li>
           ))}
         </ul>
-        {call.transcribing ? <span className="flex items-center gap-1 text-caption text-text-muted"><ScrollText className="icon-caption" aria-hidden />{t('messenger.calls.transcribing')}</span> : null}
+        {call.transcribing ? <Tip label={t('messenger.calls.transcribingHint')}><span tabIndex={0} className="flex items-center gap-1 text-caption text-text-muted"><ScrollText className="icon-caption" aria-hidden />{t('messenger.calls.transcribing')}</span></Tip> : null}
         <Tip label={call.micOn ? t('messenger.calls.mute') : t('messenger.calls.unmute')}><Button size="icon" variant={call.micOn ? 'secondary' : 'destructive'} onClick={() => void call.toggle('mic')} aria-pressed={!call.micOn} aria-label={call.micOn ? t('messenger.calls.mute') : t('messenger.calls.unmute')}>
           {call.micOn ? <Mic aria-hidden /> : <MicOff aria-hidden />}
         </Button></Tip>
