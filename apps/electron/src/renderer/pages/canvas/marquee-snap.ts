@@ -204,6 +204,8 @@ export function snapResizeBox(
   targets: readonly SnapTarget[],
   threshold: number,
   enabled: boolean,
+  /** Floor matching resizeRotated/MIN_SIZE (lines/ink may pass 1). */
+  minSize = 1,
 ): { box: Rect; guides: Guide[] } {
   if (!enabled || threshold < 0) return { box: proposed, guides: [] }
   let { x, y, w, h } = proposed
@@ -212,6 +214,7 @@ export function snapResizeBox(
   const topMoved = Math.abs(proposed.y - original.y) > 1e-9
   const rightMoved = Math.abs(proposed.x + proposed.w - (original.x + original.w)) > 1e-9
   const bottomMoved = Math.abs(proposed.y + proposed.h - (original.y + original.h)) > 1e-9
+  const floor = Number.isFinite(minSize) && minSize > 0 ? minSize : 1
 
   const snapEdge = (axis: 'x' | 'y', value: number): { value: number; guide: Guide | null } => {
     let best = value, bestAbs = threshold + 1
@@ -236,27 +239,37 @@ export function snapResizeBox(
 
   if (leftMoved) {
     const r = snapEdge('x', x)
-    const dx = r.value - x
-    x = r.value
-    w = Math.max(1, w - dx)
-    if (r.guide) guides.push({ ...r.guide, from: Math.min(r.guide.from, y, y + h), to: Math.max(r.guide.to, y, y + h) })
+    const nextW = w - (r.value - x)
+    if (nextW >= floor) {
+      x = r.value
+      w = nextW
+      if (r.guide) guides.push({ ...r.guide, from: Math.min(r.guide.from, y, y + h), to: Math.max(r.guide.to, y, y + h) })
+    }
   }
   if (rightMoved) {
     const r = snapEdge('x', x + w)
-    w = Math.max(1, r.value - x)
-    if (r.guide) guides.push({ ...r.guide, from: Math.min(r.guide.from, y, y + h), to: Math.max(r.guide.to, y, y + h) })
+    const nextW = r.value - x
+    if (nextW >= floor) {
+      w = nextW
+      if (r.guide) guides.push({ ...r.guide, from: Math.min(r.guide.from, y, y + h), to: Math.max(r.guide.to, y, y + h) })
+    }
   }
   if (topMoved) {
     const r = snapEdge('y', y)
-    const dy = r.value - y
-    y = r.value
-    h = Math.max(1, h - dy)
-    if (r.guide) guides.push({ ...r.guide, from: Math.min(r.guide.from, x, x + w), to: Math.max(r.guide.to, x, x + w) })
+    const nextH = h - (r.value - y)
+    if (nextH >= floor) {
+      y = r.value
+      h = nextH
+      if (r.guide) guides.push({ ...r.guide, from: Math.min(r.guide.from, x, x + w), to: Math.max(r.guide.to, x, x + w) })
+    }
   }
   if (bottomMoved) {
     const r = snapEdge('y', y + h)
-    h = Math.max(1, r.value - y)
-    if (r.guide) guides.push({ ...r.guide, from: Math.min(r.guide.from, x, x + w), to: Math.max(r.guide.to, x, x + w) })
+    const nextH = r.value - y
+    if (nextH >= floor) {
+      h = nextH
+      if (r.guide) guides.push({ ...r.guide, from: Math.min(r.guide.from, x, x + w), to: Math.max(r.guide.to, x, x + w) })
+    }
   }
   return { box: { x, y, w, h }, guides }
 }

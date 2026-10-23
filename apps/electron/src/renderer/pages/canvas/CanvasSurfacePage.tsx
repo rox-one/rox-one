@@ -19,10 +19,10 @@ import {
   CREATABLE_KINDS, createEntity, createEntityLinker, createEntityRegistry, createPreviewBatcher, seedCreatedCardPreview, watchEntityChanges, deleteEntity, EntitySnapshotResolver, searchExisting, unlinkMyBoardLinks, relinkMyBoardLinks, canDeleteCardEntity, type CreatableKind,
 } from './entity-wiring'
 import { onCanvasTarget, takeCanvasTarget, type CanvasTarget } from './canvas-target'
-import { resizeRotated } from './geometry'
+import { MIN_SIZE, resizeRotated } from './geometry'
 import {
-  SNAP_THRESHOLD_PX, applyMarqueeSelection, collectSnapTargets, hitMarquee, marqueeAabb,
-  snapAabb, snapResizeBox, type Guide,
+  SNAP_THRESHOLD_PX, aabbOf, applyMarqueeSelection, collectSnapTargets, hitMarquee, marqueeAabb,
+  snapAabb, snapResizeBox, type Guide, type SnapTarget,
 } from './marquee-snap'
 import {
   isTinyStroke, lineFromEndpoints, pushStrokeSample, readPoints, scaleLocalPoints, strokeBounds,
@@ -297,8 +297,8 @@ function useBoard(workspaceId: string, boardId: string) {
 type Drag =
   | { kind: 'pan'; sx: number; sy: number; ox: number; oy: number }
   | { kind: 'marquee'; x0: number; y0: number; x1: number; y1: number; additive: boolean }
-  | { kind: 'move'; ids: string[]; sx: number; sy: number; origins: Record<string, { x: number; y: number }> }
-  | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; rotation: number; o: { x: number; y: number; w: number; h: number }; points?: number[] }
+  | { kind: 'move'; ids: string[]; sx: number; sy: number; origins: Record<string, { x: number; y: number }>; snapTargets: SnapTarget[] }
+  | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; rotation: number; o: { x: number; y: number; w: number; h: number }; points?: number[]; snapTargets: SnapTarget[] }
   | { kind: 'rotate'; id: string; cx: number; cy: number }
   | { kind: 'draw-line'; id: string; x0: number; y0: number; undoLen: number }
   | { kind: 'draw-ink'; id: string; undoLen: number; abs: number[] }
@@ -538,9 +538,18 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       if (e.type === 'keydown') { if (!e.repeat) spaceHeld.current = true; e.preventDefault() }
       else spaceHeld.current = false
     }
+    const clearSpace = () => { spaceHeld.current = false }
     window.addEventListener('keydown', onSpace)
     window.addEventListener('keyup', onSpace)
-    return () => { window.removeEventListener('keydown', onSpace); window.removeEventListener('keyup', onSpace); spaceHeld.current = false }
+    window.addEventListener('blur', clearSpace)
+    document.addEventListener('visibilitychange', clearSpace)
+    return () => {
+      window.removeEventListener('keydown', onSpace)
+      window.removeEventListener('keyup', onSpace)
+      window.removeEventListener('blur', clearSpace)
+      document.removeEventListener('visibilitychange', clearSpace)
+      spaceHeld.current = false
+    }
   }, [])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -558,7 +567,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         } else if (entities[0]) requestDelete(entities[0].id)
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) undo?.redo(); else undo?.undo() }
-      if (e.key === 'Escape') { setSelectedIds([]); setTool('select'); setPicker(false); setMarquee(null); setGuides([]) }
+      if (e.key === 'Escape') { drag.current = null; setSelectedIds([]); setTool('select'); setPicker(false); setMarquee(null); setGuides([]) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -665,6 +674,8 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   }
   const onObjectDown = (e: ReactPointerEvent, o: CanvasObject) => {
     if (tool !== 'select') return
+    // Middle mouse / Space+drag must pan — do not steal the event from the canvas.
+    if (e.button !== 0 || spaceHeld.current) return
     e.stopPropagation()
     const additive = e.shiftKey || e.metaKey || e.ctrlKey
     if (additive) {
@@ -685,12 +696,15 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       for (const d of collectDescendantIds(list, id)) {
         const child = board?.get(d)
         if (!child || origins[d]) continue
+        // Locked descendants still translate with the parent (lock blocks direct drag only).
         moveIds.push(d)
         origins[d] = { x: child.x, y: child.y }
       }
     }
     if (!moveIds.length) return
-    drag.current = { kind: 'move', ids: moveIds, sx: e.clientX, sy: e.clientY, origins }
+    // Cache snap targets once per gesture — rebuilding every move is O(n) and hurts large boards.
+    const snapTargets = collectSnapTargets(list, new Set(moveIds), true)
+    drag.current = { kind: 'move', ids: moveIds, sx: e.clientX, sy: e.clientY, origins, snapTargets }
     setGuides([])
     svgRef.current?.setPointerCapture(e.pointerId)
   }
@@ -704,6 +718,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
           kind: 'resize', id: o.id, corner: h, sx: e.clientX, sy: e.clientY, rotation: o.rotation ?? 0,
           o: { x: o.x, y: o.y, w: o.w, h: o.h },
           points: (o.type === 'line' || o.type === 'ink') ? readPoints(o.props) : undefined,
+          snapTargets: collectSnapTargets(board?.list() ?? [], new Set([o.id]), true),
         }
     svgRef.current?.setPointerCapture(e.pointerId)
   }
@@ -729,16 +744,14 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         const o0 = d.origins[id]
         const cur = board.get(id)
         if (!o0 || !cur) continue
-        const x = o0.x + rawDx, y = o0.y + rawDy
-        minX = Math.min(minX, x); minY = Math.min(minY, y)
-        maxX = Math.max(maxX, x + cur.w); maxY = Math.max(maxY, y + cur.h)
+        const box = aabbOf({ x: o0.x + rawDx, y: o0.y + rawDy, w: cur.w, h: cur.h }, cur.rotation ?? 0)
+        minX = Math.min(minX, box.minX); minY = Math.min(minY, box.minY)
+        maxX = Math.max(maxX, box.maxX); maxY = Math.max(maxY, box.maxY)
       }
       const snapOn = !e.altKey
       const thr = SNAP_THRESHOLD_PX / view.zoom
-      const exclude = new Set(d.ids)
-      const targets = collectSnapTargets(board.list(), exclude, true)
       const snapped = Number.isFinite(minX)
-        ? snapAabb({ x: minX, y: minY, w: maxX - minX, h: maxY - minY }, targets, thr, snapOn)
+        ? snapAabb({ x: minX, y: minY, w: maxX - minX, h: maxY - minY }, d.snapTargets, thr, snapOn)
         : { x: minX, y: minY, guides: [] as Guide[] }
       const adjDx = rawDx + (Number.isFinite(minX) ? snapped.x - minX : 0)
       const adjDy = rawDy + (Number.isFinite(minY) ? snapped.y - minY : 0)
@@ -753,13 +766,12 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       }, LOCAL)
     }
     else if (d.kind === 'resize') {
-      const minSize = d.points && d.points.length >= 2 ? 1 : undefined
+      const minSize = d.points && d.points.length >= 2 ? 1 : MIN_SIZE
       let box = resizeRotated(d.o, d.rotation, d.corner, (e.clientX - d.sx) / view.zoom, (e.clientY - d.sy) / view.zoom, minSize)
       // Snap unrotated resizes; rotated boxes keep geometry-only resize (guides would fight the local frame).
       if (!d.rotation) {
         const thr = SNAP_THRESHOLD_PX / view.zoom
-        const targets = collectSnapTargets(board.list(), new Set([d.id]), true)
-        const sn = snapResizeBox(d.o, box, targets, thr, !e.altKey)
+        const sn = snapResizeBox(d.o, box, d.snapTargets, thr, !e.altKey, minSize)
         box = sn.box
         setGuides(sn.guides)
       } else {

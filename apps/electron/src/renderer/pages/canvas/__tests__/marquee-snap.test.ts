@@ -142,4 +142,19 @@ describe('snapResizeBox', () => {
     const proposed = { x: 0, y: 0, w: 199, h: 50 }
     expect(snapResizeBox(original, proposed, targets, 6, false)).toEqual({ box: proposed, guides: [] })
   })
+
+  it('rejects snaps that would shrink below minSize', () => {
+    // left edge near 45; right is 50 → snap to 45 would make w=5 < floor 20
+    const proposed = { x: 47, y: 0, w: 3, h: 50 }
+    const { box, guides } = snapResizeBox(
+      original,
+      proposed,
+      [{ axis: 'x', world: 45, from: 0, to: 50 }],
+      6,
+      true,
+      20,
+    )
+    expect(box).toEqual(proposed)
+    expect(guides).toEqual([])
+  })
 })
