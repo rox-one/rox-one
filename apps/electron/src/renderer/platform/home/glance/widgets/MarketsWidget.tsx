@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useHomeFetch } from '@/lib/home-fetch'
 import { cn } from '@/lib/utils'
 import type { GlanceWidgetProps } from '../registry'
-import { ListSkeleton, NetStatus, useOnScreen } from './net/kit'
+import { ListSkeleton, useOnScreen } from './net/kit'
 import { cleanSymbol, parseChart, sparkPoints } from './net/data'
 import { openExternalSafe } from '../open-external'
 

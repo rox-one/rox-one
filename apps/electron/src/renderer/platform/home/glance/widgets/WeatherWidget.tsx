@@ -46,9 +46,9 @@ export default function WeatherWidget({ config, width }: GlanceWidgetProps) {
       {weather ? (
         <>
           <div className="flex items-center gap-3">
-            <span className="text-3xl" aria-hidden>{weatherGlyph(weather.code)}</span>
+            <span className="text-display" aria-hidden>{weatherGlyph(weather.code)}</span>
             <div className="min-w-0">
-              <div className="text-2xl font-bold tabular-nums text-foreground">{Math.round(weather.temp)}{deg}</div>
+              <div className="text-display font-bold tabular-nums text-foreground">{Math.round(weather.temp)}{deg}</div>
               <div className="truncate text-xs text-muted-foreground">{[place?.name || location, place?.country].filter(Boolean).join(', ')}{weather.wind !== undefined ? ` · ${Math.round(weather.wind)} ${imperial ? 'mph' : 'km/h'}` : ''}</div>
             </div>
             {weather.hourly.length > 1 && (
