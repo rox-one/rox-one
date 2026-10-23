@@ -12,6 +12,8 @@ import * as Y from 'yjs'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { CanvasAssetStore, CanvasFileStore, isValidAssetHash, isValidBoardId, MAX_ASSET_BYTES, normalizeAssetMime, sanitizeAssetName, type AssetMeta, type BoardSummary } from '@rox/canvas-core/node'
+import { registerEntityResolver } from '@rox/server-core/handlers/rpc/entities'
+import type { EntityPreview, EntityRef } from '@rox/core/entities'
 
 export const CANVAS_IPC = {
   list: 'canvas:list',
@@ -59,6 +61,20 @@ export function createCanvasStoreRegistry(deps: Pick<CanvasIpcDependencies, 'res
       if (!root) throw new Error('CANVAS_UNKNOWN_WORKSPACE')
       return root
     },
+    /**
+     * Board title for entity previews / «На доске …» backlinks. Board ids are
+     * unique enough within the open stores; scans every live store.
+     */
+    async findBoardTitle(boardId: string): Promise<string | null> {
+      if (!isValidBoardId(boardId)) return null
+      for (const store of stores.values()) {
+        try {
+          const hit = (await store.listBoards()).find(b => b.id === boardId)
+          if (hit) return hit.title
+        } catch { /* store may be mid-close */ }
+      }
+      return null
+    },
     async closeAll(): Promise<void> {
       await Promise.all([...stores.values()].map(s => s.flush().catch(() => {})))
     },
@@ -97,6 +113,51 @@ export function writeCanvasFlag(configDir: string, enabled: boolean): void {
   } catch { /* best effort: the renderer re-pushes at every start */ }
 }
 
+
+/** Live board-title lookup for the canvas entity resolver (set by registerCanvasIpc). */
+let canvasTitleLookup: ((boardId: string) => Promise<string | null>) | null = null
+let canvasResolverRegistered = false
+
+/** Wire / re-wire the canvas → title lookup used by `entities:resolve`. */
+export function bindCanvasEntityResolver(lookup: (boardId: string) => Promise<string | null>): void {
+  canvasTitleLookup = lookup
+  if (canvasResolverRegistered) return
+  canvasResolverRegistered = true
+  registerEntityResolver({
+    kinds: ['canvas'],
+    async resolve(refs: EntityRef[]): Promise<EntityPreview[]> {
+      return Promise.all(refs.map(async (ref) => {
+        const title = await (canvasTitleLookup?.(ref.id) ?? Promise.resolve(null))
+        if (title === null) {
+          return {
+            ref,
+            status: 'unavailable' as const,
+            title: '',
+            kindLabel: 'entities.kind.canvas',
+            icon: 'presentation',
+            authority: 'local' as const,
+            etag: `canvas:missing:${ref.id}`,
+          }
+        }
+        return {
+          ref,
+          status: 'ok' as const,
+          title,
+          kindLabel: 'entities.kind.canvas',
+          icon: 'presentation',
+          authority: 'local' as const,
+          etag: `canvas:${ref.id}:${title}`,
+        }
+      }))
+    },
+  })
+}
+
+/** Tests only — drop the lookup so the next registerCanvasIpc rebinds cleanly. */
+export function __resetCanvasEntityResolverForTests(): void {
+  canvasTitleLookup = null
+}
+
 export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: CanvasIpcDependencies & {
   /** Look up a live renderer by id (forwarding). */
   rendererById?(id: number): WebContents | undefined
@@ -106,6 +167,8 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
   configDir?: string
 }) {
   const registry = createCanvasStoreRegistry(deps)
+  // WP3.2: point the (once-registered) canvas resolver at this process's stores.
+  bindCanvasEntityResolver((boardId) => registry.findBoardTitle(boardId))
   const forced = process.env.ROX_CANVAS === '1'
   let enabled = forced || (deps.initiallyEnabled ?? (deps.configDir ? readCanvasFlag(deps.configDir) : undefined) ?? CANVAS_FLAG_DEFAULT)
   const guard = (event: IpcMainInvokeEvent, opts: { flag?: boolean } = {}) => {

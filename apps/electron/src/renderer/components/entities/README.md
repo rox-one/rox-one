@@ -44,7 +44,7 @@ When the flag is off:
 | `EntityHoverCard` | 360 px preview: kind, title, badges, up to 4 fields, progress, people, updated, plus Open / Copy link. |
 | `EntityCard` | Preview-driven block card; also the node view for `![[kind:id]]` embeds. |
 | `EntityPicker` / `EntityPickerPanel` | «Связать элемент Rox…», 560 px: search, kind filter chips, Recent / Results groups, ↑↓ / Enter / Esc. A typed `kind:id` is offered as a literal row unless its literal cannot be written inside `[[…]]` (`\|`, `]`, `[[`, line breaks). `accept(ref)` lets the caller hide refs it cannot link (Notes does). |
-| `BacklinksPanel` / `BacklinksList` | «Упоминается в»: backlinks grouped Tasks / Docs / Projects / Goals / Meetings / Chats / Other, one row per source, relation labels, "show all", retry on error. |
+| `BacklinksPanel` / `BacklinksList` | «Упоминается в»: backlinks grouped Tasks / Docs / Boards / Projects / Goals / Meetings / Chats / Other, one row per source, relation labels, "show all", retry on error. Canvas `embeds` rows render as «На доске {title}» and open `canvas/board/{id}#{objectId}`. |
 | `EntityRowContextMenu` | Open, Open in new tab, Copy link, then `getEntityRowActions(ref)`. |
 | `useNoteEntityMentions` | Notes integration: `entityNodes` + picker (Mod-Shift-K inserts a mention). |
 | `TaskEntityBacklinks` | Tasks integration: the backlinks panel in the TaskDetail Links tab. |

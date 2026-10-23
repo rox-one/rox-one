@@ -4,6 +4,9 @@
  * Lists entities that link to `entityRef`, grouped by kind. Rows are entity
  * chips (drag source + row menu) with the relation label. Presentational part
  * (`BacklinksList`) is separate so stories/tests can feed links directly.
+ *
+ * WP3.2: canvas `embeds` backlinks render as «На доске {board title}» and
+ * open `canvas/board/{id}#{objectId}` via `openEntity` (focuses the card).
  */
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,10 +14,18 @@ import type { EntityLink, EntityRef } from '@rox/core/entities'
 import { FOCUS_RING, MOTION_FAST } from '@rox/ui/primitives'
 import { cn } from '@/lib/utils'
 import { EntityChip } from './EntityChip'
-import { groupBacklinks } from './backlink-groups'
+import { groupBacklinks, type BacklinkSource } from './backlink-groups'
+import {
+  canvasBacklinkBoardRef,
+  canvasBacklinkOpenRef,
+  formatOnBoardBacklinkLabel,
+  isCanvasEmbedBacklink,
+} from './canvas-backlink'
 import { useEntityBacklinks, type EntityBacklinksState } from './use-entity-backlinks'
 import { useEntityWorkspaceId } from './entity-context'
-import type { EntityPreviewView } from './use-entity-preview'
+import { openEntity } from './open-entity'
+import { useEntityPreview, type EntityPreviewView } from './use-entity-preview'
+import { useEntityPreviewsEnabled } from './flags'
 
 export const BACKLINKS_GROUP_PREVIEW = 5
 
@@ -25,10 +36,69 @@ export interface BacklinksListProps {
   /** Controlled previews keyed by formatted ref (stories/tests). */
   previews?: Record<string, EntityPreviewView>
   previewsEnabled?: boolean
+  workspaceId?: string | null
   className?: string
 }
 
-export function BacklinksList({ state, onRetry, onLoadMore, previews, previewsEnabled, className }: BacklinksListProps) {
+/** Board title from `canvas:list` when resolve has no canvas owner yet. */
+function useCanvasListTitle(workspaceId: string | null | undefined, boardId: string): string | undefined {
+  const [title, setTitle] = React.useState<string | undefined>()
+  React.useEffect(() => {
+    if (!workspaceId || !boardId) return
+    const list = (window as unknown as { electronAPI?: { canvas?: { list?: (ws: string) => Promise<Array<{ id: string; title: string }>> } } }).electronAPI?.canvas?.list
+    if (!list) return
+    let cancelled = false
+    void list(workspaceId).then((boards) => {
+      if (cancelled) return
+      const hit = boards.find((b) => b.id === boardId)
+      if (hit?.title) setTitle(hit.title)
+    }).catch(() => { /* bridge unavailable — preview/fallback covers it */ })
+    return () => { cancelled = true }
+  }, [workspaceId, boardId])
+  return title
+}
+
+function CanvasOnBoardRow({
+  source,
+  preview,
+  previewsEnabled,
+  workspaceId,
+}: {
+  source: BacklinkSource
+  preview?: EntityPreviewView
+  previewsEnabled?: boolean
+  workspaceId?: string | null
+}) {
+  const { t } = useTranslation()
+  const boardRef = canvasBacklinkBoardRef(source.link)
+  const openRef = canvasBacklinkOpenRef(source.link)
+  const flagOn = useEntityPreviewsEnabled()
+  const enabled = previewsEnabled ?? flagOn
+  const resolved = useEntityPreview(boardRef, workspaceId, enabled)
+  const listTitle = useCanvasListTitle(workspaceId, source.link.from.id)
+  const titleOf = (view: EntityPreviewView | undefined): string | undefined => {
+    if (!view || view.restricted || !view.title) return undefined
+    if (view.status === 'no_access' || view.status === 'tombstone' || view.status === 'unavailable') return undefined
+    return view.title
+  }
+  const title = titleOf(preview) || titleOf(resolved.status === 'ready' ? resolved.preview : undefined) || listTitle || ''
+  const label = formatOnBoardBacklinkLabel(t, title)
+  return (
+    <li className="flex min-w-0 items-center gap-2 text-sm" data-canvas-backlink="">
+      <button
+        type="button"
+        onClick={(event) => openEntity(openRef, { newPanel: event.metaKey || event.ctrlKey })}
+        className={cn('min-w-0 truncate text-left text-accent hover:underline', MOTION_FAST, FOCUS_RING)}
+        title={label}
+        aria-label={label}
+      >
+        {label}
+      </button>
+    </li>
+  )
+}
+
+export function BacklinksList({ state, onRetry, onLoadMore, previews, previewsEnabled, workspaceId, className }: BacklinksListProps) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({})
   const groups = React.useMemo(() => groupBacklinks(state.links), [state.links])
@@ -64,16 +134,27 @@ export function BacklinksList({ state, onRetry, onLoadMore, previews, previewsEn
             </h4>
             <ul className="flex flex-col gap-1">
               {visible.map((source) => (
-                <li key={source.key} className="flex min-w-0 items-center gap-2 text-sm">
-                  <EntityChip
-                    entityRef={source.link.from}
+                isCanvasEmbedBacklink(source.link) ? (
+                  <CanvasOnBoardRow
+                    key={source.key}
+                    source={source}
                     preview={previews?.[source.key]}
                     previewsEnabled={previewsEnabled}
+                    workspaceId={workspaceId}
                   />
-                  <span className="truncate text-text-muted">
-                    {source.relations.map((relation) => t(`entities.ui.backlinks.relation.${relation}`)).join(', ')}
-                  </span>
-                </li>
+                ) : (
+                  <li key={source.key} className="flex min-w-0 items-center gap-2 text-sm">
+                    <EntityChip
+                      entityRef={source.link.from}
+                      preview={previews?.[source.key]}
+                      previewsEnabled={previewsEnabled}
+                      workspaceId={workspaceId ?? undefined}
+                    />
+                    <span className="truncate text-text-muted">
+                      {source.relations.map((relation) => t(`entities.ui.backlinks.relation.${relation}`)).join(', ')}
+                    </span>
+                  </li>
+                )
               ))}
             </ul>
             {sources.length > visible.length && (
@@ -110,7 +191,15 @@ export function BacklinksPanel({ entityRef, workspaceId: explicit, enabled, clas
   const workspaceId = useEntityWorkspaceId(explicit)
   const { state, retry, loadMore } = useEntityBacklinks(entityRef, workspaceId, enabled)
   if (!enabled) return null
-  return <BacklinksList state={state} onRetry={retry} onLoadMore={loadMore} className={className} />
+  return (
+    <BacklinksList
+      state={state}
+      onRetry={retry}
+      onLoadMore={loadMore}
+      workspaceId={workspaceId}
+      className={className}
+    />
+  )
 }
 
 export type { EntityLink }

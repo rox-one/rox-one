@@ -134,6 +134,7 @@ describe('backlinks grouping', () => {
     expect(backlinkGroupOf('calendar-event')).toBe('meetings')
     expect(backlinkGroupOf('session')).toBe('chats')
     expect(backlinkGroupOf('license-component')).toBe('other')
+    expect(backlinkGroupOf('canvas')).toBe('boards')
   })
 
   it('collapses multiple links from one source and keeps group order', () => {
@@ -204,5 +205,44 @@ describe('preview store', () => {
     expect(previews[0]!.status).toBe('unavailable')
     expect(await electronEntityDataSource.backlinks('ws', { kind: 'task', id: '1' })).toEqual({ links: [] })
     expect(await electronEntityDataSource.search('ws', 'x')).toEqual([])
+  })
+})
+
+describe('canvas embeds render «На доске …» (WP3.2)', () => {
+  it('shows On board / На доске for canvas embeds and groups under Boards', async () => {
+    const canvasLink = {
+      linkId: 'c1',
+      from: { kind: 'canvas' as const, id: 'board-1', fragment: 'obj-9' },
+      to: { kind: 'task' as const, id: '42' },
+      relation: 'embeds' as const,
+      createdBy: 'fixture',
+      createdAt: '2026-10-01T09:00:00.000Z',
+      revision: 1,
+    }
+    const previews = {
+      'canvas:board-1#obj-9': {
+        ref: canvasLink.from,
+        title: 'Sprint planning',
+        icon: 'presentation',
+        status: 'ok' as const,
+        kindLabel: 'Board',
+        restricted: false as const,
+        etag: 'e',
+      },
+    }
+    const ru = await renderMarkup(
+      <BacklinksList state={{ status: 'ready', links: [canvasLink] }} previews={previews} previewsEnabled={false} />,
+      { lang: 'ru' },
+    )
+    expect(ru).toContain('На доске Sprint planning')
+    expect(ru).toContain('data-backlink-group="boards"')
+    expect(ru).toContain('data-canvas-backlink')
+    expect(ru).not.toContain('Встраивает')
+    const en = await renderMarkup(
+      <BacklinksList state={{ status: 'ready', links: [canvasLink] }} previews={previews} previewsEnabled={false} />,
+      { lang: 'en' },
+    )
+    expect(en).toContain('On board Sprint planning')
+    expect(en).toContain('Boards')
   })
 })

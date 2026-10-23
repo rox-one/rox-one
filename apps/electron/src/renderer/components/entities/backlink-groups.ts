@@ -1,10 +1,12 @@
 /**
  * W1-08 (#1505) — grouping for the "Referenced in" panel (UI-SPEC §4.4):
- * Tasks / Docs / Projects / Goals / Meetings / Chats / Other.
+ * Tasks / Docs / Boards / Projects / Goals / Meetings / Chats / Other.
+ *
+ * WP3.2: `canvas` embeds land in `boards` so «На доске …» rows group together.
  */
 import { formatEntityRef, kindDescriptor, type EntityKind, type EntityLink } from '@rox/core/entities'
 
-export const BACKLINK_GROUPS = ['tasks', 'docs', 'projects', 'goals', 'meetings', 'chats', 'other'] as const
+export const BACKLINK_GROUPS = ['tasks', 'docs', 'boards', 'projects', 'goals', 'meetings', 'chats', 'other'] as const
 export type BacklinkGroup = (typeof BACKLINK_GROUPS)[number]
 
 const GOAL_KINDS = new Set<EntityKind>(['goal', 'goal-target', 'goal-check', 'check-in', 'okr-cycle', 'kpi', 'kpi-entry', 'review', 'milestone'])
@@ -12,6 +14,7 @@ const MEETING_KINDS = new Set<EntityKind>(['calendar-event', 'call', 'room', 'ca
 const CHAT_KINDS = new Set<EntityKind>(['session', 'channel', 'channel-message', 'mail-thread', 'comment'])
 
 export function backlinkGroupOf(kind: EntityKind): BacklinkGroup {
+  if (kind === 'canvas') return 'boards'
   if (GOAL_KINDS.has(kind)) return 'goals'
   if (MEETING_KINDS.has(kind)) return 'meetings'
   if (CHAT_KINDS.has(kind)) return 'chats'

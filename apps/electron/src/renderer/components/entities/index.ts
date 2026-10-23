@@ -7,6 +7,13 @@ export { EntityCard, EntityPreviewBody, type EntityCardProps } from './EntityCar
 export { EntityPicker, EntityPickerPanel, ENTITY_PICKER_KIND_FILTERS, buildEntityPickerItems, type EntityPickerProps } from './EntityPicker'
 export { BacklinksPanel, BacklinksList, BACKLINKS_GROUP_PREVIEW, type BacklinksPanelProps } from './BacklinksPanel'
 export { BACKLINK_GROUPS, backlinkGroupOf, groupBacklinks, type BacklinkGroup } from './backlink-groups'
+export {
+  isCanvasEmbedBacklink,
+  canvasBacklinkOpenRef,
+  canvasBacklinkBoardRef,
+  formatOnBoardBacklinkLabel,
+  canvasBacklinkRoute,
+} from './canvas-backlink'
 export { EntityRowContextMenu, useEntityRowActions } from './EntityRowContextMenu'
 export {
   DEFAULT_ENTITY_ROW_ACTIONS,
