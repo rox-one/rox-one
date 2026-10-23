@@ -29,11 +29,12 @@ function pill(shellFlags: ReadonlySet<string>) {
 }
 
 describe('W1-07 flags', () => {
-  it('registers every W1-07 flag default OFF (Мессенджер default ON) and rollback-safe', () => {
+  it('registers every W1-07 flag default OFF (Мессенджер + «Доска» default ON) and rollback-safe', () => {
+    const defaultOn = new Set([WORKBENCH_FLAG.modeMessengerV1, WORKBENCH_FLAG.modeCanvasV1])
     for (const id of W1_07_FLAG_IDS) {
       const definition = WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === id)
       expect(definition).toBeDefined()
-      expect(definition?.defaultValue).toBe(id === WORKBENCH_FLAG.modeMessengerV1)
+      expect(definition?.defaultValue).toBe(defaultOn.has(id))
       expect(definition?.rollbackSafe).toBe(true)
     }
   })
@@ -45,16 +46,19 @@ describe('W1-07 flags', () => {
     expect(ids).not.toContain(WORKBENCH_FLAG.conationShell)
   })
 
-  it('a fresh store enables only Мессенджер among the W1-07 flags', () => {
+  it('a fresh store enables Мессенджер + «Доска» among the W1-07 flags', () => {
+    const defaultOn = new Set([WORKBENCH_FLAG.modeMessengerV1, WORKBENCH_FLAG.modeCanvasV1])
     const flags = createStore().get(enabledShellFlagsAtom)
-    for (const id of W1_07_FLAG_IDS) expect(flags.has(id)).toBe(id === WORKBENCH_FLAG.modeMessengerV1)
-    expect(enabledUnifiedSurfaces(flags)).toEqual(['messenger'])
+    for (const id of W1_07_FLAG_IDS) expect(flags.has(id)).toBe(defaultOn.has(id))
+    expect(enabledUnifiedSurfaces(flags)).toEqual(['messenger', 'canvas'])
   })
 
-  it('Мессенджер can still be switched off through its storage-backed atom', () => {
+  it('Мессенджер and «Доска» can still be switched off through their storage-backed atoms', () => {
     const store = createStore()
     store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+    store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeCanvasV1), false)
     expect(store.get(enabledShellFlagsAtom).has(WORKBENCH_FLAG.modeMessengerV1)).toBe(false)
+    expect(store.get(enabledShellFlagsAtom).has(WORKBENCH_FLAG.modeCanvasV1)).toBe(false)
   })
 
   it('negative: unregistered flag ids never resolve as enabled', () => {
@@ -71,11 +75,15 @@ describe('W1-07 flags', () => {
   it('the route bridge follows the flag atoms', () => {
     const store = createStore()
     installShellFlagBridges(store)
+    // «Доска» is default-ON — the bridge must open its route without an explicit set.
+    expect(isUnifiedSurfaceRouteEnabled('canvas')).toBe(true)
     expect(isUnifiedSurfaceRouteEnabled('calendar')).toBe(false)
     store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeCalendarV1), true)
     expect(isUnifiedSurfaceRouteEnabled('calendar')).toBe(true)
     store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeCalendarV1), false)
     expect(isUnifiedSurfaceRouteEnabled('calendar')).toBe(false)
+    store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeCanvasV1), false)
+    expect(isUnifiedSurfaceRouteEnabled('canvas')).toBe(false)
   })
 })
 
