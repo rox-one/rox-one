@@ -316,7 +316,6 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const imageInputRef = useRef<HTMLInputElement>(null)
   const pendingImageAt = useRef<{ x: number; y: number } | null>(null)
   const assetUrlsRef = useRef<Map<string, string>>(new Map())
-  const assetInflightRef = useRef<Set<string>>(new Set())
   const assetLoadGenRef = useRef(0)
   const [assetUrls, setAssetUrls] = useState<Record<string, string>>({})
   const drag = useRef<Drag | null>(null)
@@ -411,7 +410,6 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       if (typeof id === 'string' && isValidAssetHash(id)) needed.add(id)
     }
     const cache = assetUrlsRef.current
-    const inflight = assetInflightRef.current
     for (const [hash, url] of [...cache.entries()]) {
       if (!needed.has(hash)) { URL.revokeObjectURL(url); cache.delete(hash) }
     }
@@ -429,11 +427,11 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     const load = async () => {
       let changed = false
       for (const hash of needed) {
-        if (cache.has(hash) || inflight.has(hash)) continue
-        inflight.add(hash)
+        if (cache.has(hash)) continue
         try {
           const bytes = await api.getAsset(workspaceId, hash)
           if (gen !== assetLoadGenRef.current) continue
+          if (cache.has(hash)) continue
           const meta = board.getAssetMeta(hash)
           const mime = normalizeAssetMime(meta?.mime) ?? 'application/octet-stream'
           const url = URL.createObjectURL(new Blob([bytes], { type: mime }))
@@ -442,18 +440,15 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
           changed = true
         } catch (e) {
           console.warn('[canvas] asset', hash, e)
-        } finally {
-          inflight.delete(hash)
         }
       }
       if (changed) syncUrls()
     }
     void load()
-    return () => { /* gen bump / unmount cleanup revokes */ }
+    return () => { /* gen bump on next effect / unmount cleanup revokes */ }
   }, [all, board, workspaceId, version])
   useEffect(() => () => {
     assetLoadGenRef.current++
-    assetInflightRef.current.clear()
     for (const url of assetUrlsRef.current.values()) URL.revokeObjectURL(url)
     assetUrlsRef.current.clear()
   }, [])
