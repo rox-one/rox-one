@@ -52,8 +52,19 @@ describe('notes comments threads wiring', () => {
     expect(threadsPanel).toContain('publishUpdate(requestKey')
     expect(threadsPanel).toContain('onThreadsChangeRef.current?.([])')
     expect(threadsPanel).toContain('createInFlightRef')
+    expect(threadsPanel).toContain('createFlightKeyRef')
+    expect(threadsPanel).toContain('clearComposer(requestKey)')
     expect(threadsPanel).toContain('anchorFromQuote(liveText, quote, draftAnchor)')
     expect(threadsPanel).toContain('throw err')
+    // Stale create finally must not unlock a newer create; note switch must not reset the lock.
+    expect(threadsPanel).not.toMatch(/createInFlightRef\.current = false\n\s*void reload/)
+  })
+
+  it('create success clears draft for requestKey even after note switch', () => {
+    expect(threadsPanel).toContain('clearComposer(requestKey)')
+    expect(notesPage).toContain('clearCommentDraftAt(requestWorkspaceId, requestNoteId)')
+    expect(notesPage).toContain('commentCreateFlightKeyRef')
+    expect(notesPage).toMatch(/Markdown-embedded.*highlight-only/s)
   })
 
   it('orphan roots disable allowReplies', () => {
@@ -66,6 +77,10 @@ describe('notes comments threads wiring', () => {
     expect(commentsThread).toContain('setEditing(false)')
     expect(commentsThread).toContain('Keep the editor open with the draft on failure')
     expect(commentsThread).toContain('void | Promise<void>')
+    expect(commentsThread).toContain('setSubmitting(true)')
+    expect(commentsThread).toContain('setEditSubmitting(true)')
+    expect(commentsThread).toContain('setReplySubmitting(true)')
+    expect(commentsThread).toContain('disabled={busy || !value.trim()}')
   })
 
   it('anchorFromQuote prefers explicit offsets; create ignores client author', () => {
