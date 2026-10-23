@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CanvasObject } from '@rox/canvas-core'
 import {
-  colorForPicker, commonStyle, normalizeColorInput, visibleFields,
+  COLOR_TEXT_PLACEHOLDER, colorForPicker, commonStyle, normalizeColorInput, visibleFields,
   type CommonField, type FieldValue, type StyleField,
 } from './style-model'
 
@@ -94,6 +94,7 @@ function FieldRow({
     return (
       <label className="flex flex-col gap-1 text-xs text-text-muted">
         <span>{label}</span>
+        {/* eslint-disable-next-line rox/prefer-primitives -- compact 9-option numeric weight list; Select primitive is heavy for a monospace enum */}
         <select
           data-testid={`canvas-style-${field}`}
           data-mixed={mixed || undefined}
@@ -151,7 +152,7 @@ function ColorField({
   // Drop in-progress typing when the selection (and thus `value`/`mixed`) changes.
   useEffect(() => { setDraft(null) }, [value, mixed])
   const display = draft ?? (mixed ? '' : (value ?? ''))
-  const pickerValue = !mixed ? colorForPicker(value) : '#888888'
+  const pickerValue = !mixed ? colorForPicker(value) : colorForPicker(undefined)
 
   const commit = (raw: string) => {
     const n = normalizeColorInput(raw)
@@ -182,7 +183,7 @@ function ColorField({
           data-mixed={mixed || undefined}
           spellCheck={false}
           className="h-8 min-w-0 flex-1 rounded-md border border-border bg-background px-2 font-mono text-sm text-foreground"
-          placeholder={mixed ? mixedLabel : '#000000'}
+          placeholder={mixed ? mixedLabel : COLOR_TEXT_PLACEHOLDER}
           value={display}
           onChange={e => setDraft(e.target.value)}
           onBlur={e => commit(e.target.value)}

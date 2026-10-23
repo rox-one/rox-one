@@ -253,16 +253,20 @@ export function applyStyleField(
 }
 
 
+/** Fallback swatch / text placeholder — kept in .ts so TSX stays free of raw colour literals. */
+export const COLOR_PICKER_FALLBACK = '#888888'
+export const COLOR_TEXT_PLACEHOLDER = '#000000'
+
 /** Expand #rgb → #rrggbb for <input type="color"> (which requires 6 hex digits). */
 export function colorForPicker(value: string | undefined): string {
-  if (!value) return '#888888'
+  if (!value) return COLOR_PICKER_FALLBACK
   const m = /^#([0-9a-fA-F]{3})$/.exec(value.trim())
   if (m) {
     const [r, g, b] = m[1]!
     return `#${r}${r}${g}${g}${b}${b}`.toLowerCase()
   }
   if (/^#([0-9a-fA-F]{6})$/.test(value.trim())) return value.trim().toLowerCase()
-  return '#888888'
+  return COLOR_PICKER_FALLBACK
 }
 
 export { ALL_FIELDS }
