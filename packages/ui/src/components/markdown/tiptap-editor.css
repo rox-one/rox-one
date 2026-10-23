@@ -849,7 +849,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 .tiptap-rox-tabs {
   margin: 0.875rem 0;
   padding: 0.35rem 0.35rem 0.5rem;
-  border-radius: var(--radius-overlay);
+  border-radius: var(--radius-lg);
   background:
     linear-gradient(
       180deg,
