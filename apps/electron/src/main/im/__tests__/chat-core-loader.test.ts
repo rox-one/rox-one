@@ -15,7 +15,7 @@ function fakeClient(overrides: Partial<ImChatCoreClient> = {}): ImChatCoreClient
     subscribe: () => {},
     unsubscribe: () => {},
     sendMessage: () => ({ id: 'm1', channelId: 'c1', senderId: 'u1', text: 'hi', createdAt: 1 }),
-    listMessages: () => [],
+    listMessages: (_channel?: string) => [],
     publishTyping: () => {},
     ...overrides,
   }

@@ -38,7 +38,7 @@ function fakeClient(): FakeClient {
       calls.sent.push([channelId, text])
       return { id: 'm1', channelId, senderId: 'me', text, createdAt: 42 }
     },
-    listMessages: () => [],
+    listMessages: (_channel?: string) => [],
     publishTyping: (channelId, isTyping) => { calls.typing.push([channelId, isTyping]) },
     markRead: (channelId) => { calls.reads.push(channelId) },
     onMessage: (cb) => { onMessage = cb },
@@ -192,5 +192,19 @@ describe('normalizeImStatus', () => {
 
   it('honors the online alias', () => {
     expect(normalizeImStatus({ online: true })).toEqual({ available: true, mode: 'native' })
+  })
+
+  it('maps native connection states to available', () => {
+    expect(normalizeImStatus({ state: 'connected' })).toEqual({ available: true, mode: 'native' })
+    expect(normalizeImStatus({ state: 'reconnecting' })).toEqual({
+      available: true,
+      mode: 'native',
+      reason: 'reconnecting',
+    })
+    expect(normalizeImStatus({ state: 'offline' })).toEqual({
+      available: false,
+      mode: 'fallback',
+      reason: 'offline',
+    })
   })
 })

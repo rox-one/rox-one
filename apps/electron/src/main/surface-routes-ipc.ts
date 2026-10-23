@@ -20,7 +20,8 @@
  * re-queues links that were already dropped.
  */
 import type { IpcMain, IpcMainInvokeEvent } from 'electron'
-import { isUnifiedSurfaceId, setUnifiedSurfaceRoutesEnabled, type UnifiedSurfaceId } from '../shared/surface-routes'
+import { isUnifiedSurfaceId, setUnifiedSurfaceRoutesEnabled, UNIFIED_SURFACE_FLAGS, type UnifiedSurfaceId } from '../shared/surface-routes'
+import { setImEnabledWorkbenchFlags } from './im/flags'
 
 export const SURFACE_ROUTES_IPC_CHANNEL = 'shell:setSurfaceRoutesEnabled'
 
@@ -78,6 +79,8 @@ export function applyUnifiedSurfaceRoutes(ids: unknown): UnifiedSurfaceId[] {
   const next = Array.isArray(ids) ? ids.filter(isUnifiedSurfaceId) : []
   const unique = [...new Set(next)]
   setUnifiedSurfaceRoutesEnabled(unique)
+  // Keep the messenger native relay flag in sync with the renderer push.
+  setImEnabledWorkbenchFlags(unique.map(id => UNIFIED_SURFACE_FLAGS[id]))
   if (!gateReceived) {
     gateReceived = true
     // After a latch there are no waiters left (all resolved false), so a

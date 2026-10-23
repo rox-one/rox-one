@@ -99,6 +99,7 @@ impl MockRelay {
         format!("ws://{}", self.addr)
     }
 
+    #[allow(dead_code)] // handy for tests that assert the bound port
     pub fn port(&self) -> u16 {
         self.addr.port()
     }

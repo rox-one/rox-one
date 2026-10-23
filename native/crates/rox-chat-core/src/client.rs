@@ -1252,13 +1252,14 @@ mod tests {
         assert_eq!(entry.channel_id, "chan-1");
         assert_eq!(entry.until, 1_700_000_005_000);
 
-        let store = core.store().unwrap();
-        assert_eq!(
-            store.count_events().unwrap(),
-            0,
-            "ephemeral events must not be cached"
-        );
-        drop(store);
+        {
+            let store = core.store().unwrap();
+            assert_eq!(
+                store.count_events().unwrap(),
+                0,
+                "ephemeral events must not be cached"
+            );
+        }
 
         // Publishing a typing ping while offline is a no-op, not an error.
         core.stop().await.unwrap();

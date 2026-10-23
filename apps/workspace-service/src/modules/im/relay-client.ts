@@ -212,9 +212,10 @@ export function createFakeImRelayClient(): FakeImRelayClient {
       if (client.failWith) throw client.failWith
       published.push(event)
     },
-    async presence() {
+    async presence(userIds: readonly string[]) {
       if (client.failWith) throw client.failWith
-      return client.presenceResult
+      const wanted = new Set(userIds)
+      return client.presenceResult.filter(entry => wanted.has(entry.userId))
     },
   }
   return client

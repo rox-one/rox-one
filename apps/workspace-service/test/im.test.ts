@@ -70,6 +70,7 @@ async function harness(principalId = randomUUID()): Promise<Harness> {
   const relay = createFakeImRelayClient()
   const feed: ImFeedItem[] = []
   directory.setOrgMember(ORG, principalId, { role: 'member', guest: false })
+  directory.setOrgMember(ORG, OTHER, { role: 'member', guest: false })
   for (const [channel, guest] of [[CHANNEL, false], [GUEST_CHANNEL, true]] as const) {
     directory.addChannel(channel, ORG)
     directory.setChannelMember(channel, principalId, { role: 'member', guest })
@@ -239,11 +240,16 @@ describe('POST /v1/im/channels/:channelId/service-events', () => {
 })
 
 describe('GET /v1/im/presence', () => {
-  test('passes through the relay presence result', async () => {
+  test('passes through presence only for shared-org peers', async () => {
     const h = await harness()
-    h.relay.presenceResult = [{ userId: OTHER, status: 'online', lastSeenAt: '2026-10-14T00:00:00.000Z' }]
-    const result = await request(h.server.url, `/v1/im/presence?userIds=${OTHER},${randomUUID()}`, { method: 'GET' })
+    const stranger = randomUUID()
+    h.relay.presenceResult = [
+      { userId: OTHER, status: 'online', lastSeenAt: '2026-10-14T00:00:00.000Z' },
+      { userId: stranger, status: 'online', lastSeenAt: '2026-10-14T00:00:00.000Z' },
+    ]
+    const result = await request(h.server.url, `/v1/im/presence?userIds=${OTHER},${stranger}`, { method: 'GET' })
     expect(result.status).toBe(200)
+    // Stranger is filtered before the relay call; fake relay returns its full list for allowed ids only.
     expect(result.body).toEqual([{ userId: OTHER, status: 'online', lastSeenAt: '2026-10-14T00:00:00.000Z' }])
   })
 
@@ -259,6 +265,22 @@ describe('lifecycle', () => {
     const server = await serve({ authority: unusedAuthority, actorResolver: resolver })
     closers.push(server.close)
     expect((await request(server.url, '/v1/im/presence?userIds=' + OTHER, { method: 'GET' })).status).toBe(404)
+  })
+
+  test('expired identities are revoked on the next token issuance', async () => {
+    const repository = new InMemoryImRepository(() => new Date(NOW))
+    const directory = new InMemoryImDirectory()
+    const relay = createFakeImRelayClient()
+    const principalId = randomUUID()
+    directory.setOrgMember(ORG, principalId, { role: 'member', guest: false })
+    await repository.upsertIdentity(principalId, DEVICE_PUBKEY, new Date(NOW - 1_000).toISOString())
+    relay.members.push(DEVICE_PUBKEY)
+    const service = new ImService({
+      repository, directory, relay, config: CONFIG, now: () => new Date(NOW),
+    })
+    expect(await service.revokeExpiredMembers()).toBe(1)
+    expect(await repository.findIdentity(principalId)).toBeNull()
+    expect(relay.members).not.toContain(DEVICE_PUBKEY)
   })
 
   test('the removal hook deletes the identity and revokes relay membership', async () => {

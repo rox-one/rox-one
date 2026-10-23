@@ -65,9 +65,22 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 /** Normalize an untrusted native `onStatus` payload into our wire shape. */
 export function normalizeImStatus(raw: unknown): ImStatusEvent {
   // Boundary value from the native module; read only validated fields below.
+  // Native addon emits `{ state: 'connected' | 'reconnecting' | 'offline' }`.
   const record: Record<string, unknown> | null = asRecord(raw)
-  const available = record?.available === true || record?.online === true
-  const reason = typeof record?.reason === 'string' ? record.reason : undefined
+  const state = typeof record?.state === 'string' ? record.state : undefined
+  const available =
+    record?.available === true ||
+    record?.online === true ||
+    state === 'connected' ||
+    state === 'reconnecting'
+  const reason =
+    typeof record?.reason === 'string'
+      ? record.reason
+      : state === 'offline'
+        ? 'offline'
+        : state === 'reconnecting'
+          ? 'reconnecting'
+          : undefined
   return { available, mode: available ? 'native' : 'fallback', ...(reason ? { reason } : {}) }
 }
 
@@ -176,7 +189,12 @@ export class ImService {
   async listMessages(input: ImListMessagesInput): Promise<ImResult<{ messages: ImMessageEvent[] }>> {
     await this.ensureStarted()
     if (!this.client) return this.fallback()
-    const messages = await this.client.listMessages(input)
+    const before = input.before ?? input.beforeSeq
+    const options =
+      input.limit !== undefined || before !== undefined
+        ? { ...(input.limit !== undefined ? { limit: input.limit } : {}), ...(before !== undefined ? { before } : {}) }
+        : undefined
+    const messages = await this.client.listMessages(input.channelId, options)
     return { ok: true, messages }
   }
 

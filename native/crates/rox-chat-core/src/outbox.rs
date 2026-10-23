@@ -195,7 +195,7 @@ mod tests {
         assert_eq!(pending.len(), 1);
         assert_eq!(pending[0].event_id, second.id);
         assert_eq!(pending[0].attempts, 1);
-        assert_eq!(store.outbox_get(&first.id).unwrap().unwrap().sent, true);
+        assert!(store.outbox_get(&first.id).unwrap().unwrap().sent);
         assert!(store.outbox_get("missing").unwrap().is_none());
     }
 

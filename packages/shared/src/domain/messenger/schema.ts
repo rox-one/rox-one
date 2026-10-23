@@ -18,6 +18,22 @@ export const chatSchema = entity({
 })
 export const messageSchema = entity({ chatId: idSchema, seq: z.number().int().nonnegative(), senderId: idSchema.optional(), content: messageContentSchema, replyTo: idSchema.optional(), editedAt: z.string().optional() })
 
+/** Relay-bridge bookkeeping (`553-im-relay.sql` / `im` schema). */
+export const ImIdentitySchema = z.object({
+  userId: idSchema,
+  pubkey: z.string().regex(/^[0-9a-f]{64}$/),
+  createdAt: z.string(),
+  expiresAt: z.string().nullable().optional(),
+}).strict()
+export const ImServiceEventSchema = z.object({
+  callId: z.string().min(1).max(128),
+  type: z.string().min(1).max(64),
+  eventId: z.string().min(1).max(128),
+  channelId: idSchema,
+  createdAt: z.string(),
+}).strict()
+
+
 const chatCreateShape = {
   ...createIdShape, kind: chatKindSchema.default('group'), visibility: chatVisibilitySchema.default('private'), name: z.string().trim().max(200).optional(),
   description: z.string().max(2000).optional(), memberIds: principalListSchema.optional(),

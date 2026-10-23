@@ -183,14 +183,17 @@ export class ImService {
     if (Math.abs(this.now().getTime() - request.issuedAt) > TOKEN_PROOF_WINDOW_MS) throw new AuthenticationError()
     const challenge = imTokenChallenge({ orgId, principalId: verified.principalId, pubkey: request.pubkey, issuedAt: request.issuedAt })
     if (!verifyChallenge(request.pubkey, challenge, request.proof)) throw new AuthenticationError()
+    await this.revokeExpiredMembers()
+    const expiresAt = new Date(this.now().getTime() + this.config.tokenTtlSeconds * 1000).toISOString()
     try {
-      await this.repository.upsertIdentity(verified.principalId, request.pubkey)
+      await this.repository.upsertIdentity(verified.principalId, request.pubkey, expiresAt)
     } catch (error) {
       if (error instanceof ImIdentityConflictError) throw new ImError('INVALID', 400)
       throw error
     }
     let authEvent: NostrEvent | undefined
     try {
+      // Re-publish add-member on every token so TTL refresh re-authorises the pubkey.
       authEvent = await this.relay.addMember(request.pubkey)
     } catch (error) {
       throw new ImError('RELAY_UNAVAILABLE', 502)
@@ -199,7 +202,7 @@ export class ImService {
       relayUrl: this.config.relayUrl,
       pubkey: request.pubkey,
       ...(authEvent ? { authEvent } : {}),
-      expiresAt: new Date(this.now().getTime() + this.config.tokenTtlSeconds * 1000).toISOString(),
+      expiresAt,
     }
   }
 
@@ -227,12 +230,24 @@ export class ImService {
       callId: input.callId,
       content: input.content,
     })
+    // Reserve the idempotency key before publishing so concurrent callers
+    // cannot both publish and both report created: true.
+    const reserved = await this.repository.tryInsertServiceEvent({
+      callId: input.callId,
+      type: input.type,
+      eventId: event.id,
+      channelId,
+    })
+    if (!reserved) {
+      const winner = await this.repository.findServiceEvent(input.callId, input.type)
+      if (winner) return { eventId: winner.eventId, created: false }
+      throw new ImError('INVALID', 400)
+    }
     try {
       await this.relay.publishEvent(event)
     } catch (error) {
       throw new ImError('RELAY_UNAVAILABLE', 502)
     }
-    await this.repository.insertServiceEvent({ callId: input.callId, type: input.type, eventId: event.id, channelId })
     if (this.feed) {
       const orgId = await this.directory.channelOrg(channelId)
       if (orgId) {
@@ -243,14 +258,34 @@ export class ImService {
   }
 
   async presence(actor: AuthenticatedActor | null | undefined, userIds: readonly string[]): Promise<ImPresenceEntry[]> {
-    requireActor(actor)
+    const verified = requireActor(actor)
     if (!Array.isArray(userIds) || userIds.length === 0 || userIds.length > IM_PRESENCE_MAX_IDS) throw new ImError('INVALID', 400)
     for (const id of userIds) requireUuid(id)
+    await this.revokeExpiredMembers()
+    // Cross-tenant presence leak guard: only peers that share an active org.
+    const allowed = await this.directory.sharedOrgPeers(verified.principalId, userIds)
+    if (allowed.length === 0) return []
     try {
-      return await this.relay.presence(userIds)
+      return await this.relay.presence(allowed)
     } catch (error) {
       throw new ImError('RELAY_UNAVAILABLE', 502)
     }
+  }
+
+  /** Drop relay membership for identities past expires_at (enforces token TTL). */
+  async revokeExpiredMembers(): Promise<number> {
+    const expired = await this.repository.listExpiredIdentities(this.now().toISOString())
+    let revoked = 0
+    for (const row of expired) {
+      try {
+        await this.relay.removeMember(row.pubkey)
+      } catch {
+        // Best-effort: a transient relay blip must not block token issuance.
+      }
+      await this.repository.deleteIdentity(row.userId)
+      revoked += 1
+    }
+    return revoked
   }
 }
 

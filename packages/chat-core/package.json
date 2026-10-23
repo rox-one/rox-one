@@ -20,6 +20,6 @@
     "rox-chat-core.node"
   ],
   "scripts": {
-    "build:native": "cd ../../native && cargo build -p rox-chat-core --features napi-bindings --release"
+    "build:native": "cd ../../native && cargo build -p rox-chat-core --features napi-bindings --release && node ../packages/chat-core/scripts/stage-native.mjs"
   }
 }

@@ -203,25 +203,61 @@ export async function createWorkspaceServer(configuration: WorkspaceServerConfig
         ...configuration.rules,
       })
     : undefined
+  // Holder so the im revoker sink can be installed after createImModule runs.
+  const imRevokeSink: { current?: (events: import('../../../packages/core/src/events/index.ts').DomainEvent[]) => void | Promise<void> } = {}
   const commandBus = configuration.commandBus ? createWorkspaceCommandBus(configuration.database, schema, {
     ...configuration.commandBus,
-    ...(rules ? { extraSinks: [...(configuration.commandBus.extraSinks ?? []), rules.sink] } : {}),
+    extraSinks: [
+      ...(configuration.commandBus.extraSinks ?? []),
+      ...(rules ? [rules.sink] : []),
+      async events => { await imRevokeSink.current?.(events) },
+    ],
   }) : undefined
   await commandBus?.ready
   if (commandBus) rulesExecutor.service = commandBus.service
-  // W1-15 (#2042): relay bridge. Inert unless a relay config is injected or in
-  // the environment; the feed fan-out reuses the existing notify module.
+  // W1-15 (#2042): relay bridge. Always attempt construction so the env
+  // fallback inside createImModule works; returns undefined when neither an
+  // injected config nor ROX_IM_* env is present. `configuration.im` (from the
+  // runtime config parser) is merged in when the operator set `"im": {}`.
   const imNotify = commandBus?.notify
-  const im = configuration.im
-    ? createImModule({
-        database: configuration.database,
-        schema,
-        ...configuration.im,
-        ...(configuration.im.feed || !imNotify
-          ? {}
-          : { feed: async item => { await imNotify.ingest([imFeedDomainEvent(item)]) } }),
-      })
-    : undefined
+  const im = createImModule({
+    database: configuration.database,
+    schema,
+    ...(configuration.im ?? {}),
+    ...(configuration.im?.feed || !imNotify
+      ? {}
+      : { feed: async item => { await imNotify.ingest([imFeedDomainEvent(item)]) } }),
+  })
+  if (im && commandBus) {
+    const revoker = im.revoker
+    imRevokeSink.current = async events => {
+      const targets = new Set<string>()
+      for (const event of events) {
+        const payload = event.payload && typeof event.payload === 'object' && !Array.isArray(event.payload)
+          ? event.payload as Record<string, unknown>
+          : {}
+        const subjectId = event.subject && typeof event.subject === 'object' && 'id' in event.subject
+          ? String((event.subject as { id: unknown }).id)
+          : undefined
+        // Org-level removal / guest conversion (person subject + guest role/state).
+        if (subjectId && (event.subject as { kind?: string }).kind === 'person') {
+          const role = payload.role ?? payload.state
+          if (role === 'guest' || /removed|left|deleted|convert/i.test(event.type)) targets.add(subjectId)
+        }
+        if (typeof payload.principalId === 'string') {
+          if (/removed|left|deleted|guest/i.test(event.type) || payload.role === 'guest' || payload.state === 'guest') {
+            targets.add(payload.principalId)
+          }
+        }
+        if (Array.isArray(payload.memberIds) && /remove|deleted/i.test(event.type)) {
+          for (const id of payload.memberIds) if (typeof id === 'string') targets.add(id)
+        }
+      }
+      for (const userId of targets) {
+        try { await revoker.revoke(userId) } catch { /* best-effort; never break the event relay */ }
+      }
+    }
+  }
   const httpHandler = createWorkspaceHttpHandler({
     authority,
     collaborationAuthority,

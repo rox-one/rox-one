@@ -29,6 +29,8 @@ export interface ImChatCoreOptions {
 /** List-message page input (mirrors the frozen client's `listMessages`). */
 export interface ImListMessagesInput {
   channelId: string
+  /** Native addon uses `before` (unix seconds / createdAt cursor). */
+  before?: number
   beforeSeq?: number
   limit?: number
 }
@@ -46,7 +48,7 @@ export interface ImChatCoreClient {
   sendMessage(channelId: string, text: string): ImMessageEvent | Promise<ImMessageEvent>
   editMessage?(channelId: string, messageId: string, text: string): ImMessageEvent | Promise<ImMessageEvent>
   deleteMessage?(channelId: string, messageId: string): void | Promise<void>
-  listMessages(input: ImListMessagesInput): ImMessageEvent[] | Promise<ImMessageEvent[]>
+  listMessages(channel: string, options?: { limit?: number; before?: number }): ImMessageEvent[] | Promise<ImMessageEvent[]>
   markRead?(channelId: string): void | Promise<void>
   searchMessages?(query: string): ImMessageEvent[] | Promise<ImMessageEvent[]>
   publishTyping(channelId: string, isTyping: boolean): void | Promise<void>
