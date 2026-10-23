@@ -569,6 +569,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [commentComposerTop, setCommentComposerTop] = React.useState(48)
   const [focusCommentComposer, setFocusCommentComposer] = React.useState(false)
   const [rpcCommentThreads, setRpcCommentThreads] = React.useState<NoteCommentThread[]>([])
+  const commentCreateInFlightRef = React.useRef(false)
   const [commentTooltip, setCommentTooltip] = React.useState<{ body: string; quote: string; top: number; left: number } | null>(null)
   const [footnoteDraft, setFootnoteDraft] = React.useState('')
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
@@ -3466,25 +3467,42 @@ h1,h2,h3{margin-top:1.5em}
                   }}
                   onSubmit={() => {
                     const text = commentComposerBody.trim()
-                    if (!text || !activeNote || !activeWorkspaceId) return
+                    if (!text || !activeNote || !activeWorkspaceId || commentCreateInFlightRef.current) return
                     // Prefer the sidecar RPC stack (threads / resolve / reactions).
                     // Selection compose from the overlay mirrors the rail submit.
+                    commentCreateInFlightRef.current = true
                     void (async () => {
                       try {
                         const quote = commentDraftQuote.trim()
                         const anchor = quote ? anchorFromQuote(contentRef.current, quote) : null
-                        if (quote && !anchor) return
-                        await window.electronAPI.createNoteComment(activeWorkspaceId, {
+                        if (quote && !anchor) {
+                          toast.error(t('notes.comments.errorAttachSelection'))
+                          return
+                        }
+                        const created = await window.electronAPI.createNoteComment(activeWorkspaceId, {
                           noteId: activeNote.id,
                           body: text,
                           anchor,
                         })
-                        const list = await window.electronAPI.listNoteComments(activeWorkspaceId, activeNote.id)
-                        setRpcCommentThreads(list)
+                        setRpcCommentThreads(prev => {
+                          const index = prev.findIndex(c => c.id === created.id)
+                          if (index === -1) return [...prev, created]
+                          const next = prev.slice()
+                          next[index] = created
+                          return next
+                        })
                         setCommentDraftQuote('')
                         setCommentComposerBody('')
+                        try {
+                          const list = await window.electronAPI.listNoteComments(activeWorkspaceId, activeNote.id)
+                          setRpcCommentThreads(list)
+                        } catch {
+                          // Keep optimistic highlight list if quiet refresh fails.
+                        }
                       } catch {
-                        /* rail surfaces errors; overlay stays quiet */
+                        toast.error(t('notes.comments.errorCreate'))
+                      } finally {
+                        commentCreateInFlightRef.current = false
                       }
                     })()
                   }}

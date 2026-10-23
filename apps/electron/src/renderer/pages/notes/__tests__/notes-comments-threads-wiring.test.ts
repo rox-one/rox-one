@@ -4,6 +4,7 @@ import { join } from 'path'
 
 const notesPage = readFileSync(join(import.meta.dir, '../../NotesPage.tsx'), 'utf8')
 const threadsPanel = readFileSync(join(import.meta.dir, '../NotesCommentThreads.tsx'), 'utf8')
+const commentsThread = readFileSync(join(import.meta.dir, '../../../../../../../packages/ui/src/components/comments/CommentsThread.tsx'), 'utf8')
 const dto = readFileSync(join(import.meta.dir, '../../../../../../../packages/shared/src/protocol/dto.ts'), 'utf8')
 const noteComments = readFileSync(join(import.meta.dir, '../note-comments.ts'), 'utf8')
 
@@ -16,16 +17,30 @@ describe('notes comments threads wiring', () => {
     expect(notesPage).toContain('createNoteComment(activeWorkspaceId')
   })
 
-  it('rail uses functional updates, quiet reload, create busy, and comments events', () => {
+  it('rail uses functional publish, quiet reload without wipe, createInFlightRef, and empty fragment composer', () => {
+    expect(threadsPanel).toContain('publishUpdate')
     expect(threadsPanel).toContain('upsertNoteCommentInList')
     expect(threadsPanel).toContain('removeNoteCommentFromList')
-    expect(threadsPanel).toContain('setComments(prev =>')
     expect(threadsPanel).toContain('reload({ quiet: true })')
-    expect(threadsPanel).toContain("onNotesChanged")
+    expect(threadsPanel).toContain('if (!quiet) publish([])')
+    expect(threadsPanel).toContain('createInFlightRef')
+    expect(threadsPanel).toContain('createInFlightRef.current = true')
+    expect(threadsPanel).toContain('onNotesChanged')
     expect(threadsPanel).toContain("reason !== 'comments'")
-    expect(threadsPanel).toContain('CREATE_BUSY')
+    expect(threadsPanel).toContain('renderComposer={() => <></>}')
     expect(threadsPanel).toContain('getNoteText()')
-    expect(threadsPanel).toContain('anchorFromQuote(liveText, quote)')
+  })
+
+  it('overlay create uses sync in-flight ref and surfaces toast errors', () => {
+    expect(notesPage).toContain('commentCreateInFlightRef')
+    expect(notesPage).toContain('commentCreateInFlightRef.current = true')
+    expect(notesPage).toContain("toast.error(t('notes.comments.errorCreate'))")
+    expect(notesPage).toContain("toast.error(t('notes.comments.errorAttachSelection'))")
+  })
+
+  it('CommentsThread treats explicit null renderComposer as suppress, not TextComposer fallback', () => {
+    expect(commentsThread).toContain('slot === undefined')
+    expect(commentsThread).not.toContain('renderComposer?.(composerProps) ??')
   })
 
   it('protocol models optional anchors, parentId, and reaction toggles without client author', () => {
