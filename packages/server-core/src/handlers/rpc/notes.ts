@@ -1892,8 +1892,10 @@ function assertSafeTemplateId(templateId: string): string {
   const id = assertSafeNoteId(normalized)
   if (id.split('/').some(part => part === TEMPLATES_DIR || part === '')) throw new Error('Invalid template id')
   if (id !== normalized) throw new Error('Invalid template id')
-  // System Daily notes own templates/daily.md — user templates cannot claim this id.
-  if (id === 'daily') throw new CodedError('INVALID_ARGUMENT', 'Template id "daily" is reserved for Daily notes')
+  // System Daily notes own templates/**/daily.md — reject basename daily at any path.
+  if (id.split('/').some(part => part === 'daily')) {
+    throw new CodedError('INVALID_ARGUMENT', 'Template id "daily" is reserved for Daily notes')
+  }
   return id
 }
 
@@ -1996,8 +1998,8 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
       const id = templateIdFromRelativePath(rel).toLowerCase()
       // Full relative path must already match normalized `${id}.md` (nested case too).
       if (rel !== `${id}.md`) continue
-      // System Daily template is not a library catalog entry (save/create-id still hard-reserved).
-      if (id === 'daily') continue
+      // System Daily template is not a library catalog entry (basename daily at any path).
+      if (id.split('/').some(part => part === 'daily')) continue
       let content: string
       try {
         content = await readFileNoFollow(abs)
@@ -2839,8 +2841,16 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
       const { noteTitle, initialContent } = await materializeTemplateNoteContent(context.notesRoot, templateId, title)
       const safeFolder = assertSafeCreateFolder(folder)
-      const filename = safeNoteFilename(noteTitle || 'Untitled')
-      const relativeId = safeFolder ? `${safeFolder}/${stripMdExtension(filename)}` : stripMdExtension(filename)
+      // Uniquify like legacy CREATE_FROM (Title.md → Title-2.md…) so expectedRevision:null never collides.
+      const baseTitle = noteTitle || 'Untitled'
+      let relativeId = safeFolder
+        ? `${safeFolder}/${stripMdExtension(safeNoteFilename(baseTitle))}`
+        : stripMdExtension(safeNoteFilename(baseTitle))
+      let suffix = 2
+      while (existsSync(join(context.notesRoot, `${relativeId}.md`))) {
+        const uniquified = `${sanitizeFilename(baseTitle)}-${suffix++}`
+        relativeId = safeFolder ? `${safeFolder}/${uniquified}` : uniquified
+      }
       const path = `${NOTES_DIR}/${relativeId}.md`
       const metadata = nativeOperation(operation)
       if (metadata.expectedRevision !== null) throw new Error('native note create requires expectedRevision:null')

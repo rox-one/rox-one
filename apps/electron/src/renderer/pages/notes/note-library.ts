@@ -85,9 +85,10 @@ export function sanitizeTemplateId(raw: string): string {
   return id
 }
 
-/** True when sanitized id is reserved for system Daily notes (templates/daily.md). */
+/** True when any path segment is reserved for system Daily notes (…/daily). */
 export function isReservedTemplateId(raw: string): boolean {
-  return sanitizeTemplateId(raw) === 'daily'
+  const id = sanitizeTemplateId(raw)
+  return !!id && id.split('/').some((part) => part === 'daily')
 }
 
 /** Live typing helper — keeps a single trailing `/` so nested ids like team/weekly can be entered. */

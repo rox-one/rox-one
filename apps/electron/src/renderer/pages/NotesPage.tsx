@@ -2424,14 +2424,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       }
       const next = withNoteLibraryProperties(base, patch)
       try {
+        // Cover/icon are trusted one-click: still sanitize via withNoteLibraryProperties /
+        // readNoteCover upstream, but never open the YAML conversion Apply dialog.
         const preview = previewPropertyDictionary(contentRef.current, base, next)
-        const request = { workspaceId, noteId, preview }
-        if (preview.requiresReview) {
-          propertyPreviewRef.current = request
-          setPropertyPreview(request)
-          return false
-        }
-        return await applyPropertyPreview(request)
+        return await applyPropertyPreview({ workspaceId, noteId, preview })
       } catch {
         toast.error(t('notes.toast.updatePropertiesFailed'))
         return false

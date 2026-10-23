@@ -228,6 +228,11 @@ describe('note templates library', () => {
       title: 'Nope',
       body: 'x',
     })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    await expect(saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'team/daily',
+      title: 'Nope',
+      body: 'x',
+    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
   })
 
   it('skips unreadable template files instead of listing ghosts', async () => {
@@ -254,8 +259,10 @@ describe('note templates library', () => {
 
 
   it('excludes system daily template from library catalog', async () => {
+    mkdirSync(join(notesRoot, 'templates', 'team'), { recursive: true })
+    writeFileSync(join(notesRoot, 'templates', 'team', 'daily.md'), '---\ntitle: Nested Daily\n---\n\nx\n', 'utf-8')
     const listed = await listNoteTemplatesForRoot(notesRoot)
-    expect(listed.some((item) => item.id === 'daily')).toBe(false)
+    expect(listed.some((item) => item.id === 'daily' || item.id.endsWith('/daily'))).toBe(false)
     // Save still hard-rejects daily even though file may exist on disk.
     await expect(saveNoteAsTemplateForRoot(notesRoot, {
       templateId: 'daily',

@@ -59,6 +59,7 @@ describe('note-library', () => {
     expect(sanitizeTemplateId('team/')).toBe('team')
     expect(isReservedTemplateId('Daily')).toBe(true)
     expect(isReservedTemplateId('daily.md')).toBe(true)
+    expect(isReservedTemplateId('team/daily')).toBe(true)
     expect(isReservedTemplateId('standup')).toBe(false)
   })
 
