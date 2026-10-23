@@ -53,12 +53,15 @@ export const nodeRuntimeIo: RuntimeIo = {
     const ac = new AbortController()
     const timer = setTimeout(() => ac.abort(), DOWNLOAD_TIMEOUT_MS)
     timer.unref?.()
+    const tmp = `${dest}.part`
     try {
       const res = await fetch(url, { redirect: 'follow', signal: ac.signal })
       if (!res.ok || !res.body) throw new Error(`download failed (${res.status})`)
-      const tmp = `${dest}.part`
       await pipeline(Readable.fromWeb(res.body as never), createWriteStream(tmp))
       renameSync(tmp, dest)
+    } catch (err) {
+      rmSync(tmp, { force: true })
+      throw err
     } finally {
       clearTimeout(timer)
     }

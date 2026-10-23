@@ -59,6 +59,8 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
   private nextId = 1
   private pending = new Map<number, Pending>()
   private idleTimer: ReturnType<typeof setTimeout> | null = null
+  /** Earliest time a failed start may be retried (ms since epoch). */
+  private failCooldownUntil = 0
 
   constructor(private readonly deps: CogneeProviderDeps) {}
 
@@ -86,11 +88,15 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
   }
 
   private async start(): Promise<boolean> {
+    if (Date.now() < this.failCooldownUntil) {
+      return false
+    }
     this.state = 'warming'
     try {
       const python = await this.deps.ensureRuntime()
       if (!python) {
         this.state = 'not_installed'
+        this.failCooldownUntil = Date.now() + 60_000
         return false
       }
       const key = (await this.deps.resolveLlmKey()) ?? ''
@@ -138,6 +144,7 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
       if (!hello || hello.protocol !== 1) throw new Error('sidecar protocol mismatch')
       this.state = 'ready'
       this.safeError = undefined
+      this.failCooldownUntil = 0
       this.touch()
       void this.refreshStatus()
       return true
@@ -145,6 +152,7 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
       this.deps.logger?.warn('cognee sidecar start failed', err)
       this.state = 'failed'
       this.safeError = 'sidecar unavailable'
+      this.failCooldownUntil = Date.now() + 60_000
       this.kill()
       return false
     }
@@ -211,7 +219,14 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
 
   private touch(): void {
     if (this.idleTimer) clearTimeout(this.idleTimer)
-    this.idleTimer = setTimeout(() => this.shutdown(), this.deps.idleMs ?? DEFAULT_IDLE_MS)
+    this.idleTimer = setTimeout(() => {
+      // Never idle-kill while RPCs (e.g. cognify up to 30 min) are in flight.
+      if (this.pending.size > 0) {
+        this.touch()
+        return
+      }
+      this.shutdown()
+    }, this.deps.idleMs ?? DEFAULT_IDLE_MS)
     this.idleTimer.unref?.()
   }
 
