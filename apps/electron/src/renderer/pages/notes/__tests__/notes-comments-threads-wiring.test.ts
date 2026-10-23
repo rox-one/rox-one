@@ -31,7 +31,8 @@ describe('notes comments threads wiring', () => {
     expect(notesPage).toContain('workspaceIdRef.current === requestWorkspaceId')
     expect(notesPage).toContain('activeNoteIdRef.current === requestNoteId')
     expect(notesPage).toContain('if (!stillActive()) return')
-    expect(notesPage).toContain('commentCreateInFlightRef')
+    expect(notesPage).toContain('tryBeginCommentCreate')
+    expect(notesPage).toContain('endCommentCreate')
     expect(notesPage).toContain("toast.error(t('notes.comments.errorCreate'))")
   })
 
@@ -51,25 +52,35 @@ describe('notes comments threads wiring', () => {
     expect(threadsPanel).toContain('publish(list, requestKey)')
     expect(threadsPanel).toContain('publishUpdate(requestKey')
     expect(threadsPanel).toContain('onThreadsChangeRef.current?.([])')
-    expect(threadsPanel).toContain('createInFlightRef')
-    expect(threadsPanel).toContain('createFlightKeyRef')
     expect(threadsPanel).toContain('clearComposer(requestKey)')
     expect(threadsPanel).toContain('anchorFromQuote(liveText, quote, draftAnchor)')
     expect(threadsPanel).toContain('throw err')
-    // Stale create finally must not unlock a newer create; note switch must not reset the lock.
-    expect(threadsPanel).not.toMatch(/createInFlightRef\.current = false\n\s*void reload/)
+    expect(threadsPanel).toContain('beginCreate')
+    expect(threadsPanel).toContain('endCreate(flightKey)')
   })
 
   it('composers disable while create is in flight', () => {
     expect(threadsPanel).toContain('creating={creating}')
+    expect(threadsPanel).toContain('createBusy || busyId === CREATE_BUSY')
     expect(notesPage).toContain('creating={commentCreateBusy}')
-    expect(notesPage).toContain('setCommentCreateBusy(true)')
-    expect(notesPage).toContain('setCommentCreateBusy(false)')
+    expect(notesPage).toContain('tryBeginCommentCreate')
+    expect(notesPage).toContain('endCommentCreate')
+    expect(notesPage).toContain('createBusy={commentCreateBusy}')
+    expect(notesPage).toContain('beginCreate={() => tryBeginCommentCreate(activeWorkspaceId, activeNote.id)}')
+    expect(notesPage).toContain('endCreate={endCommentCreate}')
+    // Shared parent lock clears/re-keys on note switch (overlay + rail).
+    expect(notesPage).toContain('setCommentCreateBusyKey(null)')
+    expect(notesPage).toMatch(/commentCreateFlightKeyRef\.current = null/)
     const reading = readFileSync(join(import.meta.dir, '../NotesReadingChrome.tsx'), 'utf8')
     expect(reading).toContain('creating = false')
     expect(reading).toContain('disabled={busy || !body.trim()}')
     expect(reading).toContain("if (event.key === 'Escape'")
     expect(reading).toMatch(/if \(busy\)[\s\S]*Escape/)
+  })
+
+  it('anchorFromQuote refuses ambiguous quotes without preferred offsets', () => {
+    expect(noteComments).toContain('fullText.indexOf(selectedText, start + 1) >= 0')
+    expect(noteComments).toContain('return null')
   })
 
   it('create success clears draft for requestKey even after note switch', () => {
