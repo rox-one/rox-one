@@ -2022,3 +2022,35 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   max-inline-size: var(--panel-measure, 100%);
   margin-inline: auto;
 }
+
+/* Rox Engineering ultra-wide / fluid shell. data-shell-band is set from
+   SHELL_BREAKPOINTS (viewport-band.ts) on the shell row; these tiers only
+   apply under html[data-ui-profile="super-engineering"]. Static layout
+   (no transitions): live resize reflows without animating. contentBoxSize
+   shrinks with the SE edge inset, so clampShellColumns stays aligned. */
+html[data-ui-profile="super-engineering"] [data-shell-band="wide"],
+html[data-ui-profile="super-engineering"] [data-shell-band="ultra"] {
+  --shell-edge-inset: 12px;
+  --content-inset: 16px;
+  --shell-paper-max: 1600px;
+}
+html[data-ui-profile="super-engineering"] [data-shell-band="ultra"] {
+  --shell-edge-inset: 24px;
+  --content-inset: 28px;
+  --shell-paper-max: 1800px;
+}
+html[data-ui-profile="super-engineering"] [data-shell-band="wide"] .\@container\/panel > * {
+  --panel-gutter: calc(var(--spacing) * 10);
+  --panel-measure: 1120px;
+}
+html[data-ui-profile="super-engineering"] [data-shell-band="ultra"] .\@container\/panel > * {
+  --panel-gutter: calc(var(--spacing) * 14);
+  --panel-measure: 1280px;
+}
+/* Float join: grow the frame around the card and cap its inline measure so
+   the paper does not stretch across an ultra-wide field. Start stays flush
+   to chrome; end/bottom use --content-inset. */
+html[data-ui-profile="super-engineering"][data-content-join="float"] [data-shell-band="wide"] [data-panel-grid-viewport],
+html[data-ui-profile="super-engineering"][data-content-join="float"] [data-shell-band="ultra"] [data-panel-grid-viewport] {
+  max-inline-size: min(100%, var(--shell-paper-max));
+}

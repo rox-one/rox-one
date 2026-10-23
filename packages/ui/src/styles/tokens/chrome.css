@@ -101,7 +101,8 @@ html[data-density="comfortable"] {
    JS mirror is SHELL_BREAKPOINTS in platform/viewport-band.ts (parity test).
    compact 900: secondary sidebar floats; regular 1280: rail may show labels
    (icons-only below); wide 1600: labelled rail is the default layout;
-   ultra 2560: wide-monitor tier. */
+   ultra 2560: Rox Engineering caps paper measure and grows shell/content
+   inset so empty fields do not dominate. */
 :root {
   --shell-bp-compact: 900px;
   --shell-bp-regular: 1280px;
