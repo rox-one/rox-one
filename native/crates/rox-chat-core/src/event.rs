@@ -92,7 +92,8 @@ pub fn event_channel_id(event: &Event) -> Option<String> {
 /// An edit envelope is a message-kind event carrying `["e", <target>, "", "edit"]`.
 pub fn is_edit_event(event: &Event) -> bool {
     event.tags.iter().any(|tag| {
-        tag.first().map(String::as_str) == Some("e") && tag.get(3).map(String::as_str) == Some("edit")
+        tag.first().map(String::as_str) == Some("e")
+            && tag.get(3).map(String::as_str) == Some("edit")
     })
 }
 
@@ -139,7 +140,10 @@ mod tests {
     #[test]
     fn canonical_serialization_escapes_like_json_stringify() {
         let canon = canonical_id_serialization("ab", 1, 1, &[], "line1\nline2 \"q\" \\ é");
-        assert_eq!(canon, "[0,\"ab\",1,1,[],\"line1\\nline2 \\\"q\\\" \\\\ é\"]");
+        assert_eq!(
+            canon,
+            "[0,\"ab\",1,1,[],\"line1\\nline2 \\\"q\\\" \\\\ é\"]"
+        );
     }
 
     #[test]

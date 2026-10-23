@@ -10,9 +10,7 @@ use crate::types::{
 };
 use crate::{ChatCore, ChatCoreOptions, ChatError};
 use napi::bindgen_prelude::{JsFunction, Result as NapiResult};
-use napi::threadsafe_function::{
-    ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode,
-};
+use napi::threadsafe_function::{ErrorStrategy, ThreadsafeFunction, ThreadsafeFunctionCallMode};
 use napi_derive::napi;
 use std::sync::Arc;
 
@@ -166,7 +164,10 @@ impl ChatCoreJs {
     #[napi]
     pub async fn send_message(&self, channel: String, content: String) -> NapiResult<MessageRefJs> {
         let core = Arc::clone(&self.inner);
-        let sent = core.send_message(&channel, &content).await.map_err(to_napi)?;
+        let sent = core
+            .send_message(&channel, &content)
+            .await
+            .map_err(to_napi)?;
         Ok(MessageRefJs { id: sent.id })
     }
 
@@ -241,7 +242,9 @@ impl ChatCoreJs {
     #[napi]
     pub async fn publish_typing(&self, channel: String, until_ms: i64) -> NapiResult<()> {
         let core = Arc::clone(&self.inner);
-        core.publish_typing(&channel, until_ms).await.map_err(to_napi)
+        core.publish_typing(&channel, until_ms)
+            .await
+            .map_err(to_napi)
     }
 
     #[napi]
@@ -262,7 +265,10 @@ impl ChatCoreJs {
         let tsfn: ThreadsafeFunction<ChatMessageJs, ErrorStrategy::Fatal> =
             callback.create_threadsafe_function(0, |ctx| ctx.env.to_js_value(&ctx.value))?;
         let id = self.inner.on_message(move |message| {
-            let _ = tsfn.call(ChatMessageJs::from(message), ThreadsafeFunctionCallMode::NonBlocking);
+            let _ = tsfn.call(
+                ChatMessageJs::from(message),
+                ThreadsafeFunctionCallMode::NonBlocking,
+            );
         });
         Ok(id as u32)
     }
@@ -272,7 +278,10 @@ impl ChatCoreJs {
         let tsfn: ThreadsafeFunction<PresenceEntryJs, ErrorStrategy::Fatal> =
             callback.create_threadsafe_function(0, |ctx| ctx.env.to_js_value(&ctx.value))?;
         let id = self.inner.on_presence(move |entry| {
-            let _ = tsfn.call(PresenceEntryJs::from(entry), ThreadsafeFunctionCallMode::NonBlocking);
+            let _ = tsfn.call(
+                PresenceEntryJs::from(entry),
+                ThreadsafeFunctionCallMode::NonBlocking,
+            );
         });
         Ok(id as u32)
     }
@@ -282,7 +291,10 @@ impl ChatCoreJs {
         let tsfn: ThreadsafeFunction<TypingEntryJs, ErrorStrategy::Fatal> =
             callback.create_threadsafe_function(0, |ctx| ctx.env.to_js_value(&ctx.value))?;
         let id = self.inner.on_typing(move |entry| {
-            let _ = tsfn.call(TypingEntryJs::from(entry), ThreadsafeFunctionCallMode::NonBlocking);
+            let _ = tsfn.call(
+                TypingEntryJs::from(entry),
+                ThreadsafeFunctionCallMode::NonBlocking,
+            );
         });
         Ok(id as u32)
     }

@@ -60,9 +60,7 @@ impl Store {
 
     /// Unacknowledged events in replay order (oldest first).
     pub fn outbox_pending(&self) -> Result<Vec<OutboxEntry>, ChatError> {
-        let sql = format!(
-            "SELECT {OUTBOX_COLUMNS} FROM outbox WHERE sent = 0 ORDER BY seq ASC"
-        );
+        let sql = format!("SELECT {OUTBOX_COLUMNS} FROM outbox WHERE sent = 0 ORDER BY seq ASC");
         let mut stmt = self.conn().prepare(&sql)?;
         let rows = stmt.query_map([], row_to_entry)?;
         Ok(rows.collect::<Result<Vec<_>, _>>()?)
@@ -77,11 +75,11 @@ impl Store {
     }
 
     pub fn outbox_pending_count(&self) -> Result<usize, ChatError> {
-        let count: i64 = self.conn().query_row(
-            "SELECT COUNT(*) FROM outbox WHERE sent = 0",
-            [],
-            |row| row.get(0),
-        )?;
+        let count: i64 =
+            self.conn()
+                .query_row("SELECT COUNT(*) FROM outbox WHERE sent = 0", [], |row| {
+                    row.get(0)
+                })?;
         Ok(count as usize)
     }
 
@@ -140,7 +138,10 @@ mod tests {
         }
         let pending = store.outbox_pending().unwrap();
         assert_eq!(
-            pending.iter().map(|e| e.event_id.as_str()).collect::<Vec<_>>(),
+            pending
+                .iter()
+                .map(|e| e.event_id.as_str())
+                .collect::<Vec<_>>(),
             events.iter().map(|e| e.id.as_str()).collect::<Vec<_>>()
         );
         assert_eq!(store.outbox_pending_count().unwrap(), 4);
@@ -155,7 +156,10 @@ mod tests {
         let store = Store::open_in_memory().unwrap();
         let ev = event(1);
         assert!(store.outbox_enqueue(&ev).unwrap());
-        assert!(!store.outbox_enqueue(&ev).unwrap(), "second enqueue is a no-op");
+        assert!(
+            !store.outbox_enqueue(&ev).unwrap(),
+            "second enqueue is a no-op"
+        );
         assert_eq!(store.outbox_all().unwrap().len(), 1);
         assert_eq!(store.outbox_pending_count().unwrap(), 1);
     }
@@ -170,7 +174,11 @@ mod tests {
         assert_eq!(store.outbox_pending_count().unwrap(), 0);
         assert_eq!(store.outbox_all().unwrap().len(), 1);
         assert!(!store.outbox_enqueue(&ev).unwrap());
-        assert_eq!(store.outbox_pending_count().unwrap(), 0, "resend stays sent");
+        assert_eq!(
+            store.outbox_pending_count().unwrap(),
+            0,
+            "resend stays sent"
+        );
     }
 
     #[test]
@@ -206,7 +214,10 @@ mod tests {
         let reopened = Store::open(path.to_str().unwrap()).unwrap();
         let pending = reopened.outbox_pending().unwrap();
         assert_eq!(
-            pending.iter().map(|e| e.event_id.as_str()).collect::<Vec<_>>(),
+            pending
+                .iter()
+                .map(|e| e.event_id.as_str())
+                .collect::<Vec<_>>(),
             vec![events[1].id.as_str(), events[2].id.as_str()]
         );
     }

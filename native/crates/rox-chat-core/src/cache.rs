@@ -331,7 +331,10 @@ mod tests {
 
         let listed = store.list_messages("c1", &ListOptions::default()).unwrap();
         assert_eq!(
-            listed.iter().map(|m| m.content.as_str()).collect::<Vec<_>>(),
+            listed
+                .iter()
+                .map(|m| m.content.as_str())
+                .collect::<Vec<_>>(),
             vec!["first", "second"]
         );
         assert_eq!(listed[0].id, a.id);
@@ -348,7 +351,9 @@ mod tests {
     fn list_respects_limit_and_before_cursor() {
         let store = Store::open_in_memory().unwrap();
         for i in 0..5 {
-            store.insert_event(&message("c1", &format!("m{i}"), 100 + i)).unwrap();
+            store
+                .insert_event(&message("c1", &format!("m{i}"), 100 + i))
+                .unwrap();
         }
         let newest = store
             .list_messages(
@@ -360,7 +365,10 @@ mod tests {
             )
             .unwrap();
         assert_eq!(
-            newest.iter().map(|m| m.content.as_str()).collect::<Vec<_>>(),
+            newest
+                .iter()
+                .map(|m| m.content.as_str())
+                .collect::<Vec<_>>(),
             vec!["m3", "m4"]
         );
 
@@ -405,9 +413,15 @@ mod tests {
     #[test]
     fn fts_search_matches_content_and_scopes_to_channel() {
         let store = Store::open_in_memory().unwrap();
-        store.insert_event(&message("c1", "the quick brown fox", 100)).unwrap();
-        store.insert_event(&message("c2", "lazy dog sleeps here", 101)).unwrap();
-        store.insert_event(&message("c2", "another fox in c2", 102)).unwrap();
+        store
+            .insert_event(&message("c1", "the quick brown fox", 100))
+            .unwrap();
+        store
+            .insert_event(&message("c2", "lazy dog sleeps here", 101))
+            .unwrap();
+        store
+            .insert_event(&message("c2", "another fox in c2", 102))
+            .unwrap();
 
         let hits = store
             .search_messages("fox", &SearchOptions::default())
@@ -441,11 +455,28 @@ mod tests {
         let store = Store::open_in_memory().unwrap();
         let event = message("c1", "original wording", 100);
         store.insert_event(&event).unwrap();
-        assert_eq!(store.search_messages("original", &SearchOptions::default()).unwrap().len(), 1);
+        assert_eq!(
+            store
+                .search_messages("original", &SearchOptions::default())
+                .unwrap()
+                .len(),
+            1
+        );
 
-        assert!(store.mark_event_edited(&event.id, "rewritten text", 150).unwrap());
-        assert!(store.search_messages("original", &SearchOptions::default()).unwrap().is_empty());
-        assert_eq!(store.search_messages("rewritten", &SearchOptions::default()).unwrap().len(), 1);
+        assert!(store
+            .mark_event_edited(&event.id, "rewritten text", 150)
+            .unwrap());
+        assert!(store
+            .search_messages("original", &SearchOptions::default())
+            .unwrap()
+            .is_empty());
+        assert_eq!(
+            store
+                .search_messages("rewritten", &SearchOptions::default())
+                .unwrap()
+                .len(),
+            1
+        );
         let edited = store.get_event(&event.id).unwrap().unwrap();
         assert_eq!(edited.content, "rewritten text");
         assert_eq!(edited.edited_at, Some(150));

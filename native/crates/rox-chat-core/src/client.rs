@@ -121,7 +121,10 @@ struct Inner {
 }
 
 impl Inner {
-    fn with_store<T>(&self, f: impl FnOnce(&Store) -> Result<T, ChatError>) -> Result<T, ChatError> {
+    fn with_store<T>(
+        &self,
+        f: impl FnOnce(&Store) -> Result<T, ChatError>,
+    ) -> Result<T, ChatError> {
         let guard = lock(&self.store)?;
         f(&guard)
     }
@@ -354,7 +357,11 @@ impl ChatCore {
 
     // ---- sending -----------------------------------------------------------
 
-    pub async fn send_message(&self, channel: &str, content: &str) -> Result<MessageRef, ChatError> {
+    pub async fn send_message(
+        &self,
+        channel: &str,
+        content: &str,
+    ) -> Result<MessageRef, ChatError> {
         let event = self.inner.keys.sign_event(
             KIND_STREAM_MESSAGE,
             vec![vec!["h".to_string(), channel.to_string()]],
@@ -374,7 +381,12 @@ impl ChatCore {
             existing.kind,
             vec![
                 vec!["h".to_string(), existing.channel_id.clone()],
-                vec!["e".to_string(), id.to_string(), String::new(), "edit".to_string()],
+                vec![
+                    "e".to_string(),
+                    id.to_string(),
+                    String::new(),
+                    "edit".to_string(),
+                ],
             ],
             content,
             unix_seconds(),
@@ -470,8 +482,7 @@ impl ChatCore {
     }
 
     pub async fn pending_count(&self) -> Result<usize, ChatError> {
-        self.inner
-            .with_store(|store| store.outbox_pending_count())
+        self.inner.with_store(|store| store.outbox_pending_count())
     }
 
     /// Replay every unacknowledged event, oldest first. Entries stay pending
@@ -682,7 +693,11 @@ where
             sub_id,
             filters: vec![Filter::channel(&channel)],
         };
-        if sink.send(Message::Text(frame.to_json().into())).await.is_err() {
+        if sink
+            .send(Message::Text(frame.to_json().into()))
+            .await
+            .is_err()
+        {
             return true;
         }
     }
@@ -692,7 +707,11 @@ where
         for entry in pending {
             let Ok(event) = entry.event() else { continue };
             let frame = ClientFrame::Event(event);
-            if sink.send(Message::Text(frame.to_json().into())).await.is_err() {
+            if sink
+                .send(Message::Text(frame.to_json().into()))
+                .await
+                .is_err()
+            {
                 return true;
             }
         }
@@ -780,9 +799,7 @@ fn handle_text(inner: &Arc<Inner>, text: &str) -> Option<ClientFrame> {
             None
         }
         RelayFrame::Ok {
-            event_id,
-            accepted,
-            ..
+            event_id, accepted, ..
         } => {
             if accepted {
                 let _ = inner.with_store(|store| store.outbox_mark_sent(&event_id));
@@ -835,14 +852,12 @@ mod tests {
     }
 
     fn peer_event(content: &str) -> Event {
-        Keys::from_hex(PEER_KEY)
-            .unwrap()
-            .sign_event(
-                KIND_STREAM_MESSAGE,
-                vec![vec!["h".to_string(), "chan-1".to_string()]],
-                content,
-                unix_seconds(),
-            )
+        Keys::from_hex(PEER_KEY).unwrap().sign_event(
+            KIND_STREAM_MESSAGE,
+            vec![vec!["h".to_string(), "chan-1".to_string()]],
+            content,
+            unix_seconds(),
+        )
     }
 
     /// Pending outbox rows, read synchronously (the store guard is never held
@@ -919,7 +934,11 @@ mod tests {
         assert!(req[2]["kinds"].as_array().unwrap().contains(&json!(9)));
 
         assert!(
-            wait_for(|| core.status().state == ConnectionState::Connected, TIMEOUT).await,
+            wait_for(
+                || core.status().state == ConnectionState::Connected,
+                TIMEOUT
+            )
+            .await,
             "status never became connected"
         );
 
@@ -937,9 +956,15 @@ mod tests {
         assert_eq!(messages[0].content, "hello from a peer");
         assert_eq!(messages[0].id, event.id);
         assert_eq!(messages[0].channel_id, "chan-1");
-        assert_eq!(messages[0].pubkey, Keys::from_hex(PEER_KEY).unwrap().pubkey_hex());
+        assert_eq!(
+            messages[0].pubkey,
+            Keys::from_hex(PEER_KEY).unwrap().pubkey_hex()
+        );
 
-        let cached = core.list_messages("chan-1", ListOptions::default()).await.unwrap();
+        let cached = core
+            .list_messages("chan-1", ListOptions::default())
+            .await
+            .unwrap();
         assert_eq!(cached.len(), 1);
         assert_eq!(cached[0].id, event.id);
 
@@ -971,7 +996,10 @@ mod tests {
             .await;
         tokio::time::sleep(Duration::from_millis(100)).await;
 
-        assert!(seen.lock().unwrap().is_empty(), "invalid event was delivered");
+        assert!(
+            seen.lock().unwrap().is_empty(),
+            "invalid event was delivered"
+        );
         assert!(core
             .list_messages("chan-1", ListOptions::default())
             .await
@@ -1015,7 +1043,13 @@ mod tests {
         assert!(statuses
             .iter()
             .any(|s| s.state == ConnectionState::Reconnecting && s.attempt.unwrap_or(0) >= 1));
-        assert!(statuses.iter().filter(|s| s.state == ConnectionState::Connected).count() >= 2);
+        assert!(
+            statuses
+                .iter()
+                .filter(|s| s.state == ConnectionState::Connected)
+                .count()
+                >= 2
+        );
 
         core.stop().await.unwrap();
 
@@ -1047,19 +1081,34 @@ mod tests {
 
         // Locally mirrored as pending until the relay says OK.
         assert_eq!(core.pending_count().await.unwrap(), 1);
-        let cached = core.list_messages("chan-1", ListOptions::default()).await.unwrap();
+        let cached = core
+            .list_messages("chan-1", ListOptions::default())
+            .await
+            .unwrap();
         assert_eq!(cached.len(), 1);
         assert_eq!(cached[0].pending, Some(true));
 
-        relay.send_json(&json!(["OK", sent.id, true, "saved"])).await;
+        relay
+            .send_json(&json!(["OK", sent.id, true, "saved"]))
+            .await;
         assert!(
             wait_for(|| drains(&core), TIMEOUT).await,
             "OK did not ack the outbox entry"
         );
-        let cached = core.list_messages("chan-1", ListOptions::default()).await.unwrap();
+        let cached = core
+            .list_messages("chan-1", ListOptions::default())
+            .await
+            .unwrap();
         assert_eq!(cached[0].pending, None);
 
-        relay.send_json(&json!(["OK", sent.id, false, "duplicate: already have this"])).await;
+        relay
+            .send_json(&json!([
+                "OK",
+                sent.id,
+                false,
+                "duplicate: already have this"
+            ]))
+            .await;
         tokio::time::sleep(Duration::from_millis(50)).await;
         assert_eq!(core.pending_count().await.unwrap(), 0, "stays acked");
 
@@ -1091,11 +1140,7 @@ mod tests {
             .collect();
         assert_eq!(
             &ids[..3],
-            &[
-                first.id.clone(),
-                second.id.clone(),
-                third.id.clone()
-            ],
+            &[first.id.clone(), second.id.clone(), third.id.clone()],
             "replay must preserve insertion order"
         );
 
@@ -1217,7 +1262,9 @@ mod tests {
 
         // Publishing a typing ping while offline is a no-op, not an error.
         core.stop().await.unwrap();
-        core.publish_typing("chan-1", unix_millis() + 5_000).await.unwrap();
+        core.publish_typing("chan-1", unix_millis() + 5_000)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]
@@ -1242,10 +1289,7 @@ mod tests {
             event_tag_values(&event, "challenge"),
             vec!["challenge-abc".to_string()]
         );
-        assert_eq!(
-            event_tag_values(&event, "relay"),
-            vec![relay.url()]
-        );
+        assert_eq!(event_tag_values(&event, "relay"), vec![relay.url()]);
         core.stop().await.unwrap();
     }
 
@@ -1284,14 +1328,20 @@ mod tests {
             .await,
             "new subscription was not sent"
         );
-        assert_eq!(relay.frames_with_label("REQ")[1][2]["#h"], json!(["chan-2"]));
+        assert_eq!(
+            relay.frames_with_label("REQ")[1][2]["#h"],
+            json!(["chan-2"])
+        );
 
         core.unsubscribe("chan-1").await.unwrap();
         assert!(
             wait_for(|| relay.count_label("CLOSE") >= 1, TIMEOUT).await,
             "CLOSE was not sent"
         );
-        assert_eq!(relay.frames_with_label("CLOSE")[0][1], json!("rox-chat-chan-1"));
+        assert_eq!(
+            relay.frames_with_label("CLOSE")[0][1],
+            json!("rox-chat-chan-1")
+        );
 
         // Subscribing while disconnected must be replayed on the next connect.
         core.stop().await.unwrap();
@@ -1326,7 +1376,10 @@ mod tests {
 
         let edited = core.edit_message(&sent.id, "fixed").await.unwrap();
         assert_eq!(edited.id, sent.id);
-        let cached = core.list_messages("chan-1", ListOptions::default()).await.unwrap();
+        let cached = core
+            .list_messages("chan-1", ListOptions::default())
+            .await
+            .unwrap();
         assert_eq!(cached[0].content, "fixed");
         assert!(cached[0].edited_at.is_some());
         assert_eq!(
@@ -1344,7 +1397,10 @@ mod tests {
 
         let deleted = core.delete_message(&sent.id).await.unwrap();
         assert_eq!(deleted.id, sent.id);
-        let cached = core.list_messages("chan-1", ListOptions::default()).await.unwrap();
+        let cached = core
+            .list_messages("chan-1", ListOptions::default())
+            .await
+            .unwrap();
         assert!(cached[0].deleted_at.is_some());
 
         assert!(matches!(
@@ -1359,7 +1415,10 @@ mod tests {
         );
         let published = relay.frames_with_label("EVENT");
         assert_eq!(published[1][1]["kind"], json!(9));
-        assert_eq!(published[1][1]["tags"][1], json!(["e", sent.id, "", "edit"]));
+        assert_eq!(
+            published[1][1]["tags"][1],
+            json!(["e", sent.id, "", "edit"])
+        );
         assert_eq!(published[2][1]["kind"], json!(5));
         assert_eq!(published[2][1]["tags"][0], json!(["e", sent.id]));
         core.stop().await.unwrap();

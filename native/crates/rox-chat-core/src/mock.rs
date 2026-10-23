@@ -175,7 +175,9 @@ pub async fn wait_for(predicate: impl Fn() -> bool, timeout: Duration) -> bool {
 /// Reserve a loopback port that is free right now, so a test can point the
 /// client at a relay that is not listening yet.
 pub async fn reserve_port() -> u16 {
-    let listener = TcpListener::bind(("127.0.0.1", 0)).await.expect("reserve port");
+    let listener = TcpListener::bind(("127.0.0.1", 0))
+        .await
+        .expect("reserve port");
     let port = listener.local_addr().expect("reserved addr").port();
     drop(listener);
     port

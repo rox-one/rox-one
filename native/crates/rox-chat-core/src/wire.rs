@@ -60,9 +60,14 @@ impl Filter {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ClientFrame {
-    Req { sub_id: String, filters: Vec<Filter> },
+    Req {
+        sub_id: String,
+        filters: Vec<Filter>,
+    },
     Event(Event),
-    Close { sub_id: String },
+    Close {
+        sub_id: String,
+    },
     Auth(Event),
 }
 
@@ -90,12 +95,27 @@ impl ClientFrame {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum RelayFrame {
-    Event { sub_id: String, event: Event },
-    Eose { sub_id: String },
-    Ok { event_id: String, accepted: bool, message: String },
-    Auth { challenge: String },
-    Notice { message: String },
-    Unknown { label: String },
+    Event {
+        sub_id: String,
+        event: Event,
+    },
+    Eose {
+        sub_id: String,
+    },
+    Ok {
+        event_id: String,
+        accepted: bool,
+        message: String,
+    },
+    Auth {
+        challenge: String,
+    },
+    Notice {
+        message: String,
+    },
+    Unknown {
+        label: String,
+    },
 }
 
 impl RelayFrame {
@@ -134,9 +154,7 @@ impl RelayFrame {
             "AUTH" => RelayFrame::Auth {
                 challenge: str_at(1),
             },
-            "NOTICE" => RelayFrame::Notice {
-                message: str_at(1),
-            },
+            "NOTICE" => RelayFrame::Notice { message: str_at(1) },
             other => RelayFrame::Unknown {
                 label: other.to_string(),
             },
@@ -172,7 +190,10 @@ mod tests {
         assert_eq!(value[2]["#h"], json!(["c1"]));
         assert_eq!(value[2]["limit"], json!(500));
         assert!(value[2]["kinds"].as_array().unwrap().contains(&json!(9)));
-        assert!(value[2]["kinds"].as_array().unwrap().contains(&json!(20001)));
+        assert!(value[2]["kinds"]
+            .as_array()
+            .unwrap()
+            .contains(&json!(20001)));
     }
 
     #[test]
@@ -184,10 +205,7 @@ mod tests {
         assert_eq!(parsed[1]["id"], json!(ev.id));
 
         assert_eq!(
-            ClientFrame::Close {
-                sub_id: "s".into()
-            }
-            .to_json(),
+            ClientFrame::Close { sub_id: "s".into() }.to_json(),
             r#"["CLOSE","s"]"#
         );
 

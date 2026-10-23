@@ -177,7 +177,10 @@ mod tests {
     #[test]
     fn status_helpers_shape_the_ts_union() {
         assert_eq!(ChatCoreStatus::offline().attempt, None);
-        assert_eq!(ChatCoreStatus::connected().state, ConnectionState::Connected);
+        assert_eq!(
+            ChatCoreStatus::connected().state,
+            ConnectionState::Connected
+        );
         let reconnecting = ChatCoreStatus::reconnecting(3);
         assert_eq!(reconnecting.state, ConnectionState::Reconnecting);
         assert_eq!(reconnecting.attempt, Some(3));

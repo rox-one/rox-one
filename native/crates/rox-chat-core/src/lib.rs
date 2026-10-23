@@ -37,14 +37,12 @@ mod wire;
 mod mock;
 
 pub use cache::ChannelRecord;
-pub use client::{
-    sub_id_for, unix_millis, unix_seconds, BackoffPolicy, ChatCore, ChatCoreBuilder,
-};
+pub use client::{sub_id_for, unix_millis, unix_seconds, BackoffPolicy, ChatCore, ChatCoreBuilder};
 pub use error::ChatError;
 pub use event::{
     canonical_id_serialization, event_channel_id, event_id_hex, event_id_of, event_tag_values,
-    is_edit_event, verify_event, Event, KIND_AUTH, KIND_DELETE, KIND_STREAM_MESSAGE, KIND_TEXT_NOTE,
-    NON_MESSAGE_KINDS, EPHEMERAL_PRESENCE, EPHEMERAL_TYPING,
+    is_edit_event, verify_event, Event, EPHEMERAL_PRESENCE, EPHEMERAL_TYPING, KIND_AUTH,
+    KIND_DELETE, KIND_STREAM_MESSAGE, KIND_TEXT_NOTE, NON_MESSAGE_KINDS,
 };
 pub use keys::Keys;
 pub use outbox::OutboxEntry;

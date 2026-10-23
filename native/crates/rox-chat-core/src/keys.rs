@@ -45,10 +45,7 @@ impl Keys {
         let keypair = Keypair::from_secret_key(secp(), &secret);
         let (xonly, _parity) = keypair.x_only_public_key();
         let pubkey_hex = hex::encode(xonly.serialize());
-        Self {
-            secret,
-            pubkey_hex,
-        }
+        Self { secret, pubkey_hex }
     }
 
     pub fn pubkey_hex(&self) -> &str {
@@ -59,7 +56,9 @@ impl Keys {
     pub fn sign_digest(&self, digest: [u8; 32]) -> [u8; 64] {
         let keypair = Keypair::from_secret_key(secp(), &self.secret);
         let message = Message::from_digest(digest);
-        secp().sign_schnorr_no_aux_rand(&message, &keypair).serialize()
+        secp()
+            .sign_schnorr_no_aux_rand(&message, &keypair)
+            .serialize()
     }
 
     /// Build a signed, NIP-01 canonical event.
@@ -97,7 +96,10 @@ mod tests {
         assert!(Keys::from_hex("").is_err());
         assert!(Keys::from_hex("zz").is_err());
         assert!(Keys::from_hex(&"11".repeat(31)).is_err());
-        assert!(Keys::from_hex(&"00".repeat(32)).is_err(), "zero is not a scalar");
+        assert!(
+            Keys::from_hex(&"00".repeat(32)).is_err(),
+            "zero is not a scalar"
+        );
     }
 
     #[test]
