@@ -2,12 +2,12 @@
  * P8.1 — Messenger mid-band: info docks overlay <900; header secondary → ⋯;
  * infoOpen defaults closed; channel list fluid under midNarrow.
  */
+import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
 
 const src = readFileSync(
-  join(import.meta.dirname, '../../components/messenger/MessengerChannels.tsx'),
+  join(import.meta.dir, '../../components/messenger/MessengerChannels.tsx'),
   'utf8',
 )
 
