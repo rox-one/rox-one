@@ -113,7 +113,7 @@
     }
   },
   "rules": [
-    "Default theme and uiProfile remain Rox; SE only when user selects super-engineering theme.",
+    "Default theme for new installs is Rox Engineering (super-engineering) as of 2026-10-23; existing explicit picks are preserved; Arc Glass remains selectable.",
     "No edits under apps/electron/.ua/ or packages/ui/.ua/.",
     "Integrator is the only agent that may touch AppShell.tsx.",
     "Run bun test on touched packages before handoff."
