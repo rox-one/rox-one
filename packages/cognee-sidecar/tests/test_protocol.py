@@ -79,6 +79,10 @@ class ProtocolTest(unittest.TestCase):
         self.assertEqual(out[1]["result"]["added"], 1)
         self.assertEqual(out[1]["result"]["truncated"], 1)
 
+    def test_cognify_sources_unhashable(self):
+        out = run([{"id": 1, "method": "cognify", "params": {"sources": [["mail"]]}}])
+        self.assertEqual(out[1]["error"]["code"], "bad_params")
+
 
 class OversizedFrameTest(unittest.TestCase):
     def test_oversized_frame_drains_and_next_frame_ok(self):
@@ -117,6 +121,30 @@ class OversizedFrameTest(unittest.TestCase):
         self.assertEqual(len(frames), 2)
 
 
+
+
+    def test_shutdown_exits_without_waiting_for_next_line(self):
+        """shutdown must break the serve loop without another read_line."""
+        from rox_cognee_sidecar.fake_backend import FakeBackend
+        from rox_cognee_sidecar.server import serve
+
+        chunks = [
+            (json.dumps({"id": 1, "method": "shutdown"}) + "\n").encode("utf-8"),
+            (json.dumps({"id": 2, "method": "hello"}) + "\n").encode("utf-8"),
+            b"",
+        ]
+        idx = {"i": 0}
+
+        async def read_line() -> bytes:
+            i = idx["i"]
+            idx["i"] = i + 1
+            return chunks[i] if i < len(chunks) else b""
+
+        buf = io.BytesIO()
+        asyncio.run(serve(FakeBackend(), read_line, out=buf))
+        frames = [json.loads(line) for line in buf.getvalue().decode("utf-8").splitlines()]
+        self.assertEqual(len(frames), 1)
+        self.assertTrue(frames[0]["result"]["ok"])
 
 class Utf8AndConfigTest(unittest.TestCase):
     def test_invalid_utf8_frame_rejected(self):

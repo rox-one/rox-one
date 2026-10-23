@@ -105,8 +105,11 @@ class Server:
             return result
         if method == "cognify":
             sources = params.get("sources")
-            if sources is not None and (not isinstance(sources, list) or not set(sources) <= VALID_SOURCES):
-                raise RpcError("bad_params", "sources must be a list of known sources")
+            if sources is not None:
+                if not isinstance(sources, list) or not all(isinstance(s, str) for s in sources):
+                    raise RpcError("bad_params", "sources must be a list of known sources")
+                if not set(sources) <= VALID_SOURCES:
+                    raise RpcError("bad_params", "sources must be a list of known sources")
             return await self.backend.cognify(sources)
         if method == "search":
             query = params.get("query")
@@ -182,6 +185,17 @@ async def serve(backend: Backend, read_line: Callable[[], Awaitable[bytes]], out
             await server._send({"id": None, "error": {"code": "bad_json", "message": "invalid UTF-8"}})
             continue
         if line:
+            # Handle shutdown inline so we exit without waiting for another
+            # read_line() (host may wait for process exit without closing stdin).
+            is_shutdown = False
+            try:
+                peek = json.loads(line)
+                is_shutdown = isinstance(peek, dict) and peek.get("method") == "shutdown"
+            except json.JSONDecodeError:
+                pass
+            if is_shutdown:
+                await server.handle_line(line)
+                break
             server.submit(line)
             await asyncio.sleep(0)
     await server.drain()

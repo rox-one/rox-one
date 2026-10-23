@@ -8,6 +8,13 @@ from .server import MAX_LINE_BYTES, serve
 
 
 async def _amain() -> int:
+    # Protocol frames must be the only bytes on the real stdout. Capture it
+    # before redirecting sys.stdout so cognee/fastembed/hf prints cannot
+    # interleave with JSON-RPC. Fake backend is for tests only — the host
+    # must never set ROX_COGNEE_FAKE_BACKEND in production.
+    real_out = sys.stdout.buffer
+    sys.stdout = sys.stderr
+
     if os.environ.get("ROX_COGNEE_FAKE_BACKEND") == "1":
         from .fake_backend import FakeBackend
 
@@ -25,7 +32,7 @@ async def _amain() -> int:
     async def read_line() -> bytes:
         return await loop.run_in_executor(None, stdin.readline, MAX_LINE_BYTES + 1)
 
-    await serve(backend, read_line)
+    await serve(backend, read_line, out=real_out)
     return 0
 
 
@@ -35,7 +42,7 @@ def main() -> None:
     except KeyboardInterrupt:
         sys.exit(0)
     except Exception as e:  # noqa: BLE001
-        print(f"[rox-cognee] fatal: {type(e).__name__}", file=sys.stderr)
+        print(f"[rox-cognee] fatal: {type(e).__name__}: {e}", file=sys.stderr)
         sys.exit(1)
 
 

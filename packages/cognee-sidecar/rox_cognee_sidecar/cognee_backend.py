@@ -93,8 +93,14 @@ class CogneeBackend:
         try:
             with open(self.map_path, encoding="utf-8") as f:
                 data = json.load(f)
-                return data if isinstance(data, dict) else {}
-        except (OSError, ValueError):
+                if isinstance(data, dict):
+                    return data
+                print("[rox-cognee] ids.json is not an object; starting with empty map", file=sys.stderr)
+                return {}
+        except FileNotFoundError:
+            return {}
+        except (OSError, ValueError) as err:
+            print(f"[rox-cognee] ids.json unreadable ({type(err).__name__}); starting with empty map", file=sys.stderr)
             return {}
 
     def _save_map(self) -> None:
@@ -132,15 +138,31 @@ class CogneeBackend:
         async with self._write_lock:
             return await self._add(docs)
 
+    def _write_doc_file(self, path: str, text: str) -> None:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+
     async def _add(self, docs: list[dict[str, Any]]) -> dict[str, Any]:
-        # Stage files first; only commit id-map entries for sources cognee accepted
-        # so status()/search() dataset lists do not advertise docs the graph never got.
+        # Same doc id under a new source: best-effort delete from the old dataset
+        # first (runs before we rewrite files) so we do not leave an orphan node.
+        reassigned = [
+            d["id"]
+            for d in docs
+            if (prev := self._ids.get(doc_file_name(d["id"]))) and prev["source"] != d["source"]
+        ]
+        if reassigned:
+            try:
+                await self._delete(reassigned)
+            except Exception as err:  # noqa: BLE001
+                print(f"[rox-cognee] reassign cleanup failed: {type(err).__name__}", file=sys.stderr)
+
+        # Stage files off the event loop; only commit id-map entries for sources
+        # cognee.add accepted so status()/search() do not advertise missing docs.
         staged: dict[str, list[tuple[str, str, str]]] = {}  # source -> [(name, path, id)]
         for d in docs:
             name = doc_file_name(d["id"])
             path = os.path.join(self.docs_dir, name)
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(d["text"])
+            await asyncio.to_thread(self._write_doc_file, path, d["text"])
             staged.setdefault(d["source"], []).append((name, path, d["id"]))
         added = 0
         first_err: BaseException | None = None
@@ -155,7 +177,7 @@ class CogneeBackend:
             for name, _path, doc_id in items:
                 self._ids[name] = {"id": doc_id, "source": source}
                 added += 1
-        self._save_map()
+        await asyncio.to_thread(self._save_map)
         if first_err is not None and added == 0:
             raise first_err
         # Partial success: map reflects accepted sources; host may retry the rest.
@@ -258,8 +280,8 @@ class CogneeBackend:
                     os.remove(os.path.join(self.docs_dir, name))
                 except OSError:
                     pass
-            if gone:
-                self._save_map()
+        if gone:
+            await asyncio.to_thread(self._save_map)
         return {"removed": removed}
 
     async def status(self) -> dict[str, Any]:
