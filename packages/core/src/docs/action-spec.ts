@@ -458,17 +458,12 @@ export function serializeActionSpec(spec: ActionSpec): string {
   return `${JSON.stringify(payload, null, 2)}\n`
 }
 
-export function renderActionFenceMarkdown(spec: ActionSpec, language = 'rox-action'): string {
-  const lang = isActionFenceLanguage(language) ? language.trim().toLowerCase() : 'rox-action'
-  // Always emit canonical rox-action for reviewed Rox docs; keep inbound lang only when still unreviewed import.
-  const outLang =
-    spec.reviewState === 'unreviewed' && spec.sourceLanguage && isActionFenceLanguage(spec.sourceLanguage)
-      ? spec.sourceLanguage.trim().toLowerCase()
-      : lang === 'button' || lang === 'buttons' || lang === 'rox-button'
-        ? 'rox-action'
-        : lang
+export function renderActionFenceMarkdown(spec: ActionSpec, _language = 'rox-action'): string {
+  // Always canonicalize fence language to rox-action. Review state lives in
+  // attrs/metadata only — never dual langs (inbound button → rox-action).
+  void _language
   const body = serializeActionSpec(spec).replace(/\n$/, '')
-  return `\`\`\`${outLang}\n${body}\n\`\`\``
+  return `\`\`\`rox-action\n${body}\n\`\`\``
 }
 
 /** Basic/export representation stays declarative and inert — never a fake success. */

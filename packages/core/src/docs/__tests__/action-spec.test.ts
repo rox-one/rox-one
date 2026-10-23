@@ -148,7 +148,26 @@ describe('LSX-WP-033 ActionSpec helpers', () => {
     expect(basic).not.toMatch(/success|executed successfully/i)
   })
 
-  test('sanitizeActionLabel strips HTML and rejects javascript URLs', () => {
+  test('serialize always canonicalizes fence language to rox-action', () => {
+    const imported = parseActionFenceBody(
+      JSON.stringify({
+        kind: 'command',
+        label: 'Sync',
+        commandId: 'notes.sync',
+        reviewState: 'unreviewed',
+      }),
+      { language: 'button', imported: true },
+    )
+    // Imported stays unreviewed; serialize must still emit ```rox-action (no dual langs).
+    const spec = imported.ok ? imported.spec : imported.inertSpec
+    expect(spec.reviewState).toBe('unreviewed')
+    const md = renderActionFenceMarkdown(spec, 'button')
+    expect(md.startsWith('```rox-action\n')).toBe(true)
+    expect(md).not.toContain('```button')
+    expect(md).toContain('"reviewState": "unreviewed"')
+  })
+
+    test('sanitizeActionLabel strips HTML and rejects javascript URLs', () => {
     expect(sanitizeActionLabel('<b>Hi</b> there')).toBe('Hi there')
     expect(sanitizeActionLabel('javascript:alert(1)')).toBe('')
     expect(canonicalizeActionKind('entity-link')).toBe('entityLink')

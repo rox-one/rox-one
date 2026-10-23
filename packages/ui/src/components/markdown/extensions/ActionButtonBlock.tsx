@@ -54,13 +54,13 @@ function parseSpecFromCode(code: string, language?: string): ActionSpec {
 }
 
 function defaultSlashSpec(): ActionSpec {
+  // Unreviewed/inert until ActionBuilder exists — no fake command id.
   return {
     kind: 'command',
     label: translate('notes.actionButton.defaultLabel', 'Action'),
-    reviewState: 'reviewed',
+    reviewState: 'unreviewed',
     failurePolicy: 'stopOnError',
     rejectedUnsafe: false,
-    commandId: 'notes.noop',
   }
 }
 
@@ -73,7 +73,7 @@ export function createActionButtonContent(spec?: Partial<ActionSpec>): {
     ...base,
     ...spec,
     label: sanitizeActionLabel(spec?.label ?? base.label) || base.label,
-    reviewState: spec?.reviewState ?? 'reviewed',
+    reviewState: spec?.reviewState ?? 'unreviewed',
     rejectedUnsafe: spec?.rejectedUnsafe === true,
     failurePolicy: spec?.failurePolicy ?? 'stopOnError',
     kind: spec?.kind ?? 'command',

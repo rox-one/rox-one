@@ -23,15 +23,18 @@ function makeEditor(content?: string) {
 }
 
 describe('ActionButtonBlock TipTap', () => {
-  it('slash payload inserts a reviewed declarative command button', () => {
+  it('slash payload inserts an unreviewed/inert button without a fake command id', () => {
     const editor = makeEditor()
     insertActionButtonContent(editor)
     const json = JSON.stringify(editor.getJSON())
     expect(json).toContain('"type":"actionButton"')
-    expect(json).toContain('notes.noop')
+    expect(json).not.toContain('notes.noop')
+    expect(json).toContain('unreviewed')
     const md = editor.getMarkdown()
     expect(md).toContain('```rox-action')
     expect(md).toContain('"kind": "command"')
+    expect(md).toContain('"reviewState": "unreviewed"')
+    expect(md).not.toContain('notes.noop')
     editor.destroy()
   })
 
@@ -71,6 +74,9 @@ describe('ActionButtonBlock TipTap', () => {
 
     const md = editor.getMarkdown()
     // Export keeps an inert declarative fence / representation — never a fake success toast string.
+    // Fence language is always canonicalized to rox-action (inbound button → rox-action).
+    expect(md).toContain('```rox-action')
+    expect(md).not.toContain('```button')
     expect(md.toLowerCase()).not.toContain('executed successfully')
     expect(md).toContain('Before')
     expect(md).toContain('After')
