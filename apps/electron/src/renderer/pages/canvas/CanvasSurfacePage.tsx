@@ -16,7 +16,7 @@ import {
 } from '@rox/canvas-core'
 import { ENTITY_KINDS, kindDescriptor, type EntityKind } from '@rox/core/entities'
 import {
-  CREATABLE_KINDS, createEntity, createEntityLinker, createEntityRegistry, createPreviewBatcher, watchEntityChanges, deleteEntity, EntitySnapshotResolver, searchExisting, unlinkMyBoardLinks, relinkMyBoardLinks, canDeleteCardEntity, type CreatableKind,
+  CREATABLE_KINDS, createEntity, createEntityLinker, createEntityRegistry, createPreviewBatcher, seedCreatedCardPreview, watchEntityChanges, deleteEntity, EntitySnapshotResolver, searchExisting, unlinkMyBoardLinks, relinkMyBoardLinks, canDeleteCardEntity, type CreatableKind,
 } from './entity-wiring'
 import { onCanvasTarget, takeCanvasTarget, type CanvasTarget } from './canvas-target'
 import { resizeRotated } from './geometry'
@@ -405,11 +405,17 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const createAndPlace = async (kind: CreatableKind, name: string) => {
     if (!ctx) return
     let ref: EntityRef | null = null
+    const title = name.trim() || t('canvas.boards.untitled')
     try {
-      ref = await createEntity(workspaceId, kind, name.trim() || t('canvas.boards.untitled'))
+      ref = await createEntity(workspaceId, kind, title)
+      // Paint the real title immediately — entitiesResolve often returns
+      // `unavailable` (no note owner resolver), which used to show «Удалено».
+      seedCreatedCardPreview(batcher, ref, title)
+      resolver.invalidate(ref)
       const id = await linkEntityCard(ctx, ref, center())
       setSelected(id)
       setPicker(false)
+      void resolver.resolve(ref)
     } catch (e) {
       console.warn('[canvas] create', e)
       // The entity only existed for this card: don't leave an orphan behind.
