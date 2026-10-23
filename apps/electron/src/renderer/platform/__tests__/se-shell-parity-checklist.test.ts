@@ -51,6 +51,7 @@ describe('SE shell parity checklist (docs + contract)', () => {
     expect(md).toContain('Optional icons v2 SVG extract')
     expect(contract.done.some((d) => d.id === 'worktree-hover-delay')).toBe(true)
     expect(contract.done.some((d) => d.id === 'dialog-popover-springs')).toBe(true)
+    expect(contract.done.some((d) => d.id === 'overlay-menu-drawer-springs')).toBe(true)
     expect(contract.done.some((d) => d.id === 'navigator-width-260')).toBe(true)
   })
 })

@@ -79,6 +79,17 @@
       ]
     },
     {
+      "id": "overlay-menu-drawer-springs",
+      "title": "SE Dropdown/Context/Drawer-overlay/Tooltip enter-exit springs (lighter menus)",
+      "paths": [
+        "packages/ui/src/styles/index.css",
+        "packages/ui/src/components/ui/drawer.tsx",
+        "apps/electron/src/renderer/components/ui/dropdown-menu.tsx",
+        "apps/electron/src/renderer/components/ui/context-menu.tsx",
+        "apps/electron/src/renderer/index.css"
+      ]
+    },
+    {
       "id": "navigator-width-260",
       "title": "Workspace navigator design width ~260 (NAVIGATOR_WIDTH_DEFAULT)",
       "paths": [

@@ -38,14 +38,20 @@ describe('SE Dialog / Popover spring enter–exit', () => {
     expect(seBare).toContain('[data-slot="dialog-content"]')
     expect(seBare).toContain('[data-slot="popover-content"]')
     expect(seBare).toContain('[data-slot="dialog-overlay"]')
-    // Tooltips stay on the shared --motion-fast path (not this SE block).
-    expect(seBare).not.toContain('tooltip-content')
+    // Menus / tooltip / drawer-overlay follow in the same SE overlay block.
+    expect(seBare).toContain('[data-slot="tooltip-content"]')
+    expect(seBare).toContain('[data-slot="drawer-overlay"]')
+    expect(seBare).toContain('[data-slot="dropdown-menu-content"]')
+    expect(seBare).toContain('[data-slot="context-menu-content"]')
   })
 
   it('wires enter to --motion-spring / --ease-spring and exit to --motion-spring-exit', () => {
     expect(seBare).toContain('animation: rox-overlay-in var(--motion-spring) var(--ease-spring) both')
     expect(seBare).toContain('animation: rox-overlay-out var(--motion-spring-exit) var(--ease-exit) both')
     expect(seBare).toContain('animation: rox-opacity-in var(--motion-spring) var(--ease-spring) both')
+    // Lighter menu/tooltip enter (disclosure/base + spring ease).
+    expect(seBare).toContain('animation: rox-overlay-in var(--motion-disclosure) var(--ease-spring) both')
+    expect(seBare).toContain('animation: rox-overlay-in var(--motion-base) var(--ease-spring) both')
     expect(seBare).not.toMatch(/\b\d+ms\b/)
     expect(seBare).not.toContain('var(--motion-fast)')
   })
