@@ -224,6 +224,11 @@ function safeNoteFilename(title: string): string {
   return `${safe || 'Untitled'}.md`
 }
 
+/** Canonical note stem for create uniquify — Report.md → Report, Report-2 (never Report.md-2). */
+function safeNoteBasename(title: string): string {
+  return stripMdExtension(safeNoteFilename(title || 'Untitled'))
+}
+
 async function ensureNotesDirs(notesRoot: string): Promise<void> {
   await mkdir(join(notesRoot, ASSETS_DIR), { recursive: true })
   await mkdir(join(notesRoot, DAILY_DIR), { recursive: true })
@@ -1083,10 +1088,11 @@ async function createNote(notesRoot: string, title: string, writeNative: NativeN
   if (!isInsidePath(notesRoot, dir)) throw new Error('Invalid note folder')
   await ensureSafeNoteDirectory(notesRoot, dir)
 
-  let filePath = join(dir, safeNoteFilename(title))
+  const baseName = safeNoteBasename(title)
+  let filePath = join(dir, `${baseName}.md`)
   let suffix = 2
   while (existsSync(filePath)) {
-    filePath = join(dir, `${sanitizeFilename(title || 'Untitled')}-${suffix++}.md`)
+    filePath = join(dir, `${baseName}-${suffix++}.md`)
   }
   await writeNative('create', [{ kind: 'write', noteId: noteIdFromRelativePath(relative(notesRoot, filePath)), expectedRevision: null, content: buildInitialNoteContent(title || 'Untitled') }])
   return readNote(notesRoot, noteIdFromRelativePath(relative(notesRoot, filePath)))
@@ -2413,7 +2419,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
 function uniquifyNativeNoteRelativeId(notesRoot: string, title: string, folder?: string | null): string {
   const safeFolder = assertSafeCreateFolder(folder)
   // One stem for both first try and -N suffixes (avoids Report.md-2 from sanitizeFilename).
-  const baseName = stripMdExtension(safeNoteFilename(title || 'Untitled'))
+  const baseName = safeNoteBasename(title)
   let relativeId = safeFolder ? `${safeFolder}/${baseName}` : baseName
   let suffix = 2
   while (existsSync(join(notesRoot, `${relativeId}.md`))) {
@@ -2878,7 +2884,7 @@ function uniquifyNativeNoteRelativeId(notesRoot: string, title: string, folder?:
     const dir = safeFolder ? resolve(notesRoot, safeFolder) : notesRoot
     if (!isInsidePath(notesRoot, dir)) throw new Error('Invalid note folder')
     await ensureSafeNoteDirectory(notesRoot, dir)
-    const baseName = stripMdExtension(safeNoteFilename(noteTitle || 'Untitled'))
+    const baseName = safeNoteBasename(noteTitle || 'Untitled')
     let filePath = join(dir, `${baseName}.md`)
     let suffix = 2
     while (existsSync(filePath)) {
