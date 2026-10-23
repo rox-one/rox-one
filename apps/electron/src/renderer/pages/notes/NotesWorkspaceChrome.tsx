@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Check, ChevronDown, ListTree, MessageSquare, PanelRight } from 'lucide-react'
+import { Check, ChevronDown, History, ListTree, MessageSquare, PanelRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { DropdownMenu, DropdownMenuTrigger, StyledDropdownMenuContent, StyledDropdownMenuItem } from '@/components/ui/styled-dropdown'
@@ -90,14 +90,15 @@ export function NotesResponsiveRail({
 
 
 /** Shared actual NativeNotesPage tool controls; sheets never change saved rail preferences. */
-export function NotesRailTools({ tocShown, commentsShown, sheet, onCollapse, onOpen }: {
-  tocShown: boolean; commentsShown: boolean; sheet: 'toc' | 'comments' | null
-  onCollapse: (rail: 'toc' | 'comments') => void; onOpen: (rail: 'toc' | 'comments') => void
+export function NotesRailTools({ tocShown, commentsShown, historyShown, sheet, onCollapse, onOpen }: {
+  tocShown: boolean; commentsShown: boolean; historyShown?: boolean; sheet: 'toc' | 'comments' | 'history' | null
+  onCollapse: (rail: 'toc' | 'comments' | 'history') => void; onOpen: (rail: 'toc' | 'comments' | 'history') => void
 }) {
   const { t } = useTranslation()
   return <div className="ml-auto flex shrink-0 gap-1 pr-2">
     <button type="button" className="grid size-7 place-items-center rounded-md hover:bg-foreground/[0.08]" aria-label={t('notes.toc.title')} title={t('notes.toc.title')} aria-haspopup={tocShown ? undefined : 'dialog'} aria-expanded={tocShown || sheet === 'toc'} onClick={() => { if (tocShown) onCollapse('toc'); else onOpen('toc') }}><ListTree className="size-3.5" aria-hidden /></button>
     <button type="button" className="grid size-7 place-items-center rounded-md hover:bg-foreground/[0.08]" aria-label={t('notes.comments.title')} title={t('notes.comments.title')} aria-haspopup={commentsShown ? undefined : 'dialog'} aria-expanded={commentsShown || sheet === 'comments'} onClick={() => { if (commentsShown) onCollapse('comments'); else onOpen('comments') }}><MessageSquare className="size-3.5" aria-hidden /></button>
+    <button type="button" className="grid size-7 place-items-center rounded-md hover:bg-muted" aria-label={t('notes.history.title')} data-testid="notes-history-open" aria-haspopup={historyShown ? undefined : 'dialog'} aria-expanded={Boolean(historyShown) || sheet === 'history'} onClick={() => { if (historyShown) onCollapse('history'); else onOpen('history') }}><History className="icon-caption" aria-hidden /></button>
   </div>
 }
 

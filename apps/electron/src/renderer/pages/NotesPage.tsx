@@ -1,6 +1,7 @@
 import { useNavigationActions } from '@/contexts/NavigationContext'
 import * as React from 'react'
 import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, NotesViewMenu, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
+import { VersionHistoryPanel } from './notes/VersionHistoryPanel'
 import { notesAuxiliaryFits, type NotesRail } from './notes/notes-layout'
 import { usePanelWorkspaceLayout, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
 import { type ProjectNoteScope, noteInProjectScope, noteCreationFolder, newProjectNoteFolder } from './notes/project-note-scope'
@@ -641,7 +642,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [panelLayoutMode, docRowWidth, railLayout.vault])
   const [inspectorSheetOpen, setInspectorSheetOpen] = React.useState(false)
   const inlineAuxiliary = notesAuxiliaryFits(shellWidth, inspectorCollapsed, false)
-  const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | null>(null)
+  const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | 'history' | null>(null)
   const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
   const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
   const [commandIndex, setCommandIndex] = React.useState(0)
@@ -1497,6 +1498,128 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     if (!dirtyRef.current) return true
     return await saveCurrentNote() && !dirtyRef.current
   }, [saveCurrentNote])
+
+  /**
+   * Restore a historical revision as a new save under the shared save queue.
+   * Dirty editors flush first so unsaved text becomes a tip in history; a flush
+   * conflict refuses the restore.
+   */
+  const restoreNoteFromHistory = React.useCallback(async (revisionId: string): Promise<NoteDocument> => {
+    if (!activeWorkspaceId || !activeNote) throw new Error(t('notes.content.reloadRequired'))
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+    if (!await flushBeforeAction()) {
+      throw new Error(t('notes.content.conflict'))
+    }
+    const noteId = activeNote.id
+    const revisionKey = noteRevisionKey(activeWorkspaceId, noteId)
+    const documentGeneration = openNoteRequestRef.current
+    const cacheEpoch = cacheWriteEpoch()
+    const isCurrentDocument = () => activeNoteIdRef.current === noteId && workspaceIdRef.current === activeWorkspaceId && openNoteRequestRef.current === documentGeneration
+    const expectedRevision = revisionsRef.current.get(revisionKey) ?? activeNote.revision
+    if (!expectedRevision) throw new Error(t('notes.content.reloadRequired'))
+    pendingCommitsRef.current.delete(revisionKey)
+    const queued = saveQueueRef.current.then(async () => {
+      if (workspaceIdRef.current !== activeWorkspaceId || openNoteRequestRef.current !== documentGeneration) {
+        throw new Error(t('notes.content.previewChanged'))
+      }
+      if (isCurrentDocument()) { setSaving(true); setSaveError(null) }
+      try {
+        const tipRevision = revisionsRef.current.get(revisionKey) ?? expectedRevision
+        // Prefer post-flush native tip from the revision maps so CAS matches the just-saved tip.
+        const nativeExpected = nativeRevisionByNoteRef.current.get(revisionKey)
+        const saved = await window.electronAPI.restoreNoteRevision(
+          activeWorkspaceId,
+          noteId,
+          revisionId,
+          tipRevision,
+          nativeExpected !== undefined && nativeExpected !== null
+            ? mutationOptions(activeWorkspaceId, noteId, nativeExpected)
+            : activeNote.sourceStoreId,
+        )
+        nativeRevisionByNoteRef.current.set(revisionKey, saved.nativeRevision ?? null)
+        expectedRevisionByNoteRef.current.set(revisionKey, contentHash(saved.content))
+        if (saved.revision) revisionsRef.current.set(revisionKey, saved.revision)
+        // Prefer a fresh resolve after restore; on throw/error keep prior OK so the editor stays writable.
+        let restoredResolution: ContentResolution | ContentFailure | null = null
+        if (window.electronAPI.isChannelAvailable(RPC_CHANNELS.content.RESOLVE)) {
+          try {
+            restoredResolution = await window.electronAPI.resolveContent({
+              workspaceId: activeWorkspaceId,
+              entityId: `note:${saved.nativeId ?? saved.id}`,
+            })
+          } catch {
+            restoredResolution = null
+          }
+        }
+        if (isCurrentDocument()) {
+          contentRef.current = saved.content
+          dirtyRef.current = false
+          setContent(saved.content)
+          setDirty(false)
+          setActiveNote(saved)
+          setTagDraft(saved.tags.join(', '))
+          setSaveNeedsReload(false)
+          saveBlockedRef.current = false
+          if (
+            restoredResolution
+            && restoredResolution.status !== 'error'
+            && restoredResolution.origin.nativeId === (saved.nativeId ?? saved.id)
+          ) {
+            const matched = restoredResolution
+            saved.sourceStoreId = matched.origin.sourceStoreId
+            setContentResolution({
+              ...matched,
+              content: saved.content,
+              revision: saved.revision ?? matched.revision,
+              contentHash: contentHash(saved.content),
+              canonicalRef: {
+                ...matched.canonicalRef,
+                revisionId: saved.revision ?? matched.canonicalRef.revisionId,
+              },
+            })
+          } else {
+            // Resolve unavailable/failed/mismatched after a successful restore: patch previous OK, never block.
+            setContentResolution(previous => previous && previous.status !== 'error' ? {
+              ...previous, content: saved.content, revision: saved.revision!, contentHash: contentHash(saved.content),
+              canonicalRef: { ...previous.canonicalRef, revisionId: saved.revision },
+            } : previous)
+          }
+        }
+        if (workspaceIdRef.current === activeWorkspaceId) {
+          setNotes(prev => prev.map(n => n.id === saved.id ? saved : n))
+          patchCachedNote(activeWorkspaceId, saved, cacheEpoch)
+          taskCacheRef.current.set(saved.id, extractTasks(saved, saved.content))
+          taskCacheUpdatedAtRef.current.set(saved.id, saved.updatedAt)
+          setAllTasks([...taskCacheRef.current.values()].flat())
+        }
+        return saved
+      } catch (error) {
+        const code = (error as { code?: string })?.code
+        const knownFailures: Record<string, string> = {
+          HASH_CONFLICT: 'notes.content.conflict', AUTH_FAILED: 'notes.content.denied', NOT_FOUND: 'notes.content.deleted',
+          DOCUMENT_VALIDATION_FAILED: 'notes.content.invalidCommand', DOCUMENT_AUTHORITY_CHANGED: 'notes.content.authorityChanged',
+          DOCUMENT_BUSY: 'notes.content.busy', DOCUMENT_RESULT_UNAVAILABLE: 'notes.content.resultUnavailable',
+        }
+        const message = code && knownFailures[code] ? t(knownFailures[code]) : (error instanceof Error ? error.message : t('notes.content.unconfirmedSave'))
+        if (isCurrentDocument()) {
+          if (['HASH_CONFLICT', 'AUTH_FAILED', 'NOT_FOUND', 'DOCUMENT_AUTHORITY_CHANGED', 'DOCUMENT_RESULT_UNAVAILABLE'].includes(code ?? '')) {
+            saveBlockedRef.current = true
+            setSaveNeedsReload(true)
+          }
+          setSaveError(message)
+          toast.error(message)
+        }
+        throw error instanceof Error ? error : new Error(message)
+      } finally {
+        if (isCurrentDocument()) setSaving(false)
+      }
+    })
+    saveQueueRef.current = queued.then(() => true, () => false)
+    return queued
+  }, [activeWorkspaceId, activeNote, flushBeforeAction, mutationOptions, t])
 
   React.useEffect(() => {
     if (!dirty || !activeWorkspaceId || !activeNote || saveNeedsReload) return
@@ -2984,7 +3107,7 @@ h1,h2,h3{margin-top:1.5em}
             capabilities={noteViewCapabilities}
             compact={toolbarWidth < 560}
           />
-          {noteView === 'standard' ? <NotesRailTools tocShown={tocShown} commentsShown={commentsShown} sheet={railSheet} onOpen={setRailSheet} onCollapse={(rail) => setRailLayout({ [`${rail}Collapsed`]: true })} /> : null}
+          {noteView === 'standard' ? <NotesRailTools tocShown={tocShown} commentsShown={commentsShown} historyShown={false} sheet={railSheet} onOpen={setRailSheet} onCollapse={(rail) => setRailLayout({ [`${rail}Collapsed`]: true })} /> : null}
           </div>
         ) : null}
 
@@ -3401,6 +3524,16 @@ h1,h2,h3{margin-top:1.5em}
                   setContent(next)
                   setDirty(true)
                 }}
+              />
+            </NotesResponsiveRail> : null}
+            {activeNote && activeWorkspaceId ? <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView, 'history'])} inline={false} open={railSheet === 'history'} title={t('notes.history.title')} onClose={() => setRailSheet(null)}>
+              <VersionHistoryPanel
+                workspaceId={activeWorkspaceId}
+                noteId={activeNote.id}
+                currentContent={content}
+                currentRevision={activeNote.revision ?? null}
+                width={280}
+                onRestore={(revisionId) => restoreNoteFromHistory(revisionId)}
               />
             </NotesResponsiveRail> : null}
             </div>
