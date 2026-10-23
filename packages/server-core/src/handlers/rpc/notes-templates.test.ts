@@ -222,17 +222,17 @@ describe('note templates library', () => {
       templateId: 'Daily',
       title: 'Nope',
       body: 'x',
-    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    })).rejects.toMatchObject({ code: 'INVALID_PAYLOAD' })
     await expect(saveNoteAsTemplateForRoot(notesRoot, {
       templateId: 'daily.md',
       title: 'Nope',
       body: 'x',
-    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    })).rejects.toMatchObject({ code: 'INVALID_PAYLOAD' })
     await expect(saveNoteAsTemplateForRoot(notesRoot, {
       templateId: 'team/daily',
       title: 'Nope',
       body: 'x',
-    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    })).rejects.toMatchObject({ code: 'INVALID_PAYLOAD' })
   })
 
   it('skips unreadable template files instead of listing ghosts', async () => {
@@ -269,7 +269,7 @@ describe('note templates library', () => {
       title: 'Daily',
       body: 'x',
       confirmReplace: true,
-    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    })).rejects.toMatchObject({ code: 'INVALID_PAYLOAD' })
   })
 
 
@@ -283,22 +283,22 @@ describe('note templates library', () => {
   })
 
 
-  it('rejects reserved imports template id with INVALID_ARGUMENT (not LOCAL_ONLY)', async () => {
+  it('rejects reserved imports template id with INVALID_PAYLOAD (not LOCAL_ONLY)', async () => {
     await expect(saveNoteAsTemplateForRoot(notesRoot, {
       templateId: 'Imports',
       title: 'Nope',
       body: 'x',
-    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    })).rejects.toMatchObject({ code: 'INVALID_PAYLOAD' })
     await expect(saveNoteAsTemplateForRoot(notesRoot, {
       templateId: 'imports/nested',
       title: 'Nope',
       body: 'x',
-    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    })).rejects.toMatchObject({ code: 'INVALID_PAYLOAD' })
     await expect(saveNoteAsTemplateForRoot(notesRoot, {
       templateId: 'team/imports',
       title: 'Nope',
       body: 'x',
-    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    })).rejects.toMatchObject({ code: 'INVALID_PAYLOAD' })
   })
 
   it('excludes imports basename templates from library catalog', async () => {

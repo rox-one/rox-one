@@ -1900,10 +1900,10 @@ function assertSafeTemplateId(templateId: string): string {
   if (!normalized) throw new Error('Invalid template id')
   // Reserved basenames before assertSafeNoteId — imports/* would otherwise leak LOCAL_ONLY.
   if (normalized.split('/').some(part => part === 'daily')) {
-    throw new CodedError('INVALID_ARGUMENT', 'Template id "daily" is reserved for Daily notes')
+    throw new CodedError('INVALID_PAYLOAD', 'Template id "daily" is reserved for Daily notes')
   }
   if (normalized.split('/').some(part => part === 'imports')) {
-    throw new CodedError('INVALID_ARGUMENT', 'Template id "imports" is reserved')
+    throw new CodedError('INVALID_PAYLOAD', 'Template id "imports" is reserved')
   }
   const id = assertSafeNoteId(normalized)
   if (id.split('/').some(part => part === TEMPLATES_DIR || part === '')) throw new Error('Invalid template id')
