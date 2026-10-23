@@ -84,11 +84,11 @@ html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="
    radix dropdown/context-menu without data-overlay-motion. Only under SE
    accents + data-glass-slot=popover — does not re-enable Tailwind animate-in
    when accents are off. */
-html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="popover"][data-state="open"] {
+html[data-ui-profile="super-engineering"][data-glass-accents]:not([data-render-profile="performance"]) [data-glass-slot="popover"][data-state="open"] {
   animation: rox-glass-pop-in var(--motion-spring) var(--ease-spring) both !important;
 }
 
-html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="popover"][data-state="closed"] {
+html[data-ui-profile="super-engineering"][data-glass-accents]:not([data-render-profile="performance"]) [data-glass-slot="popover"][data-state="closed"] {
   animation: rox-glass-pop-out var(--motion-spring-exit) var(--ease-exit) both !important;
 }
 
