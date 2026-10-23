@@ -1,5 +1,6 @@
 import { createBlockMarkdownSpec, Node, type JSONContent } from '@tiptap/core'
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
 import * as React from 'react'
 import i18n from 'i18next'
 import { installLegacyTabs, serializeLegacyTab, serializeLegacyTabs } from './legacy-tabs'
@@ -24,8 +25,28 @@ export interface RoxTabsOptions {
 }
 
 const MIN_TABS = 1
-const MAX_TABS = 8
+export const MAX_TABS = 8
 const DEFAULT_TAB_COUNT = 2
+
+export function collectExcessTabRanges(doc: { descendants: (f: (node: any, pos: number) => void | boolean) => void }): Array<{ from: number; to: number }> {
+  const excess: Array<{ from: number; to: number }> = []
+  doc.descendants((node, pos) => {
+    if (node.type.name !== 'roxTabs' || node.childCount <= MAX_TABS) return
+    let childPos = pos + 1
+    for (let i = 0; i < MAX_TABS; i += 1) childPos += node.child(i).nodeSize
+    excess.push({ from: childPos, to: pos + node.nodeSize - 1 })
+  })
+  return excess
+}
+
+export function applyExcessTabDeletes(tr: any, excess: Array<{ from: number; to: number }>) {
+  let next = tr
+  for (const range of excess.sort((a, b) => b.from - a.from)) {
+    next = next.delete(range.from, range.to)
+  }
+  return next
+}
+
 
 function translateLabel(key: string, fallback: string, options?: Record<string, unknown>): string {
   const value = i18n.t(key, options as never)
@@ -338,22 +359,63 @@ function TabsNodeView({
   )
 }
 
+function resolveTabIndex(el: HTMLElement): number {
+  const root = el.closest('.tiptap-rox-tabs') as HTMLElement | null
+  if (!root) return 0
+  const panels = root.querySelector(':scope > .tiptap-rox-tabs-panels')
+  if (!panels) return 0
+  const contentReact = panels.querySelector(':scope > [data-node-view-content-react]')
+  const siblingRoots = contentReact
+    ? Array.from(contentReact.children)
+    : Array.from(panels.children).filter((child) => {
+        return (child as HTMLElement).classList?.contains('tiptap-rox-tab')
+          || (child as HTMLElement).querySelector?.(':scope > .tiptap-rox-tab')
+      })
+  return siblingRoots.findIndex((child) => child === el || child.contains(el))
+}
+
 function TabNodeView({
   node,
   getPos,
 }: {
-  node: { attrs: { title?: string } }
+  node: { attrs: { title?: string }; nodeSize?: number }
   getPos: (() => number | undefined) | boolean
 }) {
   const pos = typeof getPos === 'function' ? getPos() : undefined
-  // Index among siblings is resolved via CSS from parent data-active-index;
-  // aria attributes stay stable for the panel itself.
+  const wrapperRef = React.useRef<HTMLElement | null>(null)
+  const [selected, setSelected] = React.useState(true)
+
+  React.useLayoutEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+    const root = el.closest('.tiptap-rox-tabs') as HTMLElement | null
+    if (!root) return
+
+    const sync = () => {
+      const index = resolveTabIndex(el)
+      const activeIndex = Number(root.getAttribute('data-active-index') ?? '0')
+      setSelected(index >= 0 && index === activeIndex)
+    }
+
+    sync()
+    const observer = new MutationObserver(sync)
+    observer.observe(root, { attributes: true, attributeFilter: ['data-active-index', 'data-tabs-count'] })
+    const panels = root.querySelector(':scope > .tiptap-rox-tabs-panels')
+    if (panels) observer.observe(panels, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [node, pos])
+
   return (
     <NodeViewWrapper
-      className="tiptap-rox-tab"
+      ref={wrapperRef}
+      className={`tiptap-rox-tab${selected ? ' is-active' : ''}`}
       data-type="rox-tab"
       data-title={node.attrs.title ?? ''}
+      data-active={selected ? 'true' : 'false'}
       role="tabpanel"
+      hidden={!selected}
+      aria-hidden={!selected}
+      {...(!selected ? ({ inert: true } as React.HTMLAttributes<HTMLElement>) : {})}
       id={typeof pos === 'number' ? `rox-tab-panel-at-${pos}` : undefined}
     >
       <NodeViewContent className="tiptap-rox-tab-content" />
@@ -402,6 +464,26 @@ export const RoxTabsBlock = Node.create<RoxTabsOptions>({
           return chain().focus().insertContentAt(targetPos, createRoxTabsContent(count, undefined, this.options.labels)).run()
         },
     }
+  },
+
+  onCreate() {
+    const excess = collectExcessTabRanges(this.editor.state.doc)
+    if (excess.length === 0) return
+    this.editor.view.dispatch(applyExcessTabDeletes(this.editor.state.tr, excess))
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('roxTabsClamp'),
+        appendTransaction(transactions, _oldState, newState) {
+          if (!transactions.some((transaction) => transaction.docChanged)) return null
+          const excess = collectExcessTabRanges(newState.doc)
+          if (excess.length === 0) return null
+          return applyExcessTabDeletes(newState.tr, excess)
+        },
+      }),
+    ]
   },
 
   addNodeView() {

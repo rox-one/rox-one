@@ -99,6 +99,7 @@ import {
 import { PersonalTaskStore } from '@rox/core/tasks/personal'
 import {
   applyPersistentFolds,
+  basicMarkdownForNotes,
   defaultNoteCommands,
   extractComments,
   matchNoteCommands,
@@ -2790,7 +2791,7 @@ h1,h2,h3{margin-top:1.5em}
       }),
       '',
       '```markdown',
-      content,
+      basicMarkdownForNotes(content),
       '```',
       '',
       instruction,
@@ -3407,8 +3408,11 @@ h1,h2,h3{margin-top:1.5em}
             <p className="min-w-0 break-words text-destructive" data-testid="notes-save-recovery-message">{saveError}</p>
             <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Button variant="ghost" size="sm" onClick={async () => {
-              try { await navigator.clipboard.writeText(contentRef.current); toast.success(t('notes.content.draftCopied')) }
-              catch { toast.error(t('notes.content.copyFailed')) }
+              try {
+                // Basic MD for humans/clipboard; rich disk body stays portable ::: via autosave.
+                await navigator.clipboard.writeText(basicMarkdownForNotes(contentRef.current))
+                toast.success(t('notes.content.draftCopied'))
+              } catch { toast.error(t('notes.content.copyFailed')) }
             }}>{t('notes.content.copyDraft')}</Button>
             <Button variant="ghost" size="sm" onClick={() => saveNeedsReload ? setSaveRecoveryOpen(true) : void saveCurrentNote()}>
               {saveNeedsReload ? t('notes.content.reloadSource') : t('notes.content.retrySave')}

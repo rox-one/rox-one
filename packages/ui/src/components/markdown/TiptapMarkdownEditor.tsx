@@ -151,6 +151,7 @@ export function toBasicMarkdownExport(markdown: string): string {
   return expandContainersForBasicMarkdown(postprocessMarkdownFromOfficial(markdown))
 }
 
+
 const MERMAID_FILE_EXTENSIONS = new Set(['mmd', 'mermaid'])
 
 export function isMermaidFilename(fileName: string): boolean {
@@ -430,8 +431,9 @@ export function TiptapMarkdownEditor({
       LegacyMarkdown.configure({
         html: false,
         transformPastedText: true,
-        transformCopiedText: true,
-      }),
+        // Portable ::: copy is handled by editorProps.clipboardTextSerializer (expanded).
+        transformCopiedText: false,
+      })
     ]
   }, [placeholder, useOfficialMarkdown, foldingStorageKey, entityNodesEnabled, entityMentionView, entityEmbedView])
 
@@ -447,6 +449,20 @@ export function TiptapMarkdownEditor({
     editorProps: {
       attributes: {
         class: 'tiptap-prose outline-none',
+      },
+      // Wins over core ClipboardTextSerializer via view._props; expands ::: for plain copy.
+      clipboardTextSerializer: (slice) => {
+        const active = editorRef.current as { storage?: { markdown?: { serializer?: { serialize?: (content: unknown) => string } } }; getMarkdown?: () => string } | null
+        const serializer = active?.storage?.markdown?.serializer
+        if (serializer?.serialize) {
+          try {
+            return expandContainersForBasicMarkdown(serializer.serialize(slice.content))
+          } catch {
+            /* fall through */
+          }
+        }
+        // Official engine has no slice serializer; fall through to PM textBetween.
+        return undefined as unknown as string
       },
       handlePaste: (_view, event) => {
         if (!editable) return false

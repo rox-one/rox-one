@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
-import { RoxTabsBlock, RoxTabBlock, createRoxTabsContent } from '../TabsBlock'
+import { RoxTabsBlock, RoxTabBlock, createRoxTabsContent, MAX_TABS, collectExcessTabRanges, applyExcessTabDeletes } from '../TabsBlock'
 
 describe('Rox tabs block', () => {
   it('creates deterministic two-tab content payloads', () => {
@@ -128,6 +130,60 @@ describe('Rox tabs block', () => {
     expect(markdown).toContain('^R')
     expect(markdown).toContain('^S')
     editor.destroy()
+  })
+
+  it('clamp helpers trim excess panes beyond MAX_TABS (appendTransaction/onCreate use these)', () => {
+    const editor = new Editor({
+      extensions: [
+        StarterKit.configure({ codeBlock: false }),
+        RoxTabsBlock,
+        RoxTabBlock,
+        Markdown,
+      ],
+      content: {
+        type: 'doc',
+        content: [
+          {
+            type: 'roxTabs',
+            content: Array.from({ length: MAX_TABS + 3 }, (_, i) => ({
+              type: 'roxTab',
+              attrs: { title: `T${i + 1}` },
+              content: [{ type: 'paragraph', content: [{ type: 'text', text: `Body ${i + 1}` }] }],
+            })),
+          },
+        ],
+      },
+    })
+
+    let before = 0
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === 'roxTabs') before = node.childCount
+    })
+    expect(before).toBe(MAX_TABS + 3)
+
+    const excess = collectExcessTabRanges(editor.state.doc)
+    expect(excess.length).toBe(1)
+    const tr = applyExcessTabDeletes(editor.state.tr, excess)
+    editor.view.dispatch(tr)
+
+    let after = 0
+    editor.state.doc.descendants((node) => {
+      if (node.type.name === 'roxTabs') after = node.childCount
+    })
+    expect(after).toBe(MAX_TABS)
+    const json = JSON.stringify(editor.getJSON())
+    expect(json).toContain('Body 1')
+    expect(json).toContain(`Body ${MAX_TABS}`)
+    expect(json).not.toContain(`Body ${MAX_TABS + 1}`)
+    editor.destroy()
+  })
+
+  it('CSS pane show rules use child combinator and is-active (no fixed 0..7 nth-child)', () => {
+    const css = readFileSync(join(import.meta.dir, '../../tiptap-editor.css'), 'utf8')
+    expect(css).toContain('.tiptap-rox-tabs > .tiptap-rox-tabs-panels')
+    expect(css).toContain('.tiptap-rox-tab.is-active')
+    expect(css).not.toMatch(/data-active-index="7"/)
+    expect(css).not.toMatch(/nth-child\(8\)/)
   })
 
 })
