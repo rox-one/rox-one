@@ -3033,8 +3033,8 @@ h1,h2,h3{margin-top:1.5em}
           key={note.id}
           onClick={() => completeWikiLink(note)}
           className={cn(
-            'w-full rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-foreground/[0.06]',
-            wikiMatches[wikiIndex]?.id === note.id && 'bg-foreground/[0.08]'
+            'w-full rounded-[var(--radius-control)] px-2 py-1.5 text-left hover:bg-surface-hover',
+            wikiMatches[wikiIndex]?.id === note.id && 'bg-surface-selected'
           )}
         >
           <div className="truncate text-xs font-medium">{note.title}</div>
@@ -3046,8 +3046,8 @@ h1,h2,h3{margin-top:1.5em}
           data-testid="notes-wiki-create"
           onClick={() => { void completeWikiCreate(wikiCreateLabel) }}
           className={cn(
-            'mt-1 flex w-full items-center gap-2 rounded-[var(--radius-control)] border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
-            wikiCreateSelected && 'bg-foreground/[0.08]',
+            'mt-1 flex w-full items-center gap-2 rounded-[var(--radius-control)] border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-surface-hover',
+            wikiCreateSelected && 'bg-surface-selected',
           )}
         >
           <Plus className="h-3.5 w-3.5" />
@@ -3263,22 +3263,22 @@ h1,h2,h3{margin-top:1.5em}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t('notes.search.placeholder')}
                 aria-label={t('notes.search.placeholder')}
-                className="h-7 w-full rounded-[var(--radius-card)] border-0 bg-foreground/[0.06] pl-7 pr-2 text-xs outline-none placeholder:text-muted-foreground/70 focus:bg-foreground/[0.09]"
+                className="h-7 w-full rounded-[var(--radius-card)] border-0 bg-surface-hover pl-7 pr-2 text-xs outline-none placeholder:text-muted-foreground/70 focus:bg-surface-pressed"
               />
             </div>
-            <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')} aria-label={t('notes.toolbar.daily')}>
+            <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')} aria-label={t('notes.toolbar.daily')}>
               <CalendarDays className="h-4 w-4 text-emerald-500" aria-hidden="true" />
             </button>
-            <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')} aria-label={t('notes.toolbar.newFolder')}>
+            <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')} aria-label={t('notes.toolbar.newFolder')}>
               <FolderPlus className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </button>
-            <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}>
+            <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}>
               <FilePlus2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </button>
           </div>
           {allTags.length > 0 && (
-            <details open className="group/notes-tags mt-2 rounded-[var(--radius-card)] bg-foreground/[0.03] p-1" data-notes-disclosure>
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-[var(--radius-control)] px-2 py-1 text-xs font-medium text-muted-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+            <details open className="group/notes-tags mt-2 rounded-[var(--radius-card)] bg-surface-hover p-1" data-notes-disclosure>
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-[var(--radius-control)] px-2 py-1 text-xs font-medium text-muted-foreground outline-none hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                 <ChevronRight className="h-3 w-3 shrink-0 transition-transform duration-150 group-open/notes-tags:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
                 <Tags className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <span className="flex-1">{t('notes.inspector.tags')}</span>
@@ -3288,8 +3288,8 @@ h1,h2,h3{margin-top:1.5em}
               <button
                 aria-pressed={!selectedTag}
                 className={cn(
-                  'flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-xs hover:bg-foreground/[0.06]',
-                  !selectedTag && 'bg-foreground/[0.08]'
+                  'flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-xs hover:bg-surface-hover',
+                  !selectedTag && 'bg-surface-selected'
                 )}
                 onClick={() => setSelectedTag(null)}
               >
@@ -3300,8 +3300,8 @@ h1,h2,h3{margin-top:1.5em}
                   key={tag}
                   aria-pressed={selectedTag === tag}
                   className={cn(
-                    'flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-xs hover:bg-foreground/[0.06]',
-                    selectedTag === tag && 'bg-foreground/[0.08]'
+                    'flex w-full items-center rounded-[var(--radius-control)] px-2 py-1 text-left text-xs hover:bg-surface-hover',
+                    selectedTag === tag && 'bg-surface-selected'
                   )}
                   onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
                 >
@@ -3340,28 +3340,28 @@ h1,h2,h3{margin-top:1.5em}
               />
             ) : null}
             {activeNote && <div className="min-w-0 truncate text-xs text-muted-foreground/60">{activeNoteStats}</div>}
-            {activeNote && <button type="button" data-testid="notes-content-authority" aria-haspopup="dialog" onClick={() => setSourceInfoOpen(true)} className="shrink-0 rounded bg-foreground/[0.04] px-2 py-0.5 text-xs text-muted-foreground hover:bg-foreground/[0.08]" title={t('notes.content.authorityHint')}>
+            {activeNote && <button type="button" data-testid="notes-content-authority" aria-haspopup="dialog" onClick={() => setSourceInfoOpen(true)} className="shrink-0 rounded bg-surface-hover px-2 py-0.5 text-xs text-muted-foreground hover:bg-surface-selected" title={t('notes.content.authorityHint')}>
               {contentResolution?.status === 'ok' ? t('notes.content.markdown') : t('notes.content.readOnly')}
             </button>}
           </div>
           {dailyDate && (
             <div className="mr-1 flex items-center gap-1">
-              <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title={t('notes.toolbar.previousDaily')}>
+              <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={() => handleDailyShift(-1)} title={t('notes.toolbar.previousDaily')}>
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <span className="text-xs text-muted-foreground">{dailyDate}</span>
-              <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title={t('notes.toolbar.nextDaily')}>
+              <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={() => handleDailyShift(1)} title={t('notes.toolbar.nextDaily')}>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           )}
           <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
-          <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" /></button>
+          <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" /></button>
           <button type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" data-testid="notes-templates-open" aria-label={t('notes.library.templates')} onClick={() => { void openTemplatesDialog('create') }} onContextMenu={(event) => { event.preventDefault(); if (activeNote) void openTemplatesDialog('save') }}><LayoutTemplate className="icon-toolbar" aria-hidden="true" /></button>
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} disabled={openingAgent} />
           <button
-            className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
+            className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40"
             onClick={() => void handleBoundChat()}
             disabled={!activeNote || openingAgent}
             title={t('notes.sideSession.newChat')}
@@ -3369,13 +3369,13 @@ h1,h2,h3{margin-top:1.5em}
           >
             <SquarePen className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote || Boolean(assetsUnavailable)} title={t('notes.toolbar.attachAsset')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote || Boolean(assetsUnavailable)} title={t('notes.toolbar.attachAsset')}>
             <Paperclip className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
             <FileDown className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
             <Pencil className="h-4 w-4" />
           </button>
           <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
@@ -3387,15 +3387,15 @@ h1,h2,h3{margin-top:1.5em}
         </div>
 
         {noteScope.kind === 'unavailable' ? (
-          <div role="status" data-glass-slot="card" className="mx-3 mb-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground">
+          <div role="status" data-glass-slot="card" className="mx-3 mb-2 rounded-md bg-surface-hover px-3 py-2 text-xs text-muted-foreground">
             {t('navigation.notes.scopeUnavailable')}
           </div>
         ) : activeNote && !noteInProjectScope(activeNote.id, noteScope) ? (
-          <div role="status" data-glass-slot="card" data-testid="notes-outside-project" className="mx-3 mb-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground">{t('navigation.notes.currentOutsideProject', { project: noteScope.kind === 'project' ? noteScope.name : '' })}</div>
+          <div role="status" data-glass-slot="card" data-testid="notes-outside-project" className="mx-3 mb-2 rounded-md bg-surface-hover px-3 py-2 text-xs text-muted-foreground">{t('navigation.notes.currentOutsideProject', { project: noteScope.kind === 'project' ? noteScope.name : '' })}</div>
         ) : null}
 
         {assetsUnavailable && (
-          <div data-glass-slot="card" className="mx-3 mb-2 flex min-w-0 items-center justify-between gap-2 rounded-md bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground"
+          <div data-glass-slot="card" className="mx-3 mb-2 flex min-w-0 items-center justify-between gap-2 rounded-md bg-surface-hover px-3 py-2 text-xs text-muted-foreground"
             data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code}>
             <p role="status">{t('notes.inspector.assets')}: {t('common.unavailable')}</p>
             <Button variant="ghost" size="sm" onClick={() => { void refreshAssets() }}>{t('common.retry')}</Button>
@@ -3869,7 +3869,7 @@ h1,h2,h3{margin-top:1.5em}
                 />
               ) : null}
               {richParts.frontmatter && (
-                <div className="mx-auto mt-4 max-w-[70ch] rounded-[var(--radius-card)] bg-foreground/[0.04] px-3 py-2 text-xs text-muted-foreground">
+                <div className="mx-auto mt-4 max-w-[70ch] rounded-[var(--radius-card)] bg-surface-hover px-3 py-2 text-xs text-muted-foreground">
                   {t('notes.frontmatterPreserved')}
                 </div>
               )}
