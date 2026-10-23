@@ -6376,6 +6376,7 @@
   "notes.library.createFromTemplate": "Create note",
   "notes.library.icon": "Icon",
   "notes.library.iconHint": "Pick an emoji icon for this note.",
+  "notes.library.iconInvalid": "짧은 이모지 또는 기호를 사용하세요(최대 32자).",
   "notes.library.iconPlaceholder": "Emoji",
   "notes.library.replaceTemplate": "Replace",
   "notes.library.saveAsTemplate": "Save template",

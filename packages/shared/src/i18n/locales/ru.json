@@ -6416,6 +6416,7 @@
   "notes.library.createFromTemplate": "Создать заметку",
   "notes.library.icon": "Иконка",
   "notes.library.iconHint": "Выберите эмодзи-иконку для этой заметки.",
+  "notes.library.iconInvalid": "Используйте короткий эмодзи или символ (не более 32 символов).",
   "notes.library.iconPlaceholder": "Эмодзи",
   "notes.library.replaceTemplate": "Заменить",
   "notes.library.saveAsTemplate": "Сохранить шаблон",

@@ -41,6 +41,8 @@ export function NotesTemplatesDialog({
   const [selectedId, setSelectedId] = React.useState<string>('')
   const [title, setTitle] = React.useState('')
   const [templateId, setTemplateId] = React.useState('')
+  /** Once the user edits the id field, stop auto-deriving it from title. */
+  const [templateIdDirty, setTemplateIdDirty] = React.useState(false)
   const [replaceConfirm, setReplaceConfirm] = React.useState(false)
   const wasOpenRef = React.useRef(false)
 
@@ -51,6 +53,7 @@ export function NotesTemplatesDialog({
     if (opened) {
       setTitle(defaultTitle ?? '')
       setTemplateId(sanitizeTemplateId(defaultTitle ?? 'template'))
+      setTemplateIdDirty(false)
       setSelectedId(templates[0]?.id ?? '')
       setReplaceConfirm(false)
       return
@@ -68,6 +71,7 @@ export function NotesTemplatesDialog({
     const id = sanitizeTemplateId(pendingReplaceId)
     if (!id) return
     setTemplateId(id)
+    setTemplateIdDirty(true)
     setReplaceConfirm(true)
     onPendingReplaceHandled?.()
   }, [pendingReplaceId, onPendingReplaceHandled])
@@ -140,15 +144,20 @@ export function NotesTemplatesDialog({
             <Input
               value={title}
               onChange={(event) => {
-                setTitle(event.target.value)
-                setTemplateId(sanitizeTemplateId(event.target.value || 'template'))
+                const nextTitle = event.target.value
+                setTitle(nextTitle)
+                if (!templateIdDirty) {
+                  setTemplateId(sanitizeTemplateId(nextTitle || 'template'))
+                }
                 setReplaceConfirm(false)
               }}
               placeholder={t('notes.library.templateTitlePlaceholder')}
+              data-testid="notes-template-title-save"
             />
             <Input
               value={templateId}
               onChange={(event) => {
+                setTemplateIdDirty(true)
                 setTemplateId(sanitizeTemplateId(event.target.value))
                 setReplaceConfirm(false)
               }}

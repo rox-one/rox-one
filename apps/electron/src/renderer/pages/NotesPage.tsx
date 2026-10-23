@@ -202,6 +202,20 @@ function parseDailyNoteDate(noteId?: string): string | null {
   return match?.[1] ?? null
 }
 
+function propertiesFromNoteContent(content: string): Record<string, unknown> {
+  try {
+    const projection = projectFrontmatter(retainSource(content))
+    if (projection.status !== 'ok') return {}
+    const out: Record<string, unknown> = {}
+    for (const property of projection.properties) {
+      if (property.keyPath.length === 1) out[property.keyPath[0]!] = property.value
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
 function splitFrontmatter(value: string): { frontmatter: string; body: string } {
   const match = value.match(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n)?/)
   if (!match) return { frontmatter: '', body: value }
@@ -1880,13 +1894,16 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const wikiCreateSelected = showWikiCreate && wikiIndex >= wikiMatches.length
   const showWikiMenu = wikiQuery != null && wikiItemCount > 0
 
-  const createNoteWithEvidence = React.useCallback(async (...args: Parameters<Window['electronAPI']['createNote']>) => {
+  const createNoteWithEvidence = React.useCallback(async (
+    workspaceId: string,
+    create: () => Promise<NoteDocument>,
+  ) => {
     const observation = knowledgeSignals.capture()
-    const note = await window.electronAPI.createNote(...args)
+    const note = await create()
     if (!observation) return note
     try {
-      const readback = await window.electronAPI.readNote(args[0], note.id)
-      knowledgeSignals.publish(observation, { kind: 'note-created', workspaceId: args[0], note, readback })
+      const readback = await window.electronAPI.readNote(workspaceId, note.id)
+      knowledgeSignals.publish(observation, { kind: 'note-created', workspaceId, note, readback })
     } catch { /* Native creation succeeded; unconfirmed read-back provides no learning evidence. */ }
     return note
   }, [knowledgeSignals])
@@ -2982,6 +2999,7 @@ h1,h2,h3{margin-top:1.5em}
         destination.folder,
         mutationOptions(activeWorkspaceId, title || templateId, null),
       ))
+      nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
       setTemplatesDialogOpen(false)
       setCreateInFolder(undefined)
       await refreshNotes()
@@ -2998,12 +3016,14 @@ h1,h2,h3{margin-top:1.5em}
     if (!await flushBeforeAction()) return
     setTemplatesBusy(true)
     try {
-      const { body } = splitFrontmatter(contentRef.current)
+      const source = contentRef.current
+      const { body } = splitFrontmatter(source)
+      const properties = propertiesFromNoteContent(source)
       await window.electronAPI.saveNoteAsTemplate(activeWorkspaceId, {
         templateId,
-        title: title || activeNote.title,
+        title: title || (typeof properties.title === 'string' && properties.title.trim() ? properties.title.trim() : activeNote.title),
         body,
-        properties: activeNote.properties,
+        properties,
         ...(confirmReplace ? { confirmReplace: true } : {}),
       })
       setTemplatesDialogOpen(false)

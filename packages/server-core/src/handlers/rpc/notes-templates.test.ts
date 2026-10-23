@@ -4,6 +4,7 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 import {
   listNoteTemplatesForRoot,
+  materializeTemplateNoteContent,
   readNoteTemplateContent,
   saveNoteAsTemplateForRoot,
 } from './notes'
@@ -95,4 +96,39 @@ describe('note templates library', () => {
       body: 'nope',
     })).rejects.toThrow()
   })
+
+  it('lists empty when templates dir is missing and does not create it', async () => {
+    const bare = join(tmpdir(), `rox-notes-templates-bare-${Date.now()}-${Math.random().toString(16).slice(2)}`)
+    mkdirSync(bare, { recursive: true })
+    try {
+      const listed = await listNoteTemplatesForRoot(bare)
+      expect(listed).toEqual([])
+      expect(() => readFileSync(join(bare, 'templates'))).toThrow()
+    } finally {
+      rmSync(bare, { recursive: true, force: true })
+    }
+  })
+
+  it('skips templates whose basename casing does not match normalized id', async () => {
+    writeFileSync(join(notesRoot, 'templates', 'Weekly.MD'), '---\ntitle: Weekly\n---\n\nbody\n', 'utf-8')
+    const listed = await listNoteTemplatesForRoot(notesRoot)
+    expect(listed.map((item) => item.id)).toEqual(['daily', 'meeting'])
+  })
+
+  it('materializes a note without inheriting cover/icon/createdAt from the template', async () => {
+    writeFileSync(
+      join(notesRoot, 'templates', 'with-meta.md'),
+      '---\ntitle: With Meta\ncover: "#112233"\nicon: "🔥"\ncreatedAt: 42\ntags:\n  - x\n---\n\nHello\n',
+      'utf-8',
+    )
+    const { noteTitle, initialContent } = await materializeTemplateNoteContent(notesRoot, 'with-meta', 'Fresh')
+    expect(noteTitle).toBe('Fresh')
+    expect(initialContent).toContain('title: Fresh')
+    expect(initialContent).toContain('Hello')
+    expect(initialContent).not.toContain('cover:')
+    expect(initialContent).not.toContain('icon:')
+    expect(initialContent).not.toContain('createdAt: 42')
+    expect(initialContent).toMatch(/createdAt:\s*\d{10,}/)
+  })
+
 })

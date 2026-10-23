@@ -6385,6 +6385,7 @@
   "notes.library.createFromTemplate": "Create note",
   "notes.library.icon": "Icon",
   "notes.library.iconHint": "Pick an emoji icon for this note.",
+  "notes.library.iconInvalid": "Usa un emoji o símbolo corto (máx. 32 caracteres).",
   "notes.library.iconPlaceholder": "Emoji",
   "notes.library.replaceTemplate": "Replace",
   "notes.library.saveAsTemplate": "Save template",

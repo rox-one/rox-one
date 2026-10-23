@@ -1902,9 +1902,16 @@ async function assertSafeTemplateFilePath(notesRoot: string, templateId: string)
 }
 
 export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteTemplateSummary[]> {
-  await ensureNotesDirs(notesRoot)
+  // LIST must not mkdir — missing templates root is an empty library.
   const root = join(notesRoot, TEMPLATES_DIR)
-  await assertSafeExistingTemplatesPath(notesRoot, root)
+  try {
+    await assertSafeExistingTemplatesPath(notesRoot, root)
+  } catch {
+    return []
+  }
+  let rootInfo
+  try { rootInfo = await lstat(root) } catch { return [] }
+  if (!rootInfo.isDirectory() || rootInfo.isSymbolicLink()) return []
   const out: NoteTemplateSummary[] = []
   async function walk(dir: string, prefix: string): Promise<void> {
     await assertSafeExistingTemplatesPath(notesRoot, dir)
@@ -1923,9 +1930,12 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
         const info = await lstat(abs)
         if (info.isSymbolicLink() || !info.isFile()) continue
       } catch { continue }
+      const id = templateIdFromRelativePath(rel).toLowerCase()
+      const expectedBasename = `${basename(id)}.md`
+      // Exact basename match — reject Weekly.MD vs weekly.md mismatches.
+      if (entry.name !== expectedBasename) continue
       const content = await readFileNoFollow(abs).catch(() => '')
       const parsed = parseFrontmatter(content)
-      const id = templateIdFromRelativePath(rel).toLowerCase()
       const title = typeof parsed.properties.title === 'string' && parsed.properties.title.trim()
         ? parsed.properties.title.trim()
         : titleFromId(id)
@@ -1933,7 +1943,7 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
       out.push({
         id,
         title,
-        relativePath: `${TEMPLATES_DIR}/${rel}`,
+        relativePath: `${TEMPLATES_DIR}/${id}.md`,
         updatedAt: info?.mtimeMs ?? 0,
       })
     }
@@ -1980,19 +1990,21 @@ export async function saveNoteAsTemplateForRoot(
 }
 
 
-async function materializeTemplateNoteContent(
+export async function materializeTemplateNoteContent(
   notesRoot: string,
   templateId: string,
   title?: string,
 ): Promise<{ noteTitle: string; initialContent: string }> {
   const template = await readNoteTemplateContent(notesRoot, templateId)
   const noteTitle = (typeof title === 'string' && title.trim()) ? title.trim() : template.title
-  const properties = {
+  const properties: Record<string, unknown> = {
     ...template.properties,
     title: noteTitle,
     tags: Array.isArray(template.properties.tags) ? template.properties.tags : [],
-    createdAt: Date.now(),
   }
+  // Do not inherit template identity/runtime keys (same strip set as saveAsTemplate).
+  for (const key of ['createdAt', 'cover', 'icon']) delete properties[key]
+  properties.createdAt = Date.now()
   return { noteTitle, initialContent: stringifyNoteContent(template.body, properties) }
 }
 

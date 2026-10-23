@@ -55,11 +55,13 @@ export function NoteCoverIconChrome({
   const [coverDraft, setCoverDraft] = React.useState('')
   const [iconDraft, setIconDraft] = React.useState('')
   const [coverError, setCoverError] = React.useState(false)
+  const [iconError, setIconError] = React.useState(false)
 
   React.useEffect(() => {
     setCoverDraft(typeof properties.cover === 'string' ? properties.cover : '')
     setIconDraft(typeof properties.icon === 'string' ? properties.icon : '')
     setCoverError(false)
+    setIconError(false)
   }, [properties.cover, properties.icon])
 
   const coverStyle: React.CSSProperties | undefined = (() => {
@@ -187,13 +189,22 @@ export function NoteCoverIconChrome({
             </div>
             <Input
               value={iconDraft}
-              onChange={(event) => setIconDraft(event.target.value)}
-              maxLength={8}
+              onChange={(event) => {
+                setIconDraft(event.target.value)
+                setIconError(false)
+              }}
+              maxLength={32}
               placeholder={t('notes.library.iconPlaceholder')}
               data-testid="notes-icon-input"
+              aria-invalid={iconError || undefined}
             />
+            {(iconError || (iconDraft.trim() !== '' && !readNoteIcon({ icon: iconDraft.trim() }))) ? (
+              <p className="text-caption text-destructive" data-testid="notes-icon-invalid" role="alert">
+                {t('notes.library.iconInvalid')}
+              </p>
+            ) : null}
             <div className="flex justify-end gap-2">
-              <Button type="button" size="sm" variant="ghost" onClick={() => onChange({ icon: null })}>
+              <Button type="button" size="sm" variant="ghost" onClick={() => { setIconError(false); onChange({ icon: null }) }}>
                 <X className="icon-caption" aria-hidden />
                 {t('notes.library.clear')}
               </Button>
@@ -204,10 +215,17 @@ export function NoteCoverIconChrome({
                 onClick={() => {
                   const trimmed = iconDraft.trim()
                   if (!trimmed) {
+                    setIconError(false)
                     onChange({ icon: null })
                     return
                   }
-                  onChange({ icon: readNoteIcon({ icon: trimmed }) })
+                  const safe = readNoteIcon({ icon: trimmed })
+                  if (!safe) {
+                    setIconError(true)
+                    return
+                  }
+                  setIconError(false)
+                  onChange({ icon: safe })
                 }}
               >
                 {t('notes.library.apply')}
