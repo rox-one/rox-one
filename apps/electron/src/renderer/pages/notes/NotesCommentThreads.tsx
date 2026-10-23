@@ -85,7 +85,8 @@ export function NotesCommentThreads({
   draftQuote: string
   /** Preferred selection offsets into getNoteText() for repeated quotes. */
   draftAnchor?: { start: number; end: number } | null
-  onClearDraft: () => void
+  /** Clear the unsent draft. Pass scope after a successful create so a navigated-away note still drops its draft. */
+  onClearDraft: (scope?: { workspaceId: string; noteId: string }) => void
   width?: number
   composerTop?: number
   draftBody?: string
@@ -105,6 +106,8 @@ export function NotesCommentThreads({
   const onThreadsChangeRef = React.useRef(onThreadsChange)
   onThreadsChangeRef.current = onThreadsChange
   const createInFlightRef = React.useRef(false)
+  /** Which note owns the create lock — stale finally must match before clearing. */
+  const createFlightKeyRef = React.useRef<string | null>(null)
   const reloadGenerationRef = React.useRef(0)
   /** Latest mounted note key — compared after awaits so stale work cannot publish. */
   const activeKeyRef = React.useRef({ workspaceId, noteId })
@@ -166,6 +169,8 @@ export function NotesCommentThreads({
 
   React.useEffect(() => {
     // Invalidate in-flight lists and clear prior note's threads/highlights immediately.
+    // Do not reset createInFlightRef here — a stale create's finally must not unlock a newer create,
+    // and unlocking on switch would let the previous create's finally clear a lock owned by a later submit.
     reloadGenerationRef.current += 1
     const key = { workspaceId, noteId }
     publish([], key)
@@ -173,7 +178,6 @@ export function NotesCommentThreads({
     setDocCompose(false)
     setLocalBody('')
     setBusyId(null)
-    createInFlightRef.current = false
     void reload()
     return () => {
       // Collapsed rail unmounts this panel — still clear parent highlights.
@@ -203,11 +207,14 @@ export function NotesCommentThreads({
   const openRoots = React.useMemo(() => nestedRoots.filter(c => !c.resolvedAt), [nestedRoots])
   const resolvedRoots = React.useMemo(() => nestedRoots.filter(c => c.resolvedAt), [nestedRoots])
 
-  const clearComposer = React.useCallback(() => {
-    setBody('')
-    onClearDraft()
-    setDocCompose(false)
-  }, [onClearDraft, setBody])
+  const clearComposer = React.useCallback((scope?: { workspaceId: string; noteId: string }) => {
+    // Always clear the parent draft for the submitted note (scope), even after navigation.
+    onClearDraft(scope)
+    if (!scope || isActiveKey(scope)) {
+      setBody('')
+      setDocCompose(false)
+    }
+  }, [onClearDraft, setBody, isActiveKey])
 
   const createRoot = React.useCallback(async () => {
     const text = body.trim()
@@ -223,6 +230,8 @@ export function NotesCommentThreads({
     setError(null)
     const requestKey = { workspaceId, noteId }
     createInFlightRef.current = true
+    const flightKey = JSON.stringify([requestKey.workspaceId, requestKey.noteId])
+    createFlightKeyRef.current = flightKey
     setBusyId(CREATE_BUSY)
     try {
       const created = await window.electronAPI.createNoteComment(requestKey.workspaceId, {
@@ -230,14 +239,20 @@ export function NotesCommentThreads({
         body: text,
         anchor,
       })
+      // Drop the unsent draft for this note even if the user already switched away —
+      // otherwise returning would resubmit a duplicate of the comment just created.
+      clearComposer(requestKey)
       if (!isActiveKey(requestKey)) return
       publishUpdate(requestKey, prev => upsertNoteCommentInList(prev, created))
-      clearComposer()
       await reload({ quiet: true })
     } catch {
       if (isActiveKey(requestKey)) setError(t('notes.comments.errorCreate'))
     } finally {
-      createInFlightRef.current = false
+      // Only the owner of the lock may release it (stale finally must not unlock a newer create).
+      if (createFlightKeyRef.current === flightKey) {
+        createFlightKeyRef.current = null
+        createInFlightRef.current = false
+      }
       if (isActiveKey(requestKey)) setBusyId(null)
     }
   }, [body, draftQuote, draftAnchor, getNoteText, workspaceId, noteId, clearComposer, publishUpdate, reload, isActiveKey, t])
@@ -474,7 +489,7 @@ export function NotesCommentThreads({
           body={body}
           onBodyChange={setBody}
           onSubmit={() => { if (!createInFlightRef.current) void createRoot() }}
-          onCancel={clearComposer}
+          onCancel={() => clearComposer()}
           focusRequested={focusRequested || showDocComposer}
           onFocusHandled={onFocusHandled}
         />

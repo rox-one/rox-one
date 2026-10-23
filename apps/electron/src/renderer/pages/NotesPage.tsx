@@ -623,10 +623,15 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     && commentDraft.end > commentDraft.start
   ) ? { start: commentDraft.start, end: commentDraft.end } : null
   const setCommentComposerBody = React.useCallback((body: string) => setCommentDrafts(drafts => updateCommentDraft(drafts, commentDraftKey, { body })), [commentDraftKey])
+  /** Clear an unsent draft for a specific note — used after create succeeds even if the user navigated away. */
+  const clearCommentDraftAt = React.useCallback((workspaceId: string, noteId: string) => {
+    setCommentDrafts(drafts => updateCommentDraft(drafts, noteCommentDraftKey(workspaceId, noteId), EMPTY_COMMENT_DRAFT))
+  }, [])
   const [commentComposerTop, setCommentComposerTop] = React.useState(48)
   const [focusCommentComposer, setFocusCommentComposer] = React.useState(false)
   const [rpcCommentThreads, setRpcCommentThreads] = React.useState<NoteCommentThread[]>([])
   const commentCreateInFlightRef = React.useRef(false)
+  const commentCreateFlightKeyRef = React.useRef<string | null>(null)
   // Collapsed comments rail unmounts NotesCommentThreads — clear highlights here so a
   // prior note's threads cannot paint on the newly opened body.
   React.useEffect(() => {
@@ -2775,6 +2780,8 @@ h1,h2,h3{margin-top:1.5em}
     })),
     [content],
   )
+  // Markdown-embedded <!-- comment --> markers stay highlight-only for this PR —
+  // they are not migrated into note-comment sidecars; the RPC rail owns create/resolve/reactions.
   const highlightComments = React.useMemo(() => {
     const fromMarkdown = markdownComments
     const fromRpc = noteThreadsToHighlightComments(rpcCommentThreads)
@@ -3534,7 +3541,9 @@ h1,h2,h3{margin-top:1.5em}
                     // Selection compose from the overlay mirrors the rail submit.
                     const requestWorkspaceId = activeWorkspaceId
                     const requestNoteId = activeNote.id
+                    const flightKey = JSON.stringify([requestWorkspaceId, requestNoteId])
                     commentCreateInFlightRef.current = true
+                    commentCreateFlightKeyRef.current = flightKey
                     void (async () => {
                       const stillActive = () => (
                         workspaceIdRef.current === requestWorkspaceId
@@ -3552,6 +3561,9 @@ h1,h2,h3{margin-top:1.5em}
                           body: text,
                           anchor,
                         })
+                        // Always clear this note's unsent draft — even after navigation —
+                        // so returning does not resubmit a duplicate of the created comment.
+                        clearCommentDraftAt(requestWorkspaceId, requestNoteId)
                         if (!stillActive()) return
                         setRpcCommentThreads(prev => {
                           const index = prev.findIndex(c => c.id === created.id)
@@ -3560,8 +3572,6 @@ h1,h2,h3{margin-top:1.5em}
                           next[index] = created
                           return next
                         })
-                        setCommentDraftQuote('')
-                        setCommentComposerBody('')
                         try {
                           const list = await window.electronAPI.listNoteComments(requestWorkspaceId, requestNoteId)
                           if (!stillActive()) return
@@ -3572,7 +3582,10 @@ h1,h2,h3{margin-top:1.5em}
                       } catch {
                         if (stillActive()) toast.error(t('notes.comments.errorCreate'))
                       } finally {
-                        commentCreateInFlightRef.current = false
+                        if (commentCreateFlightKeyRef.current === flightKey) {
+                          commentCreateFlightKeyRef.current = null
+                          commentCreateInFlightRef.current = false
+                        }
                       }
                     })()
                   }}
@@ -3618,7 +3631,10 @@ h1,h2,h3{margin-top:1.5em}
                   onDraftBodyChange={setCommentComposerBody}
                   focusRequested={focusCommentComposer}
                   onFocusHandled={() => setFocusCommentComposer(false)}
-                  onClearDraft={() => setCommentDraftQuote('')}
+                  onClearDraft={(scope) => {
+                    if (scope) clearCommentDraftAt(scope.workspaceId, scope.noteId)
+                    else setCommentDraftQuote('')
+                  }}
                   onThreadsChange={setRpcCommentThreads}
                   onJumpToQuote={(quote) => {
                     const root = document.querySelector('.notes-editor .ProseMirror')
