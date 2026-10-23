@@ -201,3 +201,21 @@ export function anchorFromQuote(
     selectedText,
   })
 }
+
+/** Selection-anchored open threads → editor highlight payloads. Resolved threads drop out. */
+export function noteThreadsToHighlightComments(comments: readonly NoteCommentThread[]): Array<{
+  id: string
+  quote: string
+  body: string
+  createdAt: number
+}> {
+  return comments
+    .filter(comment => !comment.parentId && !comment.resolvedAt && comment.anchor?.selectedText)
+    .map(comment => ({
+      id: comment.id,
+      quote: comment.anchor!.selectedText,
+      body: comment.body,
+      createdAt: comment.createdAt,
+    }))
+}
+

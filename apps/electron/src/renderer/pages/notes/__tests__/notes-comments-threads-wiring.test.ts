@@ -60,6 +60,18 @@ describe('notes comments threads wiring', () => {
     expect(threadsPanel).not.toMatch(/createInFlightRef\.current = false\n\s*void reload/)
   })
 
+  it('composers disable while create is in flight', () => {
+    expect(threadsPanel).toContain('creating={creating}')
+    expect(notesPage).toContain('creating={commentCreateBusy}')
+    expect(notesPage).toContain('setCommentCreateBusy(true)')
+    expect(notesPage).toContain('setCommentCreateBusy(false)')
+    const reading = readFileSync(join(import.meta.dir, '../NotesReadingChrome.tsx'), 'utf8')
+    expect(reading).toContain('creating = false')
+    expect(reading).toContain('disabled={busy || !body.trim()}')
+    expect(reading).toContain("if (event.key === 'Escape'")
+    expect(reading).toMatch(/if \(busy\)[\s\S]*Escape/)
+  })
+
   it('create success clears draft for requestKey even after note switch', () => {
     expect(threadsPanel).toContain('clearComposer(requestKey)')
     expect(notesPage).toContain('clearCommentDraftAt(requestWorkspaceId, requestNoteId)')

@@ -5,6 +5,7 @@ import {
   createNoteCommentAnchor,
   isDocumentNoteComment,
   nestNoteCommentThreads,
+  noteThreadsToHighlightComments,
   removeNoteCommentFromList,
   resolveNoteCommentAnchor,
   resolveNoteCommentAnchors,
@@ -125,5 +126,29 @@ describe('note comment anchors', () => {
     expect(upsertNoteCommentInList([a, b], b2).map(c => c.body)).toEqual(['A', 'B2'])
     const reply = thread({ id: 'r', body: 'R', parentId: 'a', createdAt: 3, updatedAt: 3 })
     expect(removeNoteCommentFromList([a, b, reply], 'a').map(c => c.id)).toEqual(['b'])
+  })
+})
+
+describe('noteThreadsToHighlightComments', () => {
+  it('excludes resolved threads from editor highlights', () => {
+    const full = 'Alpha quoted open Omega quoted done'
+    const openAnchor = createNoteCommentAnchor({
+      fullText: full,
+      start: full.indexOf('quoted open'),
+      end: full.indexOf('quoted open') + 'quoted open'.length,
+      selectedText: 'quoted open',
+    })
+    const doneAnchor = createNoteCommentAnchor({
+      fullText: full,
+      start: full.indexOf('quoted done'),
+      end: full.indexOf('quoted done') + 'quoted done'.length,
+      selectedText: 'quoted done',
+    })
+    const open = thread({ id: 'open', body: 'Still open', anchor: openAnchor })
+    const resolved = thread({ id: 'done', body: 'Resolved', resolvedAt: 99, anchor: doneAnchor })
+    const reply = thread({ id: 'reply', body: 'reply', parentId: 'open', anchor: openAnchor })
+    expect(noteThreadsToHighlightComments([open, resolved, reply])).toEqual([
+      { id: 'open', quote: 'quoted open', body: 'Still open', createdAt: 1 },
+    ])
   })
 })
