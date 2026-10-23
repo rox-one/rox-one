@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { DraftPersistence } from '@/lib/draft-persistence'
 import { createBoundedReconnectRepair, DEFAULT_TIMEOUT_MS, waitForTransportConnected } from './lib/transport-wait'
 import { decideStartupAppState, isStartupAuthorityDenial, probeWithRetry } from './lib/startup-setup-needs'
+import { canPaintShellFromCache, readStartupShellCache, writeStartupShellCache } from './lib/startup-shell-cache'
 import { useTranslation } from 'react-i18next'
 import i18n from 'i18next'
 import { useTheme } from '@/hooks/useTheme'
@@ -153,7 +154,7 @@ const DoctorReportDialog = React.lazy(() =>
 const loadEnsureRoxRuntimeDefault = async () =>
   (await import('@/components/onboarding')).ensureRoxRuntimeDefault
 
-type AppState = 'loading' | 'onboarding' | 'workspace-picker' | 'ready' | 'transport-unavailable'
+type AppState = 'loading' | 'shell-warming' | 'onboarding' | 'workspace-picker' | 'ready' | 'transport-unavailable'
 
 /** Type for the Jotai store returned by useStore() */
 type JotaiStore = ReturnType<typeof getDefaultStore>
@@ -955,6 +956,20 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           })
           return
         }
+        // PERF shell-from-cache: sync window binding + last successful boot let us
+        // paint shell chrome under the splash while identity/RPC still await WS.
+        // Auth is revalidated below; a mismatch demotes out of shell-warming.
+        try {
+          const boundWorkspaceId = await window.electronAPI.getWindowWorkspace()
+          const shellCache = readStartupShellCache()
+          if (canPaintShellFromCache(shellCache, boundWorkspaceId)) {
+            setCallerAuthority(shellCache.authority)
+            setWindowWorkspaceId(boundWorkspaceId)
+            setAppState('shell-warming')
+          }
+        } catch {
+          // Keep the loading splash; full initialize still runs.
+        }
         // A failed read is unavailable, never evidence of an absent workspace
         // or a completed Welcome. Only fresh caller identity can authorize entry.
         // Independent reads run together; results are still judged in order.
@@ -1087,6 +1102,9 @@ export default function App({ webTransportBootstrap }: { webTransportBootstrap?:
           if (startupRuntimeSummary) setWorkspaceDefaultLlmConnection(startupRuntimeSummary.slug)
           // The ready effect below would list the same connections again.
           if (identity.authority === 'local' && finalStartupState === 'ready') startupLlmConnectionsPublishedRef.current = true
+        }
+        if (finalStartupState === 'ready' && workspaceProbe.value) {
+          writeStartupShellCache({ workspaceId: workspaceProbe.value, authority: identity.authority })
         }
         setAppState(finalStartupState)
       } catch (error) {

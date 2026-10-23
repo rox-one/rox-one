@@ -481,9 +481,18 @@ describe('token foundation v2: radius', () => {
   it('UI profiles scale radius only within the scale', () => {
     const root = rootOf(allTokens)
     const profile = merge(blocks(indexCss, 'html[data-ui-profile="super-engineering"]'))
+    // SE canon (super-engineering-spec §5): composer chrome is 10px — the only
+    // SE radius role allowed off the shared {0,4,6,8,12,9999} scale.
+    const seComposer = new Set(['--radius-composer', '--rox-radius-composer'])
+    const scope = { ...root, ...profile }
     for (const [name, value] of Object.entries(profile)) {
       if (!/radius/.test(name)) continue
-      expect(SCALE.has(px(resolve(value, root))), `${name} = ${value}`).toBe(true)
+      const resolved = px(resolve(value, scope))
+      if (seComposer.has(name)) {
+        expect(resolved, `${name} = ${value}`).toBe(10)
+        continue
+      }
+      expect(SCALE.has(resolved), `${name} = ${value}`).toBe(true)
     }
   })
 })

@@ -1,0 +1,9 @@
+# Secrets — generated on the server, never committed.
+.env
+keys/
+*.pem
+*.priv
+*.pub
+
+# Local / host backups
+backups/

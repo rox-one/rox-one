@@ -69,3 +69,15 @@ export {
   type ImPresenceStatus,
   type ImServiceEventPayload,
 } from './im-bridge.ts'
+export {
+  exportTeamChatToRelay,
+  exportTeamChatStore,
+  TEAM_CHAT_EXPORT_VERSION,
+  TeamChatExportError,
+  type TeamChatRelayExportManifest,
+  type TeamChatRelayExportChannel,
+  type TeamChatRelayExportMember,
+  type TeamChatRelayExportSubscription,
+  type TeamChatRelayExportMessageDraft,
+  type TeamChatRelayExportServiceEventDraft,
+} from './export-to-relay.ts'

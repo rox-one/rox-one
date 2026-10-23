@@ -7,6 +7,21 @@
 // from `@rox/shared/protocol` (or a local helper) instead.
 export type * from '@rox/shared/protocol'
 
+import type {
+  ImMessageEvent,
+  ImPresenceEvent,
+  ImStatusEvent,
+  ImTypingEvent,
+} from '@rox/shared/protocol'
+
+/**
+ * Result of an `im:*` request. `ok: false` means the native chat-core relay is
+ * unavailable and the renderer must fall back to the JSON team-chat store.
+ */
+export type ImRpcResult<T = Record<never, never>> =
+  | ({ ok: true } & T)
+  | { ok: false; reason: string; fallback?: 'team-chat' }
+
 // Cookbooks Lab surface contract (SPEC §Data & API contracts + §Amendment 1):
 // runtime status vocabulary, discovery parser, data-plane DTOs and the typed
 // API error live in their own module.
@@ -743,6 +758,8 @@ import type {
   NoteBacklink,
   CreateNoteCommentInput,
   NoteCommentThread,
+  NoteHistoryEntry,
+  NoteHistoryRevision,
   NoteDocument,
   NoteTasksEntry,
   NoteCreateOptions,
@@ -1510,6 +1527,9 @@ export interface ElectronAPI {
   createNoteComment(workspaceId: string, input: CreateNoteCommentInput): Promise<NoteCommentThread>
   updateNoteComment(workspaceId: string, input: UpdateNoteCommentInput): Promise<NoteCommentThread>
   deleteNoteComment(workspaceId: string, noteId: string, commentId: string): Promise<boolean>
+  listNoteRevisions(workspaceId: string, noteId: string): Promise<NoteHistoryEntry[]>
+  getNoteRevision(workspaceId: string, noteId: string, revisionId: string): Promise<NoteHistoryRevision | null>
+  restoreNoteRevision(workspaceId: string, noteId: string, revisionId: string, expectedRevision: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
   getNoteInsights(workspaceId: string, noteId: string): Promise<NoteInsights>
   getNoteIndexHealth(workspaceId: string): Promise<NoteIndexHealth>
   rebuildNoteIndex(workspaceId: string): Promise<NoteIndexHealth>
@@ -2964,6 +2984,22 @@ export interface ElectronAPI {
   teamChatPresence(userIds: string[]): Promise<Array<{ userId: string; status: 'online' | 'away' | 'offline' | 'call'; source: 'im' | 'local' }>>
   teamChatSearch(orgId: string, query: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage[]>
   onTeamChatChanged(callback: (change: { orgId: string; channelId?: string }) => void): () => void
+
+  // Native chat-core messenger relay (deliverable 4) — LOCAL_ONLY. `im:status`
+  // reports whether the native client is active; the request channels answer
+  // `ok: false` with `fallback: 'team-chat'` when it is not, and the events
+  // stream native messages/presence/typing to the renderer.
+  imStatus(): Promise<ImStatusEvent>
+  imSubscribeChannel(channelId: string): Promise<ImRpcResult>
+  imUnsubscribeChannel(channelId: string): Promise<ImRpcResult>
+  imListMessages(input: { channelId: string; beforeSeq?: number; limit?: number }): Promise<ImRpcResult<{ messages: ImMessageEvent[] }>>
+  imSendMessage(channelId: string, text: string): Promise<ImRpcResult<{ message: ImMessageEvent }>>
+  imMarkRead(channelId: string): Promise<ImRpcResult>
+  imPublishTyping(channelId: string, isTyping: boolean): Promise<ImRpcResult>
+  onImMessage(callback: (message: ImMessageEvent) => void): () => void
+  onImPresence(callback: (presence: ImPresenceEvent) => void): () => void
+  onImTyping(callback: (typing: ImTypingEvent) => void): () => void
+  onImStatusChanged(callback: (status: ImStatusEvent) => void): () => void
 
   // Organizations (P3.1 team workspaces)
   listOrganizations(): Promise<import('@rox/shared/orgs').OrganizationWithMembers[]>

@@ -251,6 +251,9 @@ export const RPC_CHANNELS = {
     CREATE_COMMENT: 'notes:createComment',
     UPDATE_COMMENT: 'notes:updateComment',
     DELETE_COMMENT: 'notes:deleteComment',
+    LIST_REVISIONS: 'notes:listRevisions',
+    GET_REVISION: 'notes:getRevision',
+    RESTORE_REVISION: 'notes:restoreRevision',
     PREPARE_CREATE: 'notes:prepareCreate',
     RENAME: 'notes:rename',
     MOVE: 'notes:move',
@@ -1075,6 +1078,28 @@ export const RPC_CHANNELS = {
     GET: 'chatFolders:get',
     MUTATE: 'chatFolders:mutate',
     CHANGED: 'chatFolders:changed',
+  },
+  /**
+   * im — native chat-core messenger relay (deliverable 4). LOCAL_ONLY: the
+   * `@rox/chat-core` client and its local store run in the Electron main
+   * process, which forwards `onMessage` / `onPresence` / `onTyping` /
+   * `onStatus` callbacks to the renderer as `im:message` / `im:presence` /
+   * `im:typing` / `im:statusChanged` events. When the native module is absent
+   * (or the `workbench.mode.messenger.v1` flag is off) these handlers no-op and
+   * the renderer falls back to the JSON team-chat store (`teamChat:*`).
+   */
+  im: {
+    STATUS: 'im:status',
+    SUBSCRIBE_CHANNEL: 'im:subscribeChannel',
+    UNSUBSCRIBE_CHANNEL: 'im:unsubscribeChannel',
+    LIST_MESSAGES: 'im:listMessages',
+    SEND_MESSAGE: 'im:sendMessage',
+    MARK_READ: 'im:markRead',
+    PUBLISH_TYPING: 'im:publishTyping',
+    MESSAGE: 'im:message',
+    PRESENCE: 'im:presence',
+    TYPING: 'im:typing',
+    STATUS_CHANGED: 'im:statusChanged',
   },
   views: {
     LIST: 'views:list',

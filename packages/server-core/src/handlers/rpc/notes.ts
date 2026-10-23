@@ -7,7 +7,7 @@ import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
 import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import matter from 'gray-matter'
 import yaml from 'js-yaml'
-import { RPC_CHANNELS, type CreateNoteCommentInput, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteCommentAnchor, type NoteCommentThread, type NoteDocument, type NoteIndexHealth, type NoteLink, type NoteMutationOptions, type NoteRenameImpact, type NoteSummary, type UpdateNoteCommentInput } from '@rox/shared/protocol'
+import { RPC_CHANNELS, type CreateNoteCommentInput, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteCommentAnchor, type NoteCommentThread, type NoteDocument, type NoteHistoryEntry, type NoteHistoryRevision, type NoteIndexHealth, type NoteLink, type NoteMutationOptions, type NoteRenameImpact, type NoteSummary, type UpdateNoteCommentInput } from '@rox/shared/protocol'
 import type { NativeReplicaCreatePlan } from '@rox/shared/protocol/native-replica'
 import { pushTyped, type RpcServer, type RequestContext } from '@rox/server-core/transport'
 import { sanitizeFilename } from '@rox/server-core/handlers'
@@ -17,6 +17,7 @@ import type { JournalEntitySnapshot, JournalReceipt } from '../../authority/nati
 import { registerContentHandlers, CONTENT_HANDLED_CHANNELS } from './content.ts'
 import { assertNoteReadPath, readNoteTarget } from './note-read-error.ts'
 import { markdownRevision, type MarkdownChangedEvent, type NativeMarkdownChange, type NativeFolderSnapshot } from '../../docs/markdown-commit.ts'
+import { listNoteRevisions, getNoteRevision, recordNoteRevision } from '../../docs/note-revision-history.ts'
 
 type NativeNoteWriter = (reason: MarkdownChangedEvent['reason'], changes: NativeMarkdownChange[]) => Promise<unknown>
 type NativeFolderReader = (folder: string) => Promise<NativeFolderSnapshot | null>
@@ -94,6 +95,9 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.CREATE_COMMENT,
   RPC_CHANNELS.notes.UPDATE_COMMENT,
   RPC_CHANNELS.notes.DELETE_COMMENT,
+  RPC_CHANNELS.notes.LIST_REVISIONS,
+  RPC_CHANNELS.notes.GET_REVISION,
+  RPC_CHANNELS.notes.RESTORE_REVISION,
 ] as const
 
 const NOTES_DIR = 'notes'
@@ -243,6 +247,36 @@ function noteCommentsPath(notesRoot: string, noteId: string): string {
   const encoded = Buffer.from(safeId, 'utf8').toString('base64url')
   return join(noteCommentsDir(notesRoot), `${encoded}.json`)
 }
+
+
+/** Device principal for legacy markdown history rows (maps to notes.history.localAuthor). */
+function localDeviceHistoryActor(workspaceId: string): string {
+  return `local-uid:${process.getuid?.() ?? 'windows-user'}:${workspaceId}`
+}
+
+async function rememberSavedNoteRevision(input: {
+  notesRoot: string
+  noteId: string
+  content: string
+  revisionId: string
+  operationId: string
+  previousRevision?: string | null
+  actorPrincipalId?: string | null
+}): Promise<void> {
+  try {
+    await recordNoteRevision(input.notesRoot, {
+      noteId: input.noteId,
+      content: input.content,
+      revisionId: input.revisionId,
+      operationId: input.operationId,
+      previousRevision: input.previousRevision ?? null,
+      actorPrincipalId: input.actorPrincipalId ?? null,
+    })
+  } catch {
+    // History is best-effort: a failed snapshot must never fail the save the user just made.
+  }
+}
+
 
 async function assertNoSymlinkAncestors(root: string, candidateDir: string): Promise<void> {
   const normalizedRoot = resolve(root)
@@ -1979,6 +2013,16 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         if (targets.length === 1) awardNativeXpAndBroadcast(server, deps, ctx, 'note_linked', JSON.stringify([workspaceId, updated.entity.nativeId, targets[0]!.nativeId]))
       }
       await indexNativeNoteLinks(workspaceId, note)
+      await rememberSavedNoteRevision({
+        notesRoot: context.notesRoot,
+        noteId: note.id,
+        content: note.content,
+        revisionId: note.revision ?? markdownRevision(note.content),
+        // Same operationId as commitNativeNote (required metadata) — never mint a second tip.
+        operationId: nativeOperation(operation).operationId,
+        previousRevision: previous.revision ?? null,
+        actorPrincipalId: JSON.stringify([context.principal.issuer, context.principal.subject]),
+      })
       changed({ workspaceId, reason: 'save', noteId: note.id })
       return note
     }
@@ -1993,9 +2037,10 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (!expectedRevision) throw new Error('note expected revision is required')
     const existing = await readNote(notesRoot, noteId)
     if (expectedRevision !== existing.revision && expectedRevision !== contentHash(existing.content)) throw new Error('note revision conflict')
+    const markdownSaveOperationId = crypto.randomUUID()
     const { note } = await nativeContent.commit(ctx, {
       workspaceId, noteId, content, expectedRevision: markdownRevision(existing.content), sourceStoreId,
-      authorityEpoch: 1, operationId: crypto.randomUUID(),
+      authorityEpoch: 1, operationId: markdownSaveOperationId,
     })
     let autoCreated: CreatedLinkedNote[] = []
     try {
@@ -2004,6 +2049,15 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       await refreshVaultIndex(notesRoot)
       const nextLinkCount = note.links?.length ?? 0
       if (nextLinkCount > previousLinkCount) awardXpSafe('note_linked')
+      await rememberSavedNoteRevision({
+        notesRoot,
+        noteId: note.id,
+        content: note.content,
+        revisionId: note.revision ?? markdownRevision(note.content),
+        operationId: markdownSaveOperationId,
+        previousRevision: existing.revision ?? markdownRevision(existing.content),
+        actorPrincipalId: localDeviceHistoryActor(workspaceId),
+      })
       changed({ workspaceId, reason: 'save', noteId: note.id })
       return { ...note, autoCreatedNoteIds: autoCreated.map(created => created.id) }
     } catch (error) {
@@ -2166,6 +2220,90 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     changed({ workspaceId, reason: 'comments', noteId })
     return true
   })
+
+  server.handle(RPC_CHANNELS.notes.LIST_REVISIONS, async (ctx, workspaceId: string, noteId: string): Promise<NoteHistoryEntry[]> => {
+    nativeContent.assertScope(ctx, workspaceId)
+    const safeId = assertSafeNoteId(noteId)
+    return listNoteRevisions(getWorkspaceNotesRoot(workspaceId), workspaceId, safeId)
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.notes.GET_REVISION, async (ctx, workspaceId: string, noteId: string, revisionId: string): Promise<NoteHistoryRevision | null> => {
+    nativeContent.assertScope(ctx, workspaceId)
+    if (typeof revisionId !== 'string' || !revisionId) throw new Error('revisionId is required')
+    const safeId = assertSafeNoteId(noteId)
+    return getNoteRevision(getWorkspaceNotesRoot(workspaceId), workspaceId, safeId, revisionId)
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.notes.RESTORE_REVISION, async (
+    ctx,
+    workspaceId: string,
+    noteId: string,
+    revisionId: string,
+    expectedRevision: string,
+    operationOrSourceStoreId?: NoteMutationOptions | string,
+  ): Promise<NoteDocument> => {
+    nativeContent.assertScope(ctx, workspaceId)
+    if (typeof revisionId !== 'string' || !revisionId) throw new Error('revisionId is required')
+    if (typeof expectedRevision !== 'string' || !expectedRevision) throw new Error('expectedRevision is required')
+    const safeId = assertSafeNoteId(noteId)
+    const notesRoot = getWorkspaceNotesRoot(workspaceId)
+    const historical = await getNoteRevision(notesRoot, workspaceId, safeId, revisionId)
+    if (!historical) throw new CodedError('NOT_FOUND', 'Document revision not found')
+    // Restore = new save of the historical body under CAS. Never rewrite the old snapshot.
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
+      const found = await findNativeNote(deps, context, safeId)
+      if (found.entity.files.length !== 1) throw new Error('native Notes restore requires one canonical Markdown file')
+      const previous = await nativeNoteDocument(deps, context, found.entity, found.file, found.entities)
+      const currentRevision = previous.revision ?? markdownRevision(previous.content)
+      if (expectedRevision !== currentRevision && expectedRevision !== contentHash(previous.content)) {
+        throw new CodedError('HASH_CONFLICT', 'Document revision conflict')
+      }
+      const operation = typeof operationOrSourceStoreId === 'string' ? undefined : operationOrSourceStoreId
+      const commitOperation = operation ?? {
+        operationId: randomUUID(),
+        expectedRevision: previous.nativeRevision ?? null,
+        schemaVersion: 1 as const,
+      }
+      await commitNativeNote(deps, context, found.entity.nativeId, commitOperation, [{ path: found.file.path, content: historical.content }])
+      const updated = await findNativeNote(deps, context, safeId)
+      const note = await nativeNoteDocument(deps, context, updated.entity, updated.file, updated.entities)
+      await rememberSavedNoteRevision({
+        notesRoot: context.notesRoot,
+        noteId: note.id,
+        content: note.content,
+        revisionId: note.revision ?? markdownRevision(note.content),
+        operationId: commitOperation.operationId,
+        previousRevision: currentRevision,
+        actorPrincipalId: JSON.stringify([context.principal.issuer, context.principal.subject]),
+      })
+      await indexNativeNoteLinks(workspaceId, note)
+      changed({ workspaceId, reason: 'save', noteId: note.id })
+      return note
+    }
+    const existing = await readNote(notesRoot, safeId)
+    if (expectedRevision !== existing.revision && expectedRevision !== contentHash(existing.content)) {
+      throw new CodedError('HASH_CONFLICT', 'Document revision conflict')
+    }
+    const sourceStoreId = typeof operationOrSourceStoreId === 'string' ? operationOrSourceStoreId : undefined
+    const markdownRestoreOperationId = crypto.randomUUID()
+    const { note } = await nativeContent.commit(ctx, {
+      workspaceId, noteId: safeId, content: historical.content, expectedRevision: markdownRevision(existing.content), sourceStoreId,
+      authorityEpoch: 1, operationId: markdownRestoreOperationId,
+    })
+    await rememberSavedNoteRevision({
+      notesRoot,
+      noteId: note.id,
+      content: note.content,
+      revisionId: note.revision ?? markdownRevision(note.content),
+      operationId: markdownRestoreOperationId,
+      previousRevision: existing.revision ?? markdownRevision(existing.content),
+      actorPrincipalId: localDeviceHistoryActor(workspaceId),
+    })
+    await refreshVaultIndex(notesRoot)
+    changed({ workspaceId, reason: 'save', noteId: note.id })
+    return note
+  }, { nativeAction: 'write' })
 
   server.handle(RPC_CHANNELS.notes.RENAME_FOLDER, async (ctx, workspaceId: string, folder: string, nextName: string) => {
     nativeContent.assertScope(ctx, workspaceId)

@@ -125,7 +125,7 @@ export async function loadRuntimeConfiguration(path: string): Promise<RuntimeCon
   try {
     const parsed: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes))
     const input = configurationRecord(parsed,
-      ['schemaVersion', 'database', 'schema', 'serverId', 'listen', 'authentication', 'tls', 'migrationsDirectory', 'shutdownTimeoutSeconds', 'licenseRegistryPath'],
+      ['schemaVersion', 'database', 'schema', 'serverId', 'listen', 'authentication', 'tls', 'migrationsDirectory', 'shutdownTimeoutSeconds', 'licenseRegistryPath', 'im'],
       ['schemaVersion', 'database', 'schema', 'serverId', 'listen', 'authentication'])
     if (input.schemaVersion !== 1) throw new ConfigurationError('INVALID_CONFIGURATION')
     const database = configurationRecord(input.database, ['url', 'poolSize'], ['url'])
@@ -184,12 +184,24 @@ export async function loadRuntimeConfiguration(path: string): Promise<RuntimeCon
       }
     }
     if (!LOOPBACK_HOSTS.includes(host) && !tls) throw new ConfigurationError('INVALID_CONFIGURATION')
+    let imConfig: RuntimeConfiguration['workspace']['im'] | undefined
+    if (input.im !== undefined) {
+      const im = configurationRecord(input.im, ['enabled'], [])
+      if (im.enabled !== undefined && typeof im.enabled !== 'boolean') throw new ConfigurationError('INVALID_CONFIGURATION')
+      if (im.enabled === false) imConfig = undefined
+      else imConfig = {} // enable module; relay URL/key still come from env inside createImModule
+    }
     return {
       databaseUrl,
       poolSize: database.poolSize === undefined ? DEFAULT_POOL_SIZE : integer(database.poolSize, 1, MAX_POOL_SIZE),
       shutdownTimeoutSeconds: input.shutdownTimeoutSeconds === undefined ? DEFAULT_SHUTDOWN_TIMEOUT_SECONDS : integer(input.shutdownTimeoutSeconds, 1, 300),
       migrationsDirectory: input.migrationsDirectory === undefined ? resolve(import.meta.dir, '../migrations') : absolute(input.migrationsDirectory),
-      workspace: { schema, serverId, host, port, authentication, ...(tls ? { tls } : {}), ...(input.licenseRegistryPath === undefined ? {} : { licenseRegistry: await TrustedLicenseRegistry.load(absolute(input.licenseRegistryPath)) }) },
+      workspace: {
+        schema, serverId, host, port, authentication,
+        ...(tls ? { tls } : {}),
+        ...(input.licenseRegistryPath === undefined ? {} : { licenseRegistry: await TrustedLicenseRegistry.load(absolute(input.licenseRegistryPath)) }),
+        ...(imConfig ? { im: imConfig } : {}),
+      },
     }
   } catch (error) {
     if (error instanceof ConfigurationError) throw error

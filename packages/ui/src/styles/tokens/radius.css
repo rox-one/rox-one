@@ -2,10 +2,11 @@
    none: flush shell panes, rails, docks, tab strips, bars
    xs:   chips, badges, kbd, checkboxes, small icon buttons
    sm:   controls and list-row hover/selection
-   md:   cards, menus, popovers, tooltips, composer
+   md:   cards, menus, popovers, tooltips, composer (default 8px)
    lg:   dialogs, sheets, palette, toasts, islands
    full: avatars, status dots, switches, counters, the voice pill
-   Profiles may scale the set but never leave it. */
+   Profiles may scale the set but never leave it, except Rox Engineering
+   which sets --radius-composer to 10px (canon) under data-ui-profile. */
 :root {
   --radius-none: 0px;
   --radius-xs: 4px;
