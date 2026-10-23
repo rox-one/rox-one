@@ -40,6 +40,6 @@ html[data-theme="arc-glass"] [data-rail-row][aria-current="page"]:hover {
    the selection state the markup publishes as `data-active`. The combined value
    lives in a local custom property, the same pattern the recipes use. */
 html[data-theme="arc-glass"] [data-mission-row][data-active] {
-  --glass-mission-ring: var(--glass-surface-ring), 0 0 0 1px var(--accent);
+  --glass-mission-ring: var(--glass-surface-ring, var(--glass-card-shadow)), 0 0 0 1px var(--accent);
   box-shadow: var(--glass-mission-ring);
 }

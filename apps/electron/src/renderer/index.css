@@ -578,9 +578,9 @@ html .popover-styled {
 }
 
 /* Opaque like every other overlay (PERF-07 / UI-AUDIT P1-10). Arc Glass Design
-   content surfaces CSS was removed; theme remains selectable as wallpaper-only.
-   Opaque toast fill applies to every theme except the legacy arc-glass id. */
-html:not([data-theme="arc-glass"]) [data-sonner-toast] {
+   content surfaces CSS was removed; theme remains wallpaper-only — opaque toast
+   fill applies to every theme including arc-glass. */
+[data-sonner-toast] {
   background-color: oklch(from var(--popover) l c h / 1) !important;
 }
 
@@ -1453,16 +1453,16 @@ html[data-contrast="high"] :is(.popover-styled, [data-slot="popover-content"], .
    a11y/performance gates above still reset the popover when they are active.
    With the layer off the popover stays opaque exactly as before.
 
-   Arc Glass (`html[data-theme="arc-glass"]`) is a document-wide exception for
-   its legacy overlay skin. SE optional accents do NOT exempt the whole document:
-   toast / tooltip / hover-card / dialog / alertdialog / select stay reset always
-   (under non-arc-glass). Menus/dropdowns skip the opaque reset only when
+   Arc Glass is wallpaper-only (no surfaces skin): opaque toast fill and overlay
+   backdrop-filter:none apply to it too. SE optional accents do NOT exempt the
+   whole document: toast / tooltip / hover-card / dialog / alertdialog / select
+   stay reset. Menus/dropdowns skip the opaque reset only when
    html[data-ui-profile="super-engineering"][data-glass-accents] AND they carry
    data-glass-slot="popover" — same gate as popover-content. With accents off,
    slotted menus stay opaque. Composer accent is fill/tint only (no skin blur).
    A11y/performance gates still zero blur.
 ============================================================================= */
-html:not([data-theme="arc-glass"]) :is(
+html :is(
   [data-sonner-toast],
   [data-slot="tooltip-content"],
   [data-slot="hover-card-content"],
@@ -1476,7 +1476,7 @@ html:not([data-theme="arc-glass"]) :is(
   -webkit-backdrop-filter: none !important;
 }
 /* Menus: opaque unless SE accents are on (then only unslotted menus reset). */
-html:not([data-theme="arc-glass"]):not([data-ui-profile="super-engineering"][data-glass-accents]) :is(
+html:not([data-ui-profile="super-engineering"][data-glass-accents]) :is(
   [data-slot="dropdown-menu-content"],
   [data-slot="dropdown-menu-sub-content"],
   [data-slot="context-menu-content"],
@@ -1496,8 +1496,8 @@ html[data-ui-profile="super-engineering"][data-glass-accents] :is(
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-/* Popover content: allow blur under Arc Glass, SE accents, or web material glass. */
-html:not([data-theme="arc-glass"]):not([data-ui-profile="super-engineering"][data-glass-accents]):not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"] {
+/* Popover content: allow blur under SE accents or web material glass. */
+html:not([data-ui-profile="super-engineering"][data-glass-accents]):not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }

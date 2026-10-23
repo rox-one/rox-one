@@ -198,6 +198,14 @@ describe('degradations', () => {
       expect(block.body).toMatch(/--glass-blur:\s*0px/)
       expect(block.body).toMatch(/backdrop-filter:\s*none/)
       expect(block.body).not.toMatch(/--glass-fill-mix/)
+      expect(block.selector).not.toContain('[data-glass-slot="composer"]')
+    }
+  })
+
+  it('arc-glass-skin.css: composer never appears in backdrop-filter:none :is()', () => {
+    for (const block of ruleBlocks(SKIN)) {
+      if (!/backdrop-filter:\s*none/.test(block.body)) continue
+      expect(block.selector).not.toContain('[data-glass-slot="composer"]')
     }
   })
 })
