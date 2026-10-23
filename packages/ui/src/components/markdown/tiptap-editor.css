@@ -724,18 +724,18 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 }
 
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--info,
-.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--tip,
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--question,
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--warning {
   border-left-color: color-mix(in oklch, var(--info) 55%, transparent);
   background: color-mix(in oklch, var(--info) 6%, transparent);
 }
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--info > p:first-child,
-.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--tip > p:first-child,
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--question > p:first-child,
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--warning > p:first-child {
   color: color-mix(in oklch, var(--foreground) 70%, var(--info));
 }
+
+/* tip (+ spoiler/details) inherit base accent look */
 
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--success {
   border-left-color: color-mix(in oklch, var(--success) 55%, transparent);
@@ -743,12 +743,6 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 }
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--success > p:first-child {
   color: color-mix(in oklch, var(--foreground) 70%, var(--success));
-}
-
-.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--spoiler,
-.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--details {
-  border-left-color: color-mix(in oklch, var(--accent) 55%, transparent);
-  background: color-mix(in oklch, var(--accent) 5%, transparent);
 }
 
 .tiptap-editor .tiptap-rox-block-toggle {
