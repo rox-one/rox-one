@@ -109,7 +109,7 @@ const UNSAFE_TYPE_RE = /^(js|javascript|shell|bash|powershell|eval|templater|raw
 const HTML_TAG_RE = /<\/?[a-z][^>]*>/gi
 const EVENT_HANDLER_RE = /\bon[a-z]+\s*=/i
 const UNSAFE_URL_RE = /^\s*(javascript|data|vbscript):/i
-const CONTROL_CHARS_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g
+const CONTROL_CHARS_RE = new RegExp('[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]', 'g')
 
 const MAX_LABEL = 200
 const MAX_ID = 256
@@ -137,7 +137,7 @@ export function isActionFenceLanguage(lang: unknown): boolean {
 export function sanitizeActionLabel(raw: unknown): string {
   if (typeof raw !== 'string') return ''
   const stripped = raw
-    .replace(/<\/?[a-z][^>]*>/gi, '')
+    .replace(HTML_TAG_RE, '')
     .replace(/\bon[a-z]+\s*=/gi, '')
     .replace(CONTROL_CHARS_RE, '')
     .replace(/\s+/g, ' ')
@@ -666,7 +666,7 @@ export function listAvailableCommandIds(
   if (Array.isArray(registry) || (typeof registry === 'object' && registry !== null && Symbol.iterator in registry && !('query' in registry) && !('get' in registry))) {
     return [...(registry as Iterable<string>)].filter((id) => typeof id === 'string' && id.length > 0)
   }
-  const query = (registry as { query?: Function }).query
+  const query = (registry as { query?: (...args: unknown[]) => unknown }).query
   if (typeof query === 'function') {
     try {
       const rows = query.call(registry, {}, {}) as Array<{ id?: string }>
