@@ -469,6 +469,17 @@ export interface SessionToolContext {
   boardWidgets?: BoardWidgetToolCallbacks;
 
   // ============================================================
+  // Canvas / «Доска» (canvas_create_entity_card / canvas_link_entity)
+  // ============================================================
+
+  /**
+   * Canvas entity-card callbacks — mint or link a live entity card on a board.
+   * Injected by SessionManager over the same CanvasFileStore + entity-links
+   * path the surface UI uses. Undefined when the host has no canvas support.
+   */
+  canvas?: CanvasToolCallbacks;
+
+  // ============================================================
   // Memory (memory_search / memory_get)
   // ============================================================
 
@@ -1084,6 +1095,39 @@ export interface BoardWidgetPutInput {
  */
 export interface BoardWidgetToolCallbacks {
   putWidget(input: BoardWidgetPutInput): Promise<BoardWidgetToolRecord>;
+}
+
+/** Result of placing an entity card on a board (create or link). */
+export interface CanvasEntityCardResult {
+  objectId: string;
+  entityId: string;
+  boardId: string;
+}
+
+export interface CanvasCreateEntityCardInput {
+  boardId: string;
+  kind: string;
+  title?: string;
+  props?: Record<string, unknown>;
+  x?: number;
+  y?: number;
+}
+
+export interface CanvasLinkEntityInput {
+  boardId: string;
+  kind: string;
+  entityId: string;
+  x?: number;
+  y?: number;
+}
+
+/**
+ * Canvas entity-card tool callbacks. All board / entity / link I/O lives behind
+ * these — this package never touches canvas/ or the entity-links store.
+ */
+export interface CanvasToolCallbacks {
+  createEntityCard(input: CanvasCreateEntityCardInput): Promise<CanvasEntityCardResult>;
+  linkEntity(input: CanvasLinkEntityInput): Promise<CanvasEntityCardResult>;
 }
 
 // ============================================================
