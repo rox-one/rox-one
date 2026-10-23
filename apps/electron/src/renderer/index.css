@@ -2126,6 +2126,8 @@ html[data-ui-profile="super-engineering"] :is(
   outline: none;
   box-shadow: var(--se-shell-focus-ring);
   opacity: 1;
+  /* Focus rings must paint immediately (a11y); press/hover keep motion tokens. */
+  transition-property: transform, opacity, color, background-color;
 }
 
 html[data-contrast="high"][data-ui-profile="super-engineering"] :is(

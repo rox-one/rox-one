@@ -40,6 +40,7 @@ describe('SE shell focus rings + reduced-motion audit', () => {
     const body = focusRule.slice(focusRule.indexOf('{'), focusRule.indexOf('}') + 1)
     expect(body).toContain('outline: none')
     expect(body).toContain('box-shadow: var(--se-shell-focus-ring)')
+    expect(body).toContain('transition-property: transform, opacity, color, background-color')
     expect(seBlock).toContain('inset 0 0 0 var(--focus-ring-width, 2px)')
   })
 
