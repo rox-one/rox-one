@@ -6,6 +6,7 @@ import {
   ActionButtonBlock,
   createActionButtonContent,
   insertActionButtonContent,
+  isActionButtonActivateAllowed,
 } from '../ActionButtonBlock'
 import { presentationStateForSpec, parseActionFenceBody } from '../../../../../../core/src/docs/action-spec'
 
@@ -114,4 +115,40 @@ describe('ActionButtonBlock TipTap', () => {
     expect(payload.attrs.code).toContain('Save')
     expect(payload.attrs.code).not.toContain('<script>')
   })
+
+  it('read-only editor disables activate (no pending pulse)', () => {
+    expect(
+      isActionButtonActivateAllowed({ isEditable: false, inert: false, pending: false }),
+    ).toBe(false)
+    expect(
+      isActionButtonActivateAllowed({ isEditable: true, inert: false, pending: false }),
+    ).toBe(true)
+    expect(
+      isActionButtonActivateAllowed({ isEditable: true, inert: true, pending: false }),
+    ).toBe(false)
+    expect(
+      isActionButtonActivateAllowed({ isEditable: true, inert: false, pending: true }),
+    ).toBe(false)
+
+    // Editor API: setEditable(false) must surface isEditable=false for the gate.
+    const editor = makeEditor()
+    insertActionButtonContent(editor, undefined, {
+      kind: 'command',
+      label: 'Sync',
+      commandId: 'notes.sync',
+      reviewState: 'reviewed',
+    })
+    expect(editor.isEditable).toBe(true)
+    editor.setEditable(false)
+    expect(editor.isEditable).toBe(false)
+    expect(
+      isActionButtonActivateAllowed({
+        isEditable: editor.isEditable,
+        inert: false,
+        pending: false,
+      }),
+    ).toBe(false)
+    editor.destroy()
+  })
+
 })

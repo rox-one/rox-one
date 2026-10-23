@@ -307,9 +307,20 @@ export function normalizeActionSpec(
   const blockKind = clampId(raw.blockKind ?? raw.block)
   let formula = typeof raw.formula === 'string' ? raw.formula.replace(CONTROL_CHARS_RE, '').trim() : undefined
   if (formula && formula.length > MAX_FORMULA) formula = formula.slice(0, MAX_FORMULA)
-  if (formula && (EVENT_HANDLER_RE.test(formula) || UNSAFE_URL_RE.test(formula))) {
-    issues.push('unsafe-payload')
-    formula = undefined
+  // Mirror normalizeInputs: reject eval(/function(/HTML (and event-handler/URL) — never store eval-shaped formula.
+  if (formula) {
+    const lower = formula.toLowerCase()
+    if (
+      EVENT_HANDLER_RE.test(formula) ||
+      UNSAFE_URL_RE.test(formula) ||
+      /<\/?[a-z][^>]*>/i.test(formula) ||
+      lower.includes('eval(') ||
+      lower.includes('function(') ||
+      lower.includes('new function')
+    ) {
+      issues.push('unsafe-payload')
+      formula = undefined
+    }
   }
   const workflowRef = clampId(raw.workflowRef ?? raw.workflow)
 

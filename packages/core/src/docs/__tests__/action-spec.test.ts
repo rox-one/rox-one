@@ -167,7 +167,45 @@ describe('LSX-WP-033 ActionSpec helpers', () => {
     expect(md).toContain('"reviewState": "unreviewed"')
   })
 
-    test('sanitizeActionLabel strips HTML and rejects javascript URLs', () => {
+
+  test('safeFormula rejects eval/function/HTML and clears formula (mirrors normalizeInputs)', () => {
+    const cases = [
+      'eval("1+1")',
+      'Function("return 1")()',
+      'new Function("x", "return x")',
+      '<script>alert(1)</script>sum(a,b)',
+      'onclick=alert(1)',
+      'javascript:alert(1)',
+    ]
+    for (const formula of cases) {
+      const result = normalizeActionSpec({
+        kind: 'safeFormula',
+        label: 'Calc',
+        formula,
+        reviewState: 'reviewed',
+      })
+      expect(result.ok).toBe(false)
+      if (result.ok) throw new Error('expected inert')
+      expect(result.inertSpec.rejectedUnsafe).toBe(true)
+      expect(result.inertSpec.formula).toBeUndefined()
+      expect(result.inertSpec.reviewState).toBe('unreviewed')
+      expect(presentationStateForSpec(result.inertSpec)).toBe('inert')
+    }
+
+    // Benign formula still accepted when reviewed.
+    const ok = normalizeActionSpec({
+      kind: 'safeFormula',
+      label: 'Calc',
+      formula: 'sum(a,b)',
+      reviewState: 'reviewed',
+    })
+    expect(ok.ok).toBe(true)
+    if (!ok.ok) throw new Error('expected ok')
+    expect(ok.spec.formula).toBe('sum(a,b)')
+    expect(ok.spec.rejectedUnsafe).toBe(false)
+  })
+
+  test('sanitizeActionLabel strips HTML and rejects javascript URLs', () => {
     expect(sanitizeActionLabel('<b>Hi</b> there')).toBe('Hi there')
     expect(sanitizeActionLabel('javascript:alert(1)')).toBe('')
     expect(canonicalizeActionKind('entity-link')).toBe('entityLink')

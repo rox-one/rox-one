@@ -139,6 +139,16 @@ function statusCopy(presentation: ClientActionUiState['presentation']): string {
   }
 }
 
+
+/** Activate is allowed only while the editor is editable and the button is not inert/pending. */
+export function isActionButtonActivateAllowed(options: {
+  isEditable: boolean
+  inert: boolean
+  pending: boolean
+}): boolean {
+  return options.isEditable && !options.inert && !options.pending
+}
+
 function ActionButtonNodeView({
   node,
   editor,
@@ -161,8 +171,15 @@ function ActionButtonNodeView({
   const presentation = ui.presentation
   const inert = presentation === 'inert' || presentationStateForSpec(spec) === 'inert'
   const pending = presentation === 'pending'
+  const activateAllowed = isActionButtonActivateAllowed({
+    isEditable: editor.isEditable,
+    inert,
+    pending,
+  })
 
   const onActivate = React.useCallback(() => {
+    // Read-only: disable + no-op (no pending pulse) — same gate as Tabs/Columns.
+    if (!editor.isEditable) return
     setUi((prev) => {
       const result = beginClientActionAttempt(spec, prev)
       if (!result.accepted) return result.ui
@@ -172,7 +189,7 @@ function ActionButtonNodeView({
       })
       return result.ui
     })
-  }, [spec])
+  }, [spec, editor.isEditable])
 
   const selectNode = React.useCallback(() => {
     const pos = typeof getPos === 'function' ? getPos() : undefined
@@ -204,13 +221,14 @@ function ActionButtonNodeView({
           type="button"
           className="tiptap-action-button-surface"
           data-presentation={presentation}
-          aria-disabled={inert || pending ? true : undefined}
-          disabled={inert || pending}
+          aria-disabled={!activateAllowed ? true : undefined}
+          disabled={!activateAllowed}
           title={statusCopy(presentation)}
           aria-label={label}
           onClick={(event) => {
             event.preventDefault()
             event.stopPropagation()
+            if (!editor.isEditable) return
             onActivate()
           }}
         >
