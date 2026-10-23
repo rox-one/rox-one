@@ -75,6 +75,9 @@ import {
 import { MindMapHost } from '@/mindmap/MindMapHost'
 import { deriveNoteMindMap, type MindMapGraph } from '@rox/core/mindmap'
 import { NotesCommentComposer, NotesCommentHighlights, NotesCommentTooltip, NotesComments, NotesEditorHeadlineStyles, NotesToc } from './notes/NotesReadingChrome'
+import { NotesCommentThreads, noteThreadsToHighlightComments } from './notes/NotesCommentThreads'
+import { anchorFromQuote } from './notes/note-comments'
+import type { NoteCommentThread } from '@rox/shared/protocol'
 import {
   NotesBreadcrumbs,
   NotesCommandPalette,
@@ -565,6 +568,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const setCommentComposerBody = React.useCallback((body: string) => setCommentDrafts(drafts => updateCommentDraft(drafts, commentDraftKey, { body })), [commentDraftKey])
   const [commentComposerTop, setCommentComposerTop] = React.useState(48)
   const [focusCommentComposer, setFocusCommentComposer] = React.useState(false)
+  const [rpcCommentThreads, setRpcCommentThreads] = React.useState<NoteCommentThread[]>([])
   const [commentTooltip, setCommentTooltip] = React.useState<{ body: string; quote: string; top: number; left: number } | null>(null)
   const [footnoteDraft, setFootnoteDraft] = React.useState('')
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
@@ -2708,6 +2712,13 @@ h1,h2,h3{margin-top:1.5em}
     })),
     [content],
   )
+  const highlightComments = React.useMemo(() => {
+    const fromMarkdown = markdownComments
+    const fromRpc = noteThreadsToHighlightComments(rpcCommentThreads)
+    const seen = new Set(fromRpc.map((c) => c.id))
+    return [...fromRpc, ...fromMarkdown.filter((c) => !seen.has(c.id))]
+  }, [markdownComments, rpcCommentThreads])
+
 
   const commandCatalog = React.useMemo(() => {
     const sessions = [...sessionMetaMap.values()].slice(0, 20).map((session) => ({
@@ -3424,7 +3435,7 @@ h1,h2,h3{margin-top:1.5em}
               ) : null}
               {noteEntityMentions.picker}
               <NotesCommentHighlights
-                comments={markdownComments}
+                comments={highlightComments}
                 hidden={!commentsShown}
                 contentKey={content}
                 onActivate={(comment, rect) => {
@@ -3455,19 +3466,27 @@ h1,h2,h3{margin-top:1.5em}
                   }}
                   onSubmit={() => {
                     const text = commentComposerBody.trim()
-                    if (!text || !activeNote) return
-                    const nextContent = upsertMarkdownComment(contentRef.current, {
-                      id: crypto.randomUUID(),
-                      quote: commentDraftQuote.trim(),
-                      body: text,
-                      createdAt: Date.now(),
-                    })
-                    contentRef.current = nextContent
-                    dirtyRef.current = true
-                    setContent(nextContent)
-                    setDirty(true)
-                    setCommentDraftQuote('')
-                    setCommentComposerBody('')
+                    if (!text || !activeNote || !activeWorkspaceId) return
+                    // Prefer the sidecar RPC stack (threads / resolve / reactions).
+                    // Selection compose from the overlay mirrors the rail submit.
+                    void (async () => {
+                      try {
+                        const quote = commentDraftQuote.trim()
+                        const anchor = quote ? anchorFromQuote(contentRef.current, quote) : null
+                        if (quote && !anchor) return
+                        await window.electronAPI.createNoteComment(activeWorkspaceId, {
+                          noteId: activeNote.id,
+                          body: text,
+                          anchor,
+                        })
+                        const list = await window.electronAPI.listNoteComments(activeWorkspaceId, activeNote.id)
+                        setRpcCommentThreads(list)
+                        setCommentDraftQuote('')
+                        setCommentComposerBody('')
+                      } catch {
+                        /* rail surfaces errors; overlay stays quiet */
+                      }
+                    })()
                   }}
                 />
               ) : null}
@@ -3497,34 +3516,59 @@ h1,h2,h3{margin-top:1.5em}
               maximumWidth={Math.max(140, docRowWidth - NOTE_COLUMN_MIN - (tocShown ? railLayout.toc : 0))}
             /> : null}
             {activeNote ? <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={commentsShown} open={railSheet === 'comments'} title={t('notes.comments.title')} onClose={() => setRailSheet(null)}>
-              <NotesComments
-                noteId={activeNote.id}
-                draftQuote={commentDraftQuote}
-                markdownComments={markdownComments}
-                width={railLayout.comments}
-                composerTop={commentComposerTop}
-                draftBody={commentComposerBody}
-                onDraftBodyChange={setCommentComposerBody}
-                focusRequested={focusCommentComposer}
-                onFocusHandled={() => setFocusCommentComposer(false)}
-                onClearDraft={() => setCommentDraftQuote('')}
-                onJumpToQuote={(quote) => {
-                  const root = document.querySelector('.notes-editor .ProseMirror')
-                  if (!root || !quote) return
-                  const hit = Array.from(root.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6')).find(
-                    (node) => node.textContent?.includes(quote),
-                  )
-                  hit?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                }}
-                onCommit={(comments) => {
-                  let next = content
-                  for (const comment of comments) next = upsertMarkdownComment(next, comment)
-                  contentRef.current = next
-                  dirtyRef.current = true
-                  setContent(next)
-                  setDirty(true)
-                }}
-              />
+              {activeWorkspaceId ? (
+                <NotesCommentThreads
+                  workspaceId={activeWorkspaceId}
+                  noteId={activeNote.id}
+                  noteText={content}
+                  draftQuote={commentDraftQuote}
+                  width={railLayout.comments}
+                  composerTop={commentComposerTop}
+                  draftBody={commentComposerBody}
+                  onDraftBodyChange={setCommentComposerBody}
+                  focusRequested={focusCommentComposer}
+                  onFocusHandled={() => setFocusCommentComposer(false)}
+                  onClearDraft={() => setCommentDraftQuote('')}
+                  onThreadsChange={setRpcCommentThreads}
+                  onJumpToQuote={(quote) => {
+                    const root = document.querySelector('.notes-editor .ProseMirror')
+                    if (!root || !quote) return
+                    const hit = Array.from(root.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6')).find(
+                      (node) => node.textContent?.includes(quote),
+                    )
+                    hit?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }}
+                />
+              ) : (
+                <NotesComments
+                  noteId={activeNote.id}
+                  draftQuote={commentDraftQuote}
+                  markdownComments={markdownComments}
+                  width={railLayout.comments}
+                  composerTop={commentComposerTop}
+                  draftBody={commentComposerBody}
+                  onDraftBodyChange={setCommentComposerBody}
+                  focusRequested={focusCommentComposer}
+                  onFocusHandled={() => setFocusCommentComposer(false)}
+                  onClearDraft={() => setCommentDraftQuote('')}
+                  onJumpToQuote={(quote) => {
+                    const root = document.querySelector('.notes-editor .ProseMirror')
+                    if (!root || !quote) return
+                    const hit = Array.from(root.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6')).find(
+                      (node) => node.textContent?.includes(quote),
+                    )
+                    hit?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }}
+                  onCommit={(comments) => {
+                    let next = content
+                    for (const comment of comments) next = upsertMarkdownComment(next, comment)
+                    contentRef.current = next
+                    dirtyRef.current = true
+                    setContent(next)
+                    setDirty(true)
+                  }}
+                />
+              )}
             </NotesResponsiveRail> : null}
             {activeNote && activeWorkspaceId ? <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView, 'history'])} inline={false} open={railSheet === 'history'} title={t('notes.history.title')} onClose={() => setRailSheet(null)}>
               <VersionHistoryPanel

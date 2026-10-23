@@ -1,6 +1,25 @@
 import { describe, expect, it } from 'bun:test'
 import type { NoteCommentThread } from '../../../../shared/types'
-import { createNoteCommentAnchor, resolveNoteCommentAnchor, resolveNoteCommentAnchors } from '../note-comments'
+import {
+  anchorFromQuote,
+  createNoteCommentAnchor,
+  isDocumentNoteComment,
+  nestNoteCommentThreads,
+  resolveNoteCommentAnchor,
+  resolveNoteCommentAnchors,
+} from '../note-comments'
+
+function thread(partial: Partial<NoteCommentThread> & Pick<NoteCommentThread, 'id' | 'body'>): NoteCommentThread {
+  return {
+    noteId: 'n1',
+    author: 'Вы',
+    anchor: null,
+    reactions: [],
+    createdAt: 1,
+    updatedAt: 1,
+    ...partial,
+  }
+}
 
 describe('note comment anchors', () => {
   it('creates a text-position plus text-quote anchor from a selection', () => {
@@ -40,15 +59,7 @@ describe('note comment anchors', () => {
       end: 12,
       selectedText: 'Target',
     })!
-    const comment: NoteCommentThread = {
-      id: 'c1',
-      noteId: 'n1',
-      author: 'Вы',
-      body: 'Check this',
-      anchor,
-      createdAt: 1,
-      updatedAt: 1,
-    }
+    const comment = thread({ id: 'c1', body: 'Check this', anchor })
 
     expect(resolveNoteCommentAnchors('Alpha Removed Omega', [comment]).c1.stale).toBe(true)
   })
@@ -64,5 +75,32 @@ describe('note comment anchors', () => {
     const resolved = resolveNoteCommentAnchor('Alpha Changed Omega', anchor)
 
     expect(resolved).toEqual({ start: null, end: null, stale: true })
+  })
+
+  it('treats a null anchor as a non-stale whole-document comment', () => {
+    expect(resolveNoteCommentAnchor('any text', null)).toEqual({ start: null, end: null, stale: false })
+    expect(isDocumentNoteComment(thread({ id: 'doc', body: 'About the note' }))).toBe(true)
+    expect(isDocumentNoteComment(thread({
+      id: 'sel',
+      body: 'Inline',
+      anchor: createNoteCommentAnchor({ fullText: 'Alpha Target', start: 6, end: 12, selectedText: 'Target' }),
+    }))).toBe(false)
+  })
+
+  it('builds an anchor from the first quote occurrence in note text', () => {
+    const anchor = anchorFromQuote('One Target Two Target', 'Target')
+    expect(anchor?.selectedText).toBe('Target')
+    expect(anchor?.selectors.find(s => s.type === 'text-position')).toMatchObject({ start: 4, end: 10 })
+  })
+
+  it('nests flat comments into one-level threads and resurfaces orphan replies', () => {
+    const nested = nestNoteCommentThreads([
+      thread({ id: 'r1', body: 'Root', createdAt: 2, updatedAt: 2 }),
+      thread({ id: 'a1', body: 'Reply', parentId: 'r1', createdAt: 3, updatedAt: 3 }),
+      thread({ id: 'orphan', body: 'Lost', parentId: 'missing', createdAt: 1, updatedAt: 1 }),
+      thread({ id: 'r0', body: 'Earlier', createdAt: 1, updatedAt: 1 }),
+    ])
+    expect(nested.map(item => item.id)).toEqual(['r0', 'orphan', 'r1'])
+    expect(nested.find(item => item.id === 'r1')!.replies.map(item => item.id)).toEqual(['a1'])
   })
 })

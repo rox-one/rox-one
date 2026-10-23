@@ -65,7 +65,13 @@ function findQuoteWithContext(text: string, exact: string, prefix?: string, suff
   return null
 }
 
-export function resolveNoteCommentAnchor(text: string, anchor: NoteCommentAnchor): Omit<ResolvedNoteCommentAnchor, 'commentId'> {
+/** Whole-document comments (and reply stubs) have no selection anchor. */
+export function isDocumentNoteComment(comment: Pick<NoteCommentThread, 'anchor' | 'parentId'>): boolean {
+  return !comment.parentId && !comment.anchor
+}
+
+export function resolveNoteCommentAnchor(text: string, anchor: NoteCommentAnchor | null | undefined): Omit<ResolvedNoteCommentAnchor, 'commentId'> {
+  if (!anchor) return { start: null, end: null, stale: false }
   const position = anchor.selectors.find(selector => selector.type === 'text-position')
   const quote = anchor.selectors.find(selector => selector.type === 'text-quote')
 
@@ -101,4 +107,44 @@ export function resolveNoteCommentAnchors(text: string, comments: NoteCommentThr
     }
     return acc
   }, {})
+}
+
+export type NestedNoteCommentThread = NoteCommentThread & { replies: NoteCommentThread[] }
+
+/** Group flat sidecar comments into one-level threads for the rail UI. */
+export function nestNoteCommentThreads(comments: readonly NoteCommentThread[]): NestedNoteCommentThread[] {
+  const roots: NestedNoteCommentThread[] = []
+  const byId = new Map<string, NestedNoteCommentThread>()
+  for (const comment of comments) {
+    if (comment.parentId) continue
+    const nested: NestedNoteCommentThread = { ...comment, replies: [] }
+    byId.set(comment.id, nested)
+    roots.push(nested)
+  }
+  for (const comment of comments) {
+    if (!comment.parentId) continue
+    const parent = byId.get(comment.parentId)
+    if (parent) parent.replies.push(comment)
+    else {
+      // Orphan reply: surface as its own root so it is not lost.
+      roots.push({ ...comment, parentId: undefined, replies: [] })
+    }
+  }
+  roots.sort((a, b) => a.createdAt - b.createdAt)
+  for (const root of roots) root.replies.sort((a, b) => a.createdAt - b.createdAt)
+  return roots
+}
+
+/** Build a selection anchor from note text + selected quote (first occurrence). */
+export function anchorFromQuote(fullText: string, quote: string): NoteCommentAnchor | null {
+  const selectedText = quote.trim()
+  if (!selectedText) return null
+  const start = fullText.indexOf(selectedText)
+  if (start < 0) return null
+  return createNoteCommentAnchor({
+    fullText,
+    start,
+    end: start + selectedText.length,
+    selectedText,
+  })
 }
