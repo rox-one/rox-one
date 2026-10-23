@@ -148,6 +148,10 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     return store.members.find(m => m.channelId === channelId && m.userId === userId)
   }
 
+  function subscribedOf(store: TeamChatStoreFile, channelId: string, userId: string): boolean {
+    return store.subscriptions.some(s => s.channelId === channelId && s.userId === userId)
+  }
+
   /** Channel the actor may see: org member, and for private channels a channel member. */
   function visibleChannel(store: TeamChatStoreFile, channelId: string, actor: TeamChatActor): TeamChannel {
     const channel = store.channels.find(c => c.id === channelId)
@@ -363,10 +367,10 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     const store = load()
     const channel = visibleChannel(store, channelId, actor)
     if (channel.archivedAt) throw new TeamChatError('INVALID', 'Channel is archived')
-    // Member may ingest for durability; public subscribers may also see messages
-    // but only members write the local store (same gate as post).
-    if (!memberOf(store, channel.id, actor.userId)) {
-      throw new TeamChatError('FORBIDDEN', 'Join the channel to ingest')
+    // Members or Лента followers (viewerSubscribed) may ingest for durability / fan-out.
+    // Posting still requires membership (postMessageWithOrg).
+    if (!memberOf(store, channel.id, actor.userId) && !subscribedOf(store, channel.id, actor.userId)) {
+      throw new TeamChatError('FORBIDDEN', 'Join or follow the channel to ingest')
     }
     const remoteId = typeof (input as IngestTeamMessageInput).id === 'string' && (input as IngestTeamMessageInput).id
       ? requireId((input as IngestTeamMessageInput).id, 'id')

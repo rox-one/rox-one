@@ -64,6 +64,8 @@ export function useTeamMessages(channelId: string | null) {
   const { live, status } = useImRelay()
   const [state, setState] = React.useState<{ loading: boolean; messages: TeamChannelMessage[]; error: string | null }>({ loading: false, messages: [], error: null })
   const version = React.useRef(0)
+  /** Skip one changed→reload after our own view-path markRead (badges still refresh via useTeamChannels). */
+  const suppressChangedReload = React.useRef(false)
 
   useImChannelSubscription(channelId, live)
 
@@ -88,7 +90,11 @@ export function useTeamMessages(channelId: string | null) {
             setState({ loading: false, messages, error: null })
             void window.electronAPI.imMarkRead?.(channelId).catch(() => {})
             // Keep team-chat unread badges in sync while viewing live (ingest bumps lastSeq).
-            void window.electronAPI.teamChatMarkRead?.(channelId).catch(() => {})
+            // Suppress the markRead→changed→reload loop for this open channel.
+            suppressChangedReload.current = true
+            void window.electronAPI.teamChatMarkRead?.(channelId).then(() => {
+              queueMicrotask(() => { suppressChangedReload.current = false })
+            }).catch(() => { suppressChangedReload.current = false })
             return
           }
           // ok:false → fall through to team-chat store
@@ -99,7 +105,12 @@ export function useTeamMessages(channelId: string | null) {
       const result = await window.electronAPI.teamChatListMessages({ channelId, limit: 200 })
       if (v !== version.current) return
       setState({ loading: false, messages: result.messages, error: null })
-      if (result.channel.viewerRole && result.channel.unreadCount > 0) void window.electronAPI.teamChatMarkRead(channelId).catch(() => {})
+      if (result.channel.viewerRole && result.channel.unreadCount > 0) {
+        suppressChangedReload.current = true
+        void window.electronAPI.teamChatMarkRead(channelId).then(() => {
+          queueMicrotask(() => { suppressChangedReload.current = false })
+        }).catch(() => { suppressChangedReload.current = false })
+      }
     } catch (error) {
       if (v === version.current) setState({ loading: false, messages: [], error: errorText(error) })
     }
@@ -109,7 +120,12 @@ export function useTeamMessages(channelId: string | null) {
     setState({ loading: Boolean(channelId), messages: [], error: null })
     void reload()
     const off = window.electronAPI.onTeamChatChanged?.((change) => {
-      if (change?.channelId === channelId) void reload()
+      if (change?.channelId !== channelId) return
+      if (suppressChangedReload.current) {
+        suppressChangedReload.current = false
+        return
+      }
+      void reload()
     })
     return () => { version.current++; off?.() }
   }, [channelId, reload])
@@ -159,7 +175,20 @@ export function useTeamSearch(orgId: string | null, query: string) {
               const result = await window.electronAPI.imSearchMessages(q, { limit: 50 })
               if (!alive) return
               if (result.ok) {
-                setState({ loading: false, results: imMessagesToTeam(result.messages), error: null })
+                // Native search has no orgId — keep Messenger org-scoped.
+                let allowed: Set<string> | null = null
+                try {
+                  const roster = await window.electronAPI.teamChatListChannels(orgId)
+                  if (!alive) return
+                  allowed = new Set((Array.isArray(roster) ? roster : []).map((c) => c.id))
+                } catch {
+                  allowed = null
+                }
+                const mapped = imMessagesToTeam(result.messages)
+                const results = allowed
+                  ? mapped.filter((m) => allowed!.has(m.channelId))
+                  : mapped
+                setState({ loading: false, results, error: null })
                 return
               }
             } catch {

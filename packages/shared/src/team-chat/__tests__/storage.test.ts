@@ -136,7 +136,7 @@ describe('sender-preserving ingest (PR3)', () => {
     const pub = s.createChannel({ orgId: ORG, name: 'thread-ch' }, alice)
     expect(() => s.ingestRemoteMessage({
       channelId: pub.id, senderId: 'alice', text: 'nope', id: 'x1',
-    }, carol)).toThrow('Join the channel to ingest')
+    }, carol)).toThrow('Join or follow the channel to ingest')
     s.joinChannel(pub.id, bob)
     const root = s.postMessage(pub.id, 'root', alice)
     const reply = s.ingestRemoteMessage({
@@ -176,6 +176,21 @@ describe('sender-preserving ingest (PR3)', () => {
       channelId: pub.id, senderId: 'bob', text: 'theirs', id: 'other-1',
     }, alice)
     expect(s.listChannels(ORG, alice).find(c => c.id === pub.id)!.unreadCount).toBe(1)
+  })
+
+  it('allows ingest when viewerSubscribed without joining', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'follow-ch' }, alice)
+    s.setSubscribed(pub.id, true, carol)
+    expect(s.listChannels(ORG, carol).find(c => c.id === pub.id)?.viewerRole).toBeUndefined()
+    const msg = s.ingestRemoteMessage({
+      channelId: pub.id,
+      senderId: 'alice',
+      text: 'for followers',
+      id: 'evt-follow-1',
+    }, carol)
+    expect(msg.senderId).toBe('alice')
+    expect(msg.id).toBe('evt-follow-1')
   })
 
   it('defaults attachment status to ready when https url is set', () => {

@@ -95,16 +95,22 @@ export function normalizeImMessage(raw: unknown, fallback?: { channelId?: string
   const out: ImMessageEvent = { id, channelId, senderId, text, createdAt }
   if (typeof record.editedAt === 'number') out.editedAt = record.editedAt
   if (typeof record.deletedAt === 'number') out.deletedAt = record.deletedAt
-  // reply from explicit fields or Nostr `e` tag (first non-edit marker)
+  // reply from explicit fields or Nostr `e` tags: prefer marker "reply", else last non-edit `e`.
   if (typeof record.replyToId === 'string' && record.replyToId) out.replyToId = record.replyToId
   if (typeof record.threadId === 'string' && record.threadId) out.threadId = record.threadId
   if (!out.replyToId && Array.isArray(record.tags)) {
+    let replyMarked: string | undefined
+    let lastE: string | undefined
     for (const tag of record.tags) {
-      if (!Array.isArray(tag) || tag[0] !== 'e' || typeof tag[1] !== 'string') continue
+      if (!Array.isArray(tag) || tag[0] !== 'e' || typeof tag[1] !== 'string' || !tag[1]) continue
       if (tag[3] === 'edit') continue
-      out.replyToId = tag[1]
-      out.threadId = tag[1]
-      break
+      if (tag[3] === 'reply') replyMarked = tag[1]
+      lastE = tag[1]
+    }
+    const chosen = replyMarked ?? lastE
+    if (chosen) {
+      out.replyToId = chosen
+      out.threadId = out.threadId ?? chosen
     }
   }
   return out
@@ -139,6 +145,8 @@ export class ImService {
   private status: ImStatusEvent = { available: false, mode: 'fallback', reason: 'not-started' }
   private lastReason: ImUnavailableReason = 'not-configured'
   private startPromise: Promise<ImStatusEvent> | null = null
+  /** Per-channel subscribe refcounts (open view + followed fan-out share one native sub). */
+  private subscribeRefs = new Map<string, number>()
 
   constructor(options: ImServiceOptions = {}) {
     this.options = options
@@ -201,6 +209,7 @@ export class ImService {
     const client = this.client
     this.client = null
     this.startPromise = null
+    this.subscribeRefs.clear()
     this.lastReason = 'stopped'
     this.publishStatus({ available: false, mode: 'fallback', reason: 'stopped' })
     if (client) {
@@ -219,14 +228,24 @@ export class ImService {
   async subscribeChannel(channelId: string): Promise<ImResult<Record<never, never>>> {
     await this.ensureStarted()
     if (!this.client) return this.fallback()
-    await this.client.subscribe(channelId)
+    const prev = this.subscribeRefs.get(channelId) ?? 0
+    if (prev === 0) await this.client.subscribe(channelId)
+    this.subscribeRefs.set(channelId, prev + 1)
     return { ok: true }
   }
 
   async unsubscribeChannel(channelId: string): Promise<ImResult<Record<never, never>>> {
     await this.ensureStarted()
     if (!this.client) return this.fallback()
-    await this.client.unsubscribe(channelId)
+    const prev = this.subscribeRefs.get(channelId) ?? 0
+    if (prev <= 0) return { ok: true }
+    const next = prev - 1
+    if (next === 0) {
+      this.subscribeRefs.delete(channelId)
+      await this.client.unsubscribe(channelId)
+    } else {
+      this.subscribeRefs.set(channelId, next)
+    }
     return { ok: true }
   }
 
