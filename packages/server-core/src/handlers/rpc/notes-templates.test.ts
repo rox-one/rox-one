@@ -272,4 +272,14 @@ describe('note templates library', () => {
     })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
   })
 
+
+  it('rejects non-file path at template id on save (directory)', async () => {
+    mkdirSync(join(notesRoot, 'templates', 'not-a-file.md'), { recursive: true })
+    await expect(saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'not-a-file',
+      title: 'Nope',
+      body: 'x',
+    })).rejects.toThrow(/Invalid template path/)
+  })
+
 })

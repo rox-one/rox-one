@@ -84,6 +84,41 @@ describe('note-library', () => {
     // No frontmatter — create a minimal header with only the chrome key.
     const bare = patchNoteLibraryChromeContent('Just prose\n', { icon: '📝' })
     expect(bare).toBe('---\nicon: "📝"\n---\nJust prose\n')
+    // Block/folded scalar with blank line before indented body must refuse (no orphans).
+    const blockBlank = [
+      '---',
+      'cover: |',
+      '',
+      '  multiline',
+      'title: Keep',
+      '---',
+      '',
+      'body',
+      '',
+    ].join('\n')
+    expect(patchNoteLibraryChromeContent(blockBlank, { cover: '#112233' })).toBeNull()
+    const folded = [
+      '---',
+      'icon: >-',
+      '  soft',
+      '---',
+      '',
+      'x',
+      '',
+    ].join('\n')
+    expect(patchNoteLibraryChromeContent(folded, { icon: '⭐' })).toBeNull()
+    // Duplicate top-level cover:/icon: — refuse.
+    const dup = [
+      '---',
+      'cover: "#111111"',
+      'title: A',
+      'cover: "#222222"',
+      '---',
+      '',
+      'body',
+      '',
+    ].join('\n')
+    expect(patchNoteLibraryChromeContent(dup, { cover: '#112233' })).toBeNull()
   })
 
   it('sanitizes template ids', () => {
@@ -116,5 +151,16 @@ describe('note-library', () => {
       3,
     )
     expect(ids).toEqual(['mid', 'new', 'old'])
+    // Duplicate opened ids must not consume extra slots.
+    expect(mergeRecentsByOpened(
+      [
+        { id: 'a', updatedAt: 1 },
+        { id: 'b', updatedAt: 2 },
+        { id: 'c', updatedAt: 3 },
+      ],
+      ['a', 'a', 'b', 'a'],
+      [],
+      3,
+    )).toEqual(['a', 'b', 'c'])
   })
 })

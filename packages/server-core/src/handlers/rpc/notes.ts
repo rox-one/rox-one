@@ -1952,7 +1952,8 @@ async function assertSafeTemplateFilePath(notesRoot: string, templateId: string)
   if (!isInsidePath(rootReal, templatesReal)) throw new Error('Invalid template path')
   try {
     const info = await lstat(filePath)
-    if (info.isSymbolicLink()) throw new Error('Invalid template path')
+    // Mirror assertSafeExistingTemplateFilePath — dirs/sockets/etc are not templates.
+    if (info.isSymbolicLink() || !info.isFile()) throw new Error('Invalid template path')
   } catch (error) {
     if (!isErrnoException(error, 'ENOENT')) throw error
   }

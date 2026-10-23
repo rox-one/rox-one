@@ -121,18 +121,24 @@ export function patchNoteLibraryChromeContent(
 
   for (const { key, value } of ops) {
     const keyPrefix = `${key}:`
-    let foundAt = -1
+    const matches: number[] = []
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]!
       // Exact top-level key (`cover:` / `cover: …`); never `coverExtra:`.
       if (!line.startsWith(keyPrefix)) continue
-      // Block/folded/flow continuations are indented on the next line — refuse.
-      const next = lines[i + 1]
-      if (next != null && /^[ \t]+\S/.test(next)) return null
-      foundAt = i
-      break
+      const rawValue = line.slice(keyPrefix.length).trim()
+      // Block/folded scalar indicators — rewriting the indicator line would orphan the body.
+      if (/^[|>][+-]?\d*$/.test(rawValue)) return null
+      // Skip blank lines after the key; an indented non-blank body means a multiline value.
+      let j = i + 1
+      while (j < lines.length && lines[j]!.trim() === '') j++
+      if (j < lines.length && /^[ \t]+\S/.test(lines[j]!)) return null
+      matches.push(i)
     }
-    if (foundAt >= 0) {
+    // Duplicate top-level cover:/icon: — refuse rather than leave orphans.
+    if (matches.length > 1) return null
+    if (matches.length === 1) {
+      const foundAt = matches[0]!
       if (value === null) lines.splice(foundAt, 1)
       else lines[foundAt] = `${key}: ${yamlDoubleQuoted(value)}`
       continue
@@ -195,8 +201,10 @@ export function mergeRecentsByOpened(
   const pinned = new Set(pinnedIds)
   const byId = new Map(notes.map((note) => [note.id, note]))
   const fromOpened: string[] = []
+  const seenOpened = new Set<string>()
   for (const id of openedIds) {
-    if (pinned.has(id) || !byId.has(id)) continue
+    if (pinned.has(id) || !byId.has(id) || seenOpened.has(id)) continue
+    seenOpened.add(id)
     fromOpened.push(id)
     if (fromOpened.length >= limit) return fromOpened
   }
