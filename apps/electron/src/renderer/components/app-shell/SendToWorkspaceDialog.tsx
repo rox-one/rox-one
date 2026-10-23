@@ -261,7 +261,7 @@ export function SendToWorkspaceDialog({
   )
 }
 
-/** Send button with purple LED border that traces around it during transfer */
+/** Send button with SE accent progress ring during transfer (no glow chrome). */
 function TransferButton({ onClick, disabled, isTransferring, progress }: {
   onClick: () => void
   disabled: boolean
@@ -285,7 +285,7 @@ function TransferButton({ onClick, disabled, isTransferring, progress }: {
       </Button>
       {isTransferring && (
         <svg
-          className="absolute pointer-events-none"
+          className="absolute pointer-events-none text-accent"
           style={{ inset: '-3px', width: 'calc(100% + 6px)', height: 'calc(100% + 6px)', overflow: 'visible' }}
         >
           <rect
@@ -294,12 +294,11 @@ function TransferButton({ onClick, disabled, isTransferring, progress }: {
             width="calc(100% - 3px)" height="calc(100% - 3px)"
             rx="10" ry="10"
             fill="none"
-            stroke="#8B5CF6"
+            stroke="currentColor"
             strokeWidth="2"
             strokeDasharray={perim > 0 ? `${progress * perim} ${perim}` : '0 999'}
             style={{
-              transition: 'stroke-dasharray 0.2s ease-out',
-              filter: 'drop-shadow(0 0 3px #8B5CF6) drop-shadow(0 0 6px rgba(139,92,246,0.3))',
+              transition: 'stroke-dasharray var(--motion-fast) var(--ease-standard)',
             }}
           />
         </svg>
