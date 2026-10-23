@@ -5,8 +5,10 @@ import {
   createNoteCommentAnchor,
   isDocumentNoteComment,
   nestNoteCommentThreads,
+  removeNoteCommentFromList,
   resolveNoteCommentAnchor,
   resolveNoteCommentAnchors,
+  upsertNoteCommentInList,
 } from '../note-comments'
 
 function thread(partial: Partial<NoteCommentThread> & Pick<NoteCommentThread, 'id' | 'body'>): NoteCommentThread {
@@ -102,5 +104,19 @@ describe('note comment anchors', () => {
     ])
     expect(nested.map(item => item.id)).toEqual(['r0', 'orphan', 'r1'])
     expect(nested.find(item => item.id === 'r1')!.replies.map(item => item.id)).toEqual(['a1'])
+    const orphan = nested.find(item => item.id === 'orphan')!
+    expect(orphan.orphan).toBe(true)
+    expect(orphan.parentId).toBe('missing')
+    expect(isDocumentNoteComment(orphan)).toBe(false)
+  })
+
+  it('upserts and removes comments without dropping concurrent siblings', () => {
+    const a = thread({ id: 'a', body: 'A', createdAt: 1, updatedAt: 1 })
+    const b = thread({ id: 'b', body: 'B', createdAt: 2, updatedAt: 2 })
+    const b2 = { ...b, body: 'B2', updatedAt: 3 }
+    expect(upsertNoteCommentInList([a], b).map(c => c.id)).toEqual(['a', 'b'])
+    expect(upsertNoteCommentInList([a, b], b2).map(c => c.body)).toEqual(['A', 'B2'])
+    const reply = thread({ id: 'r', body: 'R', parentId: 'a', createdAt: 3, updatedAt: 3 })
+    expect(removeNoteCommentFromList([a, b, reply], 'a').map(c => c.id)).toEqual(['b'])
   })
 })

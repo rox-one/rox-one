@@ -65,9 +65,11 @@ function findQuoteWithContext(text: string, exact: string, prefix?: string, suff
   return null
 }
 
-/** Whole-document comments (and reply stubs) have no selection anchor. */
-export function isDocumentNoteComment(comment: Pick<NoteCommentThread, 'anchor' | 'parentId'>): boolean {
-  return !comment.parentId && !comment.anchor
+/** Whole-document comments have no selection anchor and are not replies/orphans. */
+export function isDocumentNoteComment(
+  comment: Pick<NoteCommentThread, 'anchor' | 'parentId'> & { orphan?: boolean },
+): boolean {
+  return !comment.parentId && !comment.anchor && !comment.orphan
 }
 
 export function resolveNoteCommentAnchor(text: string, anchor: NoteCommentAnchor | null | undefined): Omit<ResolvedNoteCommentAnchor, 'commentId'> {
@@ -109,7 +111,11 @@ export function resolveNoteCommentAnchors(text: string, comments: NoteCommentThr
   }, {})
 }
 
-export type NestedNoteCommentThread = NoteCommentThread & { replies: NoteCommentThread[] }
+export type NestedNoteCommentThread = NoteCommentThread & {
+  replies: NoteCommentThread[]
+  /** True when parentId pointed at a missing root — not a whole-document comment. */
+  orphan?: boolean
+}
 
 /** Group flat sidecar comments into one-level threads for the rail UI. */
 export function nestNoteCommentThreads(comments: readonly NoteCommentThread[]): NestedNoteCommentThread[] {
@@ -126,13 +132,32 @@ export function nestNoteCommentThreads(comments: readonly NoteCommentThread[]): 
     const parent = byId.get(comment.parentId)
     if (parent) parent.replies.push(comment)
     else {
-      // Orphan reply: surface as its own root so it is not lost.
-      roots.push({ ...comment, parentId: undefined, replies: [] })
+      // Orphan reply: keep parentId + orphan marker so UI does not label it document-scope.
+      roots.push({ ...comment, replies: [], orphan: true })
     }
   }
   roots.sort((a, b) => a.createdAt - b.createdAt)
   for (const root of roots) root.replies.sort((a, b) => a.createdAt - b.createdAt)
   return roots
+}
+
+/** Pure list helpers for functional comment-rail updates (avoids stale closures). */
+export function upsertNoteCommentInList(
+  prev: readonly NoteCommentThread[],
+  updated: NoteCommentThread,
+): NoteCommentThread[] {
+  const index = prev.findIndex(comment => comment.id === updated.id)
+  if (index === -1) return [...prev, updated]
+  const next = prev.slice()
+  next[index] = updated
+  return next
+}
+
+export function removeNoteCommentFromList(
+  prev: readonly NoteCommentThread[],
+  commentId: string,
+): NoteCommentThread[] {
+  return prev.filter(comment => comment.id !== commentId && comment.parentId !== commentId)
 }
 
 /** Build a selection anchor from note text + selected quote (first occurrence). */
