@@ -13,7 +13,7 @@ import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/
 import { matchesNoteReceipt, notesReadCapability } from '@/features/product-tour/adapters/knowledge'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
-import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, LayoutTemplate, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useStore } from 'jotai'
 import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
@@ -23,6 +23,7 @@ import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
 import type { Node as PMNode } from 'prosemirror-model'
 import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 import { applyPropertyPatch, previewPropertyPatch, previewPropertyDictionary, projectFrontmatter, retainSource, retainedSourceHash, type MarkdownCommitCommand, type PropertyDictionaryPreview, type PropertyValue } from '@rox/core/docs'
+import { parseDocument } from 'yaml'
 import type { ContentFailure, ContentResolution } from '@rox/server-core/docs/descriptor-resolver'
 import type { BlockTreeResult, NativeMarkerMappingPreview } from '@rox/server-core/docs/block-tree-service'
 import { applyMarkerMapping as applyBlockMarkerMapping, retainedText, retainSource as retainBlockSource } from '@rox/core/docs'
@@ -43,7 +44,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { consumePendingCompose } from '@/platform/inspector-compose-events'
 import { captureWorkspaceToolOpen, openWorkspaceTool, type WorkspaceToolOpenIntent } from '@/lib/open-workspace-tool'
 import { cn } from '@/lib/utils'
-import { NotesQuickSections, useNotePins } from '@/screens/notes/NotesQuickSections'
+import { NotesQuickSections, useNotePins, useNoteRecents } from '@/screens/notes/NotesQuickSections'
 import { useNotesScreenSidebar } from '@/screens/notes/useNotesScreenSidebar'
 import { SlotPortal } from '@/screens/content-slot'
 import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
@@ -68,6 +69,10 @@ import { cacheWriteEpoch } from '@/lib/query/shared-read'
 import { NotesAIMenu } from './notes/NotesAIMenu'
 import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
+import { NoteCoverIconChrome, NoteFavoriteButton } from './notes/NoteLibraryChrome'
+import { NotesTemplatesDialog } from './notes/NotesTemplatesDialog'
+import { patchNoteLibraryChromeContent, readNoteCover, readNoteIcon, withNoteLibraryProperties } from './notes/note-library'
+import type { NoteTemplateSummary } from '../../shared/types'
 import {
   defaultNoteEntityCapabilities,
   useEntityView,
@@ -196,6 +201,26 @@ function shiftDateString(value: string, deltaDays: number): string {
 function parseDailyNoteDate(noteId?: string): string | null {
   const match = noteId?.match(/^daily\/(\d{4}-\d{2}-\d{2})$/)
   return match?.[1] ?? null
+}
+
+function propertiesFromNoteContent(content: string): Record<string, unknown> {
+  const source = retainSource(content)
+  if (!source.frontmatter) return {}
+  const yamlSource = retainedText(source, {
+    start: source.frontmatter.contentStart,
+    end: source.frontmatter.contentEnd,
+  })
+  // Full YAML document — keep nested maps/seqs (projectFrontmatter is leaf-scalars only).
+  const doc = parseDocument(yamlSource.replace(/\r(?!\n)/g, '\n'), { uniqueKeys: true })
+  if (doc.errors.length) throw new Error('Invalid note frontmatter')
+  // Empty / null YAML documents are valid "no properties".
+  if (doc.contents == null) return {}
+  const data = doc.toJS({ maxAliasCount: 0 })
+  if (data == null) return {}
+  if (typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('Invalid note frontmatter')
+  }
+  return data as Record<string, unknown>
 }
 
 function splitFrontmatter(value: string): { frontmatter: string; body: string } {
@@ -691,6 +716,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [saveNeedsReload, setSaveNeedsReload] = React.useState(false)
   const [saveRecoveryOpen, setSaveRecoveryOpen] = React.useState(false)
   const [propertyPreview, setPropertyPreview] = React.useState<{ workspaceId: string; noteId: string; preview: PropertyDictionaryPreview; createdProperty?: { key: string; value: string } } | null>(null)
+  const propertyPreviewRef = React.useRef(propertyPreview)
+  React.useEffect(() => { propertyPreviewRef.current = propertyPreview }, [propertyPreview])
   const saveBlockedRef = React.useRef(false)
   const [collapsedFolders, setCollapsedFolders] = React.useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('notes:collapsed-folders') ?? '[]')) }
@@ -703,6 +730,21 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [newPropertyKey, setNewPropertyKey] = React.useState('')
   const [newPropertyValue, setNewPropertyValue] = React.useState('')
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
+  const [templatesDialogOpen, setTemplatesDialogOpen] = React.useState(false)
+  const templatesDialogOpenRef = React.useRef(false)
+  templatesDialogOpenRef.current = templatesDialogOpen
+  const refreshNoteTemplatesRef = React.useRef<() => Promise<void>>(async () => {})
+  const [templatesDialogMode, setTemplatesDialogMode] = React.useState<'create' | 'save'>('create')
+  const [noteTemplates, setNoteTemplates] = React.useState<NoteTemplateSummary[]>([])
+  const [templatesBusy, setTemplatesBusy] = React.useState(false)
+  const [templatesPendingReplaceId, setTemplatesPendingReplaceId] = React.useState<string | null>(null)
+  React.useEffect(() => {
+    // Workspace switch must not keep another vault's templates dialog/list open.
+    setTemplatesDialogOpen(false)
+    setNoteTemplates([])
+    setTemplatesBusy(false)
+    setTemplatesPendingReplaceId(null)
+  }, [activeWorkspaceId])
   const [createTitle, setCreateTitle] = React.useState('')
   const [createFolderDialogOpen, setCreateFolderDialogOpen] = React.useState(false)
   const [createFolderName, setCreateFolderName] = React.useState('')
@@ -891,6 +933,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     schemaVersion: 1,
   }), [])
   const dirtyRef = React.useRef(dirty)
+  const noteRecentsTouchRef = React.useRef<(noteId: string) => void>(() => {})
+  const noteRecentsRekeyRef = React.useRef<(from: string, to: string, folder?: boolean) => void>(() => {})
+  const noteRecentsDropRef = React.useRef<(target: string, folder?: boolean) => void>(() => {})
   const contentRef = React.useRef(content)
   const revisionsRef = React.useRef(new Map<string, string>())
   const pendingCommitsRef = React.useRef(new Map<string, MarkdownCommitCommand>())
@@ -1316,6 +1361,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setSaveNeedsReload(false)
       setExternalChange(null)
       setTagDraft(note.tags.join(', '))
+      noteRecentsTouchRef.current(note.id)
     } catch (error) {
       if (!isCurrent()) return
       const code = capabilityErrorCode(error)
@@ -1391,6 +1437,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         contentRef.current = ''
         setContent('')
         setDirty(false)
+        return
+      }
+
+      if (payload.reason === 'templates') {
+        if (templatesDialogOpenRef.current) void refreshNoteTemplatesRef.current()
         return
       }
 
@@ -1859,13 +1910,16 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const wikiCreateSelected = showWikiCreate && wikiIndex >= wikiMatches.length
   const showWikiMenu = wikiQuery != null && wikiItemCount > 0
 
-  const createNoteWithEvidence = React.useCallback(async (...args: Parameters<Window['electronAPI']['createNote']>) => {
+  const createNoteWithEvidence = React.useCallback(async (
+    workspaceId: string,
+    create: () => Promise<NoteDocument>,
+  ) => {
     const observation = knowledgeSignals.capture()
-    const note = await window.electronAPI.createNote(...args)
+    const note = await create()
     if (!observation) return note
     try {
-      const readback = await window.electronAPI.readNote(args[0], note.id)
-      knowledgeSignals.publish(observation, { kind: 'note-created', workspaceId: args[0], note, readback })
+      const readback = await window.electronAPI.readNote(workspaceId, note.id)
+      knowledgeSignals.publish(observation, { kind: 'note-created', workspaceId, note, readback })
     } catch { /* Native creation succeeded; unconfirmed read-back provides no learning evidence. */ }
     return note
   }, [knowledgeSignals])
@@ -1875,12 +1929,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const destination = noteCreationFolder(noteScope, createInFolder)
     if (!destination.allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     if (!await flushBeforeAction()) return
-    const note = await createNoteWithEvidence(
+    const note = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNote(
       activeWorkspaceId,
       createTitle.trim(),
       destination.folder,
       mutationOptions(activeWorkspaceId, createTitle.trim(), null),
-    )
+    ))
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, note.id), note.nativeRevision ?? null)
     setCreateDialogOpen(false)
     setCreateTitle('')
@@ -1909,12 +1963,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     if (!destination.allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     const folder = destination.folder!
     if (!await flushBeforeAction()) return
-    const note = await createNoteWithEvidence(
+    const note = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNote(
       activeWorkspaceId,
       t('notes.untitled'),
       folder,
       mutationOptions(activeWorkspaceId, `${folder}/${t('notes.untitled')}`, null),
-    )
+    ))
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, note.id), note.nativeRevision ?? null)
     setCreateFolderDialogOpen(false)
     setCreateFolderName('')
@@ -2006,6 +2060,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         )
         nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, noteId), renamed.note.nativeRevision ?? null)
         notePins.rekey(noteId, renamed.note.id)
+        noteRecentsRekeyRef.current(noteId, renamed.note.id)
         await refreshNotes()
         if (activeNote?.id === noteId) navigate(routes.view.notes(renamed.note.id))
         return
@@ -2048,12 +2103,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     if (!await flushBeforeAction()) return
     const document = await window.electronAPI.readNote(activeWorkspaceId, note.id)
     const title = `${document.title} copy`
-    const created = await createNoteWithEvidence(
+    const created = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNote(
       activeWorkspaceId,
       title,
       noteFolder(note) || undefined,
       mutationOptions(activeWorkspaceId, title, null),
-    )
+    ))
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
     const duplicateContent = updateMarkdownTitle(document.content, title)
     const saved = isNativeNoteDocument(created)
@@ -2096,6 +2151,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       )
       nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, moved.note.id), moved.note.nativeRevision ?? null)
       notePins.rekey(moveTargetNote.id, moved.note.id)
+      noteRecentsRekeyRef.current(moveTargetNote.id, moved.note.id)
       setMoveDialogOpen(false)
       setMoveTargetNote(null)
       setMoveFolderName('')
@@ -2120,6 +2176,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       )
       nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, moved.note.id), moved.note.nativeRevision ?? null)
       notePins.rekey(note.id, moved.note.id)
+      noteRecentsRekeyRef.current(note.id, moved.note.id)
       await refreshNotes()
       navigate(routes.view.notes(moved.note.id))
       toast.success(t('notes.toast.moved'))
@@ -2157,6 +2214,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     try {
       await window.electronAPI.renameFolderNote(activeWorkspaceId, renameFolderTarget, renameFolderName.trim())
       notePins.rekey(renameFolderTarget, target, true)
+      noteRecentsRekeyRef.current(renameFolderTarget, target, true)
       setRenameFolderDialogOpen(false)
       setRenameFolderTarget('')
       setRenameFolderName('')
@@ -2179,6 +2237,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     try {
       const result = await window.electronAPI.deleteFolderNote(activeWorkspaceId, deleteFolderTarget)
       notePins.drop(deleteFolderTarget, true)
+      noteRecentsDropRef.current(deleteFolderTarget, true)
       setDeleteFolderDialogOpen(false)
       setDeleteFolderTarget('')
       if (activeNote && result.deletedNotes.includes(activeNote.id)) {
@@ -2249,6 +2308,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     )
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, activeNote.id), result.note.nativeRevision ?? null)
     notePins.rekey(activeNote.id, result.note.id)
+    noteRecentsRekeyRef.current(activeNote.id, result.note.id)
     setRenameDialogOpen(false)
     await refreshNotes()
     navigate(routes.view.notes(result.note.id))
@@ -2273,6 +2333,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       mutationOptions(activeWorkspaceId, activeNote.id, activeNote.nativeRevision),
     )
     notePins.drop(activeNote.id)
+    noteRecentsDropRef.current(activeNote.id)
     setDeleteDialogOpen(false)
     await refreshNotes()
     navigate(routes.view.notes())
@@ -2319,6 +2380,86 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       toast.error(t('notes.toast.updatePropertiesFailed'))
       return false
     }
+  }, [activeWorkspaceId, activeNote, canEditContent, flushBeforeAction, applyPropertyPreview, t])
+
+  /** Per-note queue so rapid cover/icon patches cannot race on stale properties. */
+  const libraryChromeWriteChainRef = React.useRef(new Map<string, Promise<unknown>>())
+
+  // In-flight chrome queues are dropped only in bridge.finally — never evict on note switch.
+
+  /** Queued cover/icon chrome writes — surgical key patch; no full YAML dictionary rewrite. */
+  const updateLibraryChromeProperties = React.useCallback((patch: { cover?: string | null; icon?: string | null }) => {
+    if (!activeWorkspaceId || !activeNote) return Promise.resolve(false)
+    if (!canEditContent) { toast.error(t('notes.content.readOnly')); return Promise.resolve(false) }
+    const workspaceId = activeWorkspaceId
+    const noteId = activeNote.id
+    const noteKey = `${workspaceId}:${noteId}`
+    // Freeze while a requiresReview preview is open for this note — don't overwrite the first patch.
+    const openPreview = propertyPreviewRef.current
+    if (openPreview && openPreview.workspaceId === workspaceId && openPreview.noteId === noteId) {
+      toast.error(t('notes.library.chromeReviewPending'))
+      return Promise.resolve(false)
+    }
+    const previous = libraryChromeWriteChainRef.current.get(noteKey) ?? Promise.resolve()
+    const run = previous.catch(() => undefined).then(async () => {
+      if (!await flushBeforeAction()) return false
+      // Drop quietly if the user switched note/workspace while we waited.
+      if (workspaceIdRef.current !== workspaceId || activeNoteIdRef.current !== noteId) return false
+      const pendingPreview = propertyPreviewRef.current
+      if (pendingPreview && pendingPreview.workspaceId === workspaceId && pendingPreview.noteId === noteId) {
+        toast.error(t('notes.library.chromeReviewPending'))
+        return false
+      }
+      // Surgical cover/icon key edit only — preserve comments/siblings/order; never
+      // stringify the full property dictionary (avoids requiresReview conversion).
+      // Draft validation toasts coverInvalid/iconInvalid; form refuse (block/fold/dup/quoted) uses updatePropertiesFailed.
+      if ('cover' in patch && patch.cover != null && String(patch.cover).trim() !== '') {
+        if (!readNoteCover({ cover: String(patch.cover) })) {
+          toast.error(t('notes.library.coverInvalid'))
+          return false
+        }
+      }
+      if ('icon' in patch && patch.icon != null && String(patch.icon).trim() !== '') {
+        if (!readNoteIcon({ icon: String(patch.icon) })) {
+          toast.error(t('notes.library.iconInvalid'))
+          return false
+        }
+      }
+      const patched = patchNoteLibraryChromeContent(contentRef.current, patch)
+      if (patched == null) {
+        toast.error(t('notes.toast.updatePropertiesFailed'))
+        return false
+      }
+      // Optimistic cover/icon merge so banner/popover aren't stale while save awaits.
+      if (workspaceIdRef.current === workspaceId && activeNoteIdRef.current === noteId) {
+        setActiveNote((current) => {
+          if (!current || current.id !== noteId) return current
+          return { ...current, properties: withNoteLibraryProperties(current.properties, patch) }
+        })
+      }
+      if (patched === contentRef.current) return true
+      const source = retainSource(contentRef.current)
+      return await applyPropertyPreview({
+        workspaceId,
+        noteId,
+        preview: {
+          expectedRevision: source.sourceHash,
+          content: patched,
+          requiresReview: false,
+          before: '',
+          after: '',
+          digest: retainedSourceHash(JSON.stringify({ expectedRevision: source.sourceHash, content: patched })),
+        },
+      })
+    })
+    const bridge = run.then(() => undefined, () => undefined)
+    libraryChromeWriteChainRef.current.set(noteKey, bridge)
+    void bridge.finally(() => {
+      if (libraryChromeWriteChainRef.current.get(noteKey) === bridge) {
+        libraryChromeWriteChainRef.current.delete(noteKey)
+      }
+    })
+    return run
   }, [activeWorkspaceId, activeNote, canEditContent, flushBeforeAction, applyPropertyPreview, t])
 
   const updateScalarProperty = React.useCallback(async (path: string[], value: PropertyValue): Promise<boolean> => {
@@ -2460,10 +2601,17 @@ h1,h2,h3{margin-top:1.5em}
 
   // «Закреплённое» / «Недавнее» quick sections (shell SidebarSection markup above the tree).
   const notePins = useNotePins(activeWorkspaceId)
+  const noteRecents = useNoteRecents(activeWorkspaceId)
+  const handleOpenNoteRef = React.useRef<(noteId: string) => unknown>(() => {})
+  noteRecentsTouchRef.current = noteRecents.touch
+  noteRecentsRekeyRef.current = noteRecents.rekey
+  noteRecentsDropRef.current = noteRecents.drop
   const pinnedNoteSet = React.useMemo(() => new Set(notePins.pinned), [notePins.pinned])
   const isNotePinned = React.useCallback((id: string) => pinnedNoteSet.has(id), [pinnedNoteSet])
-  const quickNotes = scopedNotes
-  const handleOpenNoteRef = React.useRef<(noteId: string) => unknown>(() => {})
+  const quickNotes = React.useMemo(
+    () => scopedNotes.map((note) => ({ id: note.id, title: note.title, updatedAt: note.updatedAt, icon: readNoteIcon(note.properties) })),
+    [scopedNotes],
+  )
   const openNoteFromQuick = React.useCallback((noteId: string) => { void handleOpenNoteRef.current(noteId) }, [])
   const handleOpenNote = async (noteId: string) => {
     if (!await flushBeforeAction()) return
@@ -2499,12 +2647,12 @@ h1,h2,h3{margin-top:1.5em}
     const { title, folder } = parseWikiCreateTarget(raw)
     if (!title) return
     try {
-      const created = await createNoteWithEvidence(
+      const created = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNote(
         activeWorkspaceId,
         title,
         folder,
         mutationOptions(activeWorkspaceId, `${folder ?? ''}/${title}`, null),
-      )
+      ))
       nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
       completeWikiText(created.title)
       await refreshNotes()
@@ -2518,12 +2666,12 @@ h1,h2,h3{margin-top:1.5em}
     const cleanTarget = stripMdExtension(missingLinkTarget)
     const parts = cleanTarget.split('/').filter(Boolean)
     const title = parts.pop() || cleanTarget
-    const created = await createNoteWithEvidence(
+    const created = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNote(
       activeWorkspaceId,
       title,
       parts.length > 0 ? parts.join('/') : undefined,
       mutationOptions(activeWorkspaceId, `${parts.join('/')}/${title}`, null),
-    )
+    ))
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
     setMissingLinkTarget(null)
     await refreshNotes()
@@ -2912,6 +3060,86 @@ h1,h2,h3{margin-top:1.5em}
     </div>
   ) : null
 
+
+  const refreshNoteTemplates = React.useCallback(async () => {
+    if (!activeWorkspaceId || typeof window.electronAPI.listNoteTemplates !== 'function') {
+      setNoteTemplates([])
+      return
+    }
+    try {
+      setNoteTemplates(await window.electronAPI.listNoteTemplates(activeWorkspaceId))
+    } catch (error) {
+      // Keep the prior list so a transient LIST failure does not wipe the dialog.
+      toast.error(error instanceof Error ? error.message : t('notes.library.templatesLoadFailed'))
+    }
+  }, [activeWorkspaceId, t])
+  refreshNoteTemplatesRef.current = refreshNoteTemplates
+
+  const openTemplatesDialog = React.useCallback(async (mode: 'create' | 'save') => {
+    // Keep createInFolder so template creates land in the active folder (blank-note parity).
+    setTemplatesDialogMode(mode)
+    setTemplatesDialogOpen(true)
+    await refreshNoteTemplates()
+  }, [refreshNoteTemplates])
+
+  const handleCreateFromTemplate = React.useCallback(async (templateId: string, title: string) => {
+    if (!activeWorkspaceId || typeof window.electronAPI.createNoteFromTemplate !== 'function') return
+    const destination = noteCreationFolder(noteScope, createInFolder)
+    if (!destination.allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
+    if (!await flushBeforeAction()) return
+    setTemplatesBusy(true)
+    try {
+      const created = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNoteFromTemplate(
+        activeWorkspaceId,
+        templateId,
+        title || undefined,
+        destination.folder,
+        mutationOptions(activeWorkspaceId, title || templateId, null),
+      ))
+      nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
+      setTemplatesDialogOpen(false)
+      setCreateInFolder(undefined)
+      await refreshNotes()
+      navigate(routes.view.notes(created.id))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
+    } finally {
+      setTemplatesBusy(false)
+    }
+  }, [activeWorkspaceId, createInFolder, createNoteWithEvidence, flushBeforeAction, mutationOptions, noteScope, refreshNotes, t])
+
+  const handleSaveAsTemplate = React.useCallback(async (templateId: string, title: string, confirmReplace?: boolean) => {
+    if (!activeWorkspaceId || !activeNote || typeof window.electronAPI.saveNoteAsTemplate !== 'function') return
+    if (!await flushBeforeAction()) return
+    setTemplatesBusy(true)
+    try {
+      const source = contentRef.current
+      const { body } = splitFrontmatter(source)
+      const properties = propertiesFromNoteContent(source)
+      await window.electronAPI.saveNoteAsTemplate(activeWorkspaceId, {
+        templateId,
+        title: title || (typeof properties.title === 'string' && properties.title.trim() ? properties.title.trim() : activeNote.title),
+        body,
+        properties,
+        ...(confirmReplace ? { confirmReplace: true } : {}),
+      })
+      setTemplatesDialogOpen(false)
+      setTemplatesPendingReplaceId(null)
+      toast.success(t('notes.library.templateSaved'))
+      await refreshNoteTemplates()
+    } catch (error) {
+      const code = error && typeof error === 'object' && 'code' in error ? String((error as { code: unknown }).code) : ''
+      if (code === 'CONFLICT') {
+        await refreshNoteTemplates()
+        setTemplatesPendingReplaceId(templateId)
+      } else {
+        toast.error(error instanceof Error ? error.message : t('notes.toast.updatePropertiesFailed'))
+      }
+    } finally {
+      setTemplatesBusy(false)
+    }
+  }, [activeWorkspaceId, activeNote, flushBeforeAction, refreshNoteTemplates, t])
+
   const notesSidebarSlots = useNotesScreenSidebar({
     enabled: !!shellSidebarTarget && !!activeWorkspaceId && !readUnavailable,
     title: t(notesHeaderTitleKey),
@@ -2925,6 +3153,7 @@ h1,h2,h3{margin-top:1.5em}
     onTag: setSelectedTag,
     notes: quickNotes,
     pinned: notePins.pinned,
+    opened: noteRecents.opened,
     onTogglePin: notePins.toggle,
     onOpenNote: openNoteFromQuick,
     activeNoteId: activeNote?.id,
@@ -3083,7 +3312,7 @@ h1,h2,h3{margin-top:1.5em}
             </details>
           )}
         </div>
-        <NotesQuickSections notes={quickNotes} activeNoteId={activeNote?.id} pinned={notePins.pinned} onTogglePin={notePins.toggle} onOpenNote={openNoteFromQuick} />
+        <NotesQuickSections notes={quickNotes} activeNoteId={activeNote?.id} pinned={notePins.pinned} opened={noteRecents.opened} onTogglePin={notePins.toggle} onOpenNote={openNoteFromQuick} />
         {notesTree}
         {notesFooter}
       </ShellSidebarPortal>
@@ -3104,6 +3333,12 @@ h1,h2,h3{margin-top:1.5em}
             ) : (
               <div className="truncate text-sm font-medium">{t(notesHeaderTitleKey)}</div>
             )}
+            {activeNote ? (
+              <NoteFavoriteButton
+                pinned={isNotePinned(activeNote.id)}
+                onToggle={() => notePins.toggle(activeNote.id)}
+              />
+            ) : null}
             {activeNote && <div className="min-w-0 truncate text-xs text-muted-foreground/60">{activeNoteStats}</div>}
             {activeNote && <button type="button" data-testid="notes-content-authority" aria-haspopup="dialog" onClick={() => setSourceInfoOpen(true)} className="shrink-0 rounded bg-foreground/[0.04] px-2 py-0.5 text-xs text-muted-foreground hover:bg-foreground/[0.08]" title={t('notes.content.authorityHint')}>
               {contentResolution?.status === 'ok' ? t('notes.content.markdown') : t('notes.content.readOnly')}
@@ -3122,6 +3357,7 @@ h1,h2,h3{margin-top:1.5em}
           )}
           <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
           <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" /></button>
+          <button type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" data-testid="notes-templates-open" aria-label={t('notes.library.templates')} onClick={() => { void openTemplatesDialog('create') }} onContextMenu={(event) => { event.preventDefault(); if (activeNote) void openTemplatesDialog('save') }}><LayoutTemplate className="icon-toolbar" aria-hidden="true" /></button>
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} disabled={openingAgent} />
           <button
@@ -3509,6 +3745,11 @@ h1,h2,h3{margin-top:1.5em}
                 }
               }}
             >
+              <NoteCoverIconChrome
+                properties={activeNote.properties}
+                disabled={!canEditContent}
+                onChange={(patch) => { void updateLibraryChromeProperties(patch) }}
+              />
               <TiptapMarkdownEditor
                 key={activeNote.id}
                 editable={canEditContent}
@@ -3839,6 +4080,24 @@ h1,h2,h3{margin-top:1.5em}
         </pre>
       </DialogContent>
     </Dialog>
+    <NotesTemplatesDialog
+      open={templatesDialogOpen}
+      mode={templatesDialogMode}
+      templates={noteTemplates}
+      busy={templatesBusy}
+      defaultTitle={templatesDialogMode === 'save' ? (activeNote?.title ?? '') : ''}
+      pendingReplaceId={templatesPendingReplaceId}
+      onPendingReplaceHandled={() => setTemplatesPendingReplaceId(null)}
+      onOpenChange={(open) => {
+        if (!open && templatesBusy) return
+        setTemplatesDialogOpen(open)
+        // Cancel / dismiss: clear folder target like blank-note create dialog.
+        if (!open && templatesDialogMode === 'create') setCreateInFolder(undefined)
+        if (!open) setTemplatesPendingReplaceId(null)
+      }}
+      onCreateFromTemplate={(templateId, title) => { void handleCreateFromTemplate(templateId, title) }}
+      onSaveAsTemplate={(templateId, title, confirmReplace) => { void handleSaveAsTemplate(templateId, title, confirmReplace) }}
+    />
     <NotesDialogs
       createDialogOpen={createDialogOpen}
       createTitle={createTitle}

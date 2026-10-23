@@ -659,6 +659,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'notes:changed',
   'notes:create',
   'notes:createComment',
+  'notes:createFromTemplate',
   'notes:delete',
   'notes:deleteAsset',
   'notes:deleteComment',
@@ -675,6 +676,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'notes:listComments',
   'notes:listRevisions',
   'notes:listTasks',
+  'notes:listTemplates',
   'notes:move',
   'notes:prepareCreate',
   'notes:read',
@@ -684,6 +686,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'notes:renameFolder',
   'notes:restoreRevision',
   'notes:save',
+  'notes:saveAsTemplate',
   'notes:search',
   'notes:unwatch',
   'notes:updateComment',
@@ -1149,4 +1152,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1145
+export const EXPECTED_CHANNEL_COUNT = 1148

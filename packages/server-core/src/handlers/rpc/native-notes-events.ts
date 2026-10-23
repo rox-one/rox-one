@@ -2,7 +2,7 @@ import type { NativeAuthority, NativePrincipal } from '../../authority/native-au
 import type { NoteChangedPayload } from '@rox/shared/protocol'
 
 const reasons: ReadonlySet<string> = new Set([
-  'external', 'save', 'create', 'rename', 'move', 'delete', 'asset', 'properties', 'descriptor',
+  'external', 'save', 'create', 'rename', 'move', 'delete', 'asset', 'properties', 'comments', 'descriptor', 'templates',
 ])
 
 /** Canonical Notes invalidations carry identities, never host paths or private metadata. */
