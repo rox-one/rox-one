@@ -18,25 +18,53 @@ describe('notes comments threads wiring', () => {
     expect(notesPage).toContain('getNoteText={() => contentRef.current}')
   })
 
-  it('rail uses reload generation tokens and clears threads on note switch', () => {
+  it('NotesPage clears rpcCommentThreads on note/workspace change', () => {
+    expect(notesPage).toContain('setRpcCommentThreads([])')
+    expect(notesPage).toContain('[activeWorkspaceId, activeNote?.id]')
+    expect(notesPage).toMatch(/Collapsed comments rail unmounts NotesCommentThreads/)
+  })
+
+  it('overlay create gates listNoteComments setState on still-active note', () => {
+    expect(notesPage).toContain('const requestWorkspaceId = activeWorkspaceId')
+    expect(notesPage).toContain('const requestNoteId = activeNote.id')
+    expect(notesPage).toContain('stillActive')
+    expect(notesPage).toContain('workspaceIdRef.current === requestWorkspaceId')
+    expect(notesPage).toContain('activeNoteIdRef.current === requestNoteId')
+    expect(notesPage).toContain('if (!stillActive()) return')
+    expect(notesPage).toContain('commentCreateInFlightRef')
+    expect(notesPage).toContain("toast.error(t('notes.comments.errorCreate'))")
+  })
+
+  it('commentDraftOffsetsFromEditor maps selection via buildCommentTextMap', () => {
+    expect(notesPage).toContain('pmPosToCommentOffset')
+    expect(notesPage).toContain('buildCommentTextMap(handle.state.doc)')
+    expect(notesPage).toContain('findQuoteWithContext(markdown, quote, prefix, suffix)')
+  })
+
+  it('rail binds publish to note/workspace key and clears on unmount', () => {
+    expect(threadsPanel).toContain('activeKeyRef')
+    expect(threadsPanel).toContain('isActiveKey')
+    expect(threadsPanel).toContain('const requestKey = { workspaceId, noteId }')
+    expect(threadsPanel).toContain('if (!isActiveKey(requestKey)) return')
     expect(threadsPanel).toContain('reloadGenerationRef')
     expect(threadsPanel).toContain('generation !== reloadGenerationRef.current')
-    expect(threadsPanel).toContain('publish([])')
-    expect(threadsPanel).toContain('reloadGenerationRef.current += 1')
-    expect(threadsPanel).toContain('nestedRoots')
+    expect(threadsPanel).toContain('publish(list, requestKey)')
+    expect(threadsPanel).toContain('publishUpdate(requestKey')
+    expect(threadsPanel).toContain('onThreadsChangeRef.current?.([])')
     expect(threadsPanel).toContain('createInFlightRef')
     expect(threadsPanel).toContain('anchorFromQuote(liveText, quote, draftAnchor)')
     expect(threadsPanel).toContain('throw err')
   })
 
-  it('overlay create uses sync in-flight ref and surfaces toast errors', () => {
-    expect(notesPage).toContain('commentCreateInFlightRef')
-    expect(notesPage).toContain("toast.error(t('notes.comments.errorCreate'))")
+  it('orphan roots disable allowReplies', () => {
+    expect(threadsPanel).toContain('allowReplies={!root.orphan}')
   })
 
-  it('CommentsThread awaits onCreate before clearing the reply draft', () => {
+  it('CommentsThread awaits onCreate/onEdit before closing editors', () => {
     expect(commentsThread).toContain('await create(body, comment.id)')
-    expect(commentsThread).toContain('const create = thread.onCreate')
+    expect(commentsThread).toContain('await edit(comment.id, body)')
+    expect(commentsThread).toContain('setEditing(false)')
+    expect(commentsThread).toContain('Keep the editor open with the draft on failure')
     expect(commentsThread).toContain('void | Promise<void>')
   })
 
