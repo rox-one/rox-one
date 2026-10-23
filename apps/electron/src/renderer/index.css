@@ -2224,3 +2224,35 @@ html[data-ui-profile="super-engineering"] :is(
 ) {
   border-radius: var(--radius-md);
 }
+
+/* Rox Engineering shared ActivityRail / contextual sidebar chrome.
+   Theme role `navigator` (#121214 in super-engineering.json) maps to
+   --navigator via themeToCSS; --surface-rail aliases it and feeds
+   --chrome-plate-dense. Under SE, pin the shared rail + sidebar/navigator
+   pane chrome wrappers to --navigator so tint/glass/wallpaper ladder steps
+   cannot wash the canon fill. Does not restyle surface-owned sidebar
+   contents (Home/Tasks/Messenger/Calls). Motion/focus stay on #2210/#2211. */
+html[data-ui-profile="super-engineering"] :is(
+  .chrome-rail,
+  .rox-shell-pane[data-panel-role="sidebar"],
+  .rox-shell-pane[data-panel-role="navigator"]
+) {
+  --chrome-plate-bg: var(--navigator);
+  --shell-glass-surface: var(--navigator);
+  background: var(--navigator);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Wallpaper frame glass (layers.css) uses a higher-attr gradient fill; re-pin
+   under SE so structural chrome stays solid navigator (spot glass accents
+   remain via data-glass-accents on pills/popovers only). */
+html[data-ui-profile="super-engineering"][data-wallpaper] :is(
+  .chrome-rail,
+  .rox-shell-pane[data-panel-role="sidebar"],
+  .rox-shell-pane[data-panel-role="navigator"]
+) {
+  background: var(--navigator);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
