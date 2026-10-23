@@ -29,6 +29,7 @@ Glass / blur is **optional and pointwise** (blur ~20px on chrome accents). Not a
 | Workspace navigator design width **~260** | DONE | `NAVIGATOR_WIDTH_DEFAULT = 260` in `shell-layout-preferences.ts` |
 | Dialog / Popover enter–exit springs | DONE | SE CSS → `--motion-spring` / `--ease-spring` (mirrors `SE_SPRING_MODAL`) |
 | Menu / Drawer overlay / Tooltip SE springs | DONE | Dropdown+Context `data-overlay-motion`; drawer overlay modal spring; menus/tooltip lighter `--motion-disclosure`/`--motion-base` |
+| SimpleDropdown enter via overlay-motion | DONE | drops `duration-100` animate-in; SE menu spring via `dropdown-menu-content` slot |
 
 ## Pointwise glass / popover blur (DONE — do not re-PR)
 

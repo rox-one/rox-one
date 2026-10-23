@@ -18,6 +18,10 @@ const styled = readFileSync(
   join(root, 'packages/ui/src/components/ui/StyledDropdown.tsx'),
   'utf8',
 )
+const simple = readFileSync(
+  join(root, 'packages/ui/src/components/ui/SimpleDropdown.tsx'),
+  'utf8',
+)
 
 const marker = '/* Rox Engineering: remaining shared overlays.'
 const start = ui.indexOf(marker)
@@ -36,6 +40,11 @@ describe('SE remaining overlay springs (menus / drawer / tooltip)', () => {
     expect(context).toContain('data-slot="context-menu-sub-content"')
     expect(context).not.toContain('animate-in')
     expect(styled).toContain('data-overlay-motion="true"')
+    expect(simple).toContain('data-overlay-motion="true"')
+    expect(simple).toContain('data-state="open"')
+    expect(simple).toContain('data-slot="dropdown-menu-content"')
+    expect(simple).not.toContain('duration-100')
+    expect(simple).not.toContain('animate-in')
   })
 
   it('allows context-menu animation when data-overlay-motion is set', () => {

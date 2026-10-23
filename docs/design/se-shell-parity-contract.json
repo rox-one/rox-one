@@ -53,7 +53,7 @@
     },
     {
       "id": "worktree-hover-delay",
-      "title": "Compact WorktreeHoverCard 250ms hover delay (spec 200\u2013300ms)",
+      "title": "Compact WorktreeHoverCard 250ms hover delay (spec 200–300ms)",
       "paths": [
         "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx"
       ]
@@ -94,6 +94,14 @@
       "title": "Workspace navigator design width ~260 (NAVIGATOR_WIDTH_DEFAULT)",
       "paths": [
         "apps/electron/src/renderer/lib/shell-layout-preferences.ts"
+      ]
+    },
+    {
+      "id": "simple-dropdown-springs",
+      "title": "SimpleDropdown enter uses data-overlay-motion (SE menu spring; no duration-100)",
+      "paths": [
+        "packages/ui/src/components/ui/SimpleDropdown.tsx",
+        "packages/ui/src/styles/index.css"
       ]
     }
   ],
