@@ -3041,17 +3041,17 @@ h1,h2,h3{margin-top:1.5em}
               <CalendarDays className="h-4 w-4 text-emerald-500" aria-hidden="true" />
             </button>
             <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')} aria-label={t('notes.toolbar.newFolder')}>
-              <FolderPlus className="h-4 w-4 text-amber-500" aria-hidden="true" />
+              <FolderPlus className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </button>
             <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}>
-              <FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" />
+              <FilePlus2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             </button>
           </div>
           {allTags.length > 0 && (
             <details open className="group/notes-tags mt-2 rounded-[var(--radius-card)] bg-foreground/[0.03] p-1" data-notes-disclosure>
               <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-[var(--radius-control)] px-2 py-1 text-xs font-medium text-muted-foreground outline-none hover:bg-foreground/[0.06] focus-visible:ring-1 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                 <ChevronRight className="h-3 w-3 shrink-0 transition-transform duration-150 group-open/notes-tags:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
-                <Tags className="h-3.5 w-3.5 shrink-0 text-violet-500" aria-hidden="true" />
+                <Tags className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <span className="flex-1">{t('notes.inspector.tags')}</span>
                 <span className="numeric">{allTags.length}</span>
               </summary>
@@ -3121,7 +3121,7 @@ h1,h2,h3{margin-top:1.5em}
             </div>
           )}
           <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
-          <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
+          <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" /></button>
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} disabled={openingAgent} />
           <button
