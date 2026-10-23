@@ -10,19 +10,9 @@
  * Every widget reads real stores/IPC and clicks through to its screen.
  */
 import * as React from 'react'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, Plus, RotateCcw, SlidersHorizontal, X } from 'lucide-react'
-import {
-  DndContext,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core'
-import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { newLocalId, readWorkspaceJsonSnapshot, saveWorkspaceJson, saveWorkspaceJsonIfUnchanged, subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
 import { cn } from '@/lib/utils'
@@ -32,23 +22,17 @@ import {
   HOME_GRID_GAP,
   HOME_GRID_ROW_HEIGHT,
   HOME_WIDGET_DEFAULT_SIZE,
-  HOME_WIDGET_ALLOWED_SIZES,
   HOME_WIDGET_GROUPS,
   HOME_WIDGET_IDS,
   HOME_LAYOUT_NS,
   addWidget,
-  availableWidgets,
   cloneLayout,
   isHomeWidgetId,
-  moveWidgetVisual,
-  shiftWidgetVisual,
   isSupportedHomeLayout,
   canReadHomeLayout,
   normalizeHomeLayout,
   persistHomeLayout,
   removeWidget,
-  resizeWidget,
-  setWidgetAppearance,
   widgetSpan,
   widgetRowSpan,
   HOME_META_NS,
@@ -65,9 +49,10 @@ import {
 } from './home/dashboard-layout'
 import { toast } from 'sonner'
 import { HOME_WIDGETS } from './home/widgets'
-import type { WidgetEditProps } from './home/widget-kit'
 import { widgetAppearanceStyle } from './home/widget-appearance'
 import { HomeGlanceShell } from './home/glance/HomeGlanceShell'
+
+const HomeOverviewEditGrid = lazy(() => import('./home/home-overview-dnd'))
 
 interface HomeLayoutSnapshot {
   layout: HomeDashboardLayout
@@ -147,56 +132,31 @@ class WidgetBoundary extends React.Component<{ fallback: React.ReactNode; childr
   }
 }
 
-function SortableWidget({
+/** View-mode cell — no @dnd-kit. Edit mode uses home-overview-dnd. */
+function ViewWidget({
   placement,
-  containerWidth,
   cell,
   span,
   trackPitch,
   width,
-  editing,
-  onChange,
-  layout,
 }: {
   placement: HomeWidgetPlacement
-  /** Grid width: moves act on the packed order at this width. */
-  containerWidth: number
-  /** Explicit packed position; DOM order equals this visual order. */
   cell: PackedCell
   span: number
   trackPitch: number
   width: number
-  editing: boolean
-  layout: HomeDashboardLayout
-  onChange: (next: HomeDashboardLayout) => void
 }) {
   const { t } = useTranslation()
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: placement.id, disabled: !editing })
   const def = HOME_WIDGETS[placement.id]
-  const edit: WidgetEditProps | null = editing
-    ? {
-        size: placement.size,
-        sizes: HOME_WIDGET_ALLOWED_SIZES[placement.id],
-        appearance: placement.appearance,
-        onAppearance: (appearance) => onChange(setWidgetAppearance(layout, placement.id, appearance)),
-        onResize: (size) => onChange(resizeWidget(layout, placement.id, size)),
-        onRemove: () => onChange(removeWidget(layout, placement.id)),
-        onShift: (delta) => onChange(shiftWidgetVisual(layout, placement.id, delta, containerWidth)),
-        dragHandle: { ...attributes, ...listeners, ref: setActivatorNodeRef },
-      }
-    : null
   const Widget = def.Component
-  // Every widget, Сводка and Быстрые действия included, gets the fixed slot of
-  // its size (content scrolls inside), so explicit packing is exact.
   const rowSpan = widgetRowSpan(placement.size)
   const height = rowSpan * HOME_GRID_ROW_HEIGHT + (rowSpan - 1) * HOME_GRID_GAP
   return (
     <div
-      ref={setNodeRef}
       data-home-cell={placement.id}
       data-home-size={placement.size}
-      className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
-      style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `${cell.col + 1} / span ${span}`, gridRow: `${Math.round((cell.row * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP)) / trackPitch) + 1} / span ${Math.ceil((height + HOME_GRID_GAP) / trackPitch)}`, height, alignSelf: 'start', transform: CSS.Translate.toString(transform), transition }}
+      className="min-h-0 min-w-0"
+      style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `${cell.col + 1} / span ${span}`, gridRow: `${Math.round((cell.row * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP)) / trackPitch) + 1} / span ${Math.ceil((height + HOME_GRID_GAP) / trackPitch)}`, height, alignSelf: 'start' }}
     >
       <WidgetBoundary
         fallback={
@@ -206,7 +166,7 @@ function SortableWidget({
           </div>
         }
       >
-        <Widget edit={edit} width={width} size={placement.size} />
+        <Widget edit={null} width={width} size={placement.size} />
       </WidgetBoundary>
     </div>
   )
@@ -497,17 +457,6 @@ function HomeOverviewDashboard() {
     return () => window.removeEventListener('keydown', onKey)
   }, [cancelEditing, editing])
 
-  // Pointer drag; keyboard reorder is arrow keys on the focused handle (WidgetFrame).
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
-  const onDragEnd = (event: DragEndEvent) => {
-    const active = String(event.active.id)
-    const over = event.over ? String(event.over.id) : null
-    if (!over || active === over || !isHomeWidgetId(active) || !isHomeWidgetId(over)) return
-    updateDraft(moveWidgetVisual(layout, active, over, width))
-  }
-
-  const ids = useMemo(() => visual.widgets.map((w) => w.id), [visual])
-  const hasMore = availableWidgets(layout).length > 0
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden" data-home-dashboard={editing ? 'edit' : 'view'} data-panel-density="grid">
@@ -588,43 +537,59 @@ function HomeOverviewDashboard() {
                 </HeaderButton>
               </div>
             </div>
-          ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-              <SortableContext items={ids} strategy={rectSortingStrategy}>
-                <div
-                  ref={packedGridRef}
-                  className="grid"
-                  style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '1px', columnGap: HOME_GRID_GAP }}
-                  data-home-grid=""
-                >
-                  {visual.widgets.map((placement) => (
-                    <SortableWidget
-                      key={placement.id}
-                      placement={placement}
-                      containerWidth={width}
-                      cell={packed.cells.get(placement.id)!}
-                      span={widgetSpan(placement.size, width)}
-                      trackPitch={trackPitch}
-                      width={widgetWidth(widgetSpan(placement.size, width), width)}
-                      editing={editing}
-                      layout={layout}
-                      onChange={updateDraft}
-                    />
-                  ))}
-                  {editing && hasMore && !pickerOpen ? (
-                    <button
-                      type="button"
-                      onClick={() => setPickerOpen(true)}
-                      className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] text-base font-bold text-muted-foreground hover:text-foreground"
-                      style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${Math.ceil(widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) / trackPitch)}`, height: widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) - HOME_GRID_GAP, alignSelf: 'start' }}
-                    >
-                      <Plus className="h-5 w-5" />
-                      {t('workbench.home.edit.addWidget')}
-                    </button>
-                  ) : null}
-                </div>
-              </SortableContext>
-            </DndContext>
+          ) : editing ? (
+              <Suspense
+                fallback={
+                  <div
+                    ref={packedGridRef}
+                    className="grid"
+                    style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '1px', columnGap: HOME_GRID_GAP }}
+                    data-home-grid=""
+                    aria-busy="true"
+                  >
+                    {visual.widgets.map((placement) => (
+                      <ViewWidget
+                        key={placement.id}
+                        placement={placement}
+                        cell={packed.cells.get(placement.id)!}
+                        span={widgetSpan(placement.size, width)}
+                        trackPitch={trackPitch}
+                        width={widgetWidth(widgetSpan(placement.size, width), width)}
+                      />
+                    ))}
+                  </div>
+                }
+              >
+                <HomeOverviewEditGrid
+                  layout={layout}
+                  visual={visual}
+                  packed={packed}
+                  width={width}
+                  trackPitch={trackPitch}
+                  packedGridRef={packedGridRef}
+                  pickerOpen={pickerOpen}
+                  onChange={updateDraft}
+                  onOpenPicker={() => setPickerOpen(true)}
+                />
+              </Suspense>
+            ) : (
+              <div
+                ref={packedGridRef}
+                className="grid"
+                style={{ gridTemplateColumns: `repeat(${HOME_GRID_COLUMNS}, minmax(0, 1fr))`, gridAutoRows: '1px', columnGap: HOME_GRID_GAP }}
+                data-home-grid=""
+              >
+                {visual.widgets.map((placement) => (
+                  <ViewWidget
+                    key={placement.id}
+                    placement={placement}
+                    cell={packed.cells.get(placement.id)!}
+                    span={widgetSpan(placement.size, width)}
+                    trackPitch={trackPitch}
+                    width={widgetWidth(widgetSpan(placement.size, width), width)}
+                  />
+                ))}
+              </div>
           )}
         </div>
       </div>

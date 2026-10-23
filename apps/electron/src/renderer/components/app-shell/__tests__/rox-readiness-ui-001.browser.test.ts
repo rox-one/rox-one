@@ -121,6 +121,7 @@ async function fixtureBundle() {
     const selection = {useIsMultiSelectActive:()=>false,useSelectionCount:()=>0,useSelectedIds:()=>new Set(),useSelection:()=>({clearMultiSelect(){}})};
     const sourceSelection = selection, skillSelection = selection, automationSelection = selection;
     const Pass = props => React.createElement('section', null, props.children);
+    const Skeleton = props => React.createElement('span', {'data-skeleton': true, 'aria-hidden': true}, null);
     const Panel = Pass, StoplightProvider = Pass, SendResourceToWorkspaceDialog = () => null;
     // PERF-10 (#1577): keep-alive host stubbed to the active surface only.
     const RetainedSurfacePane = props => props.children, surfaceKeepAliveCapacity = () => 1,

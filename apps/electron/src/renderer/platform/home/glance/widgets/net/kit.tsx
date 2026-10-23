@@ -9,6 +9,7 @@ import { MessageSquare, RotateCw } from 'lucide-react'
 import type { HomeFetchErrorReason } from '../../../../../../shared/home-fetch'
 import { openExternalSafe } from '../../open-external'
 import type { FeedItem } from './parsers'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 
 /**
  * True while the element is laid out and intersects the viewport. A Home
@@ -17,18 +18,20 @@ import type { FeedItem } from './parsers'
  */
 export function useOnScreen<T extends Element>(): [React.RefObject<T>, boolean] {
   const ref = React.useRef<T>(null)
-  const [visible, setVisible] = React.useState(false)
+  const [onScreen, setOnScreen] = React.useState(false)
+  const surfaceVisible = useEffectiveVisible()
   React.useEffect(() => {
     const el = ref.current
     if (!el || typeof IntersectionObserver === 'undefined') {
-      setVisible(true)
+      setOnScreen(true)
       return
     }
-    const io = new IntersectionObserver((entries) => setVisible(entries.some((e) => e.isIntersecting)), { rootMargin: '200px' })
+    const io = new IntersectionObserver((entries) => setOnScreen(entries.some((e) => e.isIntersecting)), { rootMargin: '200px' })
     io.observe(el)
     return () => io.disconnect()
   }, [])
-  return [ref, visible]
+  // Surface keep-alive + viewport: polling must stop when Home is retired or scrolled away.
+  return [ref, onScreen && surfaceVisible]
 }
 
 export function NetStatus({ error, hasData, onRetry }: { error: HomeFetchErrorReason | null; hasData: boolean; onRetry: () => void }) {
