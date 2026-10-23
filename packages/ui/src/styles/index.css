@@ -1243,7 +1243,9 @@ html[data-ui-profile="graphite"] :is([role="menu"], [role="listbox"], [data-prem
    2px focus; prefers-reduced-transparency / prefers-contrast → dense, blur 0;
    super-engineering keeps a 20px blur; data-render-profile="performance" zeroes
    chrome transitions. Floating surfaces (menus, popovers, dialogs, toasts,
-   tooltips) are ALWAYS opaque and never glass.
+   tooltips) are ALWAYS opaque on the chrome ladder. Optional SE glass accents
+   (html[data-glass-accents], intensity > 0) may glass the mode pill, Rox Mini
+   buttons, popover/menus, and composer — chrome-only, not a second design system.
 ============================================================================= */
 html :is(
   .chrome-topbar,

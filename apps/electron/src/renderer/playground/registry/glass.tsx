@@ -5,19 +5,13 @@ import { cn } from '@/lib/utils'
 import type { ComponentEntry } from './types'
 
 /**
- * Arc Glass — surface-vocabulary gallery (F1 glass-core).
+ * Glass surface-vocabulary gallery (legacy Arc Glass Design fixtures).
  *
- * One mock screen that renders the slot vocabulary (panel, toolbar, card, table,
- * row, empty, editor, dialog, toast) inside the playground's preview box, so
- * the material can be screenshotted and reviewed as a whole. `sheet` shares the
- * dialog recipe and is covered by the recipe test, not by this fixture.
- *
- * The paint lives in `packages/ui/src/components/glass/arc-glass-surfaces.css`
- * (loaded by installGlassSkin under `html[data-theme="arc-glass"]`); this file
- * only tags the roots. Nothing here talks to IPC, the store or the network —
- * overlays are plain local state. The third card carries
- * `data-glass-state="hover"` so the CSS-only hover paint is visible in a static
- * screenshot (the same idiom as `data-glass-pressed`).
+ * Mock screen for slot vocabulary (panel, toolbar, card, …) in the playground
+ * preview. Arc Glass content surfaces CSS was removed; Arc Glass theme remains
+ * selectable as wallpaper-only. Optional chrome accents live in arc-glass-skin.css
+ * under SE (`data-glass-accents`). This file only tags roots for local preview —
+ * no IPC/store/network. Third card uses `data-glass-state="hover"` for screenshots.
  */
 
 interface NavRow {

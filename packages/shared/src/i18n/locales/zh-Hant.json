@@ -9443,6 +9443,7 @@
   "settings.appearance.layers.frameText": "邊框文字",
   "settings.appearance.layers.glass": "玻璃",
   "settings.appearance.layers.glassNeedsWallpaper": "設定桌布後會顯示玻璃效果。",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "匯入",
   "settings.appearance.layers.importError": "此檔案不是有效的 .rox-theme.json。",
   "settings.appearance.layers.importSuccess": "已匯入「{{name}}」。",

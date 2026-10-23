@@ -9443,6 +9443,7 @@
   "settings.appearance.layers.frameText": "Frame text",
   "settings.appearance.layers.glass": "Glass",
   "settings.appearance.layers.glassNeedsWallpaper": "Glass shows when a wallpaper is set.",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "Import",
   "settings.appearance.layers.importError": "This file is not a valid .rox-theme.json.",
   "settings.appearance.layers.importSuccess": "Imported “{{name}}”.",
