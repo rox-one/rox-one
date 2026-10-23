@@ -20,6 +20,8 @@ export interface CallSettingsFile {
   livekitUrl?: string
   livekitApiKey?: string
   livekitApiSecret?: string
+  /** Workspace-service origin for messenger contract `/v1/im/*` (no secrets). */
+  workspaceServiceUrl?: string
 }
 
 export type CallCredentialSource = 'override' | 'builtin' | 'none'

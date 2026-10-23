@@ -47,14 +47,33 @@ export function teamCallRoomName(channelId: string): string {
  * so the payload shape stays in lockstep with /workspace contract v1. Null for non-call messages.
  */
 export function toMessengerCallEvent(message: TeamChannelMessage, call: TeamChannelCall, opts: { transcriptUrl?: string; summary?: string } = {}):
-  | { type: 'call.started'; roomName: string; startedBy: string; ts: number }
-  | { type: 'call.ended'; roomName: string; durationSec: number; participants: string[] }
-  | { type: 'call.transcript'; roomName: string; transcriptUrl?: string; summary?: string }
+  | { type: 'call.started'; roomName: string; callId: string; startedBy: string; ts: number }
+  | { type: 'call.ended'; roomName: string; callId: string; durationSec: number; participants: string[] }
+  | { type: 'call.transcript'; roomName: string; callId: string; transcriptUrl?: string; summary?: string }
   | null {
   if (message.callId !== call.id) return null
-  if (message.kind === 'system' && message.event === 'call.started') return { type: 'call.started', roomName: call.roomName, startedBy: call.startedBy, ts: Math.floor(call.startedAt / 1000) }
-  if (message.kind === 'system' && message.event === 'call.ended') return { type: 'call.ended', roomName: call.roomName, durationSec: Math.max(0, Math.round(((call.endedAt ?? message.createdAt) - call.startedAt) / 1000)), participants: [...call.everParticipantIds] }
-  if (message.kind === 'transcript' || message.kind === 'summary') return { type: 'call.transcript', roomName: call.roomName, ...(opts.transcriptUrl ? { transcriptUrl: opts.transcriptUrl } : {}), ...(opts.summary ? { summary: opts.summary } : {}) }
+  // Contract v1.1: ts is epoch milliseconds; callId is required on every call.* event.
+  if (message.kind === 'system' && message.event === 'call.started') {
+    return { type: 'call.started', roomName: call.roomName, callId: call.id, startedBy: call.startedBy, ts: call.startedAt }
+  }
+  if (message.kind === 'system' && message.event === 'call.ended') {
+    return {
+      type: 'call.ended',
+      roomName: call.roomName,
+      callId: call.id,
+      durationSec: Math.max(0, Math.round(((call.endedAt ?? message.createdAt) - call.startedAt) / 1000)),
+      participants: [...call.everParticipantIds],
+    }
+  }
+  if (message.kind === 'transcript' || message.kind === 'summary') {
+    return {
+      type: 'call.transcript',
+      roomName: call.roomName,
+      callId: call.id,
+      ...(opts.transcriptUrl ? { transcriptUrl: opts.transcriptUrl } : {}),
+      ...(opts.summary ? { summary: opts.summary } : {}),
+    }
+  }
   return null
 }
 
