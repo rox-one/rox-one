@@ -1,0 +1,21 @@
+name: cognee-sidecar
+on:
+  pull_request:
+    paths: ['packages/cognee-sidecar/**', '.github/workflows/cognee-sidecar.yml']
+  push:
+    branches: [main]
+    paths: ['packages/cognee-sidecar/**']
+permissions:
+  contents: read
+jobs:
+  protocol-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Protocol smoke (fake backend, no cognee install)
+        working-directory: packages/cognee-sidecar
+        run: python -m unittest discover -s tests -v

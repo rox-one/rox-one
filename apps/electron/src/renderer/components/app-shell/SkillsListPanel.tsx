@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal, Plus, Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { Skeleton } from '@rox/ui'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { EntityPanel } from '@/components/ui/entity-panel'
@@ -298,12 +299,13 @@ export function SkillsListPanel({
   // claiming the workspace has no skills.
   const emptyState = listSyncing ? (
     <div
-      className="flex flex-col items-center justify-center gap-2 p-6 text-xs text-muted-foreground"
+      className="flex w-full flex-col items-stretch gap-2 p-6 text-muted-foreground"
       role="status"
+      aria-busy="true"
+      aria-label={t('common.loading')}
       data-list-role="skills-syncing"
     >
-      <RefreshCw className="icon-caption animate-spin" />
-      {t('common.loading')}
+      <Skeleton lines={4} className="w-full" />
     </div>
   ) : ompSkills.length > 0 ? undefined : (
     <EntityListEmptyScreen
@@ -428,12 +430,13 @@ export function SkillsListPanel({
         rendered (e.g. a slow bundled-skills sync that outlived the timeout). */}
     {listSyncing && craftSkills.length > 0 && (
       <div
-        className="mx-2 mb-1 flex items-center gap-1.5 text-caption text-muted-foreground"
+        className="mx-2 mb-1 flex flex-col gap-1.5 text-muted-foreground"
         role="status"
+        aria-busy="true"
+        aria-label={t('common.loading')}
         data-list-role="skills-syncing"
       >
-        <RefreshCw className="icon-status animate-spin" />
-        {t('common.loading')}
+        <Skeleton className="h-3 w-1/2" />
       </div>
     )}
     <EntityPanel<LoadedSkill>
