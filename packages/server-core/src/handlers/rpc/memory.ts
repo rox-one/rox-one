@@ -2,7 +2,10 @@ import { peekRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { PushTarget } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId, getWorkspaces } from '@rox/shared/config'
-import { getMemoryConfig, updateMemoryConfig, type MemoryConfigPatch } from '@rox/shared/config/storage'
+import { getMemoryConfig, updateMemoryConfig, isGraphSourceEnabled, type MemoryConfigPatch } from '@rox/shared/config/storage'
+import { cogneeWorkspaceDir } from '../../memory/graph/cognee-runtime'
+import { readGraphImportState, runGraphOneTimeImport } from '../../memory/graph/one-time-import'
+import { collectMemorySourceDocs, getGraphMemoryProviderResolver, memoryIndexServiceFor, memoryIndexServiceOptions } from '../../memory/MemoryIndexService'
 import type { Lesson, LessonCategory, LessonOwner, LessonScope, ProjectMemoryDto, WorkspaceMemory } from '@rox/shared/memory/types'
 import type { WikiApplyResult, WikiClaimStatus, WikiGetResult, WikiLintReport, WikiListResult, WikiMutation } from '@rox/shared/memory/types'
 import { pushTyped, type RequestContext, type RpcServer } from '@rox/server-core/transport'
@@ -17,7 +20,7 @@ import { LessonStore, lessonKey } from '../../memory/LessonStore'
 import { buildConflictPrompt, parseConflicts, promoteLessonToGlobal, scanPromotionCandidates } from '../../memory/lesson-graph'
 import type { LessonConflictVerdict } from '../../memory/lesson-graph'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
-import { MemoryIndexService, memoryIndexServiceFor, memoryIndexServiceOptions } from '../../memory/MemoryIndexService'
+import { MemoryIndexService } from '../../memory/MemoryIndexService'
 import { WikiClaimStore } from '../../memory/WikiClaimStore'
 import { compileWikiDigest } from '../../memory/wiki-lint'
 import type { MemoryGetResult, MemoryIndexStatus, MemorySearchHit } from '@rox/shared/memory/types'
@@ -49,6 +52,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.memory.WIKI_LINT,
   RPC_CHANNELS.memory.GET_CONFIG,
   RPC_CHANNELS.memory.UPDATE_CONFIG,
+  RPC_CHANNELS.memory.GRAPH_IMPORT_STATUS,
+  RPC_CHANNELS.memory.GRAPH_IMPORT_RUN,
 ]
 
 export interface LessonInput {
@@ -596,6 +601,50 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
         safe.graphSources = patch.graphSources
       }
       return updateMemoryConfig(safe) ?? getMemoryConfig()
+    },
+    { nativeAction: 'write' },
+  )
+  server.handle(
+    RPC_CHANNELS.memory.GRAPH_IMPORT_STATUS,
+    async (ctx, workspaceId: string) => {
+      const authorized = authorizeMemoryWorkspace(ctx, workspaceId, deps)
+      if (!authorized) throw new Error('Workspace access denied')
+      const dir = cogneeWorkspaceDir(authorized)
+      return readGraphImportState(dir)
+    },
+    { nativeAction: 'read' },
+  )
+
+  server.handle(
+    RPC_CHANNELS.memory.GRAPH_IMPORT_RUN,
+    async (ctx, workspaceId: string) => {
+      const authorized = authorizeMemoryWorkspace(ctx, workspaceId, deps)
+      if (!authorized) throw new Error('Workspace access denied')
+      const workspace = getWorkspaceByNameOrId(authorized)
+      if (!workspace) throw new Error('Workspace not found')
+      const storageDir = cogneeWorkspaceDir(workspace.id)
+      const provider =
+        getGraphMemoryProviderResolver()?.({
+          workspaceId: workspace.id,
+          workspaceRoot: workspace.rootPath,
+        }) ?? null
+      if (!provider) return readGraphImportState(storageDir)
+      const cfg = getMemoryConfig()
+      const allowed = new Set(
+        (['session', 'notes', 'tasks', 'chats', 'calls', 'mail', 'files', 'lessons'] as const).filter(
+          (k) => isGraphSourceEnabled(cfg.graphSources, k),
+        ),
+      )
+      const docs = collectMemorySourceDocs(workspace.rootPath)
+      const result = await runGraphOneTimeImport({
+        storageDir,
+        provider,
+        docs,
+        allowedSources: allowed,
+        dailyCostCapUsd: cfg.graphDailyCostCapUsd,
+        logger: { warn: (m, e) => deps.platform?.logger?.warn?.(m, e) },
+      })
+      return result.state
     },
     { nativeAction: 'write' },
   )

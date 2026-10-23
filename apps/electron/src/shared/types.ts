@@ -2823,6 +2823,8 @@ export interface ElectronAPI {
   rebuildMemoryIndex(workspaceId: string): Promise<{ ok: boolean; state: 'absent' | 'building' | 'ready' | 'stale' | 'failed' }>
   getMemoryConfig(): Promise<import('@rox/shared/memory/types').MemoryConfig>
   updateMemoryConfig(patch: import('@rox/shared/config/storage').MemoryConfigPatch): Promise<import('@rox/shared/memory/types').MemoryConfig>
+  getGraphImportStatus(workspaceId: string): Promise<{ version: 1; status: 'idle' | 'running' | 'done' | 'failed'; cursor: number; total: number; safeError?: string }>
+  runGraphImport(workspaceId: string): Promise<{ version: 1; status: 'idle' | 'running' | 'done' | 'failed'; cursor: number; total: number; safeError?: string }>
   // Learning (continual learning, PRD §15) — candidates/evidence/outcomes/policies.
   // `observe`/`recordOutcome`/`recordCorrection` are agent/native channels and are
   // deliberately absent here.

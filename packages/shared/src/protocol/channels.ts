@@ -955,6 +955,8 @@ export const RPC_CHANNELS = {
     // Graph-memory settings (cognee PR6)
     GET_CONFIG: 'memory:getConfig',
     UPDATE_CONFIG: 'memory:updateConfig',
+    GRAPH_IMPORT_STATUS: 'memory:graphImportStatus',
+    GRAPH_IMPORT_RUN: 'memory:graphImportRun',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
    *  OBSERVE/RECORD_OUTCOME/RECORD_CORRECTION are agent/native actions — they
