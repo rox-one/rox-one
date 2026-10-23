@@ -42,7 +42,7 @@ describe('note-revision-history', () => {
     const loaded = await getNoteRevision(root, 'ws', noteId, first.revisionId)
     expect(loaded?.content).toBe(v1)
 
-    // Re-record same revisionId must not grow duplicates.
+    // Same operationId is idempotent; does not grow or rewrite peers.
     await recordNoteRevision(root, {
       noteId,
       content: v2,
@@ -52,6 +52,33 @@ describe('note-revision-history', () => {
     })
     expect(await listNoteRevisions(root, 'ws', noteId)).toHaveLength(2)
     expect((await getNoteRevision(root, 'ws', noteId, first.revisionId))?.content).toBe(v1)
+    expect((await getNoteRevision(root, 'ws', noteId, first.revisionId))?.committedAt).toBe('2026-10-23T07:00:00.000Z')
+  })
+
+  it('keeps original metadata when restoring identical bytes as a new operation', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'rox-note-history-identical-'))
+    const noteId = 'doc'
+    const body = '# Same\n'
+    const rev = markdownRevision(body)
+    await recordNoteRevision(root, {
+      noteId, content: body, revisionId: rev, operationId: 'orig',
+      committedAt: '2026-10-23T09:00:00.000Z',
+    })
+    await recordNoteRevision(root, {
+      noteId, content: '# Other\n', revisionId: markdownRevision('# Other\n'), operationId: 'mid',
+      previousRevision: rev, committedAt: '2026-10-23T09:01:00.000Z',
+    })
+    await recordNoteRevision(root, {
+      noteId, content: body, revisionId: rev, operationId: 'restore-op',
+      previousRevision: markdownRevision('# Other\n'), committedAt: '2026-10-23T09:02:00.000Z',
+    })
+    const listed = await listNoteRevisions(root, 'ws', noteId)
+    expect(listed.map((e) => e.operationId)).toEqual(['restore-op', 'mid', 'orig'])
+    const originals = listed.filter((e) => e.revisionId === rev)
+    expect(originals).toHaveLength(2)
+    expect(originals.find((e) => e.operationId === 'orig')?.committedAt).toBe('2026-10-23T09:00:00.000Z')
+    expect(originals.find((e) => e.operationId === 'restore-op')?.committedAt).toBe('2026-10-23T09:02:00.000Z')
+    expect((await getNoteRevision(root, 'ws', noteId, rev))?.content).toBe(body)
   })
 
   it('reuses committed MarkdownCommitStore journals for list and get', async () => {
@@ -86,6 +113,21 @@ describe('note-revision-history', () => {
     expect(body?.content).toBe(content)
   })
 
+  it('getNoteRevision prefers sidecar and does not require other sources when found', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'rox-note-history-get-'))
+    const noteId = 'solo'
+    const content = '# Sidecar only\n'
+    const revisionId = markdownRevision(content)
+    await recordNoteRevision(root, {
+      noteId, content, revisionId, operationId: 's1',
+      committedAt: '2026-10-23T10:00:00.000Z',
+    })
+    const loaded = await getNoteRevision(root, 'ws', noteId, revisionId)
+    expect(loaded?.content).toBe(content)
+    expect(loaded?.operationId).toBe('s1')
+    expect(await getNoteRevision(root, 'ws', noteId, 'sha256:missing')).toBeNull()
+  })
+
   it('rejects unsafe note ids', async () => {
     const root = await mkdtemp(join(tmpdir(), 'rox-note-history-bad-'))
     await expect(listNoteRevisions(root, 'ws', '../escape')).rejects.toThrow(/Invalid note ID/)
@@ -95,47 +137,5 @@ describe('note-revision-history', () => {
       revisionId: 'r',
       operationId: 'o',
     })).rejects.toThrow(/Invalid note ID/)
-  })
-})
-
-describe('conflict-safe restore semantics', () => {
-  it('keeps the restored snapshot and appends a new tip revision', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'rox-note-history-restore-'))
-    const noteId = 'doc'
-    const oldBody = '# Old\n'
-    const currentBody = '# Current\n'
-    const oldRev = markdownRevision(oldBody)
-    const currentRev = markdownRevision(currentBody)
-    await recordNoteRevision(root, {
-      noteId, content: oldBody, revisionId: oldRev, operationId: 'a',
-      committedAt: '2026-10-23T09:00:00.000Z',
-    })
-    await recordNoteRevision(root, {
-      noteId, content: currentBody, revisionId: currentRev, operationId: 'b',
-      previousRevision: oldRev, committedAt: '2026-10-23T09:01:00.000Z',
-    })
-    // Simulate restore: save old body as a NEW revision while current tip is expected.
-    const restoredBody = oldBody
-    const restoredRev = markdownRevision(restoredBody)
-    // Same bytes as old → same revisionId; still must not erase history entries.
-    await recordNoteRevision(root, {
-      noteId, content: restoredBody, revisionId: restoredRev, operationId: 'c',
-      previousRevision: currentRev, committedAt: '2026-10-23T09:02:00.000Z',
-    })
-    // Same bytes ⇒ same revisionId (content-addressed); the prior tip stays listed.
-    const listed = await listNoteRevisions(root, 'ws', noteId)
-    expect(listed.map((e) => e.revisionId).sort()).toEqual([oldRev, currentRev].sort())
-    expect((await getNoteRevision(root, 'ws', noteId, oldRev))?.content).toBe(oldBody)
-    expect((await getNoteRevision(root, 'ws', noteId, currentRev))?.content).toBe(currentBody)
-    // A restore that changes bytes must mint a distinct tip while keeping both parents.
-    const edited = '# Restored then edited\n'
-    const editedRev = markdownRevision(edited)
-    await recordNoteRevision(root, {
-      noteId, content: edited, revisionId: editedRev, operationId: 'd',
-      previousRevision: oldRev, committedAt: '2026-10-23T09:03:00.000Z',
-    })
-    const after = await listNoteRevisions(root, 'ws', noteId)
-    expect(after.map((e) => e.revisionId).sort()).toEqual([oldRev, currentRev, editedRev].sort())
-    expect((await getNoteRevision(root, 'ws', noteId, oldRev))?.content).toBe(oldBody)
   })
 })

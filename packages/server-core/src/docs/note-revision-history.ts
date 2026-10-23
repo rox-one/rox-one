@@ -10,6 +10,8 @@
  * journal saves that do not write a MarkdownCommitStore journal, so history
  * stays available on both save paths. Snapshots are append-only; restore
  * creates a NEW save (new journal / snapshot), never rewrites an old one.
+ * Identical-byte restores keep the original snapshot and append a distinct
+ * tip event keyed by operationId.
  */
 
 import { createHash } from 'node:crypto'
@@ -68,16 +70,11 @@ function byteSizeOf(content: string): number {
   return Buffer.byteLength(content, 'utf8')
 }
 
-function entryKey(entry: NoteHistoryEntry): string {
-  return entry.revisionId
-}
-
-function sortNewestFirst(entries: NoteHistoryEntry[]): NoteHistoryEntry[] {
-  return [...entries].sort((a, b) => {
-    const byTime = b.committedAt.localeCompare(a.committedAt)
-    if (byTime !== 0) return byTime
-    return b.revisionId.localeCompare(a.revisionId)
-  })
+function assertSafeNoteId(noteId: string): void {
+  if (!noteId || noteId.includes('\0') || noteId.includes('\\')
+    || noteId.split('/').some(part => !part || part === '.' || part === '..')) {
+    throw new Error('Invalid note ID')
+  }
 }
 
 async function readSidecar(notesRoot: string, noteId: string): Promise<SidecarFile | null> {
@@ -102,7 +99,11 @@ async function writeSidecarAtomic(notesRoot: string, file: SidecarFile): Promise
   await rename(tmp, path)
 }
 
-/** Record a durable history snapshot after a successful save (append-only, deduped by revisionId). */
+/**
+ * Record a durable history snapshot after a successful save.
+ * Append-only by operationId: identical-byte restores keep the original
+ * snapshot metadata and add a distinct tip event.
+ */
 export async function recordNoteRevision(
   notesRoot: string,
   input: {
@@ -115,10 +116,7 @@ export async function recordNoteRevision(
     actorPrincipalId?: string | null
   },
 ): Promise<NoteHistoryEntry> {
-  if (!input.noteId || input.noteId.includes('\0') || input.noteId.includes('\\')
-    || input.noteId.split('/').some(part => !part || part === '.' || part === '..')) {
-    throw new Error('Invalid note ID')
-  }
+  assertSafeNoteId(input.noteId)
   if (!input.revisionId || !input.operationId) throw new Error('revisionId and operationId are required')
   const entry: SidecarRevision = {
     schemaVersion: 1,
@@ -131,9 +129,9 @@ export async function recordNoteRevision(
     content: input.content,
   }
   const existing = await readSidecar(notesRoot, input.noteId)
-  const revisions = existing?.revisions.filter(item => item.revisionId !== entry.revisionId) ?? []
+  // Idempotent only for the same operationId; never overwrite another tip event.
+  const revisions = existing?.revisions.filter(item => item.operationId !== entry.operationId) ?? []
   revisions.push(entry)
-  // Cap retained snapshots to keep vault size bounded (immutable history, drop oldest).
   const MAX = 200
   const kept = revisions.length > MAX ? revisions.slice(revisions.length - MAX) : revisions
   await writeSidecarAtomic(notesRoot, { schemaVersion: 1, noteId: input.noteId, revisions: kept })
@@ -154,9 +152,28 @@ type JournalLike = {
   }
 }
 
-async function readCommittedJournals(notesRoot: string, workspaceId: string, noteId: string): Promise<NoteHistoryRevision[]> {
-  const stateRoot = join(notesRoot, COMMITS_ROOT)
-  const directory = join(stateRoot, digest(`${workspaceId}\0${noteId}`))
+function journalToRevision(value: JournalLike, noteId: string): NoteHistoryRevision | null {
+  if (value.phase !== 'committed') return null
+  const content = value.command?.content
+  const revisionId = value.receipt?.revision
+  const operationId = value.receipt?.operationId ?? value.command?.operationId
+  const committedAt = value.receipt?.committedAt
+  if (typeof content !== 'string' || typeof revisionId !== 'string' || typeof operationId !== 'string' || typeof committedAt !== 'string') return null
+  if (value.receipt?.noteId && value.receipt.noteId !== noteId) return null
+  if (value.command?.noteId && value.command.noteId !== noteId) return null
+  return {
+    revisionId,
+    operationId,
+    previousRevision: typeof value.receipt?.previousRevision === 'string' ? value.receipt.previousRevision : null,
+    committedAt,
+    actorPrincipalId: typeof value.receipt?.actorPrincipalId === 'string' ? value.receipt.actorPrincipalId : null,
+    byteSize: byteSizeOf(content),
+    content,
+  }
+}
+
+async function listCommittedJournals(notesRoot: string, workspaceId: string, noteId: string): Promise<NoteHistoryRevision[]> {
+  const directory = join(notesRoot, COMMITS_ROOT, digest(`${workspaceId}\0${noteId}`))
   let names: string[]
   try {
     names = await readdir(directory)
@@ -169,33 +186,44 @@ async function readCommittedJournals(notesRoot: string, workspaceId: string, not
     if (!/^[a-f0-9]{64}\.json$/.test(name)) continue
     try {
       const value = JSON.parse(await readFile(join(directory, name), 'utf8')) as JournalLike
-      if (value.phase !== 'committed') continue
-      const content = value.command?.content
-      const revisionId = value.receipt?.revision
-      const operationId = value.receipt?.operationId ?? value.command?.operationId
-      const committedAt = value.receipt?.committedAt
-      if (typeof content !== 'string' || typeof revisionId !== 'string' || typeof operationId !== 'string' || typeof committedAt !== 'string') continue
-      if (value.receipt?.noteId && value.receipt.noteId !== noteId) continue
-      if (value.command?.noteId && value.command.noteId !== noteId) continue
-      out.push({
-        revisionId,
-        operationId,
-        previousRevision: typeof value.receipt?.previousRevision === 'string' ? value.receipt.previousRevision : null,
-        committedAt,
-        actorPrincipalId: typeof value.receipt?.actorPrincipalId === 'string' ? value.receipt.actorPrincipalId : null,
-        byteSize: byteSizeOf(content),
-        content,
-      })
+      const entry = journalToRevision(value, noteId)
+      if (entry) out.push(entry)
     } catch {
-      // Corrupt journal: skip; history remains best-effort over durable commits.
+      // Corrupt journal: skip.
     }
   }
   return out
 }
 
-async function readNativeWriteJournals(notesRoot: string, workspaceId: string, noteId: string): Promise<NoteHistoryRevision[]> {
-  const stateRoot = join(notesRoot, COMMITS_ROOT)
-  const directory = join(stateRoot, digest(`native\0${workspaceId}`))
+async function findInCommittedJournals(
+  notesRoot: string,
+  workspaceId: string,
+  noteId: string,
+  revisionId: string,
+): Promise<NoteHistoryRevision | null> {
+  const directory = join(notesRoot, COMMITS_ROOT, digest(`${workspaceId}\0${noteId}`))
+  let names: string[]
+  try {
+    names = await readdir(directory)
+  } catch (error) {
+    if (isMissing(error)) return null
+    throw error
+  }
+  for (const name of names) {
+    if (!/^[a-f0-9]{64}\.json$/.test(name)) continue
+    try {
+      const value = JSON.parse(await readFile(join(directory, name), 'utf8')) as JournalLike
+      const entry = journalToRevision(value, noteId)
+      if (entry?.revisionId === revisionId) return entry
+    } catch {
+      // skip corrupt
+    }
+  }
+  return null
+}
+
+async function listNativeWriteJournals(notesRoot: string, workspaceId: string, noteId: string): Promise<NoteHistoryRevision[]> {
+  const directory = join(notesRoot, COMMITS_ROOT, digest(`native\0${workspaceId}`))
   let names: string[]
   try {
     names = await readdir(directory)
@@ -218,9 +246,8 @@ async function readNativeWriteJournals(notesRoot: string, workspaceId: string, n
       if (typeof operationId !== 'string' || typeof committedAt !== 'string') continue
       for (const change of value.command!.changes!) {
         if (change.kind !== 'write' || change.noteId !== noteId || typeof change.content !== 'string') continue
-        const revisionId = `sha256:${digest(change.content)}`
         out.push({
-          revisionId,
+          revisionId: `sha256:${digest(change.content)}`,
           operationId,
           previousRevision: typeof change.expectedRevision === 'string' ? change.expectedRevision : null,
           committedAt,
@@ -236,28 +263,73 @@ async function readNativeWriteJournals(notesRoot: string, workspaceId: string, n
   return out
 }
 
+async function findInNativeWriteJournals(
+  notesRoot: string,
+  workspaceId: string,
+  noteId: string,
+  revisionId: string,
+): Promise<NoteHistoryRevision | null> {
+  const directory = join(notesRoot, COMMITS_ROOT, digest(`native\0${workspaceId}`))
+  let names: string[]
+  try {
+    names = await readdir(directory)
+  } catch (error) {
+    if (isMissing(error)) return null
+    throw error
+  }
+  for (const name of names) {
+    if (!/^native-[a-f0-9]{64}\.json$/.test(name)) continue
+    try {
+      const value = JSON.parse(await readFile(join(directory, name), 'utf8')) as {
+        phase?: string
+        command?: { changes?: Array<{ kind?: string; noteId?: string; content?: string; expectedRevision?: string | null }> }
+        receipt?: { operationId?: string; committedAt?: string; actorPrincipalId?: string }
+      }
+      if (value.phase !== 'committed' || !Array.isArray(value.command?.changes)) continue
+      const operationId = value.receipt?.operationId
+      const committedAt = value.receipt?.committedAt
+      if (typeof operationId !== 'string' || typeof committedAt !== 'string') continue
+      for (const change of value.command!.changes!) {
+        if (change.kind !== 'write' || change.noteId !== noteId || typeof change.content !== 'string') continue
+        const id = `sha256:${digest(change.content)}`
+        if (id !== revisionId) continue
+        return {
+          revisionId: id,
+          operationId,
+          previousRevision: typeof change.expectedRevision === 'string' ? change.expectedRevision : null,
+          committedAt,
+          actorPrincipalId: typeof value.receipt?.actorPrincipalId === 'string' ? value.receipt.actorPrincipalId : null,
+          byteSize: byteSizeOf(change.content),
+          content: change.content,
+        }
+      }
+    } catch {
+      // skip corrupt
+    }
+  }
+  return null
+}
+
 /** List version history for a note (newest first). Bodies are omitted. */
 export async function listNoteRevisions(
   notesRoot: string,
   workspaceId: string,
   noteId: string,
 ): Promise<NoteHistoryEntry[]> {
-  if (!noteId || noteId.includes('\0') || noteId.includes('\\')
-    || noteId.split('/').some(part => !part || part === '.' || part === '..')) {
-    throw new Error('Invalid note ID')
-  }
-  const fromJournals = await readCommittedJournals(notesRoot, workspaceId, noteId)
-  const fromNative = await readNativeWriteJournals(notesRoot, workspaceId, noteId)
+  assertSafeNoteId(noteId)
+  const fromJournals = await listCommittedJournals(notesRoot, workspaceId, noteId)
+  const fromNative = await listNativeWriteJournals(notesRoot, workspaceId, noteId)
   const fromSidecar = (await readSidecar(notesRoot, noteId))?.revisions ?? []
-  const byId = new Map<string, NoteHistoryRevision>()
+  // Distinct tip events are keyed by operationId so identical-byte restores stay listed.
+  const byOp = new Map<string, NoteHistoryRevision>()
   for (const entry of [...fromJournals, ...fromNative, ...fromSidecar]) {
-    const prev = byId.get(entryKey(entry))
-    if (!prev || entry.committedAt > prev.committedAt) byId.set(entryKey(entry), entry)
+    const prev = byOp.get(entry.operationId)
+    if (!prev || entry.committedAt > prev.committedAt) byOp.set(entry.operationId, entry)
   }
-  const sorted = [...byId.values()].sort((a, b) => {
+  const sorted = [...byOp.values()].sort((a, b) => {
     const byTime = b.committedAt.localeCompare(a.committedAt)
     if (byTime !== 0) return byTime
-    return b.revisionId.localeCompare(a.revisionId)
+    return b.operationId.localeCompare(a.operationId)
   })
   return sorted.map((entry): NoteHistoryEntry => ({
     revisionId: entry.revisionId,
@@ -269,7 +341,7 @@ export async function listNoteRevisions(
   }))
 }
 
-/** Load one historical body by revisionId. */
+/** Load one historical body by revisionId. Stops at the first hit. */
 export async function getNoteRevision(
   notesRoot: string,
   workspaceId: string,
@@ -277,11 +349,14 @@ export async function getNoteRevision(
   revisionId: string,
 ): Promise<NoteHistoryRevision | null> {
   if (!revisionId) return null
-  const fromJournals = await readCommittedJournals(notesRoot, workspaceId, noteId)
-  const fromNative = await readNativeWriteJournals(notesRoot, workspaceId, noteId)
-  const fromSidecar = (await readSidecar(notesRoot, noteId))?.revisions ?? []
-  for (const entry of [...fromJournals, ...fromNative, ...fromSidecar]) {
-    if (entry.revisionId === revisionId) return entry
+  assertSafeNoteId(noteId)
+  const sidecar = await readSidecar(notesRoot, noteId)
+  const fromSidecar = sidecar?.revisions.find(entry => entry.revisionId === revisionId)
+  if (fromSidecar) {
+    const { schemaVersion: _s, ...entry } = fromSidecar
+    return entry
   }
-  return null
+  const fromJournal = await findInCommittedJournals(notesRoot, workspaceId, noteId, revisionId)
+  if (fromJournal) return fromJournal
+  return findInNativeWriteJournals(notesRoot, workspaceId, noteId, revisionId)
 }
