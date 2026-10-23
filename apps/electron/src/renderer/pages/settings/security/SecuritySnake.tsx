@@ -41,7 +41,7 @@ const SEVERITY_CLASSES: Record<SecurityDomainSummary['severity'], string> = {
   warn: 'border-amber-500/60 bg-amber-500/10 text-amber-800 dark:text-amber-200',
   info: 'border-sky-500/60 bg-sky-500/10 text-sky-800 dark:text-sky-200',
   pass: 'border-emerald-500/60 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200',
-  unavailable: 'border-muted-foreground/50 bg-muted/40 text-muted-foreground',
+  unavailable: 'border-muted-foreground/50 bg-surface-hover text-muted-foreground',
 }
 
 export interface SecuritySnakeProps {

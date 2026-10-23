@@ -68,7 +68,7 @@ export function RoxRuntimeCard({ workspaceId, remote }: { workspaceId?: string; 
           </div>
         </div>
         <p className="text-xs text-muted-foreground">{t('security.rox.readyHint')}</p>
-        {connection && <dl className="grid min-w-0 gap-3 rounded-lg bg-muted/40 p-3 sm:grid-cols-2">
+        {connection && <dl className="grid min-w-0 gap-3 rounded-lg bg-surface-hover p-3 sm:grid-cols-2">
           <div className="min-w-0"><dt className="text-xs text-muted-foreground">{t('settings.runtime.llmProvider')}</dt><dd className="mt-1 break-words text-sm font-medium">{connection.providerType === 'omp' ? 'Rox' : connection.name}</dd></div>
           <div className="min-w-0"><dt className="text-xs text-muted-foreground">{t('security.rox.model')}</dt><dd className="mt-1 break-words text-sm font-medium">{connection.defaultModel ?? t('security.rox.modelNotSelected')}</dd></div>
         </dl>}
