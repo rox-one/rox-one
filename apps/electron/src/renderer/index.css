@@ -2031,24 +2031,23 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
    html[data-resizing] — live window drag never animates. Transform and
    opacity only (plus colour/background on the state layer at --motion-fast);
    no width/height/top/left, no blur. Spring feel mirrors
-   apps/electron/src/renderer/lib/motion/super-engineering-springs.ts. */
+   apps/electron/src/renderer/lib/motion/super-engineering-springs.ts.
+
+   Rail/pill: press scale only (hover scale on a full-width rail row or a
+   segmented pill shifts neighbours / clips). Panel header icons are small
+   hit targets, so they also get a light hover scale. */
 html[data-ui-profile="super-engineering"] {
   --se-shell-press-scale: 0.97;
-  --se-shell-hover-scale: 1.02;
+  --se-shell-hover-scale: 1.04;
 }
 
 html[data-ui-profile="super-engineering"] :is(.rox-rail-row, .rox-mode-pill-item, .panel-header-btn) {
-  transform: translateZ(0);
   transition:
     transform var(--motion-spring) var(--ease-spring),
     opacity var(--motion-fast) var(--ease-standard),
     color var(--motion-fast) var(--ease-standard),
     background-color var(--motion-fast) var(--ease-standard),
     box-shadow var(--motion-fast) var(--ease-standard);
-}
-
-html[data-ui-profile="super-engineering"] .rox-rail-row:not([aria-disabled="true"]):hover {
-  transform: scale(var(--se-shell-hover-scale));
 }
 
 html[data-ui-profile="super-engineering"] .rox-rail-row:not([aria-disabled="true"]):active {
@@ -2059,8 +2058,6 @@ html[data-ui-profile="super-engineering"] .rox-rail-row:focus-visible {
   opacity: 1;
 }
 
-/* Pills: press scale only — hover scale would shift neighbours in the
-   segmented control. Colour hover stays on the shared pill rules. */
 html[data-ui-profile="super-engineering"] .rox-mode-pill-item:not([aria-disabled="true"]):active {
   transform: scale(var(--se-shell-press-scale));
 }

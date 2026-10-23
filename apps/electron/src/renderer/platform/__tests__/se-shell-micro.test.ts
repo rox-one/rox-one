@@ -35,6 +35,9 @@ describe('SE shell micro-interactions', () => {
     expect(seBare).not.toMatch(/(^|\n)\s*\.rox-rail-row\s*\{/)
     expect(seBare).not.toMatch(/(^|\n)\s*\.rox-mode-pill-item\s*\{/)
     expect(seBare).not.toMatch(/(^|\n)\s*\.panel-header-btn\s*\{/)
+    expect(seBare).not.toContain('translateZ')
+    expect(seBare).not.toMatch(/\.rox-rail-row[^\{]*:hover/)
+    expect(seBare).not.toMatch(/\.rox-mode-pill-item[^\{]*:hover/)
   })
 
   it('uses motion tokens (spring + fast) that zero under reduced-motion and resizing', () => {
