@@ -4,7 +4,9 @@ import { join } from 'path'
 
 const css = readFileSync(join(import.meta.dir, '../../../index.css'), 'utf8')
 const slot = readFileSync(join(import.meta.dir, '../PanelSlot.tsx'), 'utf8')
-const block = css.slice(css.indexOf('/* Panel container queries (fluid panels).'))
+const cqStart = css.indexOf('/* Panel container queries (fluid panels).')
+const cqEnd = css.indexOf('/* Rox Engineering shell micro-interactions')
+const block = css.slice(cqStart, cqEnd < 0 ? undefined : cqEnd)
 
 describe('panel container queries', () => {
   it('PanelSlot stays the `panel` size container the tiers query', () => {

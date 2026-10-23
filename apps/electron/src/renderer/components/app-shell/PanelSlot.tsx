@@ -31,6 +31,8 @@ import { destroyBrowserInstanceForRoute } from '@/platform/browser-panel-lifecyc
 import { AuxiliaryToolPanel } from './AuxiliaryToolPanel'
 import { WorkspaceToolContext } from '@/atoms/workspace-context'
 import { PRIMARY_NAV } from './primary-nav'
+import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
+import { sePanelMeasureActive } from './se-panel-measure'
 
 /** Header title for a grid tile: the surface the route belongs to. */
 export function gridTileTitleKey(navState: Parameters<(typeof PRIMARY_NAV)[number]['isActive']>[0]): string | null {
@@ -91,6 +93,8 @@ export function PanelSlot({
   const sidebarTarget = useContext(ShellSidebarContext)
   const primaryId = useAtomValue(primaryPanelIdAtom)
   const navState = useMemo(() => parseRouteToNavigationStateOrUnavailable(entry.route), [entry.route])
+  const seProfile = useSuperEngineeringProfile()
+  const applyPanelMeasure = sePanelMeasureActive(seProfile, navState, { tool: Boolean(entry.tool) })
   const panelRef = useRef<HTMLDivElement>(null)
   // Multi-panel grid tile: framed, titled, compact type scale (index.css).
   const gridTile = !isOnly && !isCompact && !entry.tool
@@ -236,7 +240,14 @@ export function PanelSlot({
               </Tooltip>
             </div>
           ) : null}
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div
+            className={cn(
+              'flex min-h-0 flex-1 flex-col',
+              // SE: wire #2054 gutter/measure. Skip owner full-bleed surfaces.
+              applyPanelMeasure && 'rox-panel-gutter rox-panel-measure',
+            )}
+            data-se-panel-measure={applyPanelMeasure || undefined}
+          >
             <AppShellProvider value={contextOverride}>
               <NavigationContext.Provider value={panelNavigation}>
                 <ShellSidebarContext.Provider value={ownsSidebar ? sidebarTarget : null}>
