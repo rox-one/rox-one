@@ -65,6 +65,7 @@ export function NotesCommentThreads({
   noteText,
   getNoteText,
   draftQuote,
+  draftAnchor = null,
   onClearDraft,
   width,
   composerTop,
@@ -82,6 +83,8 @@ export function NotesCommentThreads({
   /** Live source for selection anchors — same as overlay (contentRef.current). */
   getNoteText: () => string
   draftQuote: string
+  /** Preferred selection offsets into getNoteText() for repeated quotes. */
+  draftAnchor?: { start: number; end: number } | null
   onClearDraft: () => void
   width?: number
   composerTop?: number
@@ -102,6 +105,7 @@ export function NotesCommentThreads({
   const onThreadsChangeRef = React.useRef(onThreadsChange)
   onThreadsChangeRef.current = onThreadsChange
   const createInFlightRef = React.useRef(false)
+  const reloadGenerationRef = React.useRef(0)
   const body = draftBody ?? localBody
   const setBody = onDraftBodyChange ?? setLocalBody
 
@@ -123,25 +127,35 @@ export function NotesCommentThreads({
 
   const reload = React.useCallback(async (opts?: { quiet?: boolean }) => {
     const quiet = Boolean(opts?.quiet)
+    const generation = ++reloadGenerationRef.current
     if (!quiet) {
       setLoading(true)
       setError(null)
     }
     try {
       const list = await window.electronAPI.listNoteComments(workspaceId, noteId)
+      // Drop stale responses after note/workspace switch or overlapping reloads.
+      if (generation !== reloadGenerationRef.current) return
       publish(list)
     } catch {
+      if (generation !== reloadGenerationRef.current) return
       setError(t('notes.comments.errorUpdate'))
       // Quiet reloads must not wipe the rail / highlights on a transient failure.
       if (!quiet) publish([])
     } finally {
-      if (!quiet) setLoading(false)
+      if (!quiet && generation === reloadGenerationRef.current) setLoading(false)
     }
   }, [workspaceId, noteId, publish, t])
 
   React.useEffect(() => {
+    // Invalidate in-flight lists and clear prior note's threads/highlights immediately.
+    reloadGenerationRef.current += 1
+    publish([])
+    setError(null)
     setDocCompose(false)
     setLocalBody('')
+    setBusyId(null)
+    createInFlightRef.current = false
     void reload()
   }, [workspaceId, noteId]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -162,14 +176,9 @@ export function NotesCommentThreads({
   )
 
   const openCount = comments.filter(c => !c.parentId && !c.resolvedAt).length
-  const openRoots = React.useMemo(
-    () => nestNoteCommentThreads(comments).filter(c => !c.resolvedAt),
-    [comments],
-  )
-  const resolvedRoots = React.useMemo(
-    () => nestNoteCommentThreads(comments).filter(c => c.resolvedAt),
-    [comments],
-  )
+  const nestedRoots = React.useMemo(() => nestNoteCommentThreads(comments), [comments])
+  const openRoots = React.useMemo(() => nestedRoots.filter(c => !c.resolvedAt), [nestedRoots])
+  const resolvedRoots = React.useMemo(() => nestedRoots.filter(c => c.resolvedAt), [nestedRoots])
 
   const clearComposer = React.useCallback(() => {
     setBody('')
@@ -183,7 +192,7 @@ export function NotesCommentThreads({
     const quote = draftQuote.trim()
     // Match overlay: anchor against the live contentRef body, not React state.
     const liveText = getNoteText()
-    const anchor = quote ? anchorFromQuote(liveText, quote) : null
+    const anchor = quote ? anchorFromQuote(liveText, quote, draftAnchor) : null
     if (quote && !anchor) {
       setError(t('notes.comments.errorAttachSelection'))
       return
@@ -206,7 +215,7 @@ export function NotesCommentThreads({
       createInFlightRef.current = false
       setBusyId(null)
     }
-  }, [body, draftQuote, getNoteText, workspaceId, noteId, clearComposer, publishUpdate, reload, t])
+  }, [body, draftQuote, draftAnchor, getNoteText, workspaceId, noteId, clearComposer, publishUpdate, reload, t])
 
   const onCreate = React.useCallback(async (text: string, parentId?: string) => {
     try {
@@ -218,8 +227,9 @@ export function NotesCommentThreads({
       })
       publishUpdate(prev => upsertNoteCommentInList(prev, created))
       await reload({ quiet: true })
-    } catch {
+    } catch (err) {
       setError(t('notes.comments.errorCreate'))
+      throw err
     }
   }, [workspaceId, noteId, publishUpdate, reload, t])
 
@@ -350,7 +360,7 @@ export function NotesCommentThreads({
                     onDelete={onDelete}
                     onToggleReaction={onToggleReaction}
                     allowReplies
-                    // Non-null empty node — null would fall through CommentsThread's ?? to TextComposer.
+                    // Suppress the per-card root composer (replies still work). Empty fragment or null both suppress.
                     renderComposer={() => <></>}
                     className="gap-2"
                   />

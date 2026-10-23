@@ -76,7 +76,7 @@ import { MindMapHost } from '@/mindmap/MindMapHost'
 import { deriveNoteMindMap, type MindMapGraph } from '@rox/core/mindmap'
 import { NotesCommentComposer, NotesCommentHighlights, NotesCommentTooltip, NotesComments, NotesEditorHeadlineStyles, NotesToc } from './notes/NotesReadingChrome'
 import { NotesCommentThreads, noteThreadsToHighlightComments } from './notes/NotesCommentThreads'
-import { anchorFromQuote } from './notes/note-comments'
+import { anchorFromQuote, findQuoteWithContext } from './notes/note-comments'
 import type { NoteCommentThread } from '@rox/shared/protocol'
 import {
   NotesBreadcrumbs,
@@ -326,6 +326,28 @@ function commentOffsetToEndPosition(pieces: CommentTextPiece[], textLength: numb
   return previous ? previous.pos + previous.length : null
 }
 
+
+function commentDraftOffsetsFromEditor(
+  handle: TiptapEditorHandle | null,
+  markdown: string,
+  quote: string,
+): { start: number; end: number } | null {
+  if (!handle?.state || !quote) return null
+  const { from, to, empty } = handle.state.selection
+  if (empty || to <= from) return null
+  const selected = handle.state.doc.textBetween(from, to, '\n', '\n')
+  if (selected.trim() !== quote) return null
+  const prefix = handle.state.doc.textBetween(Math.max(0, from - 48), from, '\n', '\n')
+  const suffix = handle.state.doc.textBetween(to, Math.min(handle.state.doc.content.size, to + 48), '\n', '\n')
+  const hit = findQuoteWithContext(markdown, quote, prefix.slice(-48), suffix.slice(0, 48))
+  if (hit) return hit
+  // Unique occurrence in markdown is unambiguous even without context.
+  const first = markdown.indexOf(quote)
+  if (first < 0) return null
+  if (markdown.indexOf(quote, first + 1) >= 0) return null
+  return { start: first, end: first + quote.length }
+}
+
 export function findDocRangeForComment(
   handle: TiptapEditorHandle,
   quote: string,
@@ -564,7 +586,18 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const commentDraft = (commentDraftKey ? commentDrafts.get(commentDraftKey) : null) ?? EMPTY_COMMENT_DRAFT
   const commentDraftQuote = commentDraft.quote
   const commentComposerBody = commentDraft.body
-  const setCommentDraftQuote = React.useCallback((quote: string) => setCommentDrafts(drafts => updateCommentDraft(drafts, commentDraftKey, { quote })), [commentDraftKey])
+  const setCommentDraftQuote = React.useCallback((quote: string, offsets?: { start: number; end: number } | null) => {
+    setCommentDrafts(drafts => updateCommentDraft(drafts, commentDraftKey, {
+      quote,
+      start: offsets?.start,
+      end: offsets?.end,
+    }))
+  }, [commentDraftKey])
+  const commentDraftAnchor = (
+    typeof commentDraft.start === 'number'
+    && typeof commentDraft.end === 'number'
+    && commentDraft.end > commentDraft.start
+  ) ? { start: commentDraft.start, end: commentDraft.end } : null
   const setCommentComposerBody = React.useCallback((body: string) => setCommentDrafts(drafts => updateCommentDraft(drafts, commentDraftKey, { body })), [commentDraftKey])
   const [commentComposerTop, setCommentComposerTop] = React.useState(48)
   const [focusCommentComposer, setFocusCommentComposer] = React.useState(false)
@@ -3281,7 +3314,7 @@ h1,h2,h3{margin-top:1.5em}
               onMouseUp={(event) => {
                 const quote = selectedNoteQuote(event.currentTarget.querySelector('.ProseMirror'), event.currentTarget.ownerDocument.getSelection())
                 if (!quote) return
-                setCommentDraftQuote(quote)
+                setCommentDraftQuote(quote, commentDraftOffsetsFromEditor(richEditorRef.current, contentRef.current, quote))
                 setCommentTooltip(null)
                 const editor = event.currentTarget.getBoundingClientRect()
                 const range = window.getSelection()?.rangeCount ? window.getSelection()!.getRangeAt(0).getBoundingClientRect() : null
@@ -3290,7 +3323,7 @@ h1,h2,h3{margin-top:1.5em}
               onDoubleClick={(event) => {
                 if ((event.target as HTMLElement).closest('[data-testid="notes-comments-compose"]')) return
                 const quote = selectedNoteQuote(event.currentTarget.querySelector('.ProseMirror'), event.currentTarget.ownerDocument.getSelection())
-                if (quote) setCommentDraftQuote(quote)
+                if (quote) setCommentDraftQuote(quote, commentDraftOffsetsFromEditor(richEditorRef.current, contentRef.current, quote))
                 if (quote) setFocusCommentComposer(true)
                 setRailLayout({ commentsCollapsed: false })
               }}
@@ -3305,7 +3338,7 @@ h1,h2,h3{margin-top:1.5em}
                 if (noteCommentKeyboardAction(event) === 'open') {
                   event.preventDefault()
                   const quote = selectedNoteQuote(event.currentTarget.querySelector('.ProseMirror'), event.currentTarget.ownerDocument.getSelection())
-                  if (quote) setCommentDraftQuote(quote)
+                  if (quote) setCommentDraftQuote(quote, commentDraftOffsetsFromEditor(richEditorRef.current, contentRef.current, quote))
                   if (quote || commentDraftQuote) setFocusCommentComposer(true)
                   setRailLayout({ commentsCollapsed: false })
                   return
@@ -3474,7 +3507,7 @@ h1,h2,h3{margin-top:1.5em}
                     void (async () => {
                       try {
                         const quote = commentDraftQuote.trim()
-                        const anchor = quote ? anchorFromQuote(contentRef.current, quote) : null
+                        const anchor = quote ? anchorFromQuote(contentRef.current, quote, commentDraftAnchor) : null
                         if (quote && !anchor) {
                           toast.error(t('notes.comments.errorAttachSelection'))
                           return
@@ -3541,6 +3574,7 @@ h1,h2,h3{margin-top:1.5em}
                   noteText={content}
                   getNoteText={() => contentRef.current}
                   draftQuote={commentDraftQuote}
+                  draftAnchor={commentDraftAnchor}
                   width={railLayout.comments}
                   composerTop={commentComposerTop}
                   draftBody={commentComposerBody}
