@@ -66,6 +66,17 @@
         "apps/electron/src/renderer/components/icons/se/index.ts",
         "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx"
       ]
+    },
+    {
+      "id": "dialog-popover-springs",
+      "title": "SE Dialog/Popover enter-exit springs via --motion-spring (mirrors SE_SPRING_MODAL)",
+      "paths": [
+        "packages/ui/src/styles/index.css",
+        "packages/ui/src/styles/tokens/motion.css",
+        "apps/electron/src/renderer/lib/motion/super-engineering-springs.ts",
+        "apps/electron/src/renderer/components/ui/dialog.tsx",
+        "apps/electron/src/renderer/components/ui/popover.tsx"
+      ]
     }
   ],
   "gaps": [
