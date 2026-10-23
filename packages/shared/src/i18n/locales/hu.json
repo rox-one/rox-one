@@ -12751,5 +12751,6 @@
   "xfn.x23.title": "Műveletek űrlapbeküldéskor",
   "xfn.x24.title": "Megbeszélés indítása bármely elemből",
   "xfn.x25.title": "@rox panel megnyitása",
-  "xfn.x26.title": "Rögzítés minden felületen"
+  "xfn.x26.title": "Rögzítés minden felületen",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off."
 }

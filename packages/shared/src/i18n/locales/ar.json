@@ -12815,5 +12815,6 @@
   "xfn.x23.title": "إجراءات عند إرسال النموذج",
   "xfn.x24.title": "بدء اجتماع من أي عنصر",
   "xfn.x25.title": "فتح لوحة الوكيل",
-  "xfn.x26.title": "التثبيت عبر الصفحات"
+  "xfn.x26.title": "التثبيت عبر الصفحات",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off."
 }

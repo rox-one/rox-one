@@ -12765,5 +12765,6 @@
   "xfn.x23.title": "Actions à l'envoi du formulaire",
   "xfn.x24.title": "Démarrer une réunion depuis n'importe quel élément",
   "xfn.x25.title": "Ouvrir le panneau @rox",
-  "xfn.x26.title": "Épingles sur toutes les vues"
+  "xfn.x26.title": "Épingles sur toutes les vues",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off."
 }
