@@ -2980,7 +2980,7 @@ export interface ElectronAPI {
   }>
   teamChatPost(channelId: string, text: string, opts?: import('@rox/shared/team-chat').PostTeamMessageOptions): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
   teamChatIngest(input: import('@rox/shared/team-chat').IngestTeamMessageInput): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
-  teamChatMarkRead(channelId: string): Promise<{ ok: true }>
+  teamChatMarkRead(channelId: string): Promise<{ ok: true; advanced: boolean }>
   teamChatCallJoin(channelId: string, displayName?: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall; url: string; token: string }>
   teamChatCallLeave(channelId: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall | null; ended: boolean }>
   teamChatCallSync(channelId: string, participantIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelCall | null>

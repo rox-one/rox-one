@@ -68,7 +68,7 @@ export function useTeamMessages(channelId: string | null, opts?: { channelName?:
   channelNameRef.current = opts?.channelName
   /**
    * One-shot suppress for markRead→changed→reload on the open channel.
-   * Armed before markRead; consumed once when a matching changed arrives (or times out).
+   * Armed only after markRead returns advanced:true; consumed once on matching changed (or 2s timeout).
    * useTeamChannels still reloads on changed for badges.
    */
   const suppressMarkReadChanged = React.useRef<{ channelId: string; token: number } | null>(null)
@@ -105,10 +105,12 @@ export function useTeamMessages(channelId: string | null, opts?: { channelName?:
             setState({ loading: false, messages, error: null })
             void window.electronAPI.imMarkRead?.(channelId).catch(() => {})
             // Keep team-chat unread badges in sync while viewing live (ingest bumps lastSeq).
-            armMarkReadSuppress(channelId)
-            void window.electronAPI.teamChatMarkRead?.(channelId).catch(() => {
-              if (suppressMarkReadChanged.current?.channelId === channelId) suppressMarkReadChanged.current = null
-            })
+            // Await markRead; arm suppress only when advanced so !advanced cannot swallow ingest changed.
+            if (window.electronAPI.teamChatMarkRead) {
+              void window.electronAPI.teamChatMarkRead(channelId).then((res) => {
+                if (res?.advanced) armMarkReadSuppress(channelId)
+              }).catch(() => {})
+            }
             return
           }
           // ok:false → fall through to team-chat store
@@ -120,10 +122,9 @@ export function useTeamMessages(channelId: string | null, opts?: { channelName?:
       if (v !== version.current) return
       setState({ loading: false, messages: result.messages, error: null })
       if (result.channel.viewerRole && result.channel.unreadCount > 0) {
-        armMarkReadSuppress(channelId)
-        void window.electronAPI.teamChatMarkRead(channelId).catch(() => {
-          if (suppressMarkReadChanged.current?.channelId === channelId) suppressMarkReadChanged.current = null
-        })
+        void window.electronAPI.teamChatMarkRead(channelId).then((res) => {
+          if (res?.advanced) armMarkReadSuppress(channelId)
+        }).catch(() => {})
       }
     } catch (error) {
       if (v === version.current) setState({ loading: false, messages: [], error: errorText(error) })
@@ -190,7 +191,7 @@ export function useTeamSearch(orgId: string | null, query: string) {
               const result = await window.electronAPI.imSearchMessages(q, { limit: 50 })
               if (!alive) return
               if (result.ok) {
-                // Native search has no orgId — keep Messenger org-scoped.
+                // Native search has no orgId — keep Messenger org-scoped (fail-closed).
                 let allowed: Set<string> | null = null
                 try {
                   const roster = await window.electronAPI.teamChatListChannels(orgId)
@@ -199,12 +200,13 @@ export function useTeamSearch(orgId: string | null, query: string) {
                 } catch {
                   allowed = null
                 }
-                const mapped = imMessagesToTeam(result.messages)
-                const results = allowed
-                  ? mapped.filter((m) => allowed!.has(m.channelId))
-                  : mapped
-                setState({ loading: false, results, error: null })
-                return
+                if (!allowed) {
+                  // Roster failed — do not leak cross-org im hits; fall through to teamChatSearch.
+                } else {
+                  const results = imMessagesToTeam(result.messages).filter((m) => allowed!.has(m.channelId))
+                  setState({ loading: false, results, error: null })
+                  return
+                }
               }
             } catch {
               // fall through

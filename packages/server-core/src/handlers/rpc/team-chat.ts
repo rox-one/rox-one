@@ -182,7 +182,7 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
   handle(RPC_CHANNELS.teamChat.MARK_READ, async (ctx, channelId: string) => {
     const { orgId, advanced } = store().markRead(channelId, actorOf(ctx))
     if (advanced) changed(orgId, channelId)
-    return { ok: true }
+    return { ok: true, advanced }
   }, { nativeAction: 'write' })
 
   // Calls: messenger contract v1.1 membership via /v1/im when reachable; else local store.

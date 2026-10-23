@@ -71,30 +71,51 @@ export function useImChannelSubscription(channelId: string | null, live: boolean
 
 /**
  * Subscribe the native client to many channels (e.g. followed Лента channels).
- * Diffs by sorted id key; unsubscribes the previous set on change/unmount.
- * chat-core subscribe is additive per id — open-channel subscribe may overlap.
+ * Incremental sync: only subscribe newly added ids and unsubscribe removed ones.
+ * Selection / open-channel churn must not tear down unchanged followed subs.
  */
 export function useImChannelSubscriptions(channelIds: readonly string[], live: boolean): void {
-  const key = [...new Set(channelIds.filter(Boolean))].sort().join('\0')
+  const desiredKey = [...new Set(channelIds.filter(Boolean))].sort().join('\0')
+  const activeRef = React.useRef(new Set<string>())
+
   React.useEffect(() => {
-    if (!live || !window.electronAPI?.imSubscribeChannel) return
-    const ids = key ? key.split('\0') : []
-    if (ids.length === 0) return
-    let cancelled = false
-    for (const id of ids) {
-      void window.electronAPI.imSubscribeChannel(id).then(() => {
-        if (cancelled) {
-          void window.electronAPI.imUnsubscribeChannel?.(id).catch(() => {})
+    if (!live || !window.electronAPI?.imSubscribeChannel) {
+      // Going offline / unavailable: drop tracked set without wire churn if no API.
+      const prev = activeRef.current
+      activeRef.current = new Set()
+      if (window.electronAPI?.imUnsubscribeChannel) {
+        for (const id of prev) {
+          void window.electronAPI.imUnsubscribeChannel(id).catch(() => {})
         }
-      }).catch(() => {})
+      }
+      return
     }
+    const desired = new Set(desiredKey ? desiredKey.split('\0') : [])
+    const active = activeRef.current
+    for (const id of desired) {
+      if (active.has(id)) continue
+      active.add(id)
+      void window.electronAPI.imSubscribeChannel(id).catch(() => {
+        active.delete(id)
+      })
+    }
+    for (const id of [...active]) {
+      if (desired.has(id)) continue
+      active.delete(id)
+      void window.electronAPI.imUnsubscribeChannel?.(id).catch(() => {})
+    }
+  }, [desiredKey, live])
+
+  // Unmount: unsubscribe everything this hook still owns.
+  React.useEffect(() => {
     return () => {
-      cancelled = true
-      for (const id of ids) {
+      const active = activeRef.current
+      activeRef.current = new Set()
+      for (const id of active) {
         void window.electronAPI.imUnsubscribeChannel?.(id).catch(() => {})
       }
     }
-  }, [key, live])
+  }, [])
 }
 
 export type ImMessageListener = (message: ImMessageEvent) => void
