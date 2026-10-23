@@ -11,7 +11,7 @@ import * as React from 'react'
 import type { IngestTeamMessageInput, PostTeamMessageOptions, TeamChannelMessage, TeamChannelView, TeamMessageAttachment } from '@rox/shared/team-chat'
 import type { ImMessageEvent } from '@rox/shared/protocol'
 import { imMessageToTeam, imMessagesToTeam, mergeLocalEnrichments } from './im-message-map'
-import { useImChannelSubscription, useImMessageListener, useImRelay } from './use-im-relay'
+import { useImChannelSubscription, useImChannelSubscriptions, useImMessageListener, useImRelay } from './use-im-relay'
 import { recordMessengerFeedItem } from '@/platform/messenger-feed-items'
 import { listMessengerFeedChannels } from '@/platform/messenger-feed-channels'
 
@@ -225,16 +225,10 @@ export async function postTeamMessage(
             // im already delivered; local durability is best-effort
           }
         } else {
-          // No trustworthy remote sender — fall through to actor-stamped post.
-          try {
-            const stored = await window.electronAPI.teamChatPost(channelId, text, Object.keys(postOpts).length ? postOpts : undefined)
-            fanOutIfFollowed(stored, opts.channelName)
-            return stored
-          } catch {
-            return
-          }
+          // im already delivered; without a resolved actor id, skip dual-write.
+          // Never teamChatPost here — that would mint a new UUID ≠ im id and break merge.
+          return
         }
-        return
       }
     } catch {
       // fall through to team-chat
@@ -245,5 +239,43 @@ export async function postTeamMessage(
   return stored
 }
 
-export { errorText as teamChatErrorText }
+/**
+ * While Messenger is live: ingest + Лента fan-out for followed channels that are
+ * not the open conversation (open channel is handled by useTeamMessages).
+ * Callers must also subscribe those channel ids via useImChannelSubscriptions.
+ */
+export function useFollowedChannelFanOut(
+  live: boolean,
+  followed: readonly { channelId: string; name?: string }[],
+  openChannelId: string | null,
+): void {
+  const followedRef = React.useRef(followed)
+  followedRef.current = followed
+  const openRef = React.useRef(openChannelId)
+  openRef.current = openChannelId
+
+  React.useEffect(() => {
+    if (!live || !window.electronAPI?.onImMessage) return
+    return window.electronAPI.onImMessage((message) => {
+      if (!message?.channelId || !message.id) return
+      if (message.channelId === openRef.current) return
+      const meta = followedRef.current.find((c) => c.channelId === message.channelId)
+      if (!meta) return
+      if (!window.electronAPI.teamChatIngest) return
+      const input: IngestTeamMessageInput = {
+        channelId: message.channelId,
+        senderId: message.senderId,
+        text: message.text,
+        id: message.id,
+        createdAt: message.createdAt,
+        ...(message.replyToId ? { replyToId: message.replyToId, threadId: message.threadId ?? message.replyToId } : {}),
+      }
+      void window.electronAPI.teamChatIngest(input).then((stored) => {
+        fanOutIfFollowed(stored, meta.name)
+      }).catch(() => {})
+    })
+  }, [live])
+}
+
+export { errorText as teamChatErrorText, useImChannelSubscriptions }
 export type { TeamMessageAttachment }

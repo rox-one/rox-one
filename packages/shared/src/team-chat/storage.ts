@@ -725,13 +725,16 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
         .slice(0, 100)
     },
 
-    markRead(channelIdInput: unknown, actor: TeamChatActor): void {
+    markRead(channelIdInput: unknown, actor: TeamChatActor): { orgId: string; advanced: boolean } {
       const store = load()
       const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
       const member = memberOf(store, channel.id, actor.userId)
-      if (!member || member.lastReadSeq === channel.lastSeq) return
+      if (!member || member.lastReadSeq === channel.lastSeq) {
+        return { orgId: channel.orgId, advanced: false }
+      }
       member.lastReadSeq = channel.lastSeq
       save(store)
+      return { orgId: channel.orgId, advanced: true }
     },
   }
 }

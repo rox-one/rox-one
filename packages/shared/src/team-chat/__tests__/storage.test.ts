@@ -62,8 +62,10 @@ describe('team chat store', () => {
     s.joinChannel(pub.id, bob)
     s.postMessage(pub.id, 'nice', alice)
     expect(s.listChannels(ORG, bob).find(c => c.id === pub.id)!.unreadCount).toBe(1)
-    s.markRead(pub.id, bob)
+    const marked = s.markRead(pub.id, bob)
+    expect(marked).toEqual({ orgId: ORG, advanced: true })
     expect(s.listChannels(ORG, bob).find(c => c.id === pub.id)!.unreadCount).toBe(0)
+    expect(s.markRead(pub.id, bob).advanced).toBe(false)
     expect(s.setSubscribed(pub.id, false, carol).viewerSubscribed).toBe(false)
   })
 
@@ -159,7 +161,6 @@ describe('sender-preserving ingest (PR3)', () => {
     expect(reply.replyToId).toBe(root.id)
     expect(reply.threadId).toBe(root.id)
   })
-})
 
   it('rejects non-text ingest kinds and advances lastReadSeq on own dual-write', () => {
     const s = store()
@@ -189,4 +190,4 @@ describe('sender-preserving ingest (PR3)', () => {
     }, alice)
     expect(msg.attachments?.[0]?.status).toBe('ready')
   })
-
+})

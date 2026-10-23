@@ -29,7 +29,6 @@ describe('im-message-map', () => {
     ]
     expect(imMessagesToTeam(messages).map((m) => [m.id, m.seq])).toEqual([['a', 1], ['b', 2]])
   })
-})
 
   it('maps reply/thread fields', () => {
     const mapped = imMessageToTeam({
@@ -73,4 +72,4 @@ describe('im-message-map', () => {
       attachments: [{ id: 'att-1', name: 'spec.pdf', status: 'unavailable' }],
     })
   })
-
+})

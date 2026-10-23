@@ -20,7 +20,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { messengerStatusAtom } from '@/atoms/messenger-status'
-import { postTeamMessage, teamChatErrorText, useTeamChannels, useTeamMessages, useTeamSearch } from './use-team-chat'
+import { postTeamMessage, teamChatErrorText, useFollowedChannelFanOut, useImChannelSubscriptions, useTeamChannels, useTeamMessages, useTeamSearch } from './use-team-chat'
 import { hydrateMessengerFeedChannelsFromRoster, setMessengerFeedChannel } from '@/platform/messenger-feed-channels'
 import { useTeamCall } from './use-team-call'
 import { Avatar, ChannelInfoPanel, type Presence } from './ChannelInfoPanel'
@@ -79,6 +79,17 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
     if (channels.loading) return
     hydrateMessengerFeedChannelsFromRoster(orgId, channels.channels, (c) => channelLabel(c as TeamChannelView, t))
   }, [orgId, channels.channels, channels.loading, t])
+
+  // Followed-channel fan-out: subscribe + ingest even when not the open channel.
+  const followed = React.useMemo(
+    () => channels.channels
+      .filter((c) => c.viewerSubscribed)
+      .map((c) => ({ channelId: c.id, name: channelLabel(c, t) })),
+    [channels.channels, t],
+  )
+  const followedIds = React.useMemo(() => followed.map((f) => f.channelId), [followed])
+  useImChannelSubscriptions(followedIds, live)
+  useFollowedChannelFanOut(live, followed, selected?.id ?? null)
 
   const nameOf = React.useMemo(() => {
     const map = new Map(members.map(m => [m.userId, m.displayName]))

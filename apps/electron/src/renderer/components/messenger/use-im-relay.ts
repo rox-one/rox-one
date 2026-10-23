@@ -68,6 +68,35 @@ export function useImChannelSubscription(channelId: string | null, live: boolean
   }, [channelId, live])
 }
 
+
+/**
+ * Subscribe the native client to many channels (e.g. followed Лента channels).
+ * Diffs by sorted id key; unsubscribes the previous set on change/unmount.
+ * chat-core subscribe is additive per id — open-channel subscribe may overlap.
+ */
+export function useImChannelSubscriptions(channelIds: readonly string[], live: boolean): void {
+  const key = [...new Set(channelIds.filter(Boolean))].sort().join('\0')
+  React.useEffect(() => {
+    if (!live || !window.electronAPI?.imSubscribeChannel) return
+    const ids = key ? key.split('\0') : []
+    if (ids.length === 0) return
+    let cancelled = false
+    for (const id of ids) {
+      void window.electronAPI.imSubscribeChannel(id).then(() => {
+        if (cancelled) {
+          void window.electronAPI.imUnsubscribeChannel?.(id).catch(() => {})
+        }
+      }).catch(() => {})
+    }
+    return () => {
+      cancelled = true
+      for (const id of ids) {
+        void window.electronAPI.imUnsubscribeChannel?.(id).catch(() => {})
+      }
+    }
+  }, [key, live])
+}
+
 export type ImMessageListener = (message: ImMessageEvent) => void
 
 /** Forward `im:message` pushes for one channel (no-op when not live). */

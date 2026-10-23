@@ -180,7 +180,8 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
   }, { nativeAction: 'write' })
 
   handle(RPC_CHANNELS.teamChat.MARK_READ, async (ctx, channelId: string) => {
-    store().markRead(channelId, actorOf(ctx))
+    const { orgId, advanced } = store().markRead(channelId, actorOf(ctx))
+    if (advanced) changed(orgId, channelId)
     return { ok: true }
   }, { nativeAction: 'write' })
 
