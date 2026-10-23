@@ -138,4 +138,22 @@ describe('note-revision-history', () => {
       operationId: 'o',
     })).rejects.toThrow(/Invalid note ID/)
   })
+  it('serializes concurrent sidecar writes for the same noteId', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'rox-note-history-lock-'))
+    const noteId = 'locked'
+    const bodies = Array.from({ length: 12 }, (_, i) => `# v${i}\n`)
+    await Promise.all(bodies.map((content, i) => recordNoteRevision(root, {
+      noteId,
+      content,
+      revisionId: markdownRevision(content),
+      operationId: `op-${i}`,
+      committedAt: `2026-10-23T10:${String(i).padStart(2, '0')}:00.000Z`,
+    })))
+    const listed = await listNoteRevisions(root, 'ws', noteId)
+    expect(listed).toHaveLength(12)
+    expect(new Set(listed.map((e) => e.operationId)).size).toBe(12)
+    for (const body of bodies) {
+      expect((await getNoteRevision(root, 'ws', noteId, markdownRevision(body)))?.content).toBe(body)
+    }
+  })
 })

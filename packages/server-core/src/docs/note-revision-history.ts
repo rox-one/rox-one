@@ -99,6 +99,24 @@ async function writeSidecarAtomic(notesRoot: string, file: SidecarFile): Promise
   await rename(tmp, path)
 }
 
+/** Serialize sidecar RMW per noteId so concurrent restores/saves cannot clobber peers. */
+const sidecarLocks = new Map<string, Promise<unknown>>()
+
+async function withSidecarLock<T>(noteId: string, fn: () => Promise<T>): Promise<T> {
+  const previous = sidecarLocks.get(noteId) ?? Promise.resolve()
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  const tail = previous.then(() => gate, () => gate)
+  sidecarLocks.set(noteId, tail)
+  await previous.then(() => undefined, () => undefined)
+  try {
+    return await fn()
+  } finally {
+    release()
+    if (sidecarLocks.get(noteId) === tail) sidecarLocks.delete(noteId)
+  }
+}
+
 /**
  * Record a durable history snapshot after a successful save.
  * Append-only by operationId: identical-byte restores keep the original
@@ -118,25 +136,27 @@ export async function recordNoteRevision(
 ): Promise<NoteHistoryEntry> {
   assertSafeNoteId(input.noteId)
   if (!input.revisionId || !input.operationId) throw new Error('revisionId and operationId are required')
-  const entry: SidecarRevision = {
-    schemaVersion: 1,
-    revisionId: input.revisionId,
-    operationId: input.operationId,
-    previousRevision: input.previousRevision ?? null,
-    committedAt: input.committedAt ?? new Date().toISOString(),
-    actorPrincipalId: input.actorPrincipalId ?? null,
-    byteSize: byteSizeOf(input.content),
-    content: input.content,
-  }
-  const existing = await readSidecar(notesRoot, input.noteId)
-  // Idempotent only for the same operationId; never overwrite another tip event.
-  const revisions = existing?.revisions.filter(item => item.operationId !== entry.operationId) ?? []
-  revisions.push(entry)
-  const MAX = 200
-  const kept = revisions.length > MAX ? revisions.slice(revisions.length - MAX) : revisions
-  await writeSidecarAtomic(notesRoot, { schemaVersion: 1, noteId: input.noteId, revisions: kept })
-  const { content: _c, schemaVersion: _s, ...summary } = entry
-  return summary
+  return withSidecarLock(input.noteId, async () => {
+    const entry: SidecarRevision = {
+      schemaVersion: 1,
+      revisionId: input.revisionId,
+      operationId: input.operationId,
+      previousRevision: input.previousRevision ?? null,
+      committedAt: input.committedAt ?? new Date().toISOString(),
+      actorPrincipalId: input.actorPrincipalId ?? null,
+      byteSize: byteSizeOf(input.content),
+      content: input.content,
+    }
+    const existing = await readSidecar(notesRoot, input.noteId)
+    // Idempotent only for the same operationId; never overwrite another tip event.
+    const revisions = existing?.revisions.filter(item => item.operationId !== entry.operationId) ?? []
+    revisions.push(entry)
+    const MAX = 200
+    const kept = revisions.length > MAX ? revisions.slice(revisions.length - MAX) : revisions
+    await writeSidecarAtomic(notesRoot, { schemaVersion: 1, noteId: input.noteId, revisions: kept })
+    const { content: _c, schemaVersion: _s, ...summary } = entry
+    return summary
+  })
 }
 
 type JournalLike = {
