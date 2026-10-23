@@ -95,6 +95,13 @@ describe('note comment anchors', () => {
     expect(anchor?.selectors.find(s => s.type === 'text-position')).toMatchObject({ start: 4, end: 10 })
   })
 
+  it('prefers explicit selection offsets when the quote repeats in the note', () => {
+    const fullText = 'One Target Two Target'
+    const second = fullText.indexOf('Target', 5)
+    const anchor = anchorFromQuote(fullText, 'Target', { start: second, end: second + 6 })
+    expect(anchor?.selectors.find(s => s.type === 'text-position')).toMatchObject({ start: second, end: second + 6 })
+  })
+
   it('nests flat comments into one-level threads and resurfaces orphan replies', () => {
     const nested = nestNoteCommentThreads([
       thread({ id: 'r1', body: 'Root', createdAt: 2, updatedAt: 2 }),

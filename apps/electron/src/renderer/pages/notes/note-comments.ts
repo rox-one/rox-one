@@ -45,7 +45,7 @@ export function createNoteCommentAnchor(selection: NoteTextSelection): NoteComme
   }
 }
 
-function findQuoteWithContext(text: string, exact: string, prefix?: string, suffix?: string): { start: number; end: number } | null {
+export function findQuoteWithContext(text: string, exact: string, prefix?: string, suffix?: string): { start: number; end: number } | null {
   if (!exact) return null
 
   let cursor = 0
@@ -160,10 +160,38 @@ export function removeNoteCommentFromList(
   return prev.filter(comment => comment.id !== commentId && comment.parentId !== commentId)
 }
 
-/** Build a selection anchor from note text + selected quote (first occurrence). */
-export function anchorFromQuote(fullText: string, quote: string): NoteCommentAnchor | null {
+/**
+ * Build a selection anchor from note text + selected quote.
+ * When `preferred` from/to offsets are provided and match the quote in
+ * `fullText`, they win — avoids pinning the first of several identical phrases.
+ */
+export function anchorFromQuote(
+  fullText: string,
+  quote: string,
+  preferred?: { start: number; end: number } | null,
+): NoteCommentAnchor | null {
   const selectedText = quote.trim()
   if (!selectedText) return null
+
+  if (
+    preferred
+    && Number.isFinite(preferred.start)
+    && Number.isFinite(preferred.end)
+    && preferred.start >= 0
+    && preferred.end > preferred.start
+    && preferred.end <= fullText.length
+  ) {
+    const slice = fullText.slice(preferred.start, preferred.end)
+    if (slice === selectedText || slice === quote) {
+      return createNoteCommentAnchor({
+        fullText,
+        start: preferred.start,
+        end: preferred.end,
+        selectedText: slice,
+      })
+    }
+  }
+
   const start = fullText.indexOf(selectedText)
   if (start < 0) return null
   return createNoteCommentAnchor({
