@@ -525,15 +525,17 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   useEffect(() => {
     const onSpace = (e: KeyboardEvent) => {
       if (e.code !== 'Space') return
-      const el = e.target as HTMLElement | null
-      const tag = el?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT' || el?.isContentEditable) {
+      // EventTarget may be SVG (stage) or HTML — compare as Element, not HTMLElement.
+      const node = e.target instanceof Element ? e.target : null
+      const html = node instanceof HTMLElement ? node : null
+      const tag = html?.tagName ?? (node instanceof SVGElement ? node.tagName : undefined)
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT' || html?.isContentEditable) {
         if (e.type === 'keyup') spaceHeld.current = false
         return
       }
       // Only steal Space for pan when focus is on the stage (or document body).
       const stage = svgRef.current
-      const onStage = !el || el === document.body || !!(stage && (el === stage || stage.contains(el)))
+      const onStage = !node || node === document.body || !!(stage && (node === stage || stage.contains(node)))
       if (!onStage) { if (e.type === 'keyup') spaceHeld.current = false; return }
       if (e.type === 'keydown') { if (!e.repeat) spaceHeld.current = true; e.preventDefault() }
       else spaceHeld.current = false
