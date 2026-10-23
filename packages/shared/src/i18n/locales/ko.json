@@ -679,6 +679,8 @@
   "canvas.text.placeholder": "텍스트 입력…",
   "canvas.tool.ellipse": "타원",
   "canvas.tool.entity": "엔티티 삽입",
+  "canvas.tool.ink": "펜",
+  "canvas.tool.line": "선",
   "canvas.tool.rect": "사각형",
   "canvas.tool.select": "선택",
   "canvas.tool.sticky": "스티커 메모",

@@ -681,6 +681,8 @@
   "canvas.text.placeholder": "Wpisz tekst…",
   "canvas.tool.ellipse": "Elipsa",
   "canvas.tool.entity": "Wstaw obiekt",
+  "canvas.tool.ink": "Pióro",
+  "canvas.tool.line": "Linia",
   "canvas.tool.rect": "Prostokąt",
   "canvas.tool.select": "Zaznaczanie",
   "canvas.tool.sticky": "Karteczka",

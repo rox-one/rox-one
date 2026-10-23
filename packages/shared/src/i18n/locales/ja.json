@@ -679,6 +679,8 @@
   "canvas.text.placeholder": "テキストを入力…",
   "canvas.tool.ellipse": "楕円",
   "canvas.tool.entity": "エンティティを挿入",
+  "canvas.tool.ink": "ペン",
+  "canvas.tool.line": "直線",
   "canvas.tool.rect": "長方形",
   "canvas.tool.select": "選択",
   "canvas.tool.sticky": "付箋",

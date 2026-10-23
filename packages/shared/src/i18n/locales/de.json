@@ -679,6 +679,8 @@
   "canvas.text.placeholder": "Text eingeben…",
   "canvas.tool.ellipse": "Ellipse",
   "canvas.tool.entity": "Objekt einfügen",
+  "canvas.tool.ink": "Freihand",
+  "canvas.tool.line": "Linie",
   "canvas.tool.rect": "Rechteck",
   "canvas.tool.select": "Auswählen",
   "canvas.tool.sticky": "Haftnotiz",
