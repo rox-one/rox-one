@@ -200,6 +200,9 @@ describe('MemoryIndexService rebuild enqueue', () => {
   test('rebuild schedules injectable ingest; graphIngest:false skips', async () => {
     const { MemoryIndexService } = await import('../../MemoryIndexService')
     const h = home()
+    const prevHome = process.env.ROX_HOME
+    process.env.ROX_HOME = h
+    try {
     const p = new FakeProvider()
     const svc = new MemoryIndexService({
       workspaceRoot: h,
@@ -229,5 +232,9 @@ describe('MemoryIndexService rebuild enqueue', () => {
     await flush()
     expect(p2.ingested).toEqual([])
     svc2.close()
+    } finally {
+      if (prevHome === undefined) delete process.env.ROX_HOME
+      else process.env.ROX_HOME = prevHome
+    }
   })
 })
