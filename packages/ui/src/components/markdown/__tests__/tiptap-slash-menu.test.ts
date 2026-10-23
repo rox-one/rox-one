@@ -53,10 +53,35 @@ function createMockEditor() {
     },
     setTextSelection: (selection: number | { from: number; to: number }) => {
       calls.push(`setTextSelection:${JSON.stringify(selection)}`)
+      selectionFrom = typeof selection === 'number' ? selection : selection.from
       return chainApi
     },
     setNodeSelection: (pos: number) => {
       calls.push(`setNodeSelection:${pos}`)
+      return chainApi
+    },
+    splitBlock: () => {
+      calls.push('splitBlock')
+      parentOffset = 0
+      return chainApi
+    },
+    command: (fn: (props: { state: unknown; commands: { splitBlock: () => boolean } }) => boolean) => {
+      calls.push('command')
+      fn({
+        state: {
+          selection: {
+            from: selectionFrom,
+            $from: { parentOffset },
+          },
+        },
+        commands: {
+          splitBlock: () => {
+            calls.push('splitBlock')
+            parentOffset = 0
+            return true
+          },
+        },
+      })
       return chainApi
     },
     run: () => {
@@ -65,13 +90,20 @@ function createMockEditor() {
     },
   }
 
+  let selectionFrom = 5
+  let parentOffset = 0
+
   const editor = {
     state: {
       selection: {
         from: 5,
+        get $from() {
+          return { parentOffset }
+        },
       },
       doc: {
         nodesBetween: () => {},
+        resolve: () => ({ parentOffset, parent: { isTextblock: true } }),
       },
     },
     can: () => ({
@@ -88,6 +120,9 @@ function createMockEditor() {
   return {
     editor: editor as unknown as Editor,
     calls,
+    setParentOffset: (value: number) => {
+      parentOffset = value
+    },
   }
 }
 
@@ -177,5 +212,38 @@ describe('tiptap slash menu', () => {
     expect(calls.some((call) => call.startsWith('insertContentAt:') && call.includes('roxColumns'))).toBe(true)
     items.find((item) => item.id === 'tabs')?.run(editor)
     expect(calls.some((call) => call.startsWith('insertContentAt:') && call.includes('roxTabs'))).toBe(true)
+  })
+
+  it('embed inserts ![[ at insertPos with caret ready (block-level trigger)', () => {
+    const { editor, calls } = createMockEditor()
+    const items = createSlashCommandItems(editor)
+    const embed = items.find((item) => item.id === 'embed')
+    expect(embed?.description).not.toBe('Insert a note embed')
+    embed?.run(editor, 12)
+    expect(calls).toContain('setTextSelection:12')
+    expect(calls).toContain('insertContent:"![["')
+    expect(calls).toContain('run')
+    expect(calls).not.toContain('splitBlock')
+  })
+
+  it('embed splits mid-paragraph so ![[ starts a line', () => {
+    const { editor, calls, setParentOffset } = createMockEditor()
+    setParentOffset(4)
+    const embed = createSlashCommandItems(editor).find((item) => item.id === 'embed')
+    embed?.run(editor, 9)
+    expect(calls).toContain('splitBlock')
+    expect(calls).toContain('insertContent:"![["')
+  })
+
+  it('equation aliases resolve to latex block insert', async () => {
+    const { editor, calls } = createMockEditor()
+    const items = createSlashCommandItems(editor)
+    expect(filterSlashCommandItems(items, 'equation').some((item) => item.id === 'latex-code-block')).toBe(true)
+    expect(filterSlashCommandItems(items, 'формула').some((item) => item.id === 'latex-code-block')).toBe(true)
+    const latex = items.find((item) => item.id === 'latex-code-block')
+    expect(latex?.aliases).toEqual(expect.arrayContaining(['equation', 'latex', 'math', 'tex', 'katex']))
+    latex?.run(editor, 5)
+    await Promise.resolve()
+    expect(calls).toContain('insertContentAt:5:{"type":"latexBlock","attrs":{"code":"E = mc^2"}}')
   })
 })
