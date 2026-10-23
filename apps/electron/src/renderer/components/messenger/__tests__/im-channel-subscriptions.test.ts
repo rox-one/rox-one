@@ -39,10 +39,18 @@ describe('nextSubscriptionActions (live flap)', () => {
     expect([...online.nextActive].sort()).toEqual(['a', 'b'])
   })
 
-  it('incremental: selecting open channel away from followed set only unsubs that id', () => {
+  it('incremental: removing an id from desired only unsubs that id', () => {
     const r = nextSubscriptionActions(['a', 'b'], new Set(['a', 'b', 'c']), true)
     expect(r.subscribe).toEqual([])
     expect(r.unsubscribe).toEqual(['c'])
     expect([...r.nextActive].sort()).toEqual(['a', 'b'])
+  })
+
+  it('overlapping open+followed desired keeps active (no dual-sub churn)', () => {
+    // Open hook + multi-hook both list the same id; desired unchanged → no add/remove.
+    const r = nextSubscriptionActions(['open', 'a'], new Set(['open', 'a']), true)
+    expect(r.subscribe).toEqual([])
+    expect(r.unsubscribe).toEqual([])
+    expect([...r.nextActive].sort()).toEqual(['a', 'open'])
   })
 })

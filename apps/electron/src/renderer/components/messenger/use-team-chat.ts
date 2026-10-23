@@ -66,22 +66,6 @@ export function useTeamMessages(channelId: string | null, opts?: { channelName?:
   const version = React.useRef(0)
   const channelNameRef = React.useRef(opts?.channelName)
   channelNameRef.current = opts?.channelName
-  /**
-   * One-shot suppress for markRead→changed→reload on the open channel.
-   * Armed only after markRead returns advanced:true; consumed once on matching changed (or 2s timeout).
-   * useTeamChannels still reloads on changed for badges.
-   */
-  const suppressMarkReadChanged = React.useRef<{ channelId: string; token: number } | null>(null)
-  const suppressTokenGen = React.useRef(0)
-
-  const armMarkReadSuppress = React.useCallback((id: string) => {
-    const token = ++suppressTokenGen.current
-    suppressMarkReadChanged.current = { channelId: id, token }
-    window.setTimeout(() => {
-      if (suppressMarkReadChanged.current?.token === token) suppressMarkReadChanged.current = null
-    }, 2_000)
-  }, [])
-
   useImChannelSubscription(channelId, live)
 
   const reload = React.useCallback(async () => {
@@ -105,11 +89,10 @@ export function useTeamMessages(channelId: string | null, opts?: { channelName?:
             setState({ loading: false, messages, error: null })
             void window.electronAPI.imMarkRead?.(channelId).catch(() => {})
             // Keep team-chat unread badges in sync while viewing live (ingest bumps lastSeq).
-            // Await markRead; arm suppress only when advanced so !advanced cannot swallow ingest changed.
+            // markRead emits changed when advanced — accept an extra open-channel reload
+            // rather than one-shot suppress (which can race and swallow ingest changed).
             if (window.electronAPI.teamChatMarkRead) {
-              void window.electronAPI.teamChatMarkRead(channelId).then((res) => {
-                if (res?.advanced) armMarkReadSuppress(channelId)
-              }).catch(() => {})
+              void window.electronAPI.teamChatMarkRead(channelId).catch(() => {})
             }
             return
           }
@@ -122,25 +105,18 @@ export function useTeamMessages(channelId: string | null, opts?: { channelName?:
       if (v !== version.current) return
       setState({ loading: false, messages: result.messages, error: null })
       if (result.channel.viewerRole && result.channel.unreadCount > 0) {
-        void window.electronAPI.teamChatMarkRead(channelId).then((res) => {
-          if (res?.advanced) armMarkReadSuppress(channelId)
-        }).catch(() => {})
+        void window.electronAPI.teamChatMarkRead(channelId).catch(() => {})
       }
     } catch (error) {
       if (v === version.current) setState({ loading: false, messages: [], error: errorText(error) })
     }
-  }, [channelId, live, armMarkReadSuppress])
+  }, [channelId, live])
 
   React.useEffect(() => {
     setState({ loading: Boolean(channelId), messages: [], error: null })
     void reload()
     const off = window.electronAPI.onTeamChatChanged?.((change) => {
       if (change?.channelId !== channelId) return
-      const armed = suppressMarkReadChanged.current
-      if (armed && armed.channelId === channelId) {
-        suppressMarkReadChanged.current = null // consume one-shot
-        return
-      }
       void reload()
     })
     return () => { version.current++; off?.() }

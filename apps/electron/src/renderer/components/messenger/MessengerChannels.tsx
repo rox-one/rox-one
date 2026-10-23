@@ -88,10 +88,11 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
       .map((c) => ({ channelId: c.id, name: channelLabel(c, t) })),
     [channels.channels, t],
   )
-  // Open channel is owned solely by useTeamMessages subscribe — exclude it here to avoid dual refcount.
+  // Include open/selected when followed. ImService refcounts + mutex — both hooks may
+  // subscribe the same id safely; excluding here caused a gap on navigate-away.
   const followedIds = React.useMemo(
-    () => followed.map((f) => f.channelId).filter((id) => id !== selected?.id),
-    [followed, selected?.id],
+    () => followed.map((f) => f.channelId),
+    [followed],
   )
   useImChannelSubscriptions(followedIds, live)
   useFollowedChannelFanOut(live, followed, selected?.id ?? null)
