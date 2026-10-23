@@ -7,6 +7,8 @@ export const HOME_FETCH_CHANNELS = Object.freeze({
   FETCH: '__home-fetch:fetch',
   SEARCH: '__home-fetch:search',
   STATUS: '__home-fetch:status',
+  SYSTEM: '__home-fetch:system',
+  DOCKER: '__home-fetch:docker',
 })
 
 export type HomeFetchFormat = 'text' | 'json'
@@ -57,10 +59,40 @@ export interface HomeFetchStatus {
   searchAvailable: boolean
 }
 
+/** This machine's load, memory and disk (server-stats widget). */
+export interface HomeSystemStats {
+  platform: string
+  cpus: number
+  /** 1/5/15-minute load averages (0 on Windows). */
+  load: [number, number, number]
+  /** 0…1 CPU busy share since the previous sample, when known. */
+  cpu: number | null
+  memTotal: number
+  memUsed: number
+  diskTotal: number | null
+  diskUsed: number | null
+  uptimeSec: number
+}
+
+/** Read-only, minimal container view (docker widget). No env, mounts or labels. */
+export interface HomeDockerContainer {
+  id: string
+  name: string
+  image: string
+  state: string
+  status: string
+}
+
+export type HomeDockerResult =
+  | { status: 'ok'; containers: HomeDockerContainer[] }
+  | { status: 'error'; reason: 'unavailable' | 'timeout' | 'invalid' }
+
 export interface HomeFetchApi {
   fetch<T = unknown>(request: HomeFetchRequest): Promise<HomeFetchResult<T>>
   search(request: HomeSearchRequest): Promise<HomeFetchResult<HomeSearchHit[]>>
   status(): Promise<HomeFetchStatus>
+  system(): Promise<HomeSystemStats>
+  docker(): Promise<HomeDockerResult>
 }
 
 export const HOME_FETCH_LIMITS = Object.freeze({
