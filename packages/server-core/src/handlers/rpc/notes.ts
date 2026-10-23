@@ -249,6 +249,11 @@ function noteCommentsPath(notesRoot: string, noteId: string): string {
 }
 
 
+/** Device principal for legacy markdown history rows (maps to notes.history.localAuthor). */
+function localDeviceHistoryActor(workspaceId: string): string {
+  return `local-uid:${process.getuid?.() ?? 'windows-user'}:${workspaceId}`
+}
+
 async function rememberSavedNoteRevision(input: {
   notesRoot: string
   noteId: string
@@ -2051,7 +2056,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         revisionId: note.revision ?? markdownRevision(note.content),
         operationId: markdownSaveOperationId,
         previousRevision: existing.revision ?? markdownRevision(existing.content),
-        actorPrincipalId: null,
+        actorPrincipalId: localDeviceHistoryActor(workspaceId),
       })
       changed({ workspaceId, reason: 'save', noteId: note.id })
       return { ...note, autoCreatedNoteIds: autoCreated.map(created => created.id) }
@@ -2293,7 +2298,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       revisionId: note.revision ?? markdownRevision(note.content),
       operationId: markdownRestoreOperationId,
       previousRevision: existing.revision ?? markdownRevision(existing.content),
-      actorPrincipalId: null,
+      actorPrincipalId: localDeviceHistoryActor(workspaceId),
     })
     await refreshVaultIndex(notesRoot)
     changed({ workspaceId, reason: 'save', noteId: note.id })
