@@ -129,12 +129,12 @@ export function useWorkspaceWork(workspaceId: string) {
     return () => { scope.active = false; scope.request++; off?.(); offCache() }
   }, [scope, load, accept])
 
-  const mutate = useCallback(async (input: WorkspaceWorkMutation | WorkspaceWorkRemoval, remove = false, expectedRevision?: number): Promise<boolean> => {
-    if (!scope.active || scope.pending) return false
+  const mutate = useCallback(async (input: WorkspaceWorkMutation | WorkspaceWorkRemoval, remove = false, expectedRevision?: number): Promise<'ok' | 'rejected' | 'skipped'> => {
+    if (!scope.active || scope.pending) return 'skipped'
     // A cached snapshot shown while revalidating is not a write base.
     if (!scope.verified && scope.inflight) await scope.inflight
     const before = current.current
-    if (!scope.active || scope.pending || !before || before.workspaceId !== scope.workspaceId) return false
+    if (!scope.active || scope.pending || !before || before.workspaceId !== scope.workspaceId) return 'skipped'
     scope.pending = true; setPending(true); setError(null)
     const epoch = cacheWriteEpoch()
     try {
@@ -142,15 +142,16 @@ export function useWorkspaceWork(workspaceId: string) {
       const result = remove
         ? await client.remove(expectedRevision ?? before.revision, input as WorkspaceWorkRemoval)
         : await client.write(expectedRevision ?? before.revision, input as WorkspaceWorkMutation)
-      if (!scope.active) return false
-      accept(result.snapshot, epoch)
-      return true
+      // Write landed; keep 'ok' even if this view unmounted so callers do not
+      // treat a successful mutate as a rejection.
+      if (scope.active) accept(result.snapshot, epoch)
+      return 'ok'
     } catch (failure) {
-      if (!scope.active) return false
+      if (!scope.active) return 'skipped'
       const next = workspaceWorkFailure(failure)
       if (next.code === 'conflict') await load()
       if (scope.active) setError(next)
-      return false
+      return 'rejected'
     } finally {
       scope.pending = false
       if (scope.active) setPending(false)
@@ -161,7 +162,9 @@ export function useWorkspaceWork(workspaceId: string) {
   return {
     snapshot: visible,
     loading, pending, error, refresh,
-    write: useCallback((input: WorkspaceWorkMutation, expectedRevision?: number) => mutate(input, false, expectedRevision), [mutate]),
-    remove: useCallback((input: WorkspaceWorkRemoval, expectedRevision?: number) => mutate(input, true, expectedRevision), [mutate]),
+    write: useCallback(async (input: WorkspaceWorkMutation, expectedRevision?: number) => (await mutate(input, false, expectedRevision)) === 'ok', [mutate]),
+    remove: useCallback(async (input: WorkspaceWorkRemoval, expectedRevision?: number) => (await mutate(input, true, expectedRevision)) === 'ok', [mutate]),
+    /** Tri-state write for optimistic UI (skipped = never ran, rejected = mutate threw). */
+    writeOutcome: useCallback((input: WorkspaceWorkMutation, expectedRevision?: number) => mutate(input, false, expectedRevision), [mutate]),
   }
 }

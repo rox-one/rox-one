@@ -63,3 +63,36 @@ export function reconcileOptimisticDue<T extends { id: string; dueAt: number | n
   }
   return next
 }
+
+/**
+ * Due string to push into an open editor when the timeline owns the deadline.
+ * Null means leave the draft alone (manual edits + expectedRevision stay put).
+ */
+export function timelineOwnedDueInput(
+  overlay: ReadonlyMap<string, number>,
+  taskId: string,
+  toInput: (at: number) => string,
+): string | null {
+  const dueAt = overlay.get(taskId)
+  if (dueAt === undefined) return null
+  return toInput(dueAt)
+}
+
+/**
+ * After work.write: keep overlay on success (reconcile clears on match) and on
+ * early skip; drop this id only when the write ran and was rejected, and the
+ * overlay value is still the one we attempted.
+ */
+export function overlayAfterScheduleWrite(
+  overlay: ReadonlyMap<string, number>,
+  id: string,
+  attemptedDue: number,
+  outcome: 'ok' | 'rejected' | 'skipped',
+): Map<string, number> {
+  if (outcome !== 'rejected') return new Map(overlay)
+  if (overlay.get(id) !== attemptedDue) return new Map(overlay)
+  const next = new Map(overlay)
+  next.delete(id)
+  return next
+}
+

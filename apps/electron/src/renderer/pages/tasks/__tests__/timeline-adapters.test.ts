@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { WorkspaceTask } from '@rox/shared/workspace-work'
-import { reconcileOptimisticDue, withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../timeline-adapters'
+import { overlayAfterScheduleWrite, reconcileOptimisticDue, timelineOwnedDueInput, withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../timeline-adapters'
 import { groupTasks, partitionTasks, timelineGroupTitle } from '../timeline-model'
 
 const ws = (patch: Partial<WorkspaceTask>): WorkspaceTask => ({
@@ -68,3 +68,28 @@ describe('reconcileOptimisticDue', () => {
     expect(next.size).toBe(1)
   })
 })
+
+
+describe('timelineOwnedDueInput', () => {
+  const toInput = (at: number) => `due:${at}`
+  it('returns a due string only when the overlay owns the task', () => {
+    const overlay = new Map([['a', 9]])
+    expect(timelineOwnedDueInput(overlay, 'a', toInput)).toBe('due:9')
+    expect(timelineOwnedDueInput(overlay, 'b', toInput)).toBeNull()
+    expect(timelineOwnedDueInput(new Map(), 'a', toInput)).toBeNull()
+  })
+})
+
+describe('overlayAfterScheduleWrite', () => {
+  it('keeps the overlay on ok and skipped; drops only a rejected attempt still owned', () => {
+    const overlay = new Map([['a', 9], ['b', 2]])
+    expect([...overlayAfterScheduleWrite(overlay, 'a', 9, 'ok').entries()]).toEqual([['a', 9], ['b', 2]])
+    expect([...overlayAfterScheduleWrite(overlay, 'a', 9, 'skipped').entries()]).toEqual([['a', 9], ['b', 2]])
+    expect([...overlayAfterScheduleWrite(overlay, 'a', 9, 'rejected').entries()]).toEqual([['b', 2]])
+  })
+  it('does not drop when a newer drag superseded the attempted due', () => {
+    const overlay = new Map([['a', 99]])
+    expect(overlayAfterScheduleWrite(overlay, 'a', 9, 'rejected').get('a')).toBe(99)
+  })
+})
+
