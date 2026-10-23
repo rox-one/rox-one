@@ -122,3 +122,29 @@ export function clampInt(value: unknown, min: number, max: number, fallback: num
   const n = typeof value === 'number' ? value : Number(value)
   return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : fallback
 }
+
+/** Poll an async source while `active` and the window is visible. */
+export function usePoll<T>(fn: () => Promise<T>, ms: number, active: boolean): { data: T | null; failed: boolean; refresh: () => void } {
+  const [data, setData] = React.useState<T | null>(null)
+  const [failed, setFailed] = React.useState(false)
+  const fnRef = React.useRef(fn)
+  fnRef.current = fn
+  const tick = React.useCallback(() => {
+    fnRef.current().then((d) => { setData(d); setFailed(false) }, () => setFailed(true))
+  }, [])
+  React.useEffect(() => {
+    if (!active) return
+    let timer: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (timer || document.visibilityState === 'hidden') return; tick(); timer = setInterval(tick, ms) }
+    const stop = () => { if (timer) clearInterval(timer); timer = null }
+    const onVis = () => (document.visibilityState === 'hidden' ? stop() : start())
+    start()
+    document.addEventListener('visibilitychange', onVis)
+    return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
+  }, [active, ms, tick])
+  return { data, failed, refresh: tick }
+}
+
+export function StatusDot({ ok, title }: { ok: boolean | null; title?: string }) {
+  return <span title={title} aria-hidden className={ok === null ? 'size-2 shrink-0 rounded-full bg-muted-foreground/40' : ok ? 'size-2 shrink-0 rounded-full bg-success' : 'size-2 shrink-0 rounded-full bg-destructive'} />
+}
