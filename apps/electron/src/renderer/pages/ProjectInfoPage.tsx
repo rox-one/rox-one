@@ -616,7 +616,7 @@ const projectSummaryRef = useRef<HTMLDivElement | null>(null)
           />
 
           {/* Tab bar */}
-          <div className="flex items-center gap-1 border-b border-border/50 px-2 mb-4">
+          <div className="mb-4 flex items-center gap-1 border-b border-border/40 px-2 pb-2" role="tablist">
             <TabButton active={tab === 'roadmap'} onClick={() => setTab('roadmap')}>
               {t('projectRoadmap.title')}
             </TabButton>
@@ -1255,12 +1255,16 @@ function TabButton({
   return (
     <button
       type="button"
+      // eslint-disable-next-line rox/prefer-primitives -- local project tabs; shared Tabs cannot host Info_Page strip layout
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
       className={cn(
-        'px-3 py-1.5 text-sm rounded-t-md border-b-2',
+        // SE fill-selected (ModeBar / Settings nav) — not underline-selected
+        'rounded-[var(--radius-control)] px-3 py-1.5 text-sm transition-colors',
         active
-          ? 'border-foreground/80 text-foreground'
-          : 'border-transparent text-foreground/60 hover:text-foreground/80'
+          ? 'bg-foreground/5 font-medium text-foreground'
+          : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
       )}
     >
       {children}
