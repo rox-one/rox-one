@@ -12,7 +12,7 @@
 import * as React from 'react'
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronRight, Loader2, Plus, Trash2 } from 'lucide-react'
+import { ChevronRight, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -30,6 +30,7 @@ import { AutoRulesDataTable } from '@/components/info'
 import {
   SettingsSection,
   SettingsCard,
+  SettingsLoadingSkeleton,
 } from '@/components/settings'
 import { routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
@@ -302,9 +303,7 @@ export default function LabelsSettingsPage() {
           <div className="px-5 py-7 max-w-3xl mx-auto">
             <div className="space-y-8">
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
+                <SettingsLoadingSkeleton />
               ) : (
                 <>
                   <SettingsSection title={t('settings.labels.aboutLabels')}>

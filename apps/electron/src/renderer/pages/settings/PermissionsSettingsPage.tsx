@@ -16,7 +16,6 @@ import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { Loader2 } from 'lucide-react'
 import { useAppShellContext, useActiveWorkspace } from '@/context/AppShellContext'
 import { type PermissionsConfigFile } from '@rox/shared/agent/modes'
 import { OpenClawAuditSection } from '@/components/settings/OpenClawAuditSection'
@@ -28,6 +27,7 @@ import {
 import {
   SettingsSection,
   SettingsCard,
+  SettingsLoadingSkeleton,
 } from '@/components/settings'
 import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
 import { getDocUrl } from '@rox/shared/docs/doc-links'
@@ -258,9 +258,7 @@ export default function PermissionsSettingsPage() {
                   </SettingsCard>
                 </SettingsSection>
               ) : isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
+                <SettingsLoadingSkeleton />
               ) : (
                 <>
                   {/* About Section */}

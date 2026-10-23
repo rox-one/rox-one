@@ -26,6 +26,7 @@ import {
   SettingsRow,
   SettingsToggle,
   SettingsInputRow,
+  SettingsLoadingSkeleton,
 } from '@/components/settings'
 import { toErrorMessage } from '@/lib/errors'
 
@@ -220,9 +221,7 @@ export default function ServerSettingsPage() {
             <div className="px-5 py-7 max-w-3xl mx-auto space-y-5">
               <LicenseEvidencePanel />
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Spinner />
-                </div>
+                <SettingsLoadingSkeleton />
               ) : (
                 <SettingsSection title={t("settings.server.remoteAccess")}>
                   <SettingsCard className="px-4 py-3.5">

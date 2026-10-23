@@ -39,6 +39,7 @@ import {
   SettingsRow,
   SettingsToggle,
   SettingsMenuSelectRow,
+  SettingsLoadingSkeleton,
 } from '@/components/settings'
 
 export const meta: DetailsPageMeta = {
@@ -375,9 +376,7 @@ export default function WorkspaceSettingsPage() {
     return (
       <div className="flex h-full min-h-0 flex-col">
         <PanelHeader title={t("settings.workspace.workspaceSettings")} actions={<HeaderMenu route={routes.view.settings('workspace')} helpFeature="workspaces" />} />
-        <div className="flex-1 flex items-center justify-center">
-          <Spinner className="text-muted-foreground" />
-        </div>
+        <SettingsLoadingSkeleton variant="panel" />
       </div>
     )
   }
