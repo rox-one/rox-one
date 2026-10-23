@@ -6,6 +6,7 @@ import i18n from 'i18next'
 import { InlineMenuSurface } from '../ui/InlineMenuSurface'
 import { RICH_BLOCK_EDIT_EVENT } from './rich-block-events'
 import { insertRoxColumnsContent } from './extensions/ColumnsBlock'
+import { insertRoxTabsContent } from './extensions/TabsBlock'
 import { createRoxBlockContent } from './extensions/rox-block-syntax'
 
 export interface SlashCommandItem {
@@ -390,6 +391,15 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
       group: 'Blocks',
       aliases: ['columns', 'split', 'layout'],
       run: (e, insertPos) => insertRoxColumnsContent(e, 3, insertPos),
+    },
+    {
+      id: 'tabs',
+      title: slashTitle('notes.slash.tabs', 'Tabs'),
+      description: slashTitle('notes.slash.tabsDescription', 'Insert a portable tabs container'),
+      icon: 'square-code',
+      group: 'Blocks',
+      aliases: ['tabs', 'tab', 'panes', 'sections'],
+      run: (e, insertPos) => insertRoxTabsContent(e, 2, insertPos),
     },
     {
       id: 'spoiler',

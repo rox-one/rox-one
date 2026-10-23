@@ -28,6 +28,7 @@ import { HashTag } from './extensions/HashTag'
 import { MarkdownComment } from './extensions/MarkdownComment'
 import { DocumentFolding, type DocumentFoldingJSON } from './extensions/DocumentFolding'
 import { RoxColumnsBlock, RoxColumnBlock } from './extensions/ColumnsBlock'
+import { RoxTabsBlock, RoxTabBlock } from './extensions/TabsBlock'
 import { RoxBlockCallout, PortableCalloutBlockquote } from './extensions/rox-block-syntax'
 import { cn } from '../../lib/utils'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
@@ -338,6 +339,15 @@ export function TiptapMarkdownEditor({
       RichBlockInteractions,
       RoxColumnsBlock.configure({ labels: { resizeColumn: i18n.t('notes.columns.resize') } }),
       RoxColumnBlock,
+      RoxTabsBlock.configure({
+        labels: {
+          addTab: i18n.t('notes.tabs.add'),
+          removeTab: i18n.t('notes.tabs.remove'),
+          renameTab: i18n.t('notes.tabs.rename'),
+          defaultTitle: i18n.t('notes.tabs.defaultTitle', { n: '{{n}}' }),
+        },
+      }),
+      RoxTabBlock,
       DocumentFolding.configure({
         initialState: readFoldingPreference(foldingStorageKey),
         labels: {

@@ -844,6 +844,149 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
     );
 }
 
+
+/* ROX tabs — semantic containers (LSX-WP-031) */
+.tiptap-rox-tabs {
+  margin: 0.875rem 0;
+  padding: 0.35rem 0.35rem 0.5rem;
+  border-radius: 1rem;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--foreground) 2.5%, transparent) 0%,
+      color-mix(in oklch, var(--foreground) 1%, transparent) 100%
+    );
+  border: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
+}
+
+.tiptap-rox-tabs-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+  padding: 0.15rem;
+}
+
+.tiptap-rox-tabs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  max-width: 100%;
+}
+
+.tiptap-rox-tabs-tab {
+  min-height: 32px;
+  min-width: 32px;
+  max-width: 16rem;
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full, 999px);
+  background: transparent;
+  color: var(--text-secondary, color-mix(in oklch, var(--foreground) 72%, transparent));
+  font: inherit;
+  font-size: 0.92em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.tiptap-rox-tabs-tab.is-active {
+  background: color-mix(in oklch, var(--background) 88%, transparent);
+  border-color: color-mix(in oklch, var(--foreground) 10%, transparent);
+  color: var(--text-primary, var(--foreground));
+  box-shadow: var(--shadow-minimal);
+}
+
+.tiptap-rox-tabs-tab:hover {
+  color: var(--text-primary, var(--foreground));
+}
+
+.tiptap-rox-tabs-tab:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.tiptap-rox-tabs-add,
+.tiptap-rox-tabs-remove {
+  min-height: 32px;
+  min-width: 32px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full, 999px);
+  background: transparent;
+  color: color-mix(in oklch, var(--foreground) 55%, transparent);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tiptap-rox-tabs-add:hover,
+.tiptap-rox-tabs-remove:hover {
+  color: var(--foreground);
+  background: color-mix(in oklch, var(--foreground) 6%, transparent);
+}
+
+.tiptap-rox-tabs-add:focus-visible,
+.tiptap-rox-tabs-remove:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.tiptap-rox-tabs-panels {
+  display: block;
+}
+
+.tiptap-rox-tab {
+  min-width: 0;
+  border-radius: 0.875rem;
+  background: color-mix(in oklch, var(--background) 86%, transparent);
+  border: 1px solid color-mix(in oklch, var(--foreground) 7%, transparent);
+  box-shadow: var(--shadow-minimal);
+  padding: 0.75rem 0.85rem;
+}
+
+.tiptap-rox-tab > .tiptap-rox-tab-content > :first-child {
+  margin-top: 0;
+}
+
+.tiptap-rox-tab > .tiptap-rox-tab-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* Personal selected tab — hide inactive panes visually; all children stay in the doc. */
+.tiptap-rox-tabs-panels > .tiptap-rox-tab {
+  display: none;
+}
+.tiptap-rox-tabs[data-active-index="0"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(1) {
+  display: block;
+}
+.tiptap-rox-tabs[data-active-index="1"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(2) {
+  display: block;
+}
+.tiptap-rox-tabs[data-active-index="2"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(3) {
+  display: block;
+}
+.tiptap-rox-tabs[data-active-index="3"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(4) {
+  display: block;
+}
+.tiptap-rox-tabs[data-active-index="4"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(5) {
+  display: block;
+}
+.tiptap-rox-tabs[data-active-index="5"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(6) {
+  display: block;
+}
+.tiptap-rox-tabs[data-active-index="6"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(7) {
+  display: block;
+}
+.tiptap-rox-tabs[data-active-index="7"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(8) {
+  display: block;
+}
+
 /* W1-08 (#1505): fallback look for entity mention / embed nodes when the host
    passes no React node view. Rox tokens only. */
 .tiptap-editor .tiptap-entity-mention {
