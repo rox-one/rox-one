@@ -12,7 +12,16 @@ import Blockquote from '@tiptap/extension-blockquote'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey, type EditorState } from '@tiptap/pm/state'
 import { Decoration, DecorationSet, type EditorView } from '@tiptap/pm/view'
-export type RoxBlockKind = 'spoiler' | 'details'
+
+export type RoxBlockKind =
+  | 'note'
+  | 'info'
+  | 'warning'
+  | 'tip'
+  | 'success'
+  | 'question'
+  | 'spoiler'
+  | 'details'
 
 export type RoxBlockToggle = '+' | '-'
 
@@ -56,11 +65,59 @@ export interface RoxBlockCalloutOptions {
   labels: RoxBlockLabels
 }
 
-const ROX_BLOCK_MARKER = /^\[!(spoiler|details)\]([+-])(?:[ \t]+(.*))?$/i
+/** Canonical kinds accepted by Rox (Obsidian-compatible callouts). */
+export const ROX_BLOCK_KINDS: readonly RoxBlockKind[] = [
+  'note',
+  'info',
+  'warning',
+  'tip',
+  'success',
+  'question',
+  'spoiler',
+  'details',
+] as const
+
+/**
+ * Optional inbound Obsidian aliases → canonical Rox kind.
+ * Serialize only the canonical kind.
+ */
+export const ROX_BLOCK_KIND_ALIASES: Readonly<Record<string, RoxBlockKind>> = {
+  hint: 'tip',
+  important: 'tip',
+  check: 'success',
+  done: 'success',
+  help: 'question',
+  faq: 'question',
+  caution: 'warning',
+  attention: 'warning',
+}
+
+const ROX_BLOCK_KIND_SET = new Set<string>(ROX_BLOCK_KINDS)
+
+/** Marker kinds accepted on parse: canonical + inbound aliases. */
+const ROX_BLOCK_MARKER_KINDS = [
+  ...ROX_BLOCK_KINDS,
+  ...Object.keys(ROX_BLOCK_KIND_ALIASES),
+].join('|')
+
+const ROX_BLOCK_MARKER = new RegExp(
+  `^\\[!(${ROX_BLOCK_MARKER_KINDS})\\]([+-])(?:[ \\t]+(.*))?$`,
+  'i',
+)
 
 const DEFAULT_ROX_BLOCK_LABELS: RoxBlockLabels = {
   collapse: i18n.t('notes.blocks.collapse'),
   expand: i18n.t('notes.blocks.expand'),
+}
+
+/** Slash/default insert: spoiler starts collapsed; all other kinds expanded. */
+export function defaultRoxBlockToggle(kind: RoxBlockKind): RoxBlockToggle {
+  return kind === 'spoiler' ? '-' : '+'
+}
+
+function defaultRoxBlockTitleKey(kind: RoxBlockKind): string {
+  if (kind === 'details') return 'notes.blocks.details'
+  return `notes.slash.${kind}`
 }
 
 function normalizeTitle(title: string | undefined): string | undefined {
@@ -68,12 +125,19 @@ function normalizeTitle(title: string | undefined): string | undefined {
   return normalized ? normalized : undefined
 }
 
+export function canonicalizeRoxBlockKind(raw: string): RoxBlockKind | null {
+  const lower = raw.toLowerCase()
+  if (ROX_BLOCK_KIND_SET.has(lower)) return lower as RoxBlockKind
+  return ROX_BLOCK_KIND_ALIASES[lower] ?? null
+}
+
 /**
  * Parses exactly one Obsidian-compatible callout marker line.
  *
  * It intentionally rejects embedded newlines, unknown callout kinds, omitted
  * toggle markers, and trailing non-marker content. This keeps the result safe
- * to use as a block boundary in an editor implementation.
+ * to use as a block boundary in an editor implementation. Inbound aliases are
+ * normalized to a canonical Rox kind; unknown kinds stay rejected.
  */
 export function parseRoxBlockMarker(value: string): RoxBlockMarker | null {
   if (value.includes('\n') || value.includes('\r')) {
@@ -85,9 +149,9 @@ export function parseRoxBlockMarker(value: string): RoxBlockMarker | null {
     return null
   }
 
-  const kind = match[1]?.toLowerCase()
+  const kind = canonicalizeRoxBlockKind(match[1] ?? '')
   const toggle = match[2]
-  if ((kind !== 'spoiler' && kind !== 'details') || (toggle !== '+' && toggle !== '-')) {
+  if (!kind || (toggle !== '+' && toggle !== '-')) {
     return null
   }
 
@@ -134,17 +198,21 @@ export function formatRoxBlockMarkdown(marker: RoxBlockMarker, body = ''): strin
 /**
  * JSON inserted by the slash menu. It intentionally uses only built-in
  * blockquote/paragraph nodes, which tiptap-markdown serializes as `>` lines.
+ * Semantic kinds start expanded (`+`); spoiler starts collapsed (`-`).
  */
 export function createRoxBlockContent(
   kind: RoxBlockKind,
-  title = i18n.t(kind === 'spoiler' ? 'notes.slash.spoiler' : 'notes.blocks.details'),
+  title = i18n.t(defaultRoxBlockTitleKey(kind)),
 ): JSONContent {
   return {
     type: 'blockquote',
     content: [
       {
         type: 'paragraph',
-        content: [{ type: 'text', text: formatRoxBlockMarker({ kind, toggle: '-', title }) }],
+        content: [{
+          type: 'text',
+          text: formatRoxBlockMarker({ kind, toggle: defaultRoxBlockToggle(kind), title }),
+        }],
       },
       { type: 'paragraph' },
     ],
@@ -152,7 +220,7 @@ export function createRoxBlockContent(
 }
 
 /**
- * Finds Obsidian-compatible spoiler/details callouts inside a normal document.
+ * Finds Obsidian-compatible Rox callouts inside a normal document.
  * A valid callout must start with a plain paragraph whose first line is a
  * marker. The official parser may retain quoted body text in that same
  * paragraph; styled or compound marker lines are still rejected.
@@ -301,6 +369,7 @@ export function buildRoxBlockDecorations(
         class: `tiptap-rox-block tiptap-rox-block--${target.marker.kind}`,
         'data-rox-block-collapsed': String(collapsed),
         'data-rox-block-kind': target.marker.kind,
+        'data-rox-kind': target.marker.kind,
       }),
       Decoration.widget(
         target.markerTextFrom,
@@ -327,10 +396,10 @@ export function buildRoxBlockDecorations(
 }
 
 /**
- * Editable presentation layer for portable spoiler/details callouts.
- * Clicking the control rewrites only the marker's +/- character through the
- * canonical serializer, so collapse state is durable Markdown rather than
- * hidden editor-only state.
+ * Editable presentation layer for portable Rox callouts (note/info/warning/…
+ * plus spoiler/details). Clicking the control rewrites only the marker's +/-
+ * character through the canonical serializer, so collapse state is durable
+ * Markdown rather than hidden editor-only state.
  */
 export const RoxBlockCallout = Extension.create<RoxBlockCalloutOptions>({
   name: 'roxBlockCallout',

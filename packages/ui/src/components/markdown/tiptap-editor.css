@@ -698,13 +698,12 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 }
 
 
-/* Portable Obsidian callouts: `> [!spoiler]- Title` and `> [!details]+ Title`.
-   The marker remains real Markdown text for direct editing and lossless export;
-   this control only adds an editor affordance next to it. */
+/* Portable Obsidian callouts: `> [!kind]± Title` (note/info/warning/tip/success/
+   question/spoiler/details). Marker stays real Markdown; decoration themes by kind. */
 .tiptap-editor .tiptap-prose blockquote.tiptap-rox-block {
   position: relative;
   border-left-color: color-mix(in oklch, var(--accent) 55%, transparent);
-  border-radius: 0 0.5rem 0.5rem 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   background: color-mix(in oklch, var(--accent) 5%, transparent);
   padding: 0.5rem 0.75rem;
   font-style: normal;
@@ -714,6 +713,42 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   margin-top: 0;
   font-weight: 600;
   color: color-mix(in oklch, var(--foreground) 85%, var(--accent));
+}
+
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--note {
+  border-left-color: color-mix(in oklch, var(--foreground) 28%, transparent);
+  background: color-mix(in oklch, var(--foreground) 4%, transparent);
+}
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--note > p:first-child {
+  color: color-mix(in oklch, var(--foreground) 88%, var(--accent));
+}
+
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--info,
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--tip,
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--question,
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--warning {
+  border-left-color: color-mix(in oklch, var(--info) 55%, transparent);
+  background: color-mix(in oklch, var(--info) 6%, transparent);
+}
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--info > p:first-child,
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--tip > p:first-child,
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--question > p:first-child,
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--warning > p:first-child {
+  color: color-mix(in oklch, var(--foreground) 70%, var(--info));
+}
+
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--success {
+  border-left-color: color-mix(in oklch, var(--success) 55%, transparent);
+  background: color-mix(in oklch, var(--success) 6%, transparent);
+}
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--success > p:first-child {
+  color: color-mix(in oklch, var(--foreground) 70%, var(--success));
+}
+
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--spoiler,
+.tiptap-editor .tiptap-prose blockquote.tiptap-rox-block--details {
+  border-left-color: color-mix(in oklch, var(--accent) 55%, transparent);
+  background: color-mix(in oklch, var(--accent) 5%, transparent);
 }
 
 .tiptap-editor .tiptap-rox-block-toggle {

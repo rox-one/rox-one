@@ -402,6 +402,72 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
       run: (e, insertPos) => insertRoxTabsContent(e, 2, insertPos),
     },
     {
+      id: 'callout-note',
+      title: slashTitle('notes.slash.note', 'Note'),
+      description: slashTitle('notes.slash.noteDescription', 'Insert a note callout'),
+      icon: 'quote',
+      group: 'Blocks',
+      aliases: ['note', 'callout', 'annotation'],
+      run: (e, insertPos) => {
+        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('note', slashTitle('notes.slash.note', 'Note'))).run()
+      },
+    },
+    {
+      id: 'callout-info',
+      title: slashTitle('notes.slash.info', 'Info'),
+      description: slashTitle('notes.slash.infoDescription', 'Insert an info callout'),
+      icon: 'quote',
+      group: 'Blocks',
+      aliases: ['info', 'information'],
+      run: (e, insertPos) => {
+        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('info', slashTitle('notes.slash.info', 'Info'))).run()
+      },
+    },
+    {
+      id: 'callout-warning',
+      title: slashTitle('notes.slash.warning', 'Warning'),
+      description: slashTitle('notes.slash.warningDescription', 'Insert a warning callout'),
+      icon: 'quote',
+      group: 'Blocks',
+      aliases: ['warning', 'caution', 'attention'],
+      run: (e, insertPos) => {
+        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('warning', slashTitle('notes.slash.warning', 'Warning'))).run()
+      },
+    },
+    {
+      id: 'callout-tip',
+      title: slashTitle('notes.slash.tip', 'Tip'),
+      description: slashTitle('notes.slash.tipDescription', 'Insert a tip callout'),
+      icon: 'quote',
+      group: 'Blocks',
+      aliases: ['tip', 'hint', 'important'],
+      run: (e, insertPos) => {
+        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('tip', slashTitle('notes.slash.tip', 'Tip'))).run()
+      },
+    },
+    {
+      id: 'callout-success',
+      title: slashTitle('notes.slash.success', 'Success'),
+      description: slashTitle('notes.slash.successDescription', 'Insert a success callout'),
+      icon: 'quote',
+      group: 'Blocks',
+      aliases: ['success', 'check', 'done'],
+      run: (e, insertPos) => {
+        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('success', slashTitle('notes.slash.success', 'Success'))).run()
+      },
+    },
+    {
+      id: 'callout-question',
+      title: slashTitle('notes.slash.question', 'Question'),
+      description: slashTitle('notes.slash.questionDescription', 'Insert a question callout'),
+      icon: 'quote',
+      group: 'Blocks',
+      aliases: ['question', 'help', 'faq'],
+      run: (e, insertPos) => {
+        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('question', slashTitle('notes.slash.question', 'Question'))).run()
+      },
+    },
+    {
       id: 'spoiler',
       title: slashTitle('notes.slash.spoiler', 'Spoiler'),
       description: slashTitle('notes.slash.spoilerDescription', 'Insert a foldable spoiler callout'),
@@ -410,6 +476,17 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
       aliases: ['spoiler', 'hidden', 'fold'],
       run: (e, insertPos) => {
         e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('spoiler', slashTitle('notes.slash.spoiler', 'Spoiler'))).run()
+      },
+    },
+    {
+      id: 'callout-details',
+      title: slashTitle('notes.slash.details', 'Details'),
+      description: slashTitle('notes.slash.detailsDescription', 'Insert a foldable details callout'),
+      icon: 'quote',
+      group: 'Blocks',
+      aliases: ['details', 'expand', 'more'],
+      run: (e, insertPos) => {
+        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('details', slashTitle('notes.blocks.details', 'Details'))).run()
       },
     },
     {
