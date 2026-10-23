@@ -4636,5 +4636,9 @@ export interface CanvasBridge {
   setEnabled(enabled: boolean): Promise<{ ok: true; enabled: boolean }>
   listTrash(workspaceId: string): Promise<CanvasTrashedBoard[]>
   restore(workspaceId: string, boardId: string, stamp: number): Promise<CanvasBoardSummary>
+  /** Write image bytes under <ws>/canvas/assets/<sha256>; returns content-addressed meta. */
+  putAsset(workspaceId: string, bytes: Uint8Array, mime: string, name: string): Promise<{ hash: string; mime: string; size: number; name: string }>
+  /** Read asset bytes by sha256 hash. */
+  getAsset(workspaceId: string, hash: string): Promise<Uint8Array>
   onUpdate(callback: (workspaceId: string, boardId: string, update: Uint8Array) => void): () => void
 }
