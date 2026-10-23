@@ -13,7 +13,6 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { routes } from '@/lib/navigate'
-import { Spinner } from '@rox/ui'
 import { toast } from 'sonner'
 import {
   SettingsSection,
@@ -22,6 +21,7 @@ import {
   SettingsInput,
   SettingsRow,
   SettingsSelect,
+  SettingsLoadingSkeleton,
 } from '@/components/settings'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type {
@@ -298,11 +298,7 @@ export default function OrganizationsSettingsPage() {
   }, [canManageInvites, membershipAction, refresh, selected, t])
 
   if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Spinner className="h-5 w-5" />
-      </div>
-    )
+    return <SettingsLoadingSkeleton variant="panel" />
   }
 
   return (
