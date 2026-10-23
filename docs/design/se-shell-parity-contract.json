@@ -18,17 +18,23 @@
     {
       "id": "composer-radius-10",
       "title": "Composer radius 10px",
-      "paths": ["packages/ui/src/styles/index.css"]
+      "paths": [
+        "packages/ui/src/styles/index.css"
+      ]
     },
     {
       "id": "pill-radius-8",
       "title": "Mode pill density radius 8px",
-      "paths": ["apps/electron/src/renderer/index.css"]
+      "paths": [
+        "apps/electron/src/renderer/index.css"
+      ]
     },
     {
       "id": "chrome-blur-20",
       "title": "SE chrome-plate/glass blur 20px",
-      "paths": ["packages/ui/src/styles/index.css"]
+      "paths": [
+        "packages/ui/src/styles/index.css"
+      ]
     },
     {
       "id": "popover-blur-accents",
@@ -44,24 +50,25 @@
         "packages/ui/src/components/ui/PremiumMenu.tsx",
         "packages/ui/src/components/ui/SimpleDropdown.tsx"
       ]
+    },
+    {
+      "id": "worktree-hover-delay",
+      "title": "Compact WorktreeHoverCard 250ms hover delay (spec 200\u2013300ms)",
+      "paths": [
+        "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx"
+      ]
     }
   ],
   "gaps": [
     {
       "id": "G1",
-      "spec": "§4 icons v2",
+      "spec": "\u00a74 icons v2",
       "title": "Optional packages/ui/src/icons/se SVG extract missing",
       "severity": "optional"
     },
     {
-      "id": "G2",
-      "spec": "§3 compact hover",
-      "title": "WorktreeHoverCard lacks 200–300ms hover delay",
-      "severity": "shell"
-    },
-    {
       "id": "G3",
-      "spec": "§3 width",
+      "spec": "\u00a73 width",
       "title": "Workspace navigator ~260 design width not contract-locked",
       "severity": "shell"
     },
