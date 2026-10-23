@@ -837,6 +837,15 @@ export interface NoteSummary {
   size: number
 }
 
+/** Library template under notes/templates/ (filename without .md). */
+export interface NoteTemplateSummary {
+  id: string
+  title: string
+  /** Relative path under the vault templates directory. */
+  relativePath: string
+  updatedAt: number
+}
+
 export interface NoteDocument extends NoteSummary {
   /** Immutable journal identity; path-derived id may change after move/rename. */
   nativeId?: string

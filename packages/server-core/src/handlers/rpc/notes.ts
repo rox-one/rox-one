@@ -7,7 +7,7 @@ import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
 import { loadWorkspaceConfig } from '@rox/shared/workspaces'
 import matter from 'gray-matter'
 import yaml from 'js-yaml'
-import { RPC_CHANNELS, type CreateNoteCommentInput, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteCommentAnchor, type NoteCommentReaction, type NoteCommentThread, type NoteDocument, type NoteHistoryEntry, type NoteHistoryRevision, type NoteIndexHealth, type NoteLink, type NoteMutationOptions, type NoteRenameImpact, type NoteSummary, type UpdateNoteCommentInput } from '@rox/shared/protocol'
+import { RPC_CHANNELS, type CreateNoteCommentInput, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteCommentAnchor, type NoteCommentReaction, type NoteCommentThread, type NoteDocument, type NoteHistoryEntry, type NoteHistoryRevision, type NoteIndexHealth, type NoteLink, type NoteMutationOptions, type NoteRenameImpact, type NoteSummary, type NoteTemplateSummary, type UpdateNoteCommentInput } from '@rox/shared/protocol'
 import type { NativeReplicaCreatePlan } from '@rox/shared/protocol/native-replica'
 import { pushTyped, type RpcServer, type RequestContext } from '@rox/server-core/transport'
 import { sanitizeFilename } from '@rox/server-core/handlers'
@@ -1844,6 +1844,88 @@ export function nativeNotesKnowledgeAccess(deps: HandlerDeps, ctx: RequestContex
   }
 }
 
+
+function templateIdFromRelativePath(relativePath: string): string {
+  return relativePath.replace(/\.md$/i, '')
+}
+
+function assertSafeTemplateId(templateId: string): string {
+  const id = assertSafeNoteId(templateId)
+  if (id.split('/').some(part => part === TEMPLATES_DIR)) throw new Error('Invalid template id')
+  return id
+}
+
+export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteTemplateSummary[]> {
+  await ensureNotesDirs(notesRoot)
+  const root = join(notesRoot, TEMPLATES_DIR)
+  const out: NoteTemplateSummary[] = []
+  async function walk(dir: string, prefix: string): Promise<void> {
+    let entries
+    try { entries = await readdir(dir, { withFileTypes: true }) } catch { return }
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue
+      const abs = join(dir, entry.name)
+      const rel = prefix ? `${prefix}/${entry.name}` : entry.name
+      if (entry.isDirectory()) {
+        await walk(abs, rel)
+        continue
+      }
+      if (!entry.name.endsWith('.md')) continue
+      const content = await readFile(abs, 'utf-8').catch(() => '')
+      const parsed = parseFrontmatter(content)
+      const id = templateIdFromRelativePath(rel)
+      const title = typeof parsed.properties.title === 'string' && parsed.properties.title.trim()
+        ? parsed.properties.title.trim()
+        : titleFromId(id)
+      const info = await stat(abs).catch(() => null)
+      out.push({
+        id,
+        title,
+        relativePath: `${TEMPLATES_DIR}/${rel}`,
+        updatedAt: info?.mtimeMs ?? 0,
+      })
+    }
+  }
+  await walk(root, '')
+  out.sort((a, b) => a.title.localeCompare(b.title) || a.id.localeCompare(b.id))
+  return out
+}
+
+export async function readNoteTemplateContent(notesRoot: string, templateId: string): Promise<{ title: string; body: string; properties: Record<string, unknown> }> {
+  await ensureNotesDirs(notesRoot)
+  const id = assertSafeTemplateId(templateId)
+  const filePath = join(notesRoot, TEMPLATES_DIR, `${id}.md`)
+  if (!isInsidePath(join(notesRoot, TEMPLATES_DIR), filePath)) throw new Error('Invalid template id')
+  const content = await readFile(filePath, 'utf-8')
+  const parsed = parseFrontmatter(content)
+  const title = typeof parsed.properties.title === 'string' && parsed.properties.title.trim()
+    ? parsed.properties.title.trim()
+    : titleFromId(id)
+  const properties = { ...parsed.properties }
+  delete properties.title
+  return { title, body: parsed.body, properties }
+}
+
+export async function saveNoteAsTemplateForRoot(
+  notesRoot: string,
+  input: { templateId: string; title: string; body: string; properties?: Record<string, unknown> },
+): Promise<NoteTemplateSummary> {
+  await ensureNotesDirs(notesRoot)
+  const id = assertSafeTemplateId(input.templateId)
+  const filePath = join(notesRoot, TEMPLATES_DIR, `${id}.md`)
+  if (!isInsidePath(join(notesRoot, TEMPLATES_DIR), filePath)) throw new Error('Invalid template id')
+  await mkdir(dirname(filePath), { recursive: true })
+  const properties = { ...(input.properties ?? {}), title: input.title.trim() || titleFromId(id) }
+  // Templates keep content identity only — drop path/runtime-ish keys.
+  for (const key of ['createdAt', 'cover', 'icon']) delete properties[key]
+  const content = stringifyNoteContent(input.body ?? '', properties)
+  await writeFile(filePath, content, 'utf-8')
+  const listed = await listNoteTemplatesForRoot(notesRoot)
+  const hit = listed.find(item => item.id === id)
+  if (!hit) throw new Error('Template save failed')
+  return hit
+}
+
 export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): void {
   const originalServer = server
   server = new Proxy(originalServer, { get(target, property) {
@@ -2576,6 +2658,72 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     await refreshVaultIndex(notesRoot)
     changed({ workspaceId, reason: 'properties', noteId: note.id })
     return note
+  }, { nativeAction: 'write' })
+
+
+  server.handle(RPC_CHANNELS.notes.LIST_TEMPLATES, async (_ctx, workspaceId: string) => {
+    return listNoteTemplatesForRoot(getWorkspaceNotesRoot(workspaceId))
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.notes.CREATE_FROM_TEMPLATE, async (ctx, workspaceId: string, templateId: string, title?: string, folder?: string, operation?: NativeNoteOperation) => {
+    const notesRoot = getWorkspaceNotesRoot(workspaceId)
+    const template = await readNoteTemplateContent(notesRoot, templateId)
+    const noteTitle = (typeof title === 'string' && title.trim()) ? title.trim() : template.title
+    const properties = {
+      ...template.properties,
+      title: noteTitle,
+      tags: Array.isArray(template.properties.tags) ? template.properties.tags : [],
+      createdAt: Date.now(),
+    }
+    const initialContent = stringifyNoteContent(template.body, properties)
+    const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: noteTitle || 'untitled' })
+    if (!isClaimableLive(act)) throw new Error('note create is not live')
+    if (ctx.principal) {
+      const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
+      const safeFolder = folder ? assertSafeNoteId(folder) : ''
+      const filename = safeNoteFilename(noteTitle || 'Untitled')
+      const relativeId = safeFolder ? `${safeFolder}/${stripMdExtension(filename)}` : stripMdExtension(filename)
+      const path = `${NOTES_DIR}/${relativeId}.md`
+      const metadata = nativeOperation(operation)
+      if (metadata.expectedRevision !== null) throw new Error('native note create requires expectedRevision:null')
+      await commitNativeNote(deps, context, relativeId, metadata, [{ path, content: initialContent }])
+      const created = await findNativeNote(deps, context, relativeId)
+      const note = await nativeNoteDocument(deps, context, created.entity, created.file, created.entities)
+      awardNativeXpAndBroadcast(server, deps, ctx, 'first_note', JSON.stringify([workspaceId, created.entity.nativeId]))
+      await indexNativeNoteLinks(workspaceId, note, { reset: true })
+      changed({ workspaceId, reason: 'create', noteId: note.id })
+      return note
+    }
+    nativeContent.assertScope(ctx, workspaceId)
+    const safeFolder = folder ? assertSafeNoteId(folder) : ''
+    const dir = safeFolder ? resolve(notesRoot, safeFolder) : notesRoot
+    if (!isInsidePath(notesRoot, dir)) throw new Error('Invalid note folder')
+    await ensureSafeNoteDirectory(notesRoot, dir)
+    let filePath = join(dir, safeNoteFilename(noteTitle || 'Untitled'))
+    let suffix = 2
+    while (existsSync(filePath)) {
+      filePath = join(dir, `${sanitizeFilename(noteTitle || 'Untitled')}-${suffix++}.md`)
+    }
+    const noteId = noteIdFromRelativePath(relative(notesRoot, filePath))
+    await nativeContent.writeNative(ctx, workspaceId, 'create', [{ kind: 'write', noteId, expectedRevision: null, content: initialContent }])
+    await refreshVaultIndex(notesRoot)
+    const note = await readNote(notesRoot, noteId)
+    changed({ workspaceId, reason: 'create', noteId: note.id })
+    return note
+  }, { nativeAction: 'write' })
+
+  server.handle(RPC_CHANNELS.notes.SAVE_AS_TEMPLATE, async (_ctx, workspaceId: string, input: {
+    templateId: string
+    title: string
+    body: string
+    properties?: Record<string, unknown>
+  }) => {
+    if (!input || typeof input.templateId !== 'string' || typeof input.title !== 'string' || typeof input.body !== 'string') {
+      throw new Error('Invalid saveAsTemplate input')
+    }
+    const saved = await saveNoteAsTemplateForRoot(getWorkspaceNotesRoot(workspaceId), input)
+    changed({ workspaceId, reason: 'descriptor' })
+    return saved
   }, { nativeAction: 'write' })
 
   server.handle(RPC_CHANNELS.notes.WATCH, async (ctx, workspaceId: string) => {
