@@ -40,7 +40,7 @@ export interface CommentComposerProps {
 
 export interface CommentsThreadProps {
   comments: readonly CommentItem[]
-  onCreate?: (body: string, parentId?: string) => void
+  onCreate?: (body: string, parentId?: string) => void | Promise<void>
   onEdit?: (id: string, body: string) => void
   onDelete?: (id: string) => void
   onToggleReaction?: (id: string, emoji: string) => void
@@ -91,8 +91,14 @@ export function CommentsThread(props: CommentsThreadProps) {
   const submit = () => {
     const body = draft.trim()
     if (!body || !onCreate) return
-    onCreate(body)
-    setDraft('')
+    void (async () => {
+      try {
+        await onCreate(body)
+        setDraft('')
+      } catch {
+        // Keep the draft so the author can retry after a failed create.
+      }
+    })()
   }
   const composerProps: CommentComposerProps = { value: draft, onChange: setDraft, onSubmit: submit, placeholder: t('entities.ui.comments.placeholder') }
 
@@ -191,7 +197,19 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
             submitLabel={t('entities.ui.comments.reply')}
             cancelLabel={t('entities.ui.comments.cancel')}
             onCancel={() => { setReplying(false); setReplyDraft('') }}
-            onSubmit={() => { const body = replyDraft.trim(); if (body) { thread.onCreate?.(body, comment.id); setReplying(false); setReplyDraft('') } }}
+            onSubmit={() => {
+              const body = replyDraft.trim()
+              if (!body || !thread.onCreate) return
+              void (async () => {
+                try {
+                  await thread.onCreate(body, comment.id)
+                  setReplying(false)
+                  setReplyDraft('')
+                } catch {
+                  // Keep the reply composer open with the draft on failure.
+                }
+              })()
+            }}
           />
         ) : null}
       </div>
