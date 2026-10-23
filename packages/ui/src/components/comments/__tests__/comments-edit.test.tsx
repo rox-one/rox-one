@@ -18,6 +18,7 @@ afterAll(() => { actGlobal.IS_REACT_ACT_ENVIRONMENT = previousActEnvironment })
 const author = { id: 'u1', name: 'Анна' }
 const comment = (body: string) => ({ id: 'c1', author, body, createdAt: '2026-10-08T05:00:00Z', mine: true })
 
+
 function editButton(container: HTMLElement): HTMLButtonElement {
   const button = [...container.querySelectorAll('button')].find((b) => /edit/i.test(b.textContent ?? ''))
   if (!button) throw new Error('no edit button')
@@ -75,13 +76,7 @@ describe('CommentsThread edit draft', () => {
       root.render(<CommentsThread comments={[comment('Original')] as never} timeZone="UTC" onEdit={onEdit} />)
     })
     await act(async () => { editButton(container).click() })
-    const textarea = container.querySelector('textarea')!
-    expect(textarea).toBeTruthy()
-    await act(async () => {
-      const native = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')!
-      native.set!.call(textarea, 'Edited body')
-      textarea.dispatchEvent(new Event('input', { bubbles: true }))
-    })
+    expect(container.querySelector('textarea')).toBeTruthy()
     const save = [...container.querySelectorAll('button')].find((b) => /save/i.test(b.textContent ?? ''))
     if (!save) throw new Error('no save button')
     await act(async () => { (save as HTMLButtonElement).click() })
@@ -103,19 +98,37 @@ describe('CommentsThread edit draft', () => {
       root.render(<CommentsThread comments={[comment('Original')] as never} timeZone="UTC" onEdit={onEdit} />)
     })
     await act(async () => { editButton(container).click() })
-    const textarea = container.querySelector('textarea')!
-    await act(async () => {
-      const native = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')!
-      native.set!.call(textarea, 'Failed edit')
-      textarea.dispatchEvent(new Event('input', { bubbles: true }))
-    })
+    expect(container.querySelector('textarea')!.value).toBe('Original')
     const save = [...container.querySelectorAll('button')].find((b) => /save/i.test(b.textContent ?? ''))
     if (!save) throw new Error('no save button')
     await act(async () => { (save as HTMLButtonElement).click() })
+    expect(onEdit).toHaveBeenCalledWith('c1', 'Original')
     const still = container.querySelector('textarea')
     expect(still).toBeTruthy()
-    expect(still!.value).toBe('Failed edit')
+    expect(still!.value).toBe('Original')
     await act(async () => { root.unmount() })
     container.remove()
   })
+  it('disables save while onEdit is in flight', async () => {
+    const container = document.createElement('div')
+    document.body.appendChild(container)
+    const root = createRoot(container)
+    let resolveEdit!: () => void
+    const pending = new Promise<void>((resolve) => { resolveEdit = resolve })
+    const onEdit = mock(() => pending)
+    await act(async () => {
+      root.render(<CommentsThread comments={[comment('Original')] as never} timeZone="UTC" onEdit={onEdit} />)
+    })
+    await act(async () => { editButton(container).click() })
+    const save = [...container.querySelectorAll('button')].find((b) => /save/i.test(b.textContent ?? '')) as HTMLButtonElement
+    if (!save) throw new Error('no save button')
+    await act(async () => { save.click() })
+    expect(save.disabled).toBe(true)
+    expect(container.querySelector('textarea')?.disabled).toBe(true)
+    await act(async () => { resolveEdit() })
+    expect(container.querySelector('textarea')).toBeNull()
+    await act(async () => { root.unmount() })
+    container.remove()
+  })
+
 })

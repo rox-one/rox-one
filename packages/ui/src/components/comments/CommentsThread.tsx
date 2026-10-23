@@ -36,6 +36,8 @@ export interface CommentComposerProps {
   onChange: (value: string) => void
   onSubmit: () => void
   placeholder: string
+  /** True while an async create/edit is in flight — disables submit. */
+  submitting?: boolean
 }
 
 export interface CommentsThreadProps {
@@ -51,7 +53,8 @@ export interface CommentsThreadProps {
   className?: string
 }
 
-function TextComposer({ value, onChange, onSubmit, placeholder, submitLabel, onCancel, cancelLabel, autoFocus }: CommentComposerProps & { submitLabel: string; onCancel?: () => void; cancelLabel?: string; autoFocus?: boolean }) {
+function TextComposer({ value, onChange, onSubmit, placeholder, submitLabel, onCancel, cancelLabel, autoFocus, submitting }: CommentComposerProps & { submitLabel: string; onCancel?: () => void; cancelLabel?: string; autoFocus?: boolean }) {
+  const busy = Boolean(submitting)
   return (
     <div className="flex flex-col gap-1">
       <textarea
@@ -60,20 +63,22 @@ function TextComposer({ value, onChange, onSubmit, placeholder, submitLabel, onC
         rows={2}
         placeholder={placeholder}
         aria-label={placeholder}
+        disabled={busy}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
+          if (busy) return
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); onSubmit() }
           if (e.key === 'Escape' && onCancel) { e.preventDefault(); onCancel() }
         }}
-        className={cn('min-h-12 resize-y rounded-sm bg-foreground/[0.04] px-2 py-1.5 text-base placeholder:text-text-muted', FOCUS_RING)}
+        className={cn('min-h-12 resize-y rounded-sm bg-foreground/[0.04] px-2 py-1.5 text-base placeholder:text-text-muted disabled:opacity-50', FOCUS_RING)}
       />
       <div className="flex justify-end gap-1">
         {onCancel ? (
-          <button type="button" onClick={onCancel} className={cn('h-7 rounded-sm px-2 text-sm text-text-secondary', HOVER_TINT, FOCUS_RING)}>{cancelLabel}</button>
+          <button type="button" disabled={busy} onClick={onCancel} className={cn('h-7 rounded-sm px-2 text-sm text-text-secondary disabled:opacity-50', HOVER_TINT, FOCUS_RING)}>{cancelLabel}</button>
         ) : null}
         <button
           type="button"
-          disabled={!value.trim()}
+          disabled={busy || !value.trim()}
           onClick={onSubmit}
           className={cn('h-7 rounded-sm bg-accent px-3 text-sm font-medium text-[var(--accent-foreground,white)] disabled:opacity-50', MOTION_FAST, FOCUS_RING)}
         >
@@ -88,19 +93,29 @@ export function CommentsThread(props: CommentsThreadProps) {
   const { comments, onCreate, allowReplies = true, className } = props
   const { t } = useTranslation()
   const [draft, setDraft] = React.useState('')
+  const [submitting, setSubmitting] = React.useState(false)
   const submit = () => {
     const body = draft.trim()
-    if (!body || !onCreate) return
+    if (!body || !onCreate || submitting) return
+    setSubmitting(true)
     void (async () => {
       try {
         await onCreate(body)
         setDraft('')
       } catch {
         // Keep the draft so the author can retry after a failed create.
+      } finally {
+        setSubmitting(false)
       }
     })()
   }
-  const composerProps: CommentComposerProps = { value: draft, onChange: setDraft, onSubmit: submit, placeholder: t('entities.ui.comments.placeholder') }
+  const composerProps: CommentComposerProps = {
+    value: draft,
+    onChange: setDraft,
+    onSubmit: submit,
+    placeholder: t('entities.ui.comments.placeholder'),
+    submitting,
+  }
 
   return (
     <section aria-label={t('entities.ui.comments.title')} className={cn('flex flex-col gap-3', className)}>
@@ -126,8 +141,10 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
   const { t, i18n } = useTranslation()
   const [editing, setEditing] = React.useState(false)
   const [editDraft, setEditDraft] = React.useState(comment.body)
+  const [editSubmitting, setEditSubmitting] = React.useState(false)
   const [replying, setReplying] = React.useState(false)
   const [replyDraft, setReplyDraft] = React.useState('')
+  const [replySubmitting, setReplySubmitting] = React.useState(false)
   // Host-independent timestamp: format the date and the clock with two
   // separate Intl formatters joined by a literal ', '. A single formatter
   // emits locale glue ("at" on macOS ICU, a comma on Linux CLDR), which makes
@@ -159,20 +176,24 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
             value={editDraft}
             onChange={setEditDraft}
             autoFocus
+            submitting={editSubmitting}
             placeholder={t('entities.ui.comments.placeholder')}
             submitLabel={t('entities.ui.comments.save')}
             cancelLabel={t('entities.ui.comments.cancel')}
-            onCancel={() => { setEditing(false); setEditDraft(comment.body) }}
+            onCancel={() => { if (!editSubmitting) { setEditing(false); setEditDraft(comment.body) } }}
             onSubmit={() => {
               const body = editDraft.trim()
               const edit = thread.onEdit
-              if (!body || !edit) return
+              if (!body || !edit || editSubmitting) return
+              setEditSubmitting(true)
               void (async () => {
                 try {
                   await edit(comment.id, body)
                   setEditing(false)
                 } catch {
                   // Keep the editor open with the draft on failure.
+                } finally {
+                  setEditSubmitting(false)
                 }
               })()
             }}
@@ -205,14 +226,16 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
             value={replyDraft}
             onChange={setReplyDraft}
             autoFocus
+            submitting={replySubmitting}
             placeholder={t('entities.ui.comments.placeholder')}
             submitLabel={t('entities.ui.comments.reply')}
             cancelLabel={t('entities.ui.comments.cancel')}
-            onCancel={() => { setReplying(false); setReplyDraft('') }}
+            onCancel={() => { if (!replySubmitting) { setReplying(false); setReplyDraft('') } }}
             onSubmit={() => {
               const body = replyDraft.trim()
               const create = thread.onCreate
-              if (!body || !create) return
+              if (!body || !create || replySubmitting) return
+              setReplySubmitting(true)
               void (async () => {
                 try {
                   await create(body, comment.id)
@@ -220,6 +243,8 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
                   setReplyDraft('')
                 } catch {
                   // Keep the reply composer open with the draft on failure.
+                } finally {
+                  setReplySubmitting(false)
                 }
               })()
             }}
