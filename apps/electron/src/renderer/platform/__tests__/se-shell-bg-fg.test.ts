@@ -68,7 +68,7 @@ describe('SE shared shell bg/fg (canon #0d0d0f / #e8eaed)', () => {
   it('SE CSS pins frame/content fg + chrome labels to --foreground', () => {
     expect(seBare).toContain('--frame-fg: var(--foreground)')
     expect(seBare).toContain('--content-fg: var(--foreground)')
-    expect(seBare).toContain('.rox-rail-label')
+    expect(seBare).toContain('.rox-rail-row:not([aria-disabled="true"]):not([aria-current="page"]) .rox-rail-label')
     expect(seBare).toContain('.rox-mode-pill-item[aria-current="page"]')
     expect(seBare).toContain('[data-layout="panel-header"] h1')
     expect(seBare).toContain('color: var(--foreground)')

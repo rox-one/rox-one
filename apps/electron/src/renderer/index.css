@@ -2321,7 +2321,7 @@ html[data-ui-profile="super-engineering"] {
 /* Expanded ActivityRail labels: full foreground (row may still use
    --chrome-label for icon-only collapsed chrome). Active rows keep accent
    via text-accent on the row. */
-html[data-ui-profile="super-engineering"] .rox-rail-row:not([aria-current="page"]) .rox-rail-label {
+html[data-ui-profile="super-engineering"] .rox-rail-row:not([aria-disabled="true"]):not([aria-current="page"]) .rox-rail-label {
   color: var(--foreground);
 }
 
