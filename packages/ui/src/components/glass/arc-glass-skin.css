@@ -1,11 +1,12 @@
-/* SE optional glass accents: applies the glass material to Rox Engineering
-   chrome only (no content slots). Loaded lazily (installGlassSkin) under
-   html[data-ui-profile="super-engineering"][data-glass-accents]
-   (theme-layer glass intensity > 0). Chrome slots: .rox-mode-pill, popover,
-   composer, mini-button. Refraction: static pill / Rox Mini on full tier only,
-   never composer/popovers. Blur is static; SE blur scales via material.css.
-   Not an Arc Glass theme. */
-html[data-ui-profile="super-engineering"][data-glass-accents] :is(.rox-mode-pill, [data-glass-slot="popover"], [data-glass-slot="composer"], [data-glass-slot="mini-button"]) {
+/* SE optional glass accents: Rox Engineering chrome only. Loaded lazily
+   (installGlassSkin) under html[data-ui-profile="super-engineering"][data-glass-accents]
+   (theme-layer glass intensity > 0). Slots: .rox-mode-pill, popover, composer,
+   mini-button. Pill / popover / mini get static backdrop blur (fixed 20px via
+   material.css when accents are on). Composer is fill/tint only (≥70% mix) —
+   no backdrop-filter, no refraction. Refraction: static pill / Rox Mini on
+   full tier only. Not an Arc Glass theme. */
+/* Pill / popover / mini: fill + static backdrop blur (fixed 20px when on). */
+html[data-ui-profile="super-engineering"][data-glass-accents] :is(.rox-mode-pill, [data-glass-slot="popover"], [data-glass-slot="mini-button"]) {
   --glass-fill: var(--background);
   --glass-fill-mix: var(--glass-tint);
 
@@ -20,17 +21,27 @@ html[data-ui-profile="super-engineering"][data-glass-accents] :is(.rox-mode-pill
   box-shadow: var(--glass-shadow);
 }
 
-/* Readable surfaces: popovers/menus and the composer carry their own surface
-   colour at a high mix (lightly scaled by intensity, never below 70%); the
-   pill and Rox Mini buttons keep the lighter glass tint. */
+/* Popovers/menus: readable surface colour at a high mix (never below 70%). */
 html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="popover"] {
   --glass-fill: var(--popover);
   --glass-fill-mix: max(70%, calc(86% - 10% * var(--glass-intensity)));
 }
 
+/* Composer: fill/tint only (≥70%) — no backdrop-filter, no refraction. */
 html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="composer"] {
   --glass-fill: var(--background);
   --glass-fill-mix: max(70%, calc(81% - 10% * var(--glass-intensity)));
+
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white calc(var(--glass-specular-alpha) + var(--glass-hover-boost, 0%)), transparent) 0%,
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--glass-fill) calc(var(--glass-fill-mix) + var(--glass-hover-boost, 0%)), transparent);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Accent buttons (Rox Mini send) stay accent: an accent tint over the glass. */

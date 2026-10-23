@@ -1454,31 +1454,33 @@ html[data-contrast="high"] :is(.popover-styled, [data-slot="popover-content"], .
    a11y/performance gates above still reset the popover when they are active.
    With the layer off the popover stays opaque exactly as before.
 
-   Arc Glass (`html[data-theme="arc-glass"]`) and SE optional accents
-   (`html[data-ui-profile="super-engineering"][data-glass-accents]`) are further
-   exceptions: their chrome/overlay glass (data-glass-slot popover etc.) draws
-   fill + static blur in packages/ui glass CSS, so the reset would cancel it.
-   The a11y/performance gates still turn that blur off — see the degradation
-   blocks in the glass stylesheets (and data-render-profile / contrast below).
+   Arc Glass (`html[data-theme="arc-glass"]`) is a document-wide exception for
+   its legacy overlay skin. SE optional accents do NOT exempt the whole document:
+   toast / tooltip / hover-card / dialog / alertdialog / select stay reset. Only
+   chrome targets the SE skin paints keep blur — menus/popovers that carry
+   data-glass-slot="popover" (excluded below), plus [data-slot="popover-content"]
+   when SE accents are on. Composer is fill-only (no backdrop blur) and stays
+   under any opaque reset. A11y/performance gates still zero blur.
 ============================================================================= */
-html:not([data-theme="arc-glass"]):not([data-ui-profile="super-engineering"][data-glass-accents]) :is(
+html:not([data-theme="arc-glass"]) :is(
   [data-sonner-toast],
   [data-slot="tooltip-content"],
   [data-slot="hover-card-content"],
-  [data-slot="dropdown-menu-content"],
-  [data-slot="dropdown-menu-sub-content"],
-  [data-slot="context-menu-content"],
-  [data-slot="context-menu-sub-content"],
+  [data-slot="dropdown-menu-content"]:not([data-glass-slot="popover"]),
+  [data-slot="dropdown-menu-sub-content"]:not([data-glass-slot="popover"]),
+  [data-slot="context-menu-content"]:not([data-glass-slot="popover"]),
+  [data-slot="context-menu-sub-content"]:not([data-glass-slot="popover"]),
   [data-slot="select-content"],
   [data-slot="dialog-content"],
   [role="tooltip"],
-  [role="menu"],
+  [role="menu"]:not([data-glass-slot="popover"]),
   [role="dialog"]:not([data-slot="popover-content"]),
   [role="alertdialog"]
 ) {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+/* Popover content: allow blur under Arc Glass, SE accents, or web material glass. */
 html:not([data-theme="arc-glass"]):not([data-ui-profile="super-engineering"][data-glass-accents]):not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;

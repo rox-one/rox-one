@@ -119,8 +119,12 @@ describe('keyboard press', () => {
 describe('SE optional glass accents', () => {
   it('base paint and degradations are chrome-only (never bare [data-glass-slot])', () => {
     const chrome = ['.rox-mode-pill', '[data-glass-slot="popover"]', '[data-glass-slot="composer"]', '[data-glass-slot="mini-button"]']
+    // Blurred chrome (pill/popover/mini) — composer is fill-only, separate rule.
     expect(skin).toMatch(
-      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\]\s*:is\(\.rox-mode-pill,\s*\[data-glass-slot="popover"\],\s*\[data-glass-slot="composer"\],\s*\[data-glass-slot="mini-button"\]\)/,
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\]\s*:is\(\.rox-mode-pill,\s*\[data-glass-slot="popover"\],\s*\[data-glass-slot="mini-button"\]\)/,
+    )
+    expect(skin).not.toMatch(
+      /:is\(\.rox-mode-pill,\s*\[data-glass-slot="popover"\],\s*\[data-glass-slot="composer"\],\s*\[data-glass-slot="mini-button"\]\)/,
     )
     // No content-layer slots in the skin.
     for (const slot of ['panel', 'toolbar', 'card', 'table', 'row', 'empty', 'editor', 'dialog', 'sheet', 'toast'])
@@ -159,17 +163,30 @@ describe('SE optional glass accents', () => {
       /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][\s\S]*?--glass-blur:\s*calc\(var\(--chrome-plate-blur/,
     )
   })
-  it('renderer opaque-overlay reset excepts SE accents as well as arc-glass', () => {
+  it('renderer opaque-overlay keeps toast/dialog reset under SE; only chrome popovers exempt', () => {
     const renderer = readFileSync(
       join(import.meta.dir, '../../../../../../apps/electron/src/renderer/index.css'),
       'utf8',
     )
-    expect(renderer).toContain(
+    // No document-wide SE exemption on the toast/tooltip/dialog list.
+    expect(renderer).not.toContain(
       'html:not([data-theme="arc-glass"]):not([data-ui-profile="super-engineering"][data-glass-accents]) :is(',
     )
+    expect(renderer).toContain('html:not([data-theme="arc-glass"]) :is(')
+    expect(renderer).toContain('[role="menu"]:not([data-glass-slot="popover"])')
+    expect(renderer).toContain('[data-slot="dropdown-menu-content"]:not([data-glass-slot="popover"])')
+    // popover-content still skipped when SE accents are on.
     expect(renderer).toContain(
       'html:not([data-theme="arc-glass"]):not([data-ui-profile="super-engineering"][data-glass-accents]):not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"]',
     )
+  })
+  it('composer is fill-only (no backdrop blur / no refraction)', () => {
+    const composer = skin.split('}').find((b) => b.includes('[data-glass-slot="composer"]') && b.includes('--glass-fill-mix')) ?? ''
+    expect(composer).toMatch(/backdrop-filter:\s*none/)
+    expect(composer).not.toMatch(/backdrop-filter:\s*blur/)
+    expect(composer).toMatch(/--glass-fill-mix:\s*max\(70%/)
+    const refr = skin.split('}').filter((r) => r.includes('url(#rox-glass-skin-refraction)'))
+    for (const r of refr) expect(r).not.toMatch(/composer/)
   })
 
   it('is scoped to super-engineering + data-glass-accents (not arc-glass theme)', () => {

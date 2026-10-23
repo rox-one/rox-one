@@ -153,7 +153,6 @@
 html[data-ui-profile="super-engineering"][data-glass-accents] :is(
   .rox-mode-pill,
   [data-glass-slot="popover"],
-  [data-glass-slot="composer"],
   [data-glass-slot="mini-button"]
 ) {
   --glass-blur: 20px;

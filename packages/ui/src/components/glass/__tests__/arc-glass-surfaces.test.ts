@@ -96,8 +96,9 @@ describe('scoping', () => {
   })
   it('arc-glass-skin.css: base paint lists only chrome slots', () => {
     expect(SKIN).toMatch(
-      /:is\(\.rox-mode-pill,\s*\[data-glass-slot="popover"\],\s*\[data-glass-slot="composer"\],\s*\[data-glass-slot="mini-button"\]\)/,
+      /:is\(\.rox-mode-pill,\s*\[data-glass-slot="popover"\],\s*\[data-glass-slot="mini-button"\]\)/,
     )
+    expect(SKIN).toContain('[data-glass-slot="composer"]')
     for (const slot of ['panel', 'card', 'table', 'editor', 'dialog', 'toast'])
       expect(SKIN).not.toContain(`[data-glass-slot="${slot}"]`)
   })
