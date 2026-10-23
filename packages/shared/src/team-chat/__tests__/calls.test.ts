@@ -54,7 +54,8 @@ describe('team calls', () => {
     const ended = s.listCalls(general.id, alice)[0]!
     const events = messages.map(m => toMessengerCallEvent(m, ended)?.type)
     expect(events).toEqual(['call.started', 'call.ended', 'call.transcript'])
-    expect(toMessengerCallEvent(messages.find(m => m.event === 'call.ended')!, ended)).toMatchObject({ participants: ['alice', 'bob'] })
+    expect(toMessengerCallEvent(messages.find(m => m.event === 'call.ended')!, ended)).toMatchObject({ callId: ended.id, participants: ['alice', 'bob'] })
+    expect(toMessengerCallEvent(messages.find(m => m.event === 'call.started')!, ended)).toMatchObject({ callId: ended.id, startedBy: 'alice', ts: ended.startedAt })
     expect(s.postCallSummaryAsSystem(general.id, a.call.id, '- Релиз на этой неделе')).toBe(true)
     expect(s.postCallSummaryAsSystem(general.id, a.call.id, 'again')).toBe(false)
     expect(s.searchMessages(ORG, 'пятниц', carol).map(m => m.kind)).toEqual(['transcript'])

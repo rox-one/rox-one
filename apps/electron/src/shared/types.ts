@@ -2960,6 +2960,8 @@ export interface ElectronAPI {
   teamChatCallLeave(channelId: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall | null; ended: boolean }>
   teamChatCallSync(channelId: string, participantIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelCall | null>
   teamChatCallTranscript(channelId: string, callId: string, segments: import('@rox/shared/team-chat').TeamCallTranscriptSegment[]): Promise<{ added: number }>
+  /** Real presence via /v1/im/presence when Messenger is up; else in-call + self. */
+  teamChatPresence(userIds: string[]): Promise<Array<{ userId: string; status: 'online' | 'away' | 'offline' | 'call'; source: 'im' | 'local' }>>
   teamChatSearch(orgId: string, query: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage[]>
   onTeamChatChanged(callback: (change: { orgId: string; channelId?: string }) => void): () => void
 
