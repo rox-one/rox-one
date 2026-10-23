@@ -30,14 +30,19 @@ export function docIdForPath(path: string): string {
 }
 
 /** Filter to injectable (owner/agent) docs and map to GraphMemoryDocument. */
-export function toInjectableGraphDocs(docs: readonly ChunkSourceDoc[]): GraphMemoryDocument[] {
+export function toInjectableGraphDocs(
+  docs: readonly ChunkSourceDoc[],
+  allowedSources?: ReadonlySet<string> | null,
+): GraphMemoryDocument[] {
   const out: GraphMemoryDocument[] = []
   for (const d of docs) {
     if (!d?.content?.trim()) continue
     if (!isMemoryOriginInjectable(d.provenance?.originClass)) continue
+    const source = graphSourceForPath(d.path)
+    if (allowedSources && !allowedSources.has(source)) continue
     out.push({
       id: docIdForPath(d.path),
-      source: graphSourceForPath(d.path),
+      source,
       text: d.content,
       provenance: d.provenance,
       ref: d.path,
@@ -57,6 +62,8 @@ export interface ScheduleGraphIngestOptions {
   runCognify?: boolean
   logger?: { warn: (m: string, e?: unknown) => void }
   roxHome?: string
+  /** When set, only these GraphMemorySource values are ingested. */
+  allowedSources?: ReadonlySet<string> | null
 }
 
 /** Coalesce overlapping fire-and-forget runs (rebuild storms). */
@@ -74,7 +81,7 @@ export function scheduleGraphIngest(opts: ScheduleGraphIngestOptions): void {
   // Soft-fail: never block rebuild. disabled/not_installed/failed → skip.
   // cold/warming/ready → fire-and-forget (provider.ingest warms without awaiting callers).
   if (status.state === 'disabled' || status.state === 'not_installed' || status.state === 'failed') return
-  const injectable = toInjectableGraphDocs(opts.docs)
+  const injectable = toInjectableGraphDocs(opts.docs, opts.allowedSources)
   if (injectable.length === 0) return
 
   ingestTail = ingestTail
@@ -87,7 +94,8 @@ export function scheduleGraphIngest(opts: ScheduleGraphIngestOptions): void {
         return
       }
       if (opts.runCognify === false) return
-      if (typeof (provider as { cognify?: (s?: string[]) => Promise<void> }).cognify !== 'function') return
+      const cognify = (provider as unknown as { cognify?: (s?: string[]) => Promise<void> }).cognify
+      if (typeof cognify !== 'function') return
       const estimate = opts.cognifyEstimateUsd ?? DEFAULT_COGNIFY_ESTIMATE_USD
       const cap = opts.dailyCostCapUsd ?? DEFAULT_GRAPH_DAILY_COST_CAP_USD
       // Reserve before cognify so concurrent rebuilds cannot TOCTOU past the cap.
@@ -96,7 +104,7 @@ export function scheduleGraphIngest(opts: ScheduleGraphIngestOptions): void {
         return
       }
       try {
-        await (provider as { cognify: (s?: string[]) => Promise<void> }).cognify()
+        await cognify()
       } catch (err) {
         opts.logger?.warn('graph cognify failed', err)
       }

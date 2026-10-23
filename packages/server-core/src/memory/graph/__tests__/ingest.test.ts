@@ -85,6 +85,18 @@ describe('toInjectableGraphDocs', () => {
     expect(graphSourceForPath('memory/calls/1.md')).toBe('calls')
     expect(graphSourceForPath('memory/files/1.md')).toBe('files')
   })
+
+  test('allowedSources drops disabled sources', () => {
+    const out = toInjectableGraphDocs(
+      [
+        doc('memory/mail/a.md', 'mail body', 'owner'),
+        doc('memory/notes/b.md', 'note body', 'owner'),
+      ],
+      new Set(['notes']),
+    )
+    expect(out.map(d => d.source)).toEqual(['notes'])
+  })
+
 })
 
 describe('scheduleGraphIngest', () => {

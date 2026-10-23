@@ -201,6 +201,11 @@ export interface MemoryConfig {
   /** Daily USD cap for LLM-heavy graph cognify (default 2). */
   graphDailyCostCapUsd?: number
   /**
+   * Per-source graph ingest toggles (Settings → Память). Missing keys default ON.
+   * Keys match GraphMemorySource.
+   */
+  graphSources?: Partial<Record<'session' | 'notes' | 'tasks' | 'chats' | 'calls' | 'mail' | 'files' | 'lessons', boolean>>
+  /**
    * Dream (spec §9): hours between background memory-dream runs, default 4.
    * One DreamScheduler per process ticks banks (main + active workspaces) and
    * runs at most once per bank per interval window.

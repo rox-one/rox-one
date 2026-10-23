@@ -7,6 +7,7 @@
  */
 
 import {
+  Brain,
   Blocks,
   CircleUser,
   BookOpen,
@@ -54,6 +55,8 @@ export const ShortcutsIcon = ({ className }: IconProps) => <Keyboard className={
 export const DevelopersIcon = ({ className }: IconProps) => <FolderGit2 className={className} />
 export const PlaybooksIcon = ({ className }: IconProps) => <NotebookPen className={className} />
 export const RuntimeIcon = ({ className }: IconProps) => <Settings className={className} />
+export const MemoryIcon = ({ className }: IconProps) => <Brain className={className} />
+
 export const ContextIcon = ({ className }: IconProps) => <FileText className={className} />
 export const KnowledgeIcon = ({ className }: IconProps) => <BookOpen className={className} />
 export const MarketplaceIcon = ({ className }: IconProps) => <ShoppingBag className={className} />
@@ -69,6 +72,7 @@ export const SETTINGS_ICONS: Record<SettingsSubpage, React.ComponentType<IconPro
   privacy: PrivacySettingsIcon,
   runtime: RuntimeIcon,
   context: ContextIcon,
+  memory: MemoryIcon,
   knowledge: KnowledgeIcon,
   marketplace: MarketplaceIcon,
   extensions: ExtensionsIcon,

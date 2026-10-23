@@ -949,6 +949,9 @@ export const RPC_CHANNELS = {
     WIKI_GET: 'memory:wikiGet',
     WIKI_APPLY: 'memory:wikiApply',
     WIKI_LINT: 'memory:wikiLint',
+    // Graph-memory settings (cognee PR6)
+    GET_CONFIG: 'memory:getConfig',
+    UPDATE_CONFIG: 'memory:updateConfig',
   },
   /** Continual learning (PRD §15): candidates/evidence/outcomes/policies.
    *  OBSERVE/RECORD_OUTCOME/RECORD_CORRECTION are agent/native actions — they
