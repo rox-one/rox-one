@@ -160,7 +160,7 @@ import { type SessionStatusId, type SessionStatus, statusConfigsToSessionStatuse
 import { useStatuses } from "@/hooks/useStatuses"
 import { useLabels } from "@/hooks/useLabels"
 import { useViews } from "@/hooks/useViews"
-import { useContainerWidth } from "@/hooks/useContainerWidth"
+import { useContainerBorderWidth, useContainerWidth } from "@/hooks/useContainerWidth"
 import { LabelIcon, LabelValueTypeIcon } from "@/components/ui/label-icon"
 import { buildLabelTree, getDescendantIds, getLabelDisplayName, flattenLabels, extractLabelId, findLabelById, sortLabelsForDisplay, matchesLabelFilter } from "@rox/shared/labels"
 import type { LabelConfig, LabelTreeNode } from "@rox/shared/labels"
@@ -466,7 +466,9 @@ function AppShellContent({
     return selected?.render
   }, [compactHeaderEntries])
   const shellWidth = useContainerWidth(shellRef)
-  const activeShellBand = shellWidth > 0 ? shellBand(shellWidth) : undefined
+  // Band from border box so SE edge padding cannot flip wide/ultra thresholds.
+  const shellBorderWidth = useContainerBorderWidth(shellRef)
+  const activeShellBand = shellBorderWidth > 0 ? shellBand(shellBorderWidth) : undefined
   const MOBILE_THRESHOLD = 768
   const isAutoCompact = shellWidth > 0 && shellWidth < MOBILE_THRESHOLD
   // top50 #3: between the mobile layout and NARROW_SHELL_THRESHOLD the second

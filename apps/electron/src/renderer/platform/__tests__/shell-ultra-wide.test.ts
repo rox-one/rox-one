@@ -12,6 +12,7 @@ const root = join(import.meta.dir, '../../../../../..')
 const chrome = readFileSync(join(root, 'packages/ui/src/styles/tokens/chrome.css'), 'utf8')
 const css = readFileSync(join(root, 'apps/electron/src/renderer/index.css'), 'utf8')
 const appShell = readFileSync(join(root, 'apps/electron/src/renderer/components/app-shell/AppShell.tsx'), 'utf8')
+const hook = readFileSync(join(root, 'apps/electron/src/renderer/hooks/useContainerWidth.ts'), 'utf8')
 const seBlock = css.slice(css.indexOf('/* Rox Engineering ultra-wide / fluid shell.'))
 
 describe('SE ultra-wide / fluid shell', () => {
@@ -55,8 +56,11 @@ describe('SE ultra-wide / fluid shell', () => {
     expect(seBlock.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/transition|animation|@keyframes/)
   })
 
-  it('AppShell exposes data-shell-band and applies SE edge inset via content-box padding', () => {
+  it('AppShell exposes data-shell-band from border box and applies SE edge inset via padding', () => {
     expect(appShell).toContain('data-shell-band={activeShellBand}')
+    expect(hook).toContain('borderBoxSize')
+    expect(appShell).toContain('useContainerBorderWidth(shellRef)')
+    expect(appShell).toContain('shellBand(shellBorderWidth)')
     expect(appShell).toContain('shellEdgeInset(activeShellBand)')
     expect(appShell).toContain('seProfile && activeShellBand')
   })
