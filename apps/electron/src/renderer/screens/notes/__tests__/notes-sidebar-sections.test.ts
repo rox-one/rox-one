@@ -18,6 +18,17 @@ describe('buildNotesSidebarSections', () => {
     expect(secs[1]!.items[0]!.menu?.[0]?.id).toBe('pin')
   })
 
+  it('opened ids prefer recent order over updatedAt', () => {
+    const secs = buildNotesSidebarSections(notes, [], ['a.md', 'dir/b.md'])
+    expect(secs[0]!.id).toBe('recent')
+    expect(secs[0]!.items.map((i) => i.id)).toEqual(['a.md', 'dir/b.md', 'c.md'])
+  })
+
+  it('prefixes emoji icon into the label when present', () => {
+    const secs = buildNotesSidebarSections([{ id: 'a.md', title: 'A', updatedAt: 1, icon: '⭐' }], [])
+    expect(secs[0]!.items[0]).toMatchObject({ label: '⭐ A' })
+  })
+
   it('toggle pin', () => {
     expect(togglePinnedNote(['a'], 'b')).toEqual(['a', 'b'])
     expect(togglePinnedNote(['a', 'b'], 'a')).toEqual(['b'])

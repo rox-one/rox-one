@@ -23,6 +23,7 @@ export interface NotesScreenSidebarInput {
   onTag(tag: string | null): void
   notes: readonly NotesSidebarNote[]
   pinned: readonly string[]
+  opened?: readonly string[]
   onTogglePin(noteId: string): void
   onOpenNote(noteId: string): void
   activeNoteId: string | null | undefined
@@ -43,11 +44,11 @@ export function useNotesScreenSidebar(input: NotesScreenSidebarInput): NotesScre
   const { t } = useTranslation()
   const latest = React.useRef(input)
   latest.current = input
-  const { enabled, title, query, tags, selectedTag, notes, pinned, activeNoteId } = input
+  const { enabled, title, query, tags, selectedTag, notes, pinned, opened = [], activeNoteId } = input
   const [treeSlot, treeTarget] = usePortalSlot()
   const [footerSlot, footerTarget] = usePortalSlot()
 
-  const sections = React.useMemo(() => buildNotesSidebarSections(notes, pinned), [notes, pinned])
+  const sections = React.useMemo(() => buildNotesSidebarSections(notes, pinned, opened), [notes, pinned, opened])
   const onTarget = React.useCallback((target: SidebarTarget) => {
     if (target.kind === 'note') latest.current.onOpenNote(target.path)
     else if (target.kind === 'label') latest.current.onTag(target.label || null)

@@ -837,6 +837,15 @@ export interface NoteSummary {
   size: number
 }
 
+/** Library template under notes/templates/ (filename without .md). */
+export interface NoteTemplateSummary {
+  id: string
+  title: string
+  /** Relative path under the vault templates directory. */
+  relativePath: string
+  updatedAt: number
+}
+
 export interface NoteDocument extends NoteSummary {
   /** Immutable journal identity; path-derived id may change after move/rename. */
   nativeId?: string
@@ -945,7 +954,7 @@ export interface NoteChangedPayload {
   workspaceId: string
   /** Stable identity of a durable native invalidation; replay may deliver it again. */
   eventId?: string
-  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties' | 'comments' | 'descriptor'
+  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties' | 'comments' | 'descriptor' | 'templates'
   noteId?: string
 }
 
