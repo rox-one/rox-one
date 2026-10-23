@@ -2,13 +2,13 @@
  * P8.2 — Sessions mid-band: ModeBar labels @720; header actions full @640;
  * SessionSearchHeader min-w-0.
  */
+import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
 
-const css = readFileSync(join(import.meta.dirname, '../../index.css'), 'utf8')
+const css = readFileSync(join(import.meta.dir, '../../index.css'), 'utf8')
 const search = readFileSync(
-  join(import.meta.dirname, '../../components/app-shell/SessionSearchHeader.tsx'),
+  join(import.meta.dir, '../../components/app-shell/SessionSearchHeader.tsx'),
   'utf8',
 )
 

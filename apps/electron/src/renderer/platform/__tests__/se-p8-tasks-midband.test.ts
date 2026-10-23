@@ -1,16 +1,16 @@
 /**
  * P8.3 — Tasks mid-band: fluid list width 720–960; status secondary CQ.
  */
+import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
 
 const mode = readFileSync(
-  join(import.meta.dirname, '../../components/mode-screen/ResponsiveModeScreen.tsx'),
+  join(import.meta.dir, '../../components/mode-screen/ResponsiveModeScreen.tsx'),
   'utf8',
 )
-const css = readFileSync(join(import.meta.dirname, '../../index.css'), 'utf8')
-const tasks = readFileSync(join(import.meta.dirname, '../../pages/TasksPage.tsx'), 'utf8')
+const css = readFileSync(join(import.meta.dir, '../../index.css'), 'utf8')
+const tasks = readFileSync(join(import.meta.dir, '../../pages/TasksPage.tsx'), 'utf8')
 
 describe('P8.3 Tasks mid-band', () => {
   it('shrinks list pane between 720 and 960', () => {

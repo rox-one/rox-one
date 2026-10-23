@@ -1,11 +1,11 @@
 /**
  * P7.4 — kill one-off long/odd transitions; SessionFiles mirrors LeftSidebar SE motion.
  */
+import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
 
-const ROOT = join(import.meta.dirname, '../..')
+const ROOT = join(import.meta.dir, '../..')
 
 describe('P7.4 one-off motion sweep', () => {
   it('SessionFilesSection: no stagger/height; SE springs', () => {
