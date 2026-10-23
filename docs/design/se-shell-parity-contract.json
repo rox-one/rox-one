@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "updated": "2026-10-23",
+  "profile": "super-engineering",
+  "theme": "apps/electron/resources/themes/super-engineering.json",
+  "spec": "docs/design/super-engineering-spec.md",
+  "checklist": "docs/design/se-shell-parity-checklist.md",
+  "note": "Popover blur ~20px under SE accents is DONE. Prefer gap PRs over cosmetic blur PRs.",
+  "done": [
+    {
+      "id": "tokens-palette",
+      "title": "SE palette + DOM profile",
+      "paths": [
+        "apps/electron/resources/themes/super-engineering.json",
+        "packages/ui/src/styles/index.css"
+      ]
+    },
+    {
+      "id": "composer-radius-10",
+      "title": "Composer radius 10px",
+      "paths": [
+        "packages/ui/src/styles/index.css"
+      ]
+    },
+    {
+      "id": "pill-radius-8",
+      "title": "Mode pill density radius 8px",
+      "paths": [
+        "apps/electron/src/renderer/index.css"
+      ]
+    },
+    {
+      "id": "chrome-blur-20",
+      "title": "SE chrome-plate/glass blur 20px",
+      "paths": [
+        "packages/ui/src/styles/index.css"
+      ]
+    },
+    {
+      "id": "popover-blur-accents",
+      "title": "Pointwise popover/menu blur under data-glass-accents; solid on basic/reduced-transparency",
+      "paths": [
+        "packages/ui/src/styles/tokens/material.css",
+        "packages/ui/src/components/glass/arc-glass-skin.css",
+        "apps/electron/src/renderer/index.css",
+        "apps/electron/src/renderer/components/ui/popover.tsx",
+        "apps/electron/src/renderer/components/ui/dropdown-menu.tsx",
+        "apps/electron/src/renderer/components/ui/context-menu.tsx",
+        "packages/ui/src/components/ui/StyledDropdown.tsx",
+        "packages/ui/src/components/ui/PremiumMenu.tsx",
+        "packages/ui/src/components/ui/SimpleDropdown.tsx"
+      ]
+    },
+    {
+      "id": "worktree-hover-delay",
+      "title": "Compact WorktreeHoverCard 250ms hover delay (spec 200–300ms)",
+      "paths": [
+        "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx"
+      ]
+    },
+    {
+      "id": "icons-se-v2",
+      "title": "Optional packages/ui/src/icons/se SVG extract (v2, stroke 1.5)",
+      "paths": [
+        "packages/ui/src/icons/se/",
+        "apps/electron/src/renderer/components/icons/se/index.ts",
+        "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx"
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "id": "G3",
+      "spec": "§3 width",
+      "title": "Workspace navigator ~260 design width not contract-locked",
+      "severity": "shell"
+    },
+    {
+      "id": "G4",
+      "spec": "frame map",
+      "title": "Manual PNG QA vs reference frames",
+      "severity": "qa"
+    },
+    {
+      "id": "G5",
+      "spec": "product",
+      "title": "Glass accents default off (layers.glass=0); enabling by default is product",
+      "severity": "product"
+    }
+  ]
+}

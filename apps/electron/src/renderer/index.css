@@ -2256,3 +2256,84 @@ html[data-ui-profile="super-engineering"][data-wallpaper] :is(
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+
+/* Rox Engineering shared floating content card / PanelSlot chrome.
+   Theme role `paper` (super-engineering.json) maps to
+   --paper via themeToCSS; --surface-elevated aliases it. Under SE, pin
+   the shared content pane chrome and the float-join card
+   ([data-panel-grid-viewport]) to --paper so material/wallpaper ladders
+   cannot wash the canon fill. Pane chrome only (--shell-content + background);
+   does not remap --background so surface interiors / elevation stay intact
+   (Home/Tasks/Messenger/Calls). Keeps #2199 ultra-wide --shell-paper-max
+   and #2213 PanelSlot gutter/measure wiring. Motion/focus stay on
+   #2210/#2211. */
+html[data-ui-profile="super-engineering"] :is(
+  [data-shell-role="content"],
+  .rox-shell-pane[data-panel-role="content"]
+) {
+  --shell-content: var(--paper);
+  background: var(--paper);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-ui-profile="super-engineering"][data-content-join="float"] [data-panel-grid-viewport] {
+  --content-bg: var(--paper);
+  background: var(--paper);
+}
+
+/* Wallpaper frame glass (layers.css) can tint chrome; re-pin content card
+   / PanelSlot chrome under SE so the reading surface stays solid paper
+   (spot glass accents remain via data-glass-accents on pills/popovers). */
+html[data-ui-profile="super-engineering"][data-wallpaper] :is(
+  [data-shell-role="content"],
+  .rox-shell-pane[data-panel-role="content"]
+) {
+  background: var(--paper);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-ui-profile="super-engineering"][data-wallpaper][data-content-join="float"] [data-panel-grid-viewport] {
+  background: var(--paper);
+}
+
+
+/* Rox Engineering shared shell frame / root + chrome text.
+   Theme roles `background` and `foreground` in super-engineering.json map via
+   themeToCSS to --background / --foreground. Under SE, pin the window root to
+   --background so material/tint ladders cannot wash the canon fill (scenic /
+   native vibrancy|mica / wallpaper keep their transparent or image paths).
+   Pin shared chrome labels — panel titles, expanded rail labels, and mode-pill
+   current/hover labels — to --foreground (tokens only, no raw hex). Does not
+   restyle surface-owned interiors (Home/Tasks/Messenger/Calls). Keeps prior SE
+   navigator / paper / input / motion / focus pins. */
+html[data-ui-profile="super-engineering"]:not([data-scenic]):not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]):not([data-wallpaper]),
+html[data-ui-profile="super-engineering"]:not([data-scenic]):not([data-shell-material="vibrancy"]):not([data-shell-material="mica"]):not([data-wallpaper]) :is(body, #root) {
+  background: var(--background);
+}
+
+html[data-ui-profile="super-engineering"] {
+  --frame-fg: var(--foreground);
+  --content-fg: var(--foreground);
+}
+
+/* Expanded ActivityRail labels: full foreground (row may still use
+   --chrome-label for icon-only collapsed chrome). Active rows keep accent
+   via text-accent on the row. */
+html[data-ui-profile="super-engineering"] .rox-rail-row:not([aria-disabled="true"]):not([aria-current="page"]) .rox-rail-label {
+  color: var(--foreground);
+}
+
+/* Mode-pill current + hover labels already use --foreground in
+   titlebar-mode-pill.css; re-pin under SE so chrome-label / muted washes
+   cannot override. Inactive (55% mix) and disabled stay as base. */
+html[data-ui-profile="super-engineering"] .rox-mode-pill-item[aria-current="page"],
+html[data-ui-profile="super-engineering"] .rox-mode-pill-item:not([aria-disabled="true"]):not([aria-current="page"]):hover {
+  color: var(--foreground);
+}
+
+/* Shared panel header titles (h1). Identity/status stay text-secondary. */
+html[data-ui-profile="super-engineering"] [data-layout="panel-header"] h1 {
+  color: var(--foreground);
+}

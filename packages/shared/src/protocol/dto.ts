@@ -755,12 +755,25 @@ export type NoteCommentAnchor = {
   selectedText: string
 }
 
+/** One emoji reaction on a note comment (authors who toggled it on). */
+export type NoteCommentReaction = {
+  emoji: string
+  authors: string[]
+}
+
 export interface NoteCommentThread {
   id: string
   noteId: string
   author: string
   body: string
-  anchor: NoteCommentAnchor
+  /**
+   * Selection anchor for inline comments. Null/absent = whole-document
+   * comment (or a reply that inherits context from its parent).
+   */
+  anchor: NoteCommentAnchor | null
+  /** Reply parent; omitted on root thread comments. */
+  parentId?: string
+  reactions: NoteCommentReaction[]
   createdAt: number
   updatedAt: number
   resolvedAt?: number
@@ -770,7 +783,10 @@ export interface CreateNoteCommentInput {
   noteId: string
   author?: string
   body: string
-  anchor: NoteCommentAnchor
+  /** Omit or null for a whole-document comment (or a reply). */
+  anchor?: NoteCommentAnchor | null
+  /** When set, creates a reply under an existing root comment. */
+  parentId?: string
 }
 
 export interface UpdateNoteCommentInput {
@@ -778,6 +794,8 @@ export interface UpdateNoteCommentInput {
   commentId: string
   body?: string
   resolved?: boolean
+  /** Toggle this emoji for the fixed local identity (server binds author; client cannot spoof). */
+  reaction?: { emoji: string }
 }
 
 /** One note version in history (list row; no body). */

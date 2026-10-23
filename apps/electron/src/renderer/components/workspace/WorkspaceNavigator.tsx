@@ -1,11 +1,14 @@
 import * as React from 'react'
 import { useAtomValue } from 'jotai'
-import { FolderGit2, GitBranch, GitPullRequest } from 'lucide-react'
+import { FolderGit2, GitBranch, GitPullRequest } from '@rox/ui/icons/se'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { seLeftSidebarLayoutAtom } from '@/atoms/workbench-layout'
 import { useWorkspaceGitModel } from '@/hooks/useWorkspaceGitModel'
 import { WorktreeHoverCard } from './WorktreeHoverCard'
+
+/** Spec §3 compact hover: reveal git/PR card after 200–300ms (midpoint). */
+export const WORKTREE_HOVER_DELAY_MS = 250
 
 export interface WorkspaceNavigatorProps {
   workspaceRootPath?: string | null
@@ -17,7 +20,38 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
   const layout = useAtomValue(seLeftSidebarLayoutAtom)
   const git = useWorkspaceGitModel(workspaceRootPath)
   const [hoverBranchId, setHoverBranchId] = React.useState<string | null>(null)
+  const openTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const hoverBranch = git.branches.find((b) => b.id === hoverBranchId) ?? null
+
+  const clearOpenTimer = React.useCallback(() => {
+    if (openTimer.current) {
+      clearTimeout(openTimer.current)
+      openTimer.current = null
+    }
+  }, [])
+
+  React.useEffect(() => clearOpenTimer, [clearOpenTimer])
+
+  React.useEffect(() => {
+    if (layout !== 'compact') {
+      clearOpenTimer()
+      setHoverBranchId(null)
+    }
+  }, [layout, clearOpenTimer])
+
+  const scheduleHover = (branchId: string) => {
+    if (layout !== 'compact') return
+    clearOpenTimer()
+    openTimer.current = setTimeout(() => {
+      openTimer.current = null
+      setHoverBranchId(branchId)
+    }, WORKTREE_HOVER_DELAY_MS)
+  }
+
+  const clearHover = () => {
+    clearOpenTimer()
+    setHoverBranchId(null)
+  }
 
   return (
     <section
@@ -45,8 +79,8 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
           <div
             key={branch.id}
             className="relative"
-            onMouseEnter={() => layout === 'compact' && setHoverBranchId(branch.id)}
-            onMouseLeave={() => layout === 'compact' && setHoverBranchId(null)}
+            onMouseEnter={() => scheduleHover(branch.id)}
+            onMouseLeave={clearHover}
           >
             <button
               type="button"

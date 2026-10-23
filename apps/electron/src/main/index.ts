@@ -153,7 +153,7 @@ import { initializeBackendHostRuntime } from '@rox/shared/agent/backend'
 import { prependPath, pathEnvKey } from '@rox/shared/toolchain'
 import { setPowerShellValidatorRoot } from '@rox/shared/agent'
 import { handleDeepLink } from './deep-link'
-import { loadPersistedEntitiesLinksFlag, registerEntitiesLinksIpc } from './entities-flags'
+import { applyEntitiesLinksFlag, loadPersistedEntitiesLinksFlag, registerEntitiesLinksIpc } from './entities-flags'
 import { BrowserPaneManager } from './browser-pane-manager'
 import { OpenDesignRuntimeManager, isTrustedOpenDesignIpcEvent, registerOpenDesignIpcHandlers } from './open-design-runtime'
 import { initializeCookbooksRuntime, stopCookbooksRuntime } from './cookbooks-runtime'
@@ -329,6 +329,7 @@ const LEGACY_DEEPLINK_SCHEME = 'craftagents'
 
 let windowManager: WindowManager | null = null
 let sessionManager: SessionManager | null = null
+let canvasIpcCtl: { isEnabled(): boolean } | null = null
 let browserPaneManager: BrowserPaneManager | null = null
 let openDesignRuntime: OpenDesignRuntimeManager | null = null
 let oauthFlowStore: OAuthFlowStore | null = null
@@ -1114,7 +1115,11 @@ app.whenReady().then(async () => {
 
     // «Доска» (Canvas): local board persistence in <workspace>/canvas (workspace resolved in main).
     const { registerCanvasIpc } = await import('./canvas-ipc')
-    registerCanvasIpc(ipcMain, {
+    const { setCanvasLinksEnsureHost } = await import('@rox/server-core/canvas/links-ensure-host')
+    // Same durable ensure path as the surface «+ Сущность» picker (main apply + broadcast).
+    setCanvasLinksEnsureHost(() => { applyEntitiesLinksFlag(true) })
+    canvasIpcCtl = registerCanvasIpc(ipcMain, {
+      onEnabledChange: (enabled) => { sessionManager?.setCanvasModeEnabled(enabled) },
       resolveWorkspaceRoot: (id) => getWorkspaceByNameOrId(id)?.rootPath ?? null,
       isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
       listRenderers: () => webContents.getAllWebContents().filter((wc) => isRegisteredRoxRendererWebContents(wc)),
@@ -1631,6 +1636,10 @@ app.whenReady().then(async () => {
       }
       // Capture module-level references for before-quit cleanup and deep-link handlers
       sessionManager = instance.sessionManager
+      // Canvas flag was computed in registerCanvasIpc before SessionManager existed —
+      // push the live value now so agent tools see the persisted OFF as OFF.
+      if (canvasIpcCtl) sessionManager.setCanvasModeEnabled(canvasIpcCtl.isEnabled())
+      sessionManager.setCanvasLinksEnsure(() => { applyEntitiesLinksFlag(true) })
       oauthFlowStore = instance.oauthFlowStore
       moduleSink = instance.wsServer.push.bind(instance.wsServer)
       moduleClientResolver = resolveClientId

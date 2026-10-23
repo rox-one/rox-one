@@ -230,6 +230,7 @@ export function NotesCommentComposer({
   className,
   focusRequested = false,
   onFocusHandled,
+  creating = false,
 }: {
   quote: string
   body: string
@@ -240,14 +241,17 @@ export function NotesCommentComposer({
   className?: string
   focusRequested?: boolean
   onFocusHandled?: () => void
+  /** True while createNoteComment is in flight — disable submit/cancel and ignore Escape. */
+  creating?: boolean
 }) {
   const { t } = useTranslation()
   const composeRef = React.useRef<HTMLTextAreaElement>(null)
   React.useEffect(() => {
-    if (!focusRequested) return
+    if (!focusRequested || creating) return
     if (canFocusNotesControl(composeRef.current)) composeRef.current.focus({ preventScroll: true })
     onFocusHandled?.()
-  }, [focusRequested, onFocusHandled])
+  }, [focusRequested, onFocusHandled, creating])
+  const busy = Boolean(creating)
   return (
     <form
       /* Arc Glass: floating composer surface — the skin's readable popover fill
@@ -258,9 +262,11 @@ export function NotesCommentComposer({
         className,
       )}
       data-testid="notes-comments-compose"
+      data-creating={busy ? 'true' : undefined}
       style={top == null ? undefined : { position: 'absolute', top }}
       onSubmit={(event) => {
         event.preventDefault()
+        if (busy) return
         onSubmit()
       }}
     >
@@ -270,8 +276,15 @@ export function NotesCommentComposer({
       <textarea
         ref={composeRef}
         value={body}
+        disabled={busy}
         onChange={(event) => onBodyChange(event.target.value)}
         onKeyDown={(event) => {
+          if (busy) {
+            if (event.key === 'Escape' || ((event.metaKey || event.ctrlKey) && event.key === 'Enter')) {
+              event.preventDefault()
+            }
+            return
+          }
           if (event.key === 'Escape') {
             event.preventDefault()
             onCancel?.()
@@ -283,17 +296,18 @@ export function NotesCommentComposer({
           }
         }}
         aria-label={t('notes.comments.title')}
+        aria-busy={busy || undefined}
         rows={3}
         placeholder={quote ? t('notes.comments.placeholderOnSelection') : t('notes.comments.placeholder')}
         className={cn(
           'w-full resize-none rounded-[var(--radius-card)] border border-foreground/[0.08] bg-background px-2 py-1.5 text-sm outline-none',
-          'focus-visible:border-foreground/40',
+          'focus-visible:border-foreground/40 disabled:opacity-50',
         )}
       />
       <p className="mt-1 px-0.5 text-xs text-muted-foreground">{t('notes.comments.submitHint')}</p>
       <button
         type="submit"
-        disabled={!body.trim()}
+        disabled={busy || !body.trim()}
         className="mt-1.5 h-7 w-full rounded-[var(--radius-control)] bg-foreground/12 text-xs font-medium text-foreground hover:bg-foreground/18 disabled:opacity-40"
       >
         {t('notes.comments.add')}
