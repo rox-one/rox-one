@@ -95,3 +95,8 @@ export {
 
 export { OpenClawAuditSection } from './OpenClawAuditSection'
 export { CommandGatewaySection } from './CommandGatewaySection'
+
+export {
+  SettingsLoadingSkeleton,
+  type SettingsLoadingSkeletonProps,
+} from './SettingsLoadingSkeleton'
