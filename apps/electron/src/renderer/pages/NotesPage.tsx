@@ -2952,6 +2952,7 @@ h1,h2,h3{margin-top:1.5em}
   }, [activeWorkspaceId])
 
   const openTemplatesDialog = React.useCallback(async (mode: 'create' | 'save') => {
+    if (mode === 'create') setCreateInFolder(undefined)
     setTemplatesDialogMode(mode)
     setTemplatesDialogOpen(true)
     await refreshNoteTemplates()
@@ -2959,16 +2960,20 @@ h1,h2,h3{margin-top:1.5em}
 
   const handleCreateFromTemplate = React.useCallback(async (templateId: string, title: string) => {
     if (!activeWorkspaceId || typeof window.electronAPI.createNoteFromTemplate !== 'function') return
+    const destination = noteCreationFolder(noteScope, createInFolder)
+    if (!destination.allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
+    if (!await flushBeforeAction()) return
     setTemplatesBusy(true)
     try {
       const created = await window.electronAPI.createNoteFromTemplate(
         activeWorkspaceId,
         templateId,
         title || undefined,
-        createInFolder,
+        destination.folder,
         mutationOptions(activeWorkspaceId, title || templateId, null),
       )
       setTemplatesDialogOpen(false)
+      setCreateInFolder(undefined)
       await refreshNotes()
       navigate(routes.view.notes(created.id))
     } catch (error) {
@@ -2976,9 +2981,9 @@ h1,h2,h3{margin-top:1.5em}
     } finally {
       setTemplatesBusy(false)
     }
-  }, [activeWorkspaceId, createInFolder, mutationOptions, refreshNotes, t])
+  }, [activeWorkspaceId, createInFolder, flushBeforeAction, mutationOptions, noteScope, refreshNotes, t])
 
-  const handleSaveAsTemplate = React.useCallback(async (templateId: string, title: string) => {
+  const handleSaveAsTemplate = React.useCallback(async (templateId: string, title: string, confirmReplace?: boolean) => {
     if (!activeWorkspaceId || !activeNote || typeof window.electronAPI.saveNoteAsTemplate !== 'function') return
     setTemplatesBusy(true)
     try {
@@ -2988,12 +2993,18 @@ h1,h2,h3{margin-top:1.5em}
         title: title || activeNote.title,
         body,
         properties: activeNote.properties,
+        ...(confirmReplace ? { confirmReplace: true } : {}),
       })
       setTemplatesDialogOpen(false)
       toast.success(t('notes.library.templateSaved'))
       await refreshNoteTemplates()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('notes.toast.updatePropertiesFailed'))
+      const code = error && typeof error === 'object' && 'code' in error ? String((error as { code: unknown }).code) : ''
+      if (code === 'CONFLICT') {
+        toast.error(t('notes.library.templatesReplaceRequired'))
+      } else {
+        toast.error(error instanceof Error ? error.message : t('notes.toast.updatePropertiesFailed'))
+      }
     } finally {
       setTemplatesBusy(false)
     }
@@ -3951,7 +3962,7 @@ h1,h2,h3{margin-top:1.5em}
       defaultTitle={templatesDialogMode === 'save' ? activeNote?.title : createTitle}
       onOpenChange={setTemplatesDialogOpen}
       onCreateFromTemplate={(templateId, title) => { void handleCreateFromTemplate(templateId, title) }}
-      onSaveAsTemplate={(templateId, title) => { void handleSaveAsTemplate(templateId, title) }}
+      onSaveAsTemplate={(templateId, title, confirmReplace) => { void handleSaveAsTemplate(templateId, title, confirmReplace) }}
     />
     <NotesDialogs
       createDialogOpen={createDialogOpen}

@@ -1855,9 +1855,31 @@ function assertSafeTemplateId(templateId: string): string {
   return id
 }
 
+async function assertSafeTemplateFilePath(notesRoot: string, templateId: string): Promise<string> {
+  await ensureNotesDirs(notesRoot)
+  const id = assertSafeTemplateId(templateId)
+  const templatesRoot = join(notesRoot, TEMPLATES_DIR)
+  await ensureSafeNoteDirectory(notesRoot, templatesRoot)
+  const filePath = join(templatesRoot, `${id}.md`)
+  const parent = dirname(filePath)
+  await ensureSafeNoteDirectory(notesRoot, parent)
+  if (!isInsidePath(templatesRoot, filePath)) throw new Error('Invalid template id')
+  const rootReal = await realpath(notesRoot)
+  const templatesReal = await realpath(templatesRoot)
+  if (!isInsidePath(rootReal, templatesReal)) throw new Error('Invalid template path')
+  try {
+    const info = await lstat(filePath)
+    if (info.isSymbolicLink()) throw new Error('Invalid template path')
+  } catch (error) {
+    if (!isErrnoException(error, 'ENOENT')) throw error
+  }
+  return filePath
+}
+
 export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteTemplateSummary[]> {
   await ensureNotesDirs(notesRoot)
   const root = join(notesRoot, TEMPLATES_DIR)
+  await ensureSafeNoteDirectory(notesRoot, root)
   const out: NoteTemplateSummary[] = []
   async function walk(dir: string, prefix: string): Promise<void> {
     let entries
@@ -1867,11 +1889,16 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
       const abs = join(dir, entry.name)
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name
       if (entry.isDirectory()) {
+        await ensureSafeNoteDirectory(notesRoot, abs)
         await walk(abs, rel)
         continue
       }
       if (!entry.name.endsWith('.md')) continue
-      const content = await readFile(abs, 'utf-8').catch(() => '')
+      try {
+        const info = await lstat(abs)
+        if (info.isSymbolicLink() || !info.isFile()) continue
+      } catch { continue }
+      const content = await readFileNoFollow(abs).catch(() => '')
       const parsed = parseFrontmatter(content)
       const id = templateIdFromRelativePath(rel)
       const title = typeof parsed.properties.title === 'string' && parsed.properties.title.trim()
@@ -1892,12 +1919,10 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
 }
 
 export async function readNoteTemplateContent(notesRoot: string, templateId: string): Promise<{ title: string; body: string; properties: Record<string, unknown> }> {
-  await ensureNotesDirs(notesRoot)
-  const id = assertSafeTemplateId(templateId)
-  const filePath = join(notesRoot, TEMPLATES_DIR, `${id}.md`)
-  if (!isInsidePath(join(notesRoot, TEMPLATES_DIR), filePath)) throw new Error('Invalid template id')
-  const content = await readFile(filePath, 'utf-8')
+  const filePath = await assertSafeTemplateFilePath(notesRoot, templateId)
+  const content = await readFileNoFollow(filePath)
   const parsed = parseFrontmatter(content)
+  const id = assertSafeTemplateId(templateId)
   const title = typeof parsed.properties.title === 'string' && parsed.properties.title.trim()
     ? parsed.properties.title.trim()
     : titleFromId(id)
@@ -1908,13 +1933,21 @@ export async function readNoteTemplateContent(notesRoot: string, templateId: str
 
 export async function saveNoteAsTemplateForRoot(
   notesRoot: string,
-  input: { templateId: string; title: string; body: string; properties?: Record<string, unknown> },
+  input: { templateId: string; title: string; body: string; properties?: Record<string, unknown>; confirmReplace?: boolean },
 ): Promise<NoteTemplateSummary> {
-  await ensureNotesDirs(notesRoot)
   const id = assertSafeTemplateId(input.templateId)
-  const filePath = join(notesRoot, TEMPLATES_DIR, `${id}.md`)
-  if (!isInsidePath(join(notesRoot, TEMPLATES_DIR), filePath)) throw new Error('Invalid template id')
-  await mkdir(dirname(filePath), { recursive: true })
+  const filePath = await assertSafeTemplateFilePath(notesRoot, id)
+  let exists = false
+  try {
+    const info = await lstat(filePath)
+    if (info.isSymbolicLink()) throw new Error('Invalid template path')
+    exists = info.isFile()
+  } catch (error) {
+    if (!isErrnoException(error, 'ENOENT')) throw error
+  }
+  if (exists && input.confirmReplace !== true) {
+    throw new CodedError('CONFLICT', 'Template already exists')
+  }
   const properties: Record<string, unknown> = { ...(input.properties ?? {}), title: input.title.trim() || titleFromId(id) }
   // Templates keep content identity only — drop path/runtime-ish keys.
   for (const key of ['createdAt', 'cover', 'icon']) delete properties[key]
@@ -2661,25 +2694,28 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   }, { nativeAction: 'write' })
 
 
-  server.handle(RPC_CHANNELS.notes.LIST_TEMPLATES, async (_ctx, workspaceId: string) => {
-    return listNoteTemplatesForRoot(getWorkspaceNotesRoot(workspaceId))
+  server.handle(RPC_CHANNELS.notes.LIST_TEMPLATES, async (ctx, workspaceId: string) => {
+    const notesRoot = ctx.principal
+      ? nativeNotesContext(deps, ctx, workspaceId, 'read').notesRoot
+      : (nativeContent.assertScope(ctx, workspaceId), getWorkspaceNotesRoot(workspaceId))
+    return listNoteTemplatesForRoot(notesRoot)
   }, { nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.notes.CREATE_FROM_TEMPLATE, async (ctx, workspaceId: string, templateId: string, title?: string, folder?: string, operation?: NativeNoteOperation) => {
-    const notesRoot = getWorkspaceNotesRoot(workspaceId)
-    const template = await readNoteTemplateContent(notesRoot, templateId)
-    const noteTitle = (typeof title === 'string' && title.trim()) ? title.trim() : template.title
-    const properties = {
-      ...template.properties,
-      title: noteTitle,
-      tags: Array.isArray(template.properties.tags) ? template.properties.tags : [],
-      createdAt: Date.now(),
-    }
-    const initialContent = stringifyNoteContent(template.body, properties)
-    const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: noteTitle || 'untitled' })
+    const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: title || templateId || 'untitled' })
     if (!isClaimableLive(act)) throw new Error('note create is not live')
     if (ctx.principal) {
       const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
+      const notesRoot = context.notesRoot
+      const template = await readNoteTemplateContent(notesRoot, templateId)
+      const noteTitle = (typeof title === 'string' && title.trim()) ? title.trim() : template.title
+      const properties = {
+        ...template.properties,
+        title: noteTitle,
+        tags: Array.isArray(template.properties.tags) ? template.properties.tags : [],
+        createdAt: Date.now(),
+      }
+      const initialContent = stringifyNoteContent(template.body, properties)
       const safeFolder = folder ? assertSafeNoteId(folder) : ''
       const filename = safeNoteFilename(noteTitle || 'Untitled')
       const relativeId = safeFolder ? `${safeFolder}/${stripMdExtension(filename)}` : stripMdExtension(filename)
@@ -2695,6 +2731,16 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       return note
     }
     nativeContent.assertScope(ctx, workspaceId)
+    const notesRoot = getWorkspaceNotesRoot(workspaceId)
+    const template = await readNoteTemplateContent(notesRoot, templateId)
+    const noteTitle = (typeof title === 'string' && title.trim()) ? title.trim() : template.title
+    const properties = {
+      ...template.properties,
+      title: noteTitle,
+      tags: Array.isArray(template.properties.tags) ? template.properties.tags : [],
+      createdAt: Date.now(),
+    }
+    const initialContent = stringifyNoteContent(template.body, properties)
     const safeFolder = folder ? assertSafeNoteId(folder) : ''
     const dir = safeFolder ? resolve(notesRoot, safeFolder) : notesRoot
     if (!isInsidePath(notesRoot, dir)) throw new Error('Invalid note folder')
@@ -2712,16 +2758,20 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     return note
   }, { nativeAction: 'write' })
 
-  server.handle(RPC_CHANNELS.notes.SAVE_AS_TEMPLATE, async (_ctx, workspaceId: string, input: {
+  server.handle(RPC_CHANNELS.notes.SAVE_AS_TEMPLATE, async (ctx, workspaceId: string, input: {
     templateId: string
     title: string
     body: string
     properties?: Record<string, unknown>
+    confirmReplace?: boolean
   }) => {
     if (!input || typeof input.templateId !== 'string' || typeof input.title !== 'string' || typeof input.body !== 'string') {
       throw new Error('Invalid saveAsTemplate input')
     }
-    const saved = await saveNoteAsTemplateForRoot(getWorkspaceNotesRoot(workspaceId), input)
+    const notesRoot = ctx.principal
+      ? nativeNotesContext(deps, ctx, workspaceId, 'write').notesRoot
+      : (nativeContent.assertScope(ctx, workspaceId), getWorkspaceNotesRoot(workspaceId))
+    const saved = await saveNoteAsTemplateForRoot(notesRoot, input)
     changed({ workspaceId, reason: 'descriptor' })
     return saved
   }, { nativeAction: 'write' })

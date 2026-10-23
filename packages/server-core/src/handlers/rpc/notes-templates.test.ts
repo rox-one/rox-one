@@ -65,6 +65,28 @@ describe('note templates library', () => {
     expect(listed.some((item) => item.id === 'standup')).toBe(true)
   })
 
+  it('refuses silent overwrite without confirmReplace; replaces only when confirmed', async () => {
+    await saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'daily',
+      title: 'Daily v2',
+      body: 'new body',
+    }).then(
+      () => { throw new Error('expected conflict') },
+      (error: { code?: string }) => { expect(error.code).toBe('CONFLICT') },
+    )
+    expect(readFileSync(join(notesRoot, 'templates', 'daily.md'), 'utf-8')).toContain('# {{date}}')
+
+    const replaced = await saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'daily',
+      title: 'Daily v2',
+      body: 'replaced body',
+      confirmReplace: true,
+    })
+    expect(replaced.title).toBe('Daily v2')
+    expect(readFileSync(join(notesRoot, 'templates', 'daily.md'), 'utf-8')).toContain('replaced body')
+    expect(readFileSync(join(notesRoot, 'templates', 'daily.md'), 'utf-8')).not.toContain('# {{date}}')
+  })
+
   it('rejects path escape in template id', async () => {
     await expect(readNoteTemplateContent(notesRoot, '../secret')).rejects.toThrow()
     await expect(saveNoteAsTemplateForRoot(notesRoot, {

@@ -30,33 +30,58 @@ export function NotesTemplatesDialog({
   defaultTitle?: string
   onOpenChange(open: boolean): void
   onCreateFromTemplate(templateId: string, title: string): void
-  onSaveAsTemplate(templateId: string, title: string): void
+  onSaveAsTemplate(templateId: string, title: string, confirmReplace?: boolean): void
 }) {
   const { t } = useTranslation()
   const [selectedId, setSelectedId] = React.useState<string>('')
   const [title, setTitle] = React.useState('')
   const [templateId, setTemplateId] = React.useState('')
+  const [replaceConfirm, setReplaceConfirm] = React.useState(false)
 
   React.useEffect(() => {
     if (!open) return
     setTitle(defaultTitle ?? '')
     setTemplateId(sanitizeTemplateId(defaultTitle ?? 'template'))
     setSelectedId(templates[0]?.id ?? '')
+    setReplaceConfirm(false)
   }, [open, defaultTitle, templates])
 
+  const safeId = sanitizeTemplateId(templateId)
+  const collision = mode === 'save' && safeId ? templates.some((item) => item.id === safeId) : false
+
+  const requestSave = (confirmReplace = false) => {
+    if (!safeId) return
+    if (collision && !confirmReplace) {
+      setReplaceConfirm(true)
+      return
+    }
+    onSaveAsTemplate(safeId, title.trim() || safeId, confirmReplace || undefined)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => {
+      if (!next) setReplaceConfirm(false)
+      onOpenChange(next)
+    }}>
       <DialogContent data-testid="notes-templates-dialog">
         <DialogHeader>
           <DialogTitle>
-            {mode === 'create' ? t('notes.library.templatesCreateTitle') : t('notes.library.templatesSaveTitle')}
+            {replaceConfirm
+              ? t('notes.library.templatesReplaceTitle')
+              : mode === 'create'
+                ? t('notes.library.templatesCreateTitle')
+                : t('notes.library.templatesSaveTitle')}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'create' ? t('notes.library.templatesCreateDesc') : t('notes.library.templatesSaveDesc')}
+            {replaceConfirm
+              ? t('notes.library.templatesReplaceDesc', { id: safeId })
+              : mode === 'create'
+                ? t('notes.library.templatesCreateDesc')
+                : t('notes.library.templatesSaveDesc')}
           </DialogDescription>
         </DialogHeader>
 
-        {mode === 'create' ? (
+        {replaceConfirm ? null : mode === 'create' ? (
           <div className="space-y-3">
             <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-border/50 p-1">
               {templates.length === 0 ? (
@@ -90,36 +115,60 @@ export function NotesTemplatesDialog({
               onChange={(event) => {
                 setTitle(event.target.value)
                 setTemplateId(sanitizeTemplateId(event.target.value || 'template'))
+                setReplaceConfirm(false)
               }}
               placeholder={t('notes.library.templateTitlePlaceholder')}
             />
             <Input
               value={templateId}
-              onChange={(event) => setTemplateId(sanitizeTemplateId(event.target.value))}
+              onChange={(event) => {
+                setTemplateId(sanitizeTemplateId(event.target.value))
+                setReplaceConfirm(false)
+              }}
               placeholder={t('notes.library.templateIdPlaceholder')}
               data-testid="notes-template-id"
             />
+            {collision ? (
+              <p className="text-caption text-status-warning" data-testid="notes-template-collision">
+                {t('notes.library.templatesReplaceHint', { id: safeId })}
+              </p>
+            ) : null}
           </div>
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('notes.dialog.cancel')}</Button>
-          {mode === 'create' ? (
-            <Button
-              disabled={busy || !selectedId}
-              data-testid="notes-template-create"
-              onClick={() => onCreateFromTemplate(selectedId, title.trim())}
-            >
-              {t('notes.library.createFromTemplate')}
-            </Button>
+          {replaceConfirm ? (
+            <>
+              <Button variant="outline" onClick={() => setReplaceConfirm(false)}>{t('notes.dialog.cancel')}</Button>
+              <Button
+                disabled={busy}
+                data-testid="notes-template-replace"
+                onClick={() => requestSave(true)}
+              >
+                {t('notes.library.replaceTemplate')}
+              </Button>
+            </>
           ) : (
-            <Button
-              disabled={busy || !sanitizeTemplateId(templateId)}
-              data-testid="notes-template-save"
-              onClick={() => onSaveAsTemplate(sanitizeTemplateId(templateId), title.trim() || sanitizeTemplateId(templateId))}
-            >
-              {t('notes.library.saveAsTemplate')}
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>{t('notes.dialog.cancel')}</Button>
+              {mode === 'create' ? (
+                <Button
+                  disabled={busy || !selectedId}
+                  data-testid="notes-template-create"
+                  onClick={() => onCreateFromTemplate(selectedId, title.trim())}
+                >
+                  {t('notes.library.createFromTemplate')}
+                </Button>
+              ) : (
+                <Button
+                  disabled={busy || !safeId}
+                  data-testid="notes-template-save"
+                  onClick={() => requestSave(false)}
+                >
+                  {t('notes.library.saveAsTemplate')}
+                </Button>
+              )}
+            </>
           )}
         </DialogFooter>
       </DialogContent>

@@ -115,7 +115,23 @@ export function NoteCoverIconChrome({
               />
               <div className="flex justify-end gap-2">
                 <Button type="button" size="sm" variant="ghost" onClick={() => onChange({ cover: null })}>{t('notes.library.clear')}</Button>
-                <Button type="button" size="sm" onClick={() => onChange({ cover: coverDraft.trim() || null })}>{t('notes.library.apply')}</Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  data-testid="notes-cover-apply"
+                  onClick={() => {
+                    const trimmed = coverDraft.trim()
+                    if (!trimmed) {
+                      onChange({ cover: null })
+                      return
+                    }
+                    const safe = readNoteCover({ cover: trimmed })
+                    if (!safe) return
+                    onChange({ cover: safe })
+                  }}
+                >
+                  {t('notes.library.apply')}
+                </Button>
               </div>
             </PopoverContent>
           </Popover>

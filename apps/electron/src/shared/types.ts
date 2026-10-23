@@ -1543,7 +1543,7 @@ export interface ElectronAPI {
   updateNoteProperties(workspaceId: string, noteId: string, properties: Record<string, unknown>, operationOrExpectedRevision?: NoteMutationOptions | string, reviewedDigest?: string, sourceStoreId?: string): Promise<NoteDocument>
   listNoteTemplates(workspaceId: string): Promise<NoteTemplateSummary[]>
   createNoteFromTemplate(workspaceId: string, templateId: string, title?: string, folder?: string, operation?: NoteCreateOptions): Promise<NoteDocument>
-  saveNoteAsTemplate(workspaceId: string, input: { templateId: string; title: string; body: string; properties?: Record<string, unknown> }): Promise<NoteTemplateSummary>
+  saveNoteAsTemplate(workspaceId: string, input: { templateId: string; title: string; body: string; properties?: Record<string, unknown>; confirmReplace?: boolean }): Promise<NoteTemplateSummary>
   watchNotes(workspaceId: string): Promise<void>
   unwatchNotes(workspaceId: string): Promise<void>
   onNotesChanged(callback: (payload: NoteChangedPayload | string) => void): () => void
