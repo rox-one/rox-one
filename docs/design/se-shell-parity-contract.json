@@ -53,7 +53,7 @@
     },
     {
       "id": "worktree-hover-delay",
-      "title": "Compact WorktreeHoverCard 250ms hover delay (spec 200–300ms)",
+      "title": "Compact WorktreeHoverCard 250ms hover delay (spec 200\u2013300ms)",
       "paths": [
         "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx"
       ]
@@ -66,15 +66,27 @@
         "apps/electron/src/renderer/components/icons/se/index.ts",
         "apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx"
       ]
+    },
+    {
+      "id": "dialog-popover-springs",
+      "title": "SE Dialog/Popover enter-exit springs via --motion-spring (mirrors SE_SPRING_MODAL)",
+      "paths": [
+        "packages/ui/src/styles/index.css",
+        "packages/ui/src/styles/tokens/motion.css",
+        "apps/electron/src/renderer/lib/motion/super-engineering-springs.ts",
+        "apps/electron/src/renderer/components/ui/dialog.tsx",
+        "apps/electron/src/renderer/components/ui/popover.tsx"
+      ]
+    },
+    {
+      "id": "navigator-width-260",
+      "title": "Workspace navigator design width ~260 (NAVIGATOR_WIDTH_DEFAULT)",
+      "paths": [
+        "apps/electron/src/renderer/lib/shell-layout-preferences.ts"
+      ]
     }
   ],
   "gaps": [
-    {
-      "id": "G3",
-      "spec": "§3 width",
-      "title": "Workspace navigator ~260 design width not contract-locked",
-      "severity": "shell"
-    },
     {
       "id": "G4",
       "spec": "frame map",

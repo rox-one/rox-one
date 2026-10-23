@@ -21,7 +21,7 @@ export const SIDEBAR_WIDTH_MAX = 360
 export const SIDEBAR_WIDTH_DEFAULT = SIDE_PANEL_DEFAULT_WIDTH
 export const NAVIGATOR_WIDTH_MIN = 240
 export const NAVIGATOR_WIDTH_MAX = 480
-export const NAVIGATOR_WIDTH_DEFAULT = 300
+export const NAVIGATOR_WIDTH_DEFAULT = 260
 export const DEFAULT_COLLAPSED_SIDEBAR_SECTIONS = ['nav:labels', 'nav:allSessions', 'nav:views'] as const
 
 export interface ShellLayoutPreferencesV1 {
