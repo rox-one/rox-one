@@ -83,14 +83,20 @@ const FROZEN_SLOTS = ['panel', 'toolbar', 'card', 'table', 'row', 'empty', 'edit
 const BLURRED_SLOTS = ['panel', 'toolbar', 'dialog', 'sheet', 'toast']
 const SOLID_SLOTS = ['card', 'table', 'row', 'empty', 'editor']
 
-describe('arc-glass scoping (both stylesheets)', () => {
-  for (const [name, css] of SHEETS) {
-    it(`${name}: every rule is scoped to html[data-theme="arc-glass"]`, () => {
-      const blocks = ruleBlocks(css)
-      expect(blocks.length).toBeGreaterThan(0)
-      for (const block of blocks) expect(block.selector).toContain('html[data-theme="arc-glass"]')
-    })
-  }
+describe('scoping', () => {
+  it('arc-glass-skin.css: every rule is scoped to SE optional accents (not arc-glass theme)', () => {
+    const blocks = ruleBlocks(SKIN)
+    expect(blocks.length).toBeGreaterThan(0)
+    for (const block of blocks) {
+      expect(block.selector).toContain('html[data-ui-profile="super-engineering"][data-glass-accents]')
+      expect(block.selector).not.toContain('data-theme="arc-glass"')
+    }
+  })
+  it('arc-glass-surfaces.css: legacy content recipes stay arc-glass-scoped (unused by install)', () => {
+    const blocks = ruleBlocks(SURFACES)
+    expect(blocks.length).toBeGreaterThan(0)
+    for (const block of blocks) expect(block.selector).toContain('html[data-theme="arc-glass"]')
+  })
 })
 
 describe('static blur', () => {
@@ -211,7 +217,12 @@ describe('degradations', () => {
 
     it(`${name}: reduced transparency goes solid with no blur`, () => {
       const block = atRule(css, '@media (prefers-reduced-transparency: reduce)')
-      expect(block).toContain('html[data-theme="arc-glass"]')
+      if (name === 'arc-glass-skin.css') {
+        expect(block).toContain('html[data-ui-profile="super-engineering"][data-glass-accents]')
+        expect(block).not.toContain('data-theme="arc-glass"')
+      } else {
+        expect(block).toContain('html[data-theme="arc-glass"]')
+      }
       expect(block).toMatch(/--glass-fill-mix:\s*100%/)
       expect(block).toMatch(/--glass-blur:\s*0px/)
       expect(block).toMatch(/backdrop-filter:\s*none/)
@@ -237,9 +248,9 @@ describe('degradations', () => {
 })
 
 describe('install', () => {
-  it('loads both stylesheets under one idempotent install', () => {
+  it('loads SE accent skin only (no Arc Glass content surfaces), idempotent', () => {
     expect(INSTALL).toContain("import('./arc-glass-skin.css')")
-    expect(INSTALL).toContain("import('./arc-glass-surfaces.css')")
+    expect(INSTALL).not.toContain("import('./arc-glass-surfaces.css')")
     expect(INSTALL.match(/if \(installed\) return installed/g)?.length).toBe(1)
     for (const call of INSTALL.matchAll(/import\('\.\/[\w-]+\.css'\)/g)) expect(call[0]).toBeTruthy()
   })

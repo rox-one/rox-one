@@ -6,20 +6,18 @@ export const SKIN_FILTER_ID = 'rox-glass-skin-refraction'
 let installed: (() => void) | null = null
 
 /**
- * App-root glass install, called once from a lazy chunk: loads the Arc Glass
- * skin CSS, sets html[data-glass] (live), and mounts one shared refraction
- * filter for the skin's static slots. Idempotent; returns the uninstall.
+ * App-root glass install, called once from a lazy chunk: loads optional SE
+ * chrome accent CSS, sets html[data-glass] (live), and mounts one shared
+ * refraction filter for static slots. Idempotent; returns the uninstall.
+ *
+ * Content-layer Arc Glass recipes (arc-glass-surfaces.css) are intentionally
+ * not loaded — Mark retired Arc Glass as a design base; accents only.
  */
 export function installGlassSkin(doc: Document = document): () => void {
   if (installed) return installed
-  // Un-awaited: both chunks only restyle; a failed CSS chunk leaves the plain look.
+  // Un-awaited: chunk only restyles; a failed CSS chunk leaves the plain look.
   import('./arc-glass-skin.css').catch((error: unknown) => {
-    console.warn('[glass] Arc Glass skin CSS failed to load; keeping the plain look', error)
-  })
-  // Content-layer recipes (data-glass-slot vocabulary). The recipes out-specify
-  // the skin's generic slot rule, so import order between the two files is free.
-  import('./arc-glass-surfaces.css').catch((error: unknown) => {
-    console.warn('[glass] Arc Glass surfaces CSS failed to load; keeping the plain content look', error)
+    console.warn('[glass] SE accent CSS failed to load; keeping the plain look', error)
   })
   const releaseTier = applyGlassTier(doc.documentElement)
   const svgNS = 'http://www.w3.org/2000/svg'

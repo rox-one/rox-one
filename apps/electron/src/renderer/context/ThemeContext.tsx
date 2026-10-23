@@ -527,6 +527,14 @@ export function ThemeProvider({
       delete root.dataset.uiProfile
     }
 
+    // Optional SE chrome glass accents (not Arc Glass): on when intensity > 0.
+    const glassIntensity = typeof layers?.glass === 'number' && Number.isFinite(layers.glass) ? layers.glass : 0
+    if (uiProfile === 'super-engineering' && glassIntensity > 0) {
+      root.dataset.glassAccents = ''
+    } else {
+      delete root.dataset.glassAccents
+    }
+
   }, [presetTheme, visualMode, isScenic, resolvedTheme])
 
   // Inject CSS variables

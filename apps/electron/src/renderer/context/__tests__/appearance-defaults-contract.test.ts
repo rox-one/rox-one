@@ -3,12 +3,11 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 /**
- * Appearance defaults contract (2026-10-14): Arc Glass (`arc-glass`) is the
- * out-of-the-box theme for new installs; Rox Ink (`rox-ink`, grayscale sumi-e)
- * stays the migration target for existing installs. Rox Engineering stays an opt-in preset. The app does not pin a theme,
- * Settings → Внешний вид offers the color-theme picker, and installs on the
- * old defaults (including the v1 Rox Engineering + deep-glass seed) migrate
- * once via `appearance-defaults-v2-ink`.
+ * Appearance defaults contract (2026-10-23): Rox Engineering (`super-engineering`)
+ * is the out-of-the-box theme for new installs. Arc Glass Design was retired.
+ * Rox Ink (`rox-ink`) stays the migration target for existing installs on older
+ * defaults. The app does not pin a theme; Settings → Внешний вид offers the
+ * color-theme picker; legacy seeds migrate once via `appearance-defaults-v2-ink`.
  */
 const repo = join(import.meta.dir, '..', '..', '..', '..', '..', '..')
 const themeConfig = readFileSync(join(repo, 'packages/shared/src/config/theme.ts'), 'utf8')
@@ -21,8 +20,8 @@ const appearancePage = readFileSync(
 )
 
 describe('appearance defaults', () => {
-  it('ships Arc Glass as the default theme id for new installs', () => {
-    expect(themeConfig).toContain("export const ROX_THEME_ID = 'arc-glass'")
+  it('ships Rox Engineering as the default theme id for new installs', () => {
+    expect(themeConfig).toContain("export const ROX_THEME_ID = 'super-engineering'")
     // Existing installs migrated to Rox Ink keep it: the one-shot migrations
     // still target the previous default.
     expect(themeConfig).toContain("export const ROX_INK_THEME_ID = 'rox-ink'")

@@ -12751,5 +12751,6 @@
   "xfn.x23.title": "Form submit actions",
   "xfn.x24.title": "Start a meeting from any entity",
   "xfn.x25.title": "Open the @rox panel",
-  "xfn.x26.title": "Pins across surfaces"
+  "xfn.x26.title": "Pins across surfaces",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off."
 }

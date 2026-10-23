@@ -115,10 +115,13 @@ describe('keyboard press', () => {
   })
 })
 
-describe('Arc Glass skin', () => {
-  it('is scoped to the arc-glass theme', () => {
+describe('SE optional glass accents', () => {
+  it('is scoped to super-engineering + data-glass-accents (not arc-glass theme)', () => {
     for (const rule of skin.split('}').filter((r) => r.includes('{') && !r.trim().startsWith('@') && !/^\s*(from|to)\b/.test(r.split('{')[0].trim())))
-      if (!/^\s*(from|to)\s*$/.test(rule.split('{')[0])) expect(rule.split('{')[0]).toContain('html[data-theme="arc-glass"]')
+      if (!/^\s*(from|to)\s*$/.test(rule.split('{')[0])) {
+        expect(rule.split('{')[0]).toContain('html[data-ui-profile="super-engineering"][data-glass-accents]')
+        expect(rule.split('{')[0]).not.toContain('data-theme="arc-glass"')
+      }
   })
   it('refraction only on static slots on the full tier, never composer or popovers', () => {
     const refr = skin.split('}').filter((r) => r.includes('url(#rox-glass-skin-refraction)'))
