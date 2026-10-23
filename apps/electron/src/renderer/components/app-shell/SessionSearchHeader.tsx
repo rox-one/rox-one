@@ -60,7 +60,7 @@ export function SessionSearchHeader({
   const { t } = useTranslation()
   const resolvedPlaceholder = placeholder ?? t('session.searchTitlesAndContent')
   return (
-    <div data-glass-slot="toolbar" className="sticky top-0 z-10 min-w-0 shrink-0 px-2 pt-2 pb-1.5 bg-background/95 backdrop-blur-sm">
+    <div data-glass-slot="toolbar" className="sticky top-0 z-10 min-w-0 shrink-0 px-2 pt-2 pb-1.5 bg-background">
       {/* Search input */}
       {/* SE/shared: fill is --input-surface (theme input #1a1a1e under Rox Engineering).
           Focus uses --focus / accent like shared Input and #2211 shell rings. */}
