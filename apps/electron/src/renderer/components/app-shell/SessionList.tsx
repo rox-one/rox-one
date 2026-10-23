@@ -1767,7 +1767,7 @@ export function SessionList({
               <button
                 type="button"
                 onClick={() => onSearchChange?.('')}
-                className="inline-flex items-center min-h-[var(--control-hit-min)] px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors duration-[var(--motion-fast)]"
+                className="inline-flex items-center min-h-[var(--control-hit-min)] px-3 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover hover:bg-surface-pressed transition-colors duration-[var(--motion-fast)]"
               >
                 {t("session.clearSearch")}
               </button>
