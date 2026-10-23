@@ -25,3 +25,28 @@ export function useContainerWidth(ref: RefObject<HTMLElement | null>): number {
 
   return width
 }
+
+/**
+ * Border-box inline size. Prefer this when classifying shell bands that also
+ * apply padding: content-box shrinks with padding and would oscillate at the
+ * wide/ultra thresholds; the flex-allocated border box stays put.
+ */
+export function useContainerBorderWidth(ref: RefObject<HTMLElement | null>): number {
+  const [width, setWidth] = useState(0)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const read = (entry?: ResizeObserverEntry) => {
+      const fromRo = entry?.borderBoxSize?.[0]?.inlineSize
+      setWidth(typeof fromRo === 'number' ? fromRo : el.offsetWidth)
+    }
+    const ro = new ResizeObserver(([entry]) => read(entry))
+    ro.observe(el)
+    read()
+    return () => ro.disconnect()
+  }, [ref])
+
+  return width
+}

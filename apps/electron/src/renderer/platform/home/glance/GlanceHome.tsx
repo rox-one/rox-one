@@ -1,46 +1,24 @@
 /**
  * Glance-style Home pages (clean-room). Page tabs live next to the built-in
  * «Обзор» dashboard; each page renders small/full columns of widget cards.
- * Edit mode: drag cards within/between columns (dnd-kit), add/remove/resize
- * columns, per-widget settings, groups, presets and JSON import/export.
- * Widget bodies are lazy chunks mounted only when the card nears the viewport.
+ * View mode never imports @dnd-kit; edit mode lazy-loads GlanceHomeEdit
+ * (PERF Home PR5). Widget bodies are lazy chunks; off-screen cards mount on idle.
  */
 import * as React from 'react'
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  DndContext,
-  PointerSensor,
-  KeyboardSensor,
-  closestCorners,
-  useDroppable,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core'
-import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { Activity, AppWindow, Bookmark, Braces, Calendar, ChevronDown, ChevronLeft, ChevronRight, Clock, CloudSun, Columns3, Container, Cpu, FileText, GitBranch, GripVertical, Layers, LayoutGrid, ListChecks, MessageSquare, Newspaper, Play, Plus, Puzzle, Radio, Rss, ScanEye, Search, Settings2, Tag, Trash2, TrendingUp, X } from 'lucide-react'
+import { Activity, AppWindow, Bookmark, Braces, Calendar, ChevronDown, ChevronLeft, ChevronRight, Clock, CloudSun, Container, Cpu, FileText, GitBranch, Layers, LayoutGrid, ListChecks, MessageSquare, Newspaper, Play, Plus, Puzzle, Radio, Rss, ScanEye, Search, Settings2, Tag, TrendingUp, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   GLANCE_MAX_HEIGHT,
   GLANCE_MIN_HEIGHT,
-  addColumn,
   addGroupChild,
   addWidgetInstance,
   findWidget,
-  moveColumn,
-  moveWidgetInstance,
-  removeColumn,
-  removePage,
   removeWidgetInstance,
-  resizeColumnByDrag,
-  setColumnSize,
   shiftGroupChild,
-  shiftWidgetInstance,
-  updatePage,
   updateWidgetInstance,
   type GlanceColumn,
   type GlanceConfig,
@@ -50,12 +28,18 @@ import {
 } from './model'
 import { GLANCE_CATEGORIES, getGlanceWidget, glanceWidgetTitle, listGlanceWidgets, resolveConfig, type GlanceField, type GlanceWidgetDef } from './registry'
 import { registerBuiltinGlanceWidgets } from './builtin'
+import { useNearViewport } from './idle-mount'
 
 /** Category labels reuse existing generic catalogue keys where the English text is identical. */
 const CATEGORY_LABEL_KEY: Record<string, string> = {'rox': 'onboarding.providerSelect.rox', 'news': 'feed.tab.news', 'media': 'rovers.category.media', 'dev': 'label.default.development', 'system': 'inspector.context.system', 'advanced': 'settings.workspace.advanced'}
 
 
 registerBuiltinGlanceWidgets()
+registerBuiltinGlanceWidgets()
+
+/** Edit chrome + @dnd-kit — loaded only when the user enters customize. */
+const GlancePageEdit = lazy(() => import('./GlanceHomeEdit').then((m) => ({ default: m.GlancePageEdit })))
+
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   'layout-grid': LayoutGrid,
@@ -108,8 +92,8 @@ export function IconButton({ label, onClick, children, pressed, testId, danger }
 // Page view
 // ---------------------------------------------------------------------------
 
-const PAGE_MAX_WIDTH: Record<GlancePage['width'], number> = { slim: 1100, default: 1600, wide: 1920 }
-const SMALL_COLUMN_PX = 300
+export const PAGE_MAX_WIDTH: Record<GlancePage['width'], number> = { slim: 1100, default: 1600, wide: 1920 }
+export const SMALL_COLUMN_PX = 300
 
 export function GlancePageView({
   layout,
@@ -124,84 +108,58 @@ export function GlancePageView({
   editing: boolean
   onDeleted: () => void
 }) {
+  if (editing) {
+    return (
+      <Suspense fallback={<GlancePageViewStatic layout={layout} page={page} onChange={onChange} onDeleted={onDeleted} />}>
+        <GlancePageEdit layout={layout} page={page} onChange={onChange} onDeleted={onDeleted} />
+      </Suspense>
+    )
+  }
+  return <GlancePageViewStatic layout={layout} page={page} onChange={onChange} onDeleted={onDeleted} />
+}
+
+/** View-mode page: no @dnd-kit in the module graph. */
+function GlancePageViewStatic({
+  layout,
+  page,
+  onChange,
+  onDeleted,
+}: {
+  layout: GlanceLayout
+  page: GlancePage
+  onChange: (next: GlanceLayout) => void
+  onDeleted: () => void
+}) {
   const { t } = useTranslation()
   const [settingsFor, setSettingsFor] = useState<string | null>(null)
   const [pickerFor, setPickerFor] = useState<string | null>(null)
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }))
   const containerRef = useRef<HTMLDivElement>(null)
   const narrow = useNarrow(containerRef, 900)
-
-  const onDragEnd = (event: DragEndEvent) => {
-    const active = String(event.active.id)
-    const overId = event.over ? String(event.over.id) : null
-    if (!overId || active === overId) return
-    const targetColumn = page.columns.find((c) => c.id === overId || `drop:${c.id}` === overId)
-    if (targetColumn) {
-      onChange(moveWidgetInstance(layout, active, { pageId: page.id, columnId: targetColumn.id, index: targetColumn.widgets.length }))
-      return
-    }
-    const over = findWidget(layout, overId)
-    if (!over || over.at.groupId || over.at.pageId !== page.id) return
-    onChange(moveWidgetInstance(layout, active, { pageId: page.id, columnId: over.at.columnId, index: over.at.index }))
-  }
-
+  // onDeleted kept for API parity with edit chunk (unused in view).
+  void onDeleted
   const settingsTarget = settingsFor ? findWidget(layout, settingsFor) : null
 
   return (
     <div ref={containerRef} className="mx-auto flex w-full min-w-0 flex-col gap-2" style={{ maxWidth: PAGE_MAX_WIDTH[page.width] }} data-glance-page={page.id}>
-      {editing ? (
-        <div className="flex flex-wrap items-center gap-2 text-sm" data-glance-page-toolbar="">
-          <input
-            value={page.title}
-            onChange={(e) => onChange(updatePage(layout, page.id, { title: e.target.value }))}
-            aria-label={t('glance.pageTitle')}
-            placeholder={t('notes.untitled')}
-            className="h-7 w-48 rounded-[var(--radius-control)] bg-surface-hover px-2 text-sm font-bold outline-none focus:bg-surface-pressed"
+      <div
+        className={cn('grid min-w-0', narrow ? 'grid-cols-1' : '')}
+        style={narrow ? undefined : { gridTemplateColumns: page.columns.map((c) => (c.size === 'small' ? `${SMALL_COLUMN_PX}px` : 'minmax(0, 1fr)')).join(' ') }}
+        data-glance-columns={page.columns.length}
+      >
+        {page.columns.map((column, ci) => (
+          <GlanceColumnView
+            key={column.id}
+            layout={layout}
+            page={page}
+            column={column}
+            index={ci}
+            onChange={onChange}
+            onSettings={setSettingsFor}
+            onAdd={() => setPickerFor(column.id)}
+            last={ci === page.columns.length - 1}
           />
-          <GlanceSelect
-            label={t('glance.pageWidth')}
-            value={page.width}
-            onChange={(v) => onChange(updatePage(layout, page.id, { width: v as GlancePage['width'] }))}
-            options={(['slim', 'default', 'wide'] as const).map((w) => ({ value: w, label: t(w === 'default' ? 'common.default' : w === 'slim' ? 'glance.column.small' : 'glance.column.full') }))}
-            className="w-32"
-          />
-          <IconButton label={t('kanban.column.add')} onClick={() => onChange(addColumn(layout, page.id))} testId="add-column"><Columns3 className="icon-toolbar" /></IconButton>
-          <span className="flex-1" />
-          <IconButton
-            label={t('common.delete')}
-            danger
-            testId="delete-page"
-            onClick={() => {
-              onChange(removePage(layout, page.id))
-              onDeleted()
-            }}
-          >
-            <Trash2 className="icon-toolbar" />
-          </IconButton>
-        </div>
-      ) : null}
-      <DndContext sensors={sensors} collisionDetection={closestCorners} onDragEnd={onDragEnd}>
-        <div
-          className={cn('grid min-w-0', narrow ? 'grid-cols-1' : '')}
-          style={narrow ? undefined : { gridTemplateColumns: page.columns.map((c) => (c.size === 'small' ? `${SMALL_COLUMN_PX}px` : 'minmax(0, 1fr)')).join(' ') }}
-          data-glance-columns={page.columns.length}
-        >
-          {page.columns.map((column, ci) => (
-            <GlanceColumnView
-              key={column.id}
-              layout={layout}
-              page={page}
-              column={column}
-              index={ci}
-              editing={editing}
-              onChange={onChange}
-              onSettings={setSettingsFor}
-              onAdd={() => setPickerFor(column.id)}
-              last={ci === page.columns.length - 1}
-            />
-          ))}
-        </div>
-      </DndContext>
+        ))}
+      </div>
       {pickerFor ? (
         <GlanceWidgetPicker
           onClose={() => setPickerFor(null)}
@@ -234,7 +192,8 @@ export function GlancePageView({
   )
 }
 
-function useNarrow(ref: React.RefObject<HTMLElement | null>, breakpoint: number): boolean {
+
+export function useNarrow(ref: React.RefObject<HTMLElement>, breakpoint: number): boolean {
   const [narrow, setNarrow] = useState(false)
   useEffect(() => {
     const el = ref.current
@@ -251,7 +210,6 @@ function GlanceColumnView({
   page,
   column,
   index,
-  editing,
   onChange,
   onSettings,
   onAdd,
@@ -261,60 +219,29 @@ function GlanceColumnView({
   page: GlancePage
   column: GlanceColumn
   index: number
-  editing: boolean
   onChange: (next: GlanceLayout) => void
   onSettings: (id: string) => void
   onAdd: () => void
   last: boolean
 }) {
   const { t } = useTranslation()
-  const { setNodeRef, isOver } = useDroppable({ id: `drop:${column.id}`, disabled: !editing })
-  const fulls = page.columns.filter((c) => c.size === 'full').length
+  void onAdd
   return (
     <section
-      ref={setNodeRef}
-      className={cn('rox-grid-tile relative flex min-w-0 flex-col', !last && 'pr-px', isOver && 'bg-surface-hover')}
+      className={cn('rox-grid-tile relative flex min-w-0 flex-col', !last && 'pr-px')}
       aria-label={t('glance.columnN', { n: index + 1 })}
       data-glance-column={column.size}
     >
-      {editing ? (
-        <div className="flex h-7 items-center gap-1 px-2 text-xs text-muted-foreground" data-glance-column-toolbar="">
-          <GlanceSelect
-            label={t('glance.columnSize')}
-            value={column.size}
-            onChange={(v) => onChange(setColumnSize(layout, page.id, column.id, v as GlanceColumn['size']))}
-            options={[
-              { value: 'small', label: t('glance.column.small'), disabled: column.size === 'full' && fulls <= 1 },
-              { value: 'full', label: t('glance.column.full'), disabled: column.size === 'small' && fulls >= 2 },
-            ]}
-            className="w-28"
-          />
-          <IconButton label={t('glance.moveLeft')} onClick={() => onChange(moveColumn(layout, page.id, column.id, -1))}><ChevronLeft className="icon-caption" /></IconButton>
-          <IconButton label={t('glance.moveRight')} onClick={() => onChange(moveColumn(layout, page.id, column.id, 1))}><ChevronRight className="icon-caption" /></IconButton>
-          <span className="flex-1" />
-          {page.columns.length > 1 ? (
-            <IconButton label={t('kanban.column.remove')} danger onClick={() => onChange(removeColumn(layout, page.id, column.id))}><X className="icon-caption" /></IconButton>
-          ) : null}
-        </div>
-      ) : null}
-      <SortableContext items={column.widgets.map((w) => w.id)} strategy={verticalListSortingStrategy}>
-        <div className="flex min-w-0 flex-col">
-          {column.widgets.map((widget) => (
-            <GlanceCard key={widget.id} layout={layout} widget={widget} column={column.size} editing={editing} onChange={onChange} onSettings={onSettings} />
-          ))}
-        </div>
-      </SortableContext>
-      {column.widgets.length === 0 && !editing ? <p className="px-3 py-6 text-sm text-muted-foreground">{t('glance.emptyColumn')}</p> : null}
-      {editing ? (
-        <button type="button" onClick={onAdd} className="rox-home-add-cell m-2 flex h-12 items-center justify-center gap-1 rounded-[var(--radius-control)] text-sm font-bold text-muted-foreground hover:text-foreground" data-glance-add-widget={column.id}>
-          <Plus className="icon-toolbar" />
-          {t('workbench.home.edit.addWidget')}
-        </button>
-      ) : null}
-      {editing && !last ? <ColumnResizeHandle size={column.size} onResize={(dx) => onChange(resizeColumnByDrag(layout, page.id, column.id, dx))} /> : null}
+      <div className="flex min-w-0 flex-col">
+        {column.widgets.map((widget) => (
+          <GlanceCard key={widget.id} layout={layout} widget={widget} column={column.size} onChange={onChange} onSettings={onSettings} />
+        ))}
+      </div>
+      {column.widgets.length === 0 ? <p className="px-3 py-6 text-sm text-muted-foreground">{t('glance.emptyColumn')}</p> : null}
     </section>
   )
 }
+
 
 // ---------------------------------------------------------------------------
 // Card
@@ -343,27 +270,8 @@ function lazyBody(def: GlanceWidgetDef) {
   return C
 }
 
-/** Mount children only once the element is near the viewport. */
-function useNearViewport<T extends HTMLElement>(): [React.RefObject<T>, boolean] {
-  const ref = useRef<T>(null)
-  const [seen, setSeen] = useState(typeof IntersectionObserver === 'undefined')
-  useEffect(() => {
-    if (seen) return
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting)) {
-        setSeen(true)
-        io.disconnect()
-      }
-    }, { rootMargin: '400px 0px' })
-    io.observe(el)
-    return () => io.disconnect()
-  }, [seen])
-  return [ref, seen]
-}
 
-function useWidth<T extends HTMLElement>(ref: React.RefObject<T | null>): number {
+export function useWidth<T extends HTMLElement>(ref: React.RefObject<T>): number {
   const [w, setW] = useState(320)
   useEffect(() => {
     const el = ref.current
@@ -384,43 +292,24 @@ function GlanceCard({
   layout,
   widget,
   column,
-  editing,
   onChange,
   onSettings,
 }: {
   layout: GlanceLayout
   widget: GlanceWidgetInstance
   column: 'small' | 'full'
-  editing: boolean
   onChange: (next: GlanceLayout) => void
   onSettings: (id: string) => void
 }) {
   const { t } = useTranslation()
-  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: widget.id, disabled: !editing })
   const [viewRef, near] = useNearViewport<HTMLDivElement>()
-  const [previewHeight, setPreviewHeight] = useState<number | undefined>(undefined)
   const width = useWidth(viewRef)
   const def = widget.type === 'group' ? null : getGlanceWidget(widget.type)
   const title = widget.title ?? (widget.type === 'group' ? t('sidebar.group') : def ? glanceWidgetTitle(def, t) : widget.type)
-  const frameless = !!def?.frameless && !editing
+  const frameless = !!def?.frameless
+  void onSettings
   const chrome = (
     <header className="flex h-7 shrink-0 items-center gap-1 px-3">
-      {editing ? (
-        <button
-          type="button"
-          ref={setActivatorNodeRef}
-          {...attributes}
-          {...listeners}
-          className="-ml-1 flex h-6 w-5 shrink-0 cursor-grab items-center justify-center rounded-[var(--radius-control)] text-muted-foreground hover:bg-surface-pressed hover:text-foreground active:cursor-grabbing"
-          aria-label={t('workbench.home.edit.drag', { name: title })}
-          onKeyDown={(event) => {
-            if (event.key === 'ArrowUp') { event.preventDefault(); onChange(shiftWidgetInstance(layout, widget.id, -1)) }
-            else if (event.key === 'ArrowDown') { event.preventDefault(); onChange(shiftWidgetInstance(layout, widget.id, 1)) }
-          }}
-        >
-          <GripVertical className="icon-toolbar" />
-        </button>
-      ) : null}
       <button
         type="button"
         onClick={() => onChange(updateWidgetInstance(layout, widget.id, { collapsed: !widget.collapsed }))}
@@ -431,19 +320,11 @@ function GlanceCard({
         <ChevronDown className={cn('icon-caption shrink-0 opacity-0 transition group-hover:opacity-100', widget.collapsed && '-rotate-90 opacity-100')} />
       </button>
       <span className="flex-1" />
-      {editing ? (
-        <>
-          <IconButton label={t('glance.settings', { name: title })} onClick={() => onSettings(widget.id)} testId="settings"><Settings2 className="icon-toolbar" /></IconButton>
-          <IconButton label={t('workbench.home.edit.remove', { name: title })} danger onClick={() => onChange(removeWidgetInstance(layout, widget.id))} testId="remove"><X className="icon-toolbar" /></IconButton>
-        </>
-      ) : null}
     </header>
   )
   return (
     <article
-      ref={setNodeRef}
-      style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cn('rox-grid-tile relative min-w-0', isDragging && 'z-raised opacity-80')}
+      className="rox-grid-tile relative min-w-0"
       data-glance-widget={widget.type}
       data-glance-id={widget.id}
       data-glass-slot={def?.frameless ? undefined : 'card'}
@@ -452,8 +333,8 @@ function GlanceCard({
       {frameless ? null : chrome}
       <div
         ref={viewRef}
-        className={cn('min-w-0', !frameless && 'px-3 pb-3', widget.collapsed && 'hidden', (previewHeight ?? widget.height) !== undefined && 'overflow-y-auto')}
-        style={(previewHeight ?? widget.height) !== undefined ? { height: previewHeight ?? widget.height } : undefined}
+        className={cn('min-w-0', !frameless && 'px-3 pb-3', widget.collapsed && 'hidden', widget.height !== undefined && 'overflow-y-auto')}
+        style={widget.height !== undefined ? { height: widget.height } : undefined}
       >
         {widget.collapsed ? null : near ? (
           widget.type === 'group' ? (
@@ -464,22 +345,15 @@ function GlanceCard({
             <p className="text-sm text-muted-foreground">{t('glance.unknownWidget')}</p>
           )
         ) : (
-          <div className="h-24 animate-pulse rounded-[var(--radius-control)] bg-surface-hover" aria-hidden />
+          <div className="h-24 animate-pulse rounded-[var(--radius-control)] bg-surface-hover" aria-hidden data-glance-skeleton="" />
         )}
       </div>
-      {editing && !widget.collapsed ? (
-        <HeightResizeHandle
-          bodyRef={viewRef}
-          onPreview={setPreviewHeight}
-          onCommit={(h) => { setPreviewHeight(undefined); onChange(updateWidgetInstance(layout, widget.id, { height: h })) }}
-        />
-      ) : null}
     </article>
   )
 }
 
-/** Drag the column's right edge: right → full, left → small (snap, column rules apply). */
-function ColumnResizeHandle({ size, onResize }: { size: 'small' | 'full'; onResize: (dx: number) => void }) {
+
+export function ColumnResizeHandle({ size, onResize }: { size: 'small' | 'full'; onResize: (dx: number) => void }) {
   const { t } = useTranslation()
   const start = useRef<number | null>(null)
   return (
@@ -504,7 +378,7 @@ function ColumnResizeHandle({ size, onResize }: { size: 'small' | 'full'; onResi
 }
 
 /** Drag the bottom edge to set a fixed body height; double-click (or Delete) resets. */
-function HeightResizeHandle({ bodyRef, onPreview, onCommit }: { bodyRef: React.RefObject<HTMLDivElement | null>; onPreview: (h: number | undefined) => void; onCommit: (h: number | null) => void }) {
+export function HeightResizeHandle({ bodyRef, onPreview, onCommit }: { bodyRef: React.RefObject<HTMLDivElement>; onPreview: (h: number | undefined) => void; onCommit: (h: number | null) => void }) {
   const { t } = useTranslation()
   const drag = useRef<{ y: number; h: number; last: number } | null>(null)
   const clampH = (h: number) => Math.round(Math.min(GLANCE_MAX_HEIGHT, Math.max(GLANCE_MIN_HEIGHT, h)))
@@ -531,7 +405,7 @@ function HeightResizeHandle({ bodyRef, onPreview, onCommit }: { bodyRef: React.R
   )
 }
 
-function WidgetBody({ def, widget, column, width, layout, onChange }: { def: GlanceWidgetDef; widget: GlanceWidgetInstance; column: 'small' | 'full'; width: number; layout: GlanceLayout; onChange: (next: GlanceLayout) => void }) {
+export function WidgetBody({ def, widget, column, width, layout, onChange }: { def: GlanceWidgetDef; widget: GlanceWidgetInstance; column: 'small' | 'full'; width: number; layout: GlanceLayout; onChange: (next: GlanceLayout) => void }) {
   const { t } = useTranslation()
   const Body = lazyBody(def)
   const config = useMemo(() => resolveConfig(def, widget.config), [def, widget.config])
@@ -544,7 +418,7 @@ function WidgetBody({ def, widget, column, width, layout, onChange }: { def: Gla
   )
 }
 
-function GroupBody({ group, column, width, layout, onChange }: { group: GlanceWidgetInstance; column: 'small' | 'full'; width: number; layout: GlanceLayout; onChange: (next: GlanceLayout) => void }) {
+export function GroupBody({ group, column, width, layout, onChange }: { group: GlanceWidgetInstance; column: 'small' | 'full'; width: number; layout: GlanceLayout; onChange: (next: GlanceLayout) => void }) {
   const { t } = useTranslation()
   const kids = group.children ?? []
   const [active, setActive] = useState(0)
@@ -575,7 +449,7 @@ function GroupBody({ group, column, width, layout, onChange }: { group: GlanceWi
 // Picker
 // ---------------------------------------------------------------------------
 
-function GlanceWidgetPicker({ onPick, onPickGroup, onClose }: { onPick: (def: GlanceWidgetDef) => void; onPickGroup: () => void; onClose: () => void }) {
+export function GlanceWidgetPicker({ onPick, onPickGroup, onClose }: { onPick: (def: GlanceWidgetDef) => void; onPickGroup: () => void; onClose: () => void }) {
   const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const all = listGlanceWidgets()
@@ -640,7 +514,7 @@ function Modal({ title, onClose, children, testId }: { title: string; onClose: (
 // Settings
 // ---------------------------------------------------------------------------
 
-function GlanceSettingsDialog({
+export function GlanceSettingsDialog({
   widget,
   onClose,
   onSave,
