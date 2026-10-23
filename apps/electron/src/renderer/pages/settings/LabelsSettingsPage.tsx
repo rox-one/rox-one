@@ -430,7 +430,7 @@ export default function LabelsSettingsPage() {
                                       e.currentTarget.blur()
                                     }
                                   }}
-                                  className="h-8 text-sm flex-1 min-w-0 bg-muted/30 border-border/50"
+                                  className="h-8 text-sm flex-1 min-w-0 bg-surface-hover border-border/50"
                                   aria-label={t('common.name')}
                                 />
 
@@ -474,7 +474,7 @@ export default function LabelsSettingsPage() {
 
                           {addingParentId !== undefined && (
                             <div
-                              className="flex items-center gap-2 px-3 py-2.5 bg-muted/20"
+                              className="flex items-center gap-2 px-3 py-2.5 bg-surface-hover"
                               style={{
                                 paddingLeft: `${
                                   (addingParentId

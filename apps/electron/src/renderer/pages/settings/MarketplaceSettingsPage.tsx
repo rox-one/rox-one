@@ -606,7 +606,7 @@ export default function MarketplaceSettingsPage() {
                 className={
                   active
                     ? 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-primary/10 text-primary font-medium'
-                    : 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:bg-muted/60'
+                    : 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:bg-surface-hover'
                 }
               >
                 <Icon className="w-3.5 h-3.5 opacity-70" />

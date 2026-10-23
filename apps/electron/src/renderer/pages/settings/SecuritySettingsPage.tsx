@@ -361,11 +361,11 @@ export default function SecuritySettingsPage() {
                 </div>
               </div>
 
-              {workspaceId && runtimeResource.scope === workspaceId && ['failed', 'unavailable'].includes(runtimeResource.phase) && <div role="status" className="rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground" data-testid="security-openclaw-error">
+              {workspaceId && runtimeResource.scope === workspaceId && ['failed', 'unavailable'].includes(runtimeResource.phase) && <div role="status" className="rounded-lg bg-surface-hover p-3 text-sm text-muted-foreground" data-testid="security-openclaw-error">
                 <p>{t(runtimeResource.phase === 'failed' ? 'security.openclaw.loadFailed' : 'security.openclaw.unavailable')}</p>
                 <Button size="sm" variant="outline" className="mt-2" disabled={runtimeLoading} onClick={() => void refreshRuntime()}>{t('security.openclaw.refresh')}</Button>
               </div>}
-              {workspaceId && auditResource.scope === workspaceId && ['failed', 'unavailable'].includes(auditResource.phase) && <div role="status" className="rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground" data-testid="security-audit-error">
+              {workspaceId && auditResource.scope === workspaceId && ['failed', 'unavailable'].includes(auditResource.phase) && <div role="status" className="rounded-lg bg-surface-hover p-3 text-sm text-muted-foreground" data-testid="security-audit-error">
                 <p>{t(auditResource.phase === 'failed' ? 'security.error.loadFailed' : 'security.error.auditUnavailable')}</p>
                 <Button size="sm" variant="outline" className="mt-2" disabled={auditLoading} onClick={() => void refreshAudit()}>{t('security.audit.refresh')}</Button>
               </div>}
@@ -577,7 +577,7 @@ export default function SecuritySettingsPage() {
                             {finding.acceptance && !finding.acceptance.expired ? ` · ${t('security.finding.acceptedUntil', { date: dateFormatter.format(new Date(finding.acceptance.expiresAt)) })}` : ''}
                           </p>
                           {isAdviceVisible && (
-                            <p className="rounded-md border border-border/60 bg-muted/30 p-3 text-sm text-muted-foreground">
+                            <p className="rounded-md border border-border/60 bg-surface-hover p-3 text-sm text-muted-foreground">
                               {t('security.finding.fixAdvice')}
                             </p>
                           )}

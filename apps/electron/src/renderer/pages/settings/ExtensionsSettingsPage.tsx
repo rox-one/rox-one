@@ -201,7 +201,7 @@ function ExtensionCard({
       typeof onOpenCompat === 'function')
 
   return (
-    <div className="border rounded-lg p-4 space-y-3 bg-background/40" data-glass-slot="card">
+    <div className="border border-border rounded-lg p-4 space-y-3 bg-surface-hover" data-glass-slot="card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -274,7 +274,7 @@ function ExtensionCard({
               className={`inline-flex items-center gap-1.5 text-xs border rounded-md px-2 py-1 disabled:opacity-50 ${
                 enabled
                   ? 'bg-emerald-500/15 border-emerald-600/40 text-emerald-800 dark:text-emerald-200'
-                  : 'bg-muted/70 border-border text-muted-foreground'
+                  : 'bg-surface-pressed border-border text-muted-foreground'
               }`}
               title={
                 enabled
@@ -1131,7 +1131,7 @@ export default function ExtensionsSettingsPage() {
                 <div className="text-xs font-medium opacity-80">
                   {t('extensions.developer.hostStatus')}
                 </div>
-                <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs space-y-1 font-mono">
+                <div className="rounded-md border bg-surface-hover px-3 py-2 text-xs space-y-1 font-mono">
                   <div>
                     {t('extensions.developer.workspaceId')}:{' '}
                     <span className="font-semibold">{workspaceId ?? '—'}</span>
@@ -1155,7 +1155,7 @@ export default function ExtensionsSettingsPage() {
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    className="text-xs px-2 py-1 rounded border hover:bg-muted/50 disabled:opacity-50"
+                    className="text-xs px-2 py-1 rounded border hover:bg-surface-hover disabled:opacity-50"
                     disabled={Boolean(busy['host-start'])}
                     onClick={() => void hostLifecycle('start')}
                   >
@@ -1163,7 +1163,7 @@ export default function ExtensionsSettingsPage() {
                   </button>
                   <button
                     type="button"
-                    className="text-xs px-2 py-1 rounded border hover:bg-muted/50 disabled:opacity-50"
+                    className="text-xs px-2 py-1 rounded border hover:bg-surface-hover disabled:opacity-50"
                     disabled={Boolean(busy['host-stop'])}
                     onClick={() => void hostLifecycle('stop')}
                   >
@@ -1171,7 +1171,7 @@ export default function ExtensionsSettingsPage() {
                   </button>
                   <button
                     type="button"
-                    className="text-xs px-2 py-1 rounded border hover:bg-muted/50 disabled:opacity-50"
+                    className="text-xs px-2 py-1 rounded border hover:bg-surface-hover disabled:opacity-50"
                     disabled={Boolean(busy['host-restart'])}
                     onClick={() => void hostLifecycle('restart')}
                   >
@@ -1231,7 +1231,7 @@ export default function ExtensionsSettingsPage() {
                   />
                   <button
                     type="button"
-                    className="text-xs px-2 py-1 rounded border hover:bg-muted/50"
+                    className="text-xs px-2 py-1 rounded border hover:bg-surface-hover"
                     onClick={() => void loadAllowlist()}
                   >
                     {t('extensions.developer.urlAllowlistLoad')}
@@ -1255,7 +1255,7 @@ export default function ExtensionsSettingsPage() {
                         <span className="flex-1 break-all">{prefix}</span>
                         <button
                           type="button"
-                          className="shrink-0 text-xs px-1.5 py-0.5 rounded border hover:bg-muted/50"
+                          className="shrink-0 text-xs px-1.5 py-0.5 rounded border hover:bg-surface-hover"
                           onClick={() => removeAllowlistPrefix(prefix)}
                         >
                           {t('extensions.developer.urlAllowlistRemove')}
@@ -1281,14 +1281,14 @@ export default function ExtensionsSettingsPage() {
                   />
                   <button
                     type="button"
-                    className="text-xs px-2 py-1 rounded border hover:bg-muted/50"
+                    className="text-xs px-2 py-1 rounded border hover:bg-surface-hover"
                     onClick={addAllowlistPrefix}
                   >
                     {t('extensions.developer.urlAllowlistAdd')}
                   </button>
                   <button
                     type="button"
-                    className="text-xs px-2 py-1 rounded border hover:bg-muted/50 disabled:opacity-50"
+                    className="text-xs px-2 py-1 rounded border hover:bg-surface-hover disabled:opacity-50"
                     disabled={!allowlistExtId.trim() || Boolean(busy['allowlist-save'])}
                     onClick={() => void saveAllowlist()}
                   >
@@ -1304,7 +1304,7 @@ export default function ExtensionsSettingsPage() {
                   </div>
                   <button
                     type="button"
-                    className="text-xs px-2 py-1 rounded border hover:bg-muted/50"
+                    className="text-xs px-2 py-1 rounded border hover:bg-surface-hover"
                     onClick={() => void load()}
                   >
                     {t('extensions.developer.capabilitiesRefresh')}
@@ -1330,7 +1330,7 @@ export default function ExtensionsSettingsPage() {
                         <span className="opacity-50">{row.tokenHash.slice(0, 12)}</span>
                         <button
                           type="button"
-                          className="ml-auto text-xs px-1.5 py-0.5 rounded border hover:bg-muted/50"
+                          className="ml-auto text-xs px-1.5 py-0.5 rounded border hover:bg-surface-hover"
                           onClick={() => void revokeCapabilityHash(row.tokenHash)}
                         >
                           {t('extensions.developer.capabilitiesRevoke')}

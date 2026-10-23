@@ -58,7 +58,7 @@ export function StorageVisibleRootSettings() {
       {statusKey && (
         <div
           data-testid="storage-visible-root-last-migration"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/40 border border-border text-xs text-muted-foreground"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-hover border border-border text-xs text-muted-foreground"
         >
           <Info className="h-3.5 w-3.5 shrink-0" />
           <span className="flex-1">{t(statusKey)}</span>
