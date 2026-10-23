@@ -42,3 +42,24 @@ export function withOptimisticDue<T extends { id: string; dueAt: number | null }
   if (!overlay.size) return [...tasks]
   return tasks.map((task) => (overlay.has(task.id) ? { ...task, dueAt: overlay.get(task.id)! } : task))
 }
+
+/**
+ * Drop overlay entries only once the snapshot dueAt matches (write confirmed).
+ * Unmatched entries stay so an in-flight or rejected write does not flash the bar
+ * back and forth on every unrelated snapshot bump.
+ */
+export function reconcileOptimisticDue<T extends { id: string; dueAt: number | null }>(
+  overlay: ReadonlyMap<string, number>,
+  tasks: readonly T[],
+): Map<string, number> {
+  if (!overlay.size) return new Map()
+  const byId = new Map(tasks.map((task) => [task.id, task.dueAt]))
+  const next = new Map<string, number>()
+  for (const [id, due] of overlay) {
+    const snap = byId.get(id)
+    if (snap === undefined) continue // task gone
+    if (snap === due) continue // confirmed
+    next.set(id, due)
+  }
+  return next
+}

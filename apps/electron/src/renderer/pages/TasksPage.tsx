@@ -78,7 +78,7 @@ import {
 } from '@/components/mode-screen/ModeScreen'
 import { tasksLayoutAtom, tasksTimelineGroupAtom, tasksTimelineWeekAtom, tasksTimelineZoomAtom, tasksViewAtom } from './tasks/atoms'
 import { TaskTimeline } from './tasks/TaskTimeline'
-import { applySchedule, dependencyConflicts, isoOf, timelineRowOrder, weekRange, weekTasks, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
+import { applySchedule, dependencyConflicts, isoOf, timelineGroupTitle as formatTimelineGroupTitle, timelineRowOrder, weekRange, weekTasks, type SchedulePatch, type TimelineGroup } from './tasks/timeline-model'
 import {
   agentChipFor,
   agentCounts,
@@ -1352,12 +1352,12 @@ export default function TasksPage(props: TasksPageProps = {}) {
     const conflict = dependencyConflicts(storeRef.current.list().filter(isOpenTask), id, today).find((c) => !before.has(key(c)))
     if (conflict) toast.warning(t('tasks.deps.conflict', { title: conflict.blocked.title, blocker: conflict.blocker.title }))
   }
-  const timelineGroupTitle = (group: TimelineGroup) => {
-    if (group.id == null) return t('tasks.move.noPlace')
-    if (group.kind === 'project') return projectName(group.id)
-    if (group.kind === 'area') return areaName(group.id)
-    return t(`tasks.projection.${group.id}`)
-  }
+  const timelineGroupTitle = (group: TimelineGroup) => formatTimelineGroupTitle(
+    group,
+    t,
+    (id) => projectName(id) || undefined,
+    (id) => areaName(id) || undefined,
+  )
   const showTimeline = layout === 'timeline' && view.kind !== 'agents'
   // Leaving the list for the timeline drops any multi-selection.
   useEffect(() => { if (layout === 'timeline') clearMulti() }, [layout, clearMulti])

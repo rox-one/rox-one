@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { WorkspaceTask } from '@rox/shared/workspace-work'
-import { withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../timeline-adapters'
+import { reconcileOptimisticDue, withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../timeline-adapters'
 import { groupTasks, partitionTasks, timelineGroupTitle } from '../timeline-model'
 
 const ws = (patch: Partial<WorkspaceTask>): WorkspaceTask => ({
@@ -41,10 +41,30 @@ describe('workspace deadline moves', () => {
 describe('timelineGroupTitle', () => {
   const t = (k: string) => `t:${k}`
   it('branches on group kind', () => {
-    const g = (kind: 'list' | 'project' | 'area', id: string | null) => ({ key: String(id), id, kind, tasks: [] })
+    const g = (kind: 'list' | 'project' | 'area' | 'none', id: string | null) => ({ key: String(id), id, kind, tasks: [] as never[] })
     expect(timelineGroupTitle(g('list', 'today'), t, () => 'P', () => 'A')).toBe('t:tasks.projection.today')
     expect(timelineGroupTitle(g('project', 'p1'), t, (id) => `P:${id}`, () => 'A')).toBe('P:p1')
     expect(timelineGroupTitle(g('area', 'a1'), t, () => 'P', (id) => `A:${id}`)).toBe('A:a1')
     expect(timelineGroupTitle(g('project', null), t, () => 'P', () => 'A')).toBe('t:tasks.move.noPlace')
+    expect(timelineGroupTitle(g('area', null), t, () => 'P', () => 'A')).toBe('t:tasks.move.noArea')
+    expect(timelineGroupTitle(g('area', 'gone'), t, () => 'P', () => undefined)).toBe('t:tasks.move.noArea')
+    expect(timelineGroupTitle(g('area', 'gone'), t, () => 'P', () => '')).toBe('t:tasks.move.noArea')
+  })
+})
+
+describe('reconcileOptimisticDue', () => {
+  it('keeps unmatched overlays and drops confirmed or missing tasks', () => {
+    const overlay = new Map([['a', 9], ['b', 2], ['gone', 3]])
+    const next = reconcileOptimisticDue(
+      overlay,
+      [ws({ id: 'a', dueAt: 1 }), ws({ id: 'b', dueAt: 2 })],
+    )
+    expect([...next.entries()]).toEqual([['a', 9]])
+  })
+  it('does not wipe everything on an unrelated snapshot', () => {
+    const overlay = new Map([['a', 9]])
+    const next = reconcileOptimisticDue(overlay, [ws({ id: 'a', dueAt: 1 }), ws({ id: 'c', dueAt: 5 })])
+    expect(next.get('a')).toBe(9)
+    expect(next.size).toBe(1)
   })
 })

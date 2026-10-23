@@ -6,7 +6,7 @@ import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
 import { isOpenTask } from '@rox/core/tasks/personal'
 import { cn } from '@/lib/utils'
 import { TimelinePanel } from '../tasks/TimelinePanel'
-import { withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../tasks/timeline-adapters'
+import { reconcileOptimisticDue, withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../tasks/timeline-adapters'
 import type { SchedulePatch, TimelineGroup } from '../tasks/timeline-model'
 import { localDateTimeInput, parseLocalDateTime, workspaceProjectOptions, type WorkspaceProjectOption } from '@/lib/workspace-work-client'
 
@@ -81,19 +81,40 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
     if (ok) setDraft(null)
   }
   // Timeline: open workspace tasks across projects, one-day bars on their deadlines.
-  // Optimistic deadlines shown until the next snapshot arrives (or the write is rejected).
+  // Optimistic deadlines stay until the snapshot dueAt matches (confirmed write).
   const [overlay, setOverlay] = useState<ReadonlyMap<string, number>>(() => new Map())
-  useEffect(() => { setOverlay(new Map()) }, [snapshot])
+  useEffect(() => {
+    if (!snapshot) return
+    setOverlay(prev => {
+      const next = reconcileOptimisticDue(prev, snapshot.tasks)
+      if (next.size === prev.size && [...next].every(([id, due]) => prev.get(id) === due)) return prev
+      return next
+    })
+  }, [snapshot])
+  // When the open task's deadline moves on the timeline, refresh the form so save
+  // does not fight the new dueAt / expectedRevision.
+  useEffect(() => {
+    if (!draft?.id || !snapshot) return
+    const task = snapshot.tasks.find(item => item.id === draft.id)
+    if (!task) return
+    const dueAt = overlay.get(task.id) ?? task.dueAt
+    const due = localDateTimeInput(dueAt)
+    setDraft(current => {
+      if (!current || current.id !== task.id) return current
+      if (current.due === due && current.expectedRevision === snapshot.revision) return current
+      return { ...current, due, expectedRevision: snapshot.revision }
+    })
+  }, [snapshot, overlay, draft?.id])
   const timelineTasks = useMemo(() => withOptimisticDue(tasks, overlay).map(workspaceTaskToTimeline).filter(isOpenTask), [tasks, overlay])
   const schedule = (id: string, patch: SchedulePatch) => {
     const task = snapshot?.tasks.find(item => item.id === id)
     const dueAt = task ? workspaceDuePatch(patch, task.dueAt) : null
     if (!snapshot || !canWrite || work.pending || dueAt == null) return
     setOverlay(prev => new Map(prev).set(id, dueAt))
-    // A rejection clears the overlay; the hook's error surfaces in the banner above.
-    void work.write({ kind: 'updateTask', id, patch: { dueAt } }, snapshot.revision).then(ok => {
-      if (!ok) setOverlay(prev => { const next = new Map(prev); next.delete(id); return next })
-    })
+    // Early false (write never ran) keeps the overlay; a real rejection sets
+    // work.error (banner) and still keeps the bar until the user retries or a
+    // matching snapshot arrives — never wipe silently.
+    void work.write({ kind: 'updateTask', id, patch: { dueAt } }, snapshot.revision)
   }
   const projectTitle = (group: TimelineGroup) => (group.id == null ? t('navigation.work.tasks.noProject') : projects.find(project => project.id === group.id)?.name ?? t('navigation.work.tasks.missingProject'))
   const members = new Map<string, string>(snapshot?.members.map(member => [member.id, member.name]))
