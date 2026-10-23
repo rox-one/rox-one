@@ -41,11 +41,15 @@ export function cogneeRuntimeDir(roxHome = defaultRoxHome()): string {
   return join(roxHome, 'runtime', 'cognee')
 }
 
-/** Per-workspace storage root: `~/rox/memory/cognee/<workspaceId>`. */
+/**
+ * Per-workspace storage root: `~/rox/memory/cognee/<hash16>`.
+ * Uses a sha1 prefix of the raw id so path-like / punctuated ids cannot collide
+ * after sanitisation (e.g. `/w/foo-bar` vs `/w/foo_bar`).
+ */
 export function cogneeWorkspaceDir(workspaceId: string, roxHome = defaultRoxHome()): string {
-  const safe = workspaceId.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 128) || 'default'
-  if (safe === '.' || safe === '..') return join(roxHome, 'memory', 'cognee', '_')
-  return join(roxHome, 'memory', 'cognee', safe)
+  const raw = workspaceId.trim() || 'default'
+  const hash = createHash('sha1').update(raw).digest('hex').slice(0, 16)
+  return join(roxHome, 'memory', 'cognee', hash)
 }
 
 export type InstallStep = 'uv' | 'python' | 'venv' | 'sidecar'

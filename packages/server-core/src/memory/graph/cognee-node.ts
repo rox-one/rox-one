@@ -131,7 +131,11 @@ export function createCogneeProviderResolver(opts: CogneeResolverOptions) {
         storageDir: cogneeWorkspaceDir(id),
         ensureRuntime: async () => {
           const s = await getRuntime().ensureInstalled()
-          return s.state === 'installed' ? s.python : null
+          if (s.state === 'installed') return { python: s.python }
+          if (s.state === 'unsupported') return { python: null, reason: 'unsupported' as const, detail: s.platformKey }
+          if (s.state === 'failed') return { python: null, reason: 'failed' as const, detail: s.safeError }
+          if (s.state === 'installing') return { python: null, reason: 'installing' as const, detail: s.step }
+          return { python: null, reason: 'not_installed' as const }
         },
         resolveLlmKey: opts.resolveLlmKey ?? resolveSharedRoxKey,
         isEnabled: opts.isEnabled,

@@ -28,7 +28,7 @@ function make(over: Partial<ConstructorParameters<typeof CogneeGraphProvider>[0]
   const p = new CogneeGraphProvider({
     workspaceId: 'ws1',
     storageDir: '/tmp/rox-cognee-test/ws1',
-    ensureRuntime: async () => process.execPath,
+    ensureRuntime: async () => ({ python: process.execPath }),
     resolveLlmKey: async () => 'SECRET-KEY-123',
     spawnFn: (cmd, _args, env) => spawn(cmd, ['-e', FAKE], { env, stdio: ['pipe', 'pipe', 'pipe'] }),
     logger: { warn: (m: string, e?: unknown) => { warns.push(`${m} ${String(e)}`) } },
@@ -71,7 +71,7 @@ describe('CogneeGraphProvider', () => {
   })
 
   test('missing runtime -> not_installed, search stays empty', async () => {
-    const { p } = make({ ensureRuntime: async () => null })
+    const { p } = make({ ensureRuntime: async () => ({ python: null, reason: 'not_installed' as const }) })
     expect(await p.warm()).toBe(false)
     expect(p.status().state).toBe('not_installed')
     expect(await p.search('x')).toEqual([])
@@ -92,6 +92,15 @@ describe('CogneeGraphProvider', () => {
     await new Promise(r => setTimeout(r, 400))
     expect(p.status().state).toBe('cold')
     expect(await p.warm()).toBe(true)
+  })
+
+  test('unsupported runtime surfaces failed status, not not_installed', async () => {
+    const { p } = make({
+      ensureRuntime: async () => ({ python: null, reason: 'unsupported' as const, detail: 'win32-arm64' }),
+    })
+    expect(await p.warm()).toBe(false)
+    expect(p.status().state).toBe('failed')
+    expect(p.status().safeError).toContain('unsupported')
   })
 
   test('crashing sidecar fails soft', async () => {

@@ -85,10 +85,13 @@ describe('CogneeRuntimeManager', () => {
     const mgr = new CogneeRuntimeManager({ runtimeDir: r, sidecarSourceDir: r, platform: 'freebsd', arch: 'x64', exec: { run: async () => ({ code: 0, stderr: '' }) }, io: {} as RuntimeIo })
     expect((await mgr.ensureInstalled()).state).toBe('unsupported')
   })
-  test('workspace dir is sanitised and scoped', () => {
-    expect(cogneeWorkspaceDir('../../etc', '/h')).toBe('/h/memory/cognee/.._.._etc')
-    expect(cogneeWorkspaceDir('..', '/h')).toBe('/h/memory/cognee/_')
-    expect(cogneeWorkspaceDir('ws-1', '/h')).toBe('/h/memory/cognee/ws-1')
+  test('workspace dir is hash-keyed and collision-free', () => {
+    const a = cogneeWorkspaceDir('/w/foo-bar', '/h')
+    const b = cogneeWorkspaceDir('/w/foo_bar', '/h')
+    expect(a).toBe('/h/memory/cognee/5d2ba45c92364537')
+    expect(b).toBe('/h/memory/cognee/fd7bcfb1da8cfb71')
+    expect(a).not.toBe(b)
+    expect(cogneeWorkspaceDir('ws-1', '/h')).toBe('/h/memory/cognee/7cb11a0b15a50508')
     expect(existsSync('/h/memory')).toBe(false)
   })
 })

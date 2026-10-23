@@ -31,8 +31,12 @@ export interface CogneeProviderDeps {
   workspaceId: string
   /** Storage root, `~/rox/memory/cognee/<workspaceId>`. */
   storageDir: string
-  /** Ensure the runtime is installed; resolves the python path or null (unavailable). */
-  ensureRuntime: () => Promise<string | null>
+  /**
+   * Ensure the runtime is installed. Resolves `{ python }` when ready, or
+   * `{ python: null, reason }` where reason distinguishes unsupported/failed/
+   * installing so status() is not collapsed to a forever-retrying not_installed.
+   */
+  ensureRuntime: () => Promise<{ python: string | null; reason?: 'unsupported' | 'failed' | 'installing' | 'not_installed'; detail?: string }>
   /** Resolve the LLM key (build-time shared key / credential store). Never logged. */
   resolveLlmKey: () => Promise<string | null>
   llmEndpoint?: string
@@ -93,10 +97,25 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
     }
     this.state = 'warming'
     try {
-      const python = await this.deps.ensureRuntime()
+      const runtime = await this.deps.ensureRuntime()
+      const python = runtime.python
       if (!python) {
-        this.state = 'not_installed'
-        this.failCooldownUntil = Date.now() + 60_000
+        if (runtime.reason === 'unsupported') {
+          this.state = 'failed'
+          this.safeError = `unsupported platform${runtime.detail ? `: ${runtime.detail}` : ''}`
+          // Permanent: do not retry for a long time.
+          this.failCooldownUntil = Date.now() + 24 * 60 * 60_000
+        } else if (runtime.reason === 'failed') {
+          this.state = 'failed'
+          this.safeError = runtime.detail?.slice(0, 200) || 'runtime install failed'
+          this.failCooldownUntil = Date.now() + 60_000
+        } else if (runtime.reason === 'installing') {
+          this.state = 'warming'
+          return false
+        } else {
+          this.state = 'not_installed'
+          this.failCooldownUntil = Date.now() + 60_000
+        }
         return false
       }
       const key = (await this.deps.resolveLlmKey()) ?? ''
