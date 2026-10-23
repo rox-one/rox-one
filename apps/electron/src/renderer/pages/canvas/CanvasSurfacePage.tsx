@@ -289,8 +289,8 @@ type Drag =
   | { kind: 'move'; id: string; sx: number; sy: number; ox: number; oy: number }
   | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; rotation: number; o: { x: number; y: number; w: number; h: number }; points?: number[] }
   | { kind: 'rotate'; id: string; cx: number; cy: number }
-  | { kind: 'draw-line'; id: string; x0: number; y0: number }
-  | { kind: 'draw-ink'; id: string }
+  | { kind: 'draw-line'; id: string; x0: number; y0: number; undoLen: number }
+  | { kind: 'draw-ink'; id: string; undoLen: number }
 
 export { resizeBox } from './geometry'
 
@@ -453,12 +453,12 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         const b = lineFromEndpoints(p.x, p.y, p.x, p.y)
         const [id] = board.add([{ type: 'line', x: b.x, y: b.y, w: b.w, h: b.h, rotation: 0, style: stroke, props: { points: b.points } }], LOCAL)
         setSelected(id!)
-        drag.current = { kind: 'draw-line', id: id!, x0: p.x, y0: p.y }
+        drag.current = { kind: 'draw-line', id: id!, x0: p.x, y0: p.y, undoLen: undo?.undoStack.length ?? 0 }
       } else {
         const b = strokeBounds([p.x, p.y])
         const [id] = board.add([{ type: 'ink', x: b.x, y: b.y, w: b.w, h: b.h, rotation: 0, style: stroke, props: { points: b.points } }], LOCAL)
         setSelected(id!)
-        drag.current = { kind: 'draw-ink', id: id! }
+        drag.current = { kind: 'draw-ink', id: id!, undoLen: undo?.undoStack.length ?? 0 }
       }
       e.currentTarget.setPointerCapture(e.pointerId)
       return
@@ -539,13 +539,16 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     if (board && d && (d.kind === 'draw-line' || d.kind === 'draw-ink')) {
       const o = board.get(d.id)
       const pts = o ? readPoints(o.props) : []
+      undo?.stopCapturing()
       if (!o || isTinyStroke(o, pts.length / 2)) {
-        board.delete([d.id], LOCAL)
+        // Roll back the in-progress stroke so Undo is not left with a stub.
+        while (undo && undo.undoStack.length > d.undoLen) undo.undo()
         setSelected(null)
       } else {
         setSelected(d.id)
       }
       setTool('select')
+      return
     }
     undo?.stopCapturing()
   }

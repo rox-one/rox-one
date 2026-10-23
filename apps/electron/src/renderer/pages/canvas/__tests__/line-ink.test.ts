@@ -105,3 +105,19 @@ describe('board line/ink lifecycle', () => {
     expect(readPoints(after.props)[2]).toBeCloseTo(150, 5)
   })
 })
+
+describe('tiny stroke rollback', () => {
+  it('rolls back a discarded tiny stroke via undo stack', () => {
+    const board = new CanvasDoc()
+    const undo = createUndoManager(board, me, 0)
+    const before = undo.undoStack.length
+    const b = lineFromEndpoints(5, 5, 5, 5) // zero-length → tiny after pad
+    const [id] = board.add([{ type: 'line', x: b.x, y: b.y, w: b.w, h: b.h, props: { points: b.points } }], me)
+    undo.stopCapturing()
+    expect(board.get(id!)).toBeDefined()
+    expect(isTinyStroke(board.get(id!)!, readPoints(board.get(id!)!.props).length / 2)).toBe(true)
+    while (undo.undoStack.length > before) undo.undo()
+    expect(board.get(id!)).toBeUndefined()
+    expect(undo.undoStack.length).toBe(before)
+  })
+})
