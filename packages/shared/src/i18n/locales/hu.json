@@ -6055,6 +6055,7 @@
   "notes.actionButton.defaultLabel": "Művelet",
   "notes.actionButton.failureHint": "A művelet sikertelen.",
   "notes.actionButton.inertHint": "Az importált művelet ellenőrzésig inaktív — nem fut le.",
+  "notes.actionButton.draftInertHint": "A piszkozat művelet ellenőrzésig inaktív — nem fut le.",
   "notes.actionButton.offlineHint": "Offline — a művelet nem érhető el.",
   "notes.actionButton.pendingHint": "Függőben (nincs mellékhatás ebben a szerkesztőben).",
   "notes.actionButton.successHint": "A művelet kész.",

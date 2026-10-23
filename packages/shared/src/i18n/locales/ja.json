@@ -6055,6 +6055,7 @@
   "notes.actionButton.defaultLabel": "アクション",
   "notes.actionButton.failureHint": "アクションに失敗しました。",
   "notes.actionButton.inertHint": "インポートしたアクションは確認まで無効 — 実行されません。",
+  "notes.actionButton.draftInertHint": "下書きアクションは確認まで無効 — 実行されません。",
   "notes.actionButton.offlineHint": "オフライン — アクションを利用できません。",
   "notes.actionButton.pendingHint": "保留中（このエディターでは副作用なし）。",
   "notes.actionButton.successHint": "アクションが完了しました。",

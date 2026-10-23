@@ -6077,6 +6077,7 @@
   "notes.actionButton.defaultLabel": "Akcja",
   "notes.actionButton.failureHint": "Akcja nie powiodła się.",
   "notes.actionButton.inertHint": "Zaimportowana akcja jest nieaktywna do weryfikacji — nie jest wykonywana.",
+  "notes.actionButton.draftInertHint": "Szkic akcji jest nieaktywny do weryfikacji — nie jest wykonywany.",
   "notes.actionButton.offlineHint": "Offline — akcja niedostępna.",
   "notes.actionButton.pendingHint": "Oczekiwanie (bez skutków ubocznych w tym edytorze).",
   "notes.actionButton.successHint": "Akcja zakończona.",
