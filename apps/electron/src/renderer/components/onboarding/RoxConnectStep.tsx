@@ -93,7 +93,7 @@ export function RoxConnectStep({
 
           {codes && status === 'waiting' && !cancelled ? (
             <>
-              <div className="rounded-lg border bg-background p-4 text-center">
+              <div data-glass-slot="card" className="rounded-lg border bg-background p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-2">
                   {t('onboarding.roxConnect.enterCode')}
                   {copied ? ` (${t('onboarding.roxConnect.copied')})` : ''}

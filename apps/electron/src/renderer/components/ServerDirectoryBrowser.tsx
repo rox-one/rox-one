@@ -217,7 +217,7 @@ export function ServerDirectoryBrowser({
       )}
 
       {/* Directory listing */}
-      <div className="border border-foreground/10 rounded-md overflow-hidden flex-1 min-h-0">
+      <div data-glass-slot="table" className="border border-foreground/10 rounded-md overflow-hidden flex-1 min-h-0">
         <div className="overflow-y-auto max-h-[300px]">
           {loading && (
             <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
@@ -248,6 +248,8 @@ export function ServerDirectoryBrowser({
             <button
               key={entry.path}
               type="button"
+              data-glass-slot="row"
+              data-state={selectedEntry === entry.path ? 'selected' : undefined}
               onClick={() => handleEntryClick(entry.path)}
               onDoubleClick={() => handleEntryDoubleClick(entry.path)}
               className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left transition-colors hover:bg-foreground/5 ${

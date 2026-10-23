@@ -1,0 +1,15 @@
+/* Arc Glass — runtime map state rules (docs/plans/2026-10-15-glass-all-screens.md).
+   The map's cards/rows adopt the shared `data-glass-slot` recipes; these are the
+   two states the shared vocabulary cannot express, so they live here instead of
+   in the frozen foundation files. Scoped to the arc-glass theme, tokens/var()
+   only (px appears only inside a shadow). */
+
+/* Selected node: the shared `card` recipe owns box-shadow, so a selected node
+   re-declares the same ring plus the focus halo (`--runtime-focus` is the map's
+   own accent). The 2px halo matches the un-glassed rule in runtime-map.css. */
+html[data-theme="arc-glass"] .runtime-node[data-selected="true"] {
+  --runtime-glass-selected-ring:
+    var(--glass-surface-ring, var(--glass-card-shadow)),
+    0 0 0 2px color-mix(in srgb, var(--runtime-focus) 12%, transparent);
+  box-shadow: var(--runtime-glass-selected-ring);
+}

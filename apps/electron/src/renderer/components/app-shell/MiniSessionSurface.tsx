@@ -10,6 +10,7 @@ import { resolveStatusDisplayLabel } from '@/config/session-status-config'
 import { toErrorMessage } from '@/lib/errors'
 import { navigate, routes } from '@/lib/navigate'
 import { VoiceDictationControl } from './input/VoiceDictationControl'
+import { useGlassPress } from '@rox/ui/glass/press'
 
 /** Compact native-minimize surface; it stays in the existing renderer/session. */
 export function MiniSessionSurface() {
@@ -25,6 +26,11 @@ export function MiniSessionSurface() {
   const [draft, setDraft] = useState(() => sessionId ? context.getDraft(sessionId) : '')
   const [sending, setSending] = useState(false)
   const [creatingNote, setCreatingNote] = useState(false)
+  // Glass press feedback (pointer + Space/Enter) for the Rox Mini buttons.
+  const expandPress = useGlassPress<HTMLButtonElement>()
+  const stopPress = useGlassPress<HTMLButtonElement>()
+  const notePress = useGlassPress<HTMLButtonElement>()
+  const sendPress = useGlassPress<HTMLButtonElement>()
 
   useEffect(() => {
     setDraft(sessionId ? context.getDraft(sessionId) : '')
@@ -72,7 +78,7 @@ export function MiniSessionSurface() {
 
   return (
     <main className="h-screen w-screen overflow-hidden border border-border bg-background text-foreground shadow-strong" aria-label={t('window.mini.appTitle')}>
-      <header className="flex h-10 items-center gap-2 border-b border-border px-3">
+      <header data-glass-slot="toolbar" className="flex h-10 items-center gap-2 border-b border-border px-3">
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{session?.name || session?.preview || t('window.mini.appTitle')}</span>
         <span className="max-w-[45%] truncate text-xs text-muted-foreground" role="status" aria-live="polite" title={sessionDetails?.currentStatus?.message || undefined}>
           {sessionDetails?.currentStatus?.message || (session?.isProcessing
@@ -81,13 +87,13 @@ export function MiniSessionSurface() {
               ? resolveStatusDisplayLabel(statusConfig, t)
               : t('window.mini.ready'))}
         </span>
-        <button className="rounded p-1 hover:bg-muted" aria-label={t('window.mini.expand')} title={t('window.mini.expand')} onClick={() => void window.electronAPI.exitMiniWindow()}>
+        <button data-glass-slot="mini-button" className="rounded p-1 hover:bg-muted" aria-label={t('window.mini.expand')} {...expandPress} title={t('window.mini.expand')} onClick={() => void window.electronAPI.exitMiniWindow()}>
           <ArrowUpRight size={16} />
         </button>
       </header>
       <div className="flex h-[calc(100%-2.5rem)] items-center gap-2 px-3 py-2">
         {session?.isProcessing && sessionId ? (
-          <button className="rounded-md border border-border p-2 hover:bg-muted" aria-label={t('window.mini.stop')} onClick={() => void window.electronAPI.cancelProcessing(sessionId, false)}>
+          <button data-glass-slot="mini-button" className="rounded-md border border-border p-2 hover:bg-muted" aria-label={t('window.mini.stop')} {...stopPress} onClick={() => void window.electronAPI.cancelProcessing(sessionId, false)}>
             <Square size={15} />
           </button>
         ) : null}
@@ -106,10 +112,10 @@ export function MiniSessionSurface() {
             }
           }}
         />
-        <button className="rounded-md border border-border p-2 hover:bg-muted disabled:opacity-50" aria-label={t('window.mini.createNote')} title={t('window.mini.createNote')} disabled={creatingNote || (!session?.workspaceId && !context.activeWorkspaceId)} onClick={() => void createNote()}>
+        <button data-glass-slot="mini-button" className="rounded-md border border-border p-2 hover:bg-muted disabled:opacity-50" aria-label={t('window.mini.createNote')} {...notePress} title={t('window.mini.createNote')} disabled={creatingNote || (!session?.workspaceId && !context.activeWorkspaceId)} onClick={() => void createNote()}>
           <FileText size={15} />
         </button>
-        <button className="rounded-md bg-primary p-2 text-primary-foreground disabled:opacity-50" aria-label={t('window.mini.send')} disabled={!sessionId || !draft.trim() || sending} onClick={() => void send()}>
+        <button data-glass-slot="mini-button" data-glass-tone="accent" className="rounded-md bg-accent p-2 text-[var(--glass-accent-ink,var(--accent-foreground,var(--canvas-opaque)))] disabled:opacity-50" aria-label={t('window.mini.send')} {...sendPress} disabled={!sessionId || !draft.trim() || sending} onClick={() => void send()}>
           <Send size={15} />
         </button>
       </div>

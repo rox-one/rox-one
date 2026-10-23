@@ -1,4 +1,4 @@
-import { Check, Columns2, Columns3, Focus, Grid2X2, LayoutGrid, Maximize2, Minimize2, RotateCcw } from 'lucide-react'
+import { Check, Columns2, Columns3, Focus, Grid2X2, LayoutGrid, Maximize2, Minimize2, PanelsTopLeft, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { usePanelWorkspaceLayout, type PanelLayoutPreset, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
@@ -40,13 +40,17 @@ export function PanelWorkspaceMenu() {
   const { execute } = useActionRegistry()
   const panelIds = useAtomValue(panelStackAtom).map((panel) => panel.id)
   const expanded = reconcilePanelFullScreen(useAtomValue(expandedPanelIdAtom), panelIds) !== null
+  // Deliberately no `data-panel-layout` on the layout button in this subtree: that
+  // attribute belongs to PanelStackContainer, and LayoutDeck resolves it with a bare
+  // `querySelector` (first document-order match). A second carrier — this 24px
+  // top-bar button — makes the deck measure the button instead of the columns area.
   return (
     <DropdownMenu>
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
             <TopBarButton aria-label={t('panelWorkspace.layout')}>
-              <LayoutGrid className="icon-inline" aria-hidden />
+              <PanelsTopLeft className="icon-inline" aria-hidden />
             </TopBarButton>
           </DropdownMenuTrigger>
         </TooltipTrigger>

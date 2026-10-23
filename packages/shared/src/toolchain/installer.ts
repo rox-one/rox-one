@@ -19,9 +19,63 @@ const isWindows = process.platform === 'win32';
 const run = (cmd: string[], opts?: { cwd?: string }): Promise<void> => runCommand(cmd, opts);
 
 /**
+ * Аргументы PowerShell-команды, распаковывающей zip в destDir на win32.
+ *
+ * Обе стороны проверки containment канонизируются ОДНИМ API —
+ * `[IO.Path]::GetFullPath`. Раньше приёмник брался через `Resolve-Path`, а
+ * кандидат — через `GetFullPath`; на 8.3-коротком имени профиля CI-раннера
+ * (`RUNNER~1`) эти два API возвращали разные формы одного и того же пути, и
+ * первая же безобидная запись эталонного фикстура падала с
+ * `zip-slip blocked: bin/`. Одна канонизация с обеих сторон делает такое
+ * расхождение невозможным: `GetFullPath(Combine($dest, $e.FullName))` всегда
+ * сохраняет `$dest` дословным префиксом.
+ *
+ * Сравнение — `OrdinalIgnoreCase` (ФС win32 регистронезависима), а
+ * завершающий `DirectorySeparatorChar` в `$dest` не даёт соседнему каталогу
+ * с общим префиксом (`…\dest-other`) засчитаться как `…\dest`.
+ *
+ * Вынесено в чистую функцию, чтобы правило можно было верифицировать без
+ * Windows (см. `__tests__/installer.test.ts`).
+ */
+export function windowsZipExtractCommand(archiveFile: string, destDir: string): string[] {
+  // Одинарная кавычка в пути закрыла бы строковый литерал PowerShell.
+  const a = archiveFile.replaceAll("'", "''");
+  const d = destDir.replaceAll("'", "''");
+  return [
+    'powershell',
+    '-NoProfile',
+    '-Command',
+    `Add-Type -AssemblyName System.IO.Compression.FileSystem; ` +
+      `$dest = [IO.Path]::GetFullPath('${d}') + [IO.Path]::DirectorySeparatorChar; ` +
+      `$zip = [System.IO.Compression.ZipFile]::OpenRead('${a}'); ` +
+      `foreach ($e in $zip.Entries) { ` +
+      `$out = [IO.Path]::GetFullPath([IO.Path]::Combine($dest, $e.FullName)); ` +
+      `if (-not $out.StartsWith($dest, [StringComparison]::OrdinalIgnoreCase)) { $zip.Dispose(); throw "zip-slip blocked: $($e.FullName)" } ` +
+      `if ($e.FullName.EndsWith('/') -or $e.FullName.EndsWith('\\\\')) { New-Item -ItemType Directory -Path $out -Force | Out-Null } ` +
+      `else { New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($out)) -Force | Out-Null; [System.IO.Compression.ZipFileExtensions]::ExtractToFile($e, $out, $true) }; ` +
+      `$zip.Dispose()`,
+  ];
+}
+
+/**
+ * Нормативная модель правила containment из `windowsZipExtractCommand`,
+ * повторённая на `path.win32`: канонизация (аналог `GetFullPath`) →
+ * завершающий разделитель → сравнение без учёта регистра. Существует ради
+ * проверяемости на не-Windows-хостах; при правке PowerShell-строки выше
+ * обновляйте и её (и наоборот) — тесты сверяют обе стороны.
+ */
+export function zipEntryEscapesDest(destDir: string, entryName: string): boolean {
+  const dest = path.win32.resolve(destDir) + path.win32.sep;
+  // [IO.Path]::Combine возвращает второй аргумент как есть, если он rooted.
+  const candidate = path.win32.isAbsolute(entryName) ? entryName : path.win32.join(dest, entryName);
+  return !path.win32.resolve(candidate).toLowerCase().startsWith(dest.toLowerCase());
+}
+
+/**
  * Распаковать архив в destDir.
  * tar.gz/tar.xz/zip — системный tar (bsdtar на macOS читает и zip);
- * на win32 — PowerShell Expand-Archive. `raw` — голый файл.
+ * на win32 — PowerShell (System.IO.Compression) с явной проверкой zip-slip.
+ * `raw` — голый файл.
  */
 export async function extractArtifact(
   archiveFile: string,
@@ -40,22 +94,7 @@ export async function extractArtifact(
       if (isWindows) {
         // Windows PowerShell Expand-Archive не санитизирует zip-slip (CWE-22):
         // распаковываем через System.IO.Compression с явной нормализацией путей.
-        const a = archiveFile.replaceAll("'", "''");
-        const d = destDir.replaceAll("'", "''");
-        await run([
-          'powershell',
-          '-NoProfile',
-          '-Command',
-          `Add-Type -AssemblyName System.IO.Compression.FileSystem; ` +
-            `$dest = (Resolve-Path -LiteralPath '${d}').Path + [IO.Path]::DirectorySeparatorChar; ` +
-            `$zip = [System.IO.Compression.ZipFile]::OpenRead('${a}'); ` +
-            `foreach ($e in $zip.Entries) { ` +
-            `$out = [IO.Path]::GetFullPath([IO.Path]::Combine($dest, $e.FullName)); ` +
-            `if (-not $out.StartsWith($dest)) { $zip.Dispose(); throw "zip-slip blocked: $($e.FullName)" } ` +
-            `if ($e.FullName.EndsWith('/') -or $e.FullName.EndsWith('\\\\')) { New-Item -ItemType Directory -Path $out -Force | Out-Null } ` +
-            `else { New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($out)) -Force | Out-Null; [System.IO.Compression.ZipFileExtensions]::ExtractToFile($e, $out, $true) } }; ` +
-            `$zip.Dispose()`,
-        ]);
+        await run(windowsZipExtractCommand(archiveFile, destDir));
       } else if (process.platform === 'darwin') {
         // macOS tar — bsdtar (санитизирует ../ и абсолютные пути)
         await run(['tar', '-xf', archiveFile, '-C', destDir]);

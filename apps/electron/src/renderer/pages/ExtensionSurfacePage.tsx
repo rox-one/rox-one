@@ -202,7 +202,7 @@ export default function ExtensionSurfacePage({
 
   if (error) {
     return (
-      <div className="flex flex-col gap-3 items-center justify-center h-full w-full bg-background text-muted-foreground" data-testid="extension-surface-unavailable" data-reason={error} role="status">
+      <div className="flex flex-col gap-3 items-center justify-center h-full w-full bg-background text-muted-foreground" data-testid="extension-surface-unavailable" data-reason={error} data-glass-slot="empty" role="status">
         <p className="text-sm">
           {error === 'url-unavailable' ? t('extensions.surface.loadUrlHint') : t('extensions.surface.error')}
         </p>
@@ -215,7 +215,7 @@ export default function ExtensionSurfacePage({
 
   if (removed) {
     return (
-      <div className="flex flex-col gap-3 items-center justify-center h-full w-full bg-background text-muted-foreground" data-testid="extension-surface-removed" role="status">
+      <div className="flex flex-col gap-3 items-center justify-center h-full w-full bg-background text-muted-foreground" data-testid="extension-surface-removed" data-glass-slot="empty" role="status">
         <p className="text-sm">
           {t('extensions.surface.removed')}
         </p>
@@ -228,7 +228,7 @@ export default function ExtensionSurfacePage({
 
   if (!instanceId) {
     return (
-      <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
+      <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground" data-glass-slot="empty">
         <p className="text-sm">
           {t('extensions.surface.loading')}
         </p>

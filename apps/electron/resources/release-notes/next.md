@@ -9,6 +9,10 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 - **Transcription and meeting follow-up** — Deepgram transcription selects the latest prerecorded model and diarizer, with speaker-separated paragraphs and timestamps. Meeting tasks and decisions are extracted automatically and remain editable. Shared services become available when their server credentials are configured. [#1391](https://github.com/rox-one/rox-one/pull/1391) · `ddf97e3`
 - **Public ROX model endpoints** — The default Rox CLI connection lists the public ROX endpoints (`rox/r1-max`, `rox/explore`, `rox/standard`, `rox/max`, `rox/vision`, `rox/fast`); child sessions spawned without an explicit model use `rox/fast`.
 - **Cookbooks surface** — The sidebar «Ещё» group gains a **Cookbooks** destination: the vendored notebook catalog opens inside the app, reports the local runtime honestly (preparing, Python missing, failed, stopped) and starts and stops with the app. Gated by the `cookbooks.v1` kill-switch.
+- **Cookbooks convenience** — Notebooks and playbooks autosave a second after the last edit, and the surface now says what is on disk: a status bar reports the save state, the document's own sizes and how the last run went, while «Перезапустить и выполнить» clears every result and runs the notebook again in one click.
+- **Cookbooks cell manipulation** — Cells reorder by dragging the gutter handle, select as a range with Shift+click or Shift+↑/↓, and copy, cut and paste as a block. Structural operations undo and redo one gesture at a time (`Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`), cells fold to hide their code, `Alt+Enter` runs a cell and inserts a fresh one below, `Tab`/`Shift+Tab` indent and outdent code, the outline numbers its headings (1, 1.1, …), and a batch run reports its own scope in the header.
+- **Cookbooks downloads** — The «Скачать» menu exports the open notebook as a `.ipynb` file or as a Jupytext-style `.py` script with `# %%` cell markers and markdown as comments.
+- **Cookbooks live output** — Cell output streams in as it is printed: a running cell shows its stdout line by line, and a batch run counts finished cells honestly («Выполнено N из M») while each cell's output lands as it finishes. The new stream transport also lifts the old 60-second ceiling on long runs, and «Остановить» still interrupts a cell immediately without leaving a process behind.
 
 ## Improvements
 
@@ -21,6 +25,7 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 - **Windows runtime prerequisites** — The installer can provision verified private GitHub CLI, Git, Node, jq and yq dependencies, with optional native Git Bash and WSL 2 setup. Runtime subprocesses now use the selected dependency environment consistently.
 - **GitHub Copilot GPT-5.6 models** — GitHub Copilot connections now show GPT-5.6 Luna, Terra, and Sol when those models are available to the account.
 - **Native iOS workspace redesign** — Refined server onboarding, added searchable and filterable session rows, introduced document-style assistant responses and richer tool activity cards, surfaced model and permission controls in the composer, improved approval safety, and made the iPad session sidebar visible by default.
+- **Cookbooks navigation** — Command keys (`j`/`k`, Enter, `a`/`b`, `dd`, `y`/`m`), find and replace across every cell behind `Ctrl/Cmd+F`, an outline that follows your scroll position and a per-cell badge for how long the last run took make a long notebook navigable without a mouse.
 
 ## Bug Fixes
 

@@ -74,7 +74,7 @@ export function GitBashWarning({
         />
 
         {/* Primary action: Download Git */}
-        <div className="rounded-lg border border-border bg-foreground-2 p-4">
+        <div data-glass-slot="card" className="rounded-lg border border-border bg-foreground-2 p-4">
           <h3 className="text-sm font-medium text-foreground">
             {t("onboarding.gitBash.installTitle")}
           </h3>
@@ -92,7 +92,7 @@ export function GitBashWarning({
         </div>
 
         {/* Secondary: Already have Git? */}
-        <div className="rounded-lg border border-border bg-foreground-2 p-4">
+        <div data-glass-slot="card" className="rounded-lg border border-border bg-foreground-2 p-4">
           <h3 className="text-sm font-medium text-foreground">
             {t("onboarding.gitBash.alreadyInstalled")}
           </h3>

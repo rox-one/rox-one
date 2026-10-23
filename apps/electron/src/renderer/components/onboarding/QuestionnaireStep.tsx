@@ -339,24 +339,26 @@ export function QuestionnaireStep({
   }
 
   const locale = i18n?.language?.toLowerCase().startsWith('ru') ? 'ru' : 'en'
+  // Section cards at natural height: the wizard's FitToViewport scales the
+  // whole page to one viewport (min 0.75, then a visible thin scroll).
   const columnClass =
-    'min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-1 [scrollbar-gutter:stable]'
+    'onb-card min-h-0 p-3'
 
   return (
     <div
       data-testid="onboarding-questionnaire-step"
-      className={cn('mx-auto flex w-full flex-col lg:h-full lg:min-h-0', className)}
+      className={cn('mx-auto flex w-full flex-col', className)}
     >
       <header className="shrink-0 text-center">
         <h1 className="text-lg font-semibold tracking-tight">{t('onboarding.questionnaire.title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('onboarding.questionnaire.description')}</p>
+        <p className="onb-subtitle mt-1 text-sm text-muted-foreground">{t('onboarding.questionnaire.description')}</p>
       </header>
 
       <div
         data-testid="questionnaire-columns"
-        className="mt-5 grid gap-6 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-5"
+        className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] lg:items-start lg:gap-3"
       >
-        <div className={columnClass} data-testid="questionnaire-column-profile">
+        <div className={columnClass} data-glass-slot="card" data-testid="questionnaire-column-profile">
           <ProfileQuestionnaireColumn
             value={value}
             onChange={setQuestionnaire}
@@ -364,7 +366,7 @@ export function QuestionnaireStep({
           />
         </div>
 
-        <div className={columnClass} data-testid="questionnaire-column-interests">
+        <div className={columnClass} data-glass-slot="card" data-testid="questionnaire-column-interests">
           <InterestAccordion
             groupIds={BUBBLE_GROUP_IDS}
             selection={selection}
@@ -374,7 +376,7 @@ export function QuestionnaireStep({
           />
         </div>
 
-        <div className={columnClass} data-testid="questionnaire-column-permissions">
+        <div className={columnClass} data-glass-slot="card" data-testid="questionnaire-column-permissions">
           <PermissionsColumn
             platform={resolvedPlatform}
             state={permissionState}
@@ -389,7 +391,7 @@ export function QuestionnaireStep({
           type="button"
           variant="outline"
           data-testid="questionnaire-skip"
-          className="gap-2"
+          className="onb-secondary gap-2 px-5"
           onClick={handleSkip}
         >
           <ChevronsRight className="icon-toolbar" aria-hidden="true" />
@@ -399,7 +401,7 @@ export function QuestionnaireStep({
           type="button"
           data-testid="questionnaire-continue"
           data-state={complete ? 'ready' : 'incomplete'}
-          className={cn('gap-2', complete ? 'opacity-100' : 'opacity-60')}
+          className={cn('onb-primary gap-2 px-6', complete ? 'opacity-100' : 'opacity-60')}
           disabled={!complete}
           onClick={handleContinue}
         >

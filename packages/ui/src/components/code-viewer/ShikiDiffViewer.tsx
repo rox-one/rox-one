@@ -187,18 +187,17 @@ export function ShikiDiffViewer({
     }
   }, [filePath, disableFileHeader, onFileHeaderClick])
 
-  // Use CSS variable so custom themes are respected
-  const backgroundColor = 'var(--background)'
-
+  // The root keeps `bg-background` for every theme; under arc-glass the shared
+  // `editor` recipe out-specifies it and paints the glass fill.
   return (
     <div
       ref={containerRef}
+      data-glass-slot="editor"
       className={cn(
-        'h-full w-full overflow-auto transition-opacity duration-200',
+        'h-full w-full overflow-auto transition-opacity duration-200 bg-background',
         className
       )}
       style={{
-        backgroundColor,
         fontFamily: 'var(--font-mono)',
         fontSize: 13,
         lineHeight: 1.6,

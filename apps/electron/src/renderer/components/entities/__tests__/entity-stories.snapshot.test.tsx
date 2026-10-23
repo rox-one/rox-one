@@ -49,8 +49,15 @@ describe('W1-08 stories', () => {
             const defaults = Object.fromEntries(entry.props.map((prop) => [prop.name, prop.defaultValue]))
             const Component = entry.component
             const html = await renderMarkup(<Component {...defaults} {...variant.props} />, { lang, theme })
-            expect(html).not.toContain('entities.ui.')
-            expect(html).toMatchSnapshot()
+            // Glass paint hooks are presentational and asserted in
+            // packages/ui/src/components/glass/__tests__ — strip them so these
+            // snapshots keep guarding the entities' structure, not the wave's slot
+            // attributes. The inherited pin drift accumulated after 2026-10-13
+            // (token normalisation, label changes) was refreshed deliberately in
+            // the dedicated snapshot-refresh change, not absorbed silently here.
+            const structural = html.replace(/ data-glass-[a-z-]+(?:="[^"]*")?/g, '')
+            expect(structural).not.toContain('entities.ui.')
+            expect(structural).toMatchSnapshot()
           })
         }
       }

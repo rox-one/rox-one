@@ -52,6 +52,7 @@ export function SideThreadPreviewDialog({
             id="side-thread-prompt"
             value={draft?.prompt ?? ''}
             onChange={(event) => onChangePrompt(event.target.value)}
+            data-glass-slot="editor"
             className="h-72 w-full resize-none rounded-md border border-border/60 bg-background px-3 py-2 text-sm"
           />
         </div>

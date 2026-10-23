@@ -160,12 +160,17 @@ export interface StoredConfig {
   // Native integration — global accelerator that opens the floating quick
   // composer. `null` = explicitly disabled; missing = default ('Alt+Space').
   quickComposerShortcut?: string | null;
+  /** Mini glass companion on minimize (macOS). Missing → enabled. */
+  miniGlassEnabled?: boolean;
+  /** Last dragged screen position of the mini glass companion. */
+  miniGlassPosition?: { x: number; y: number };
   // Appearance
   colorTheme?: string;  // Selected preset ID; existing profiles without this key retain config-defaults.
   defaultZoomLevel?: number;  // Default app zoom percentage (50-150, default: 90)
   // «Интерфейс» UI preferences (A6 compact status bar, B10 accent source).
   ui?: {
     statusBar?: boolean;  // Show the compact bottom status bar (default: true)
+    modePill?: boolean;  // Show the titlebar screen pills (default: true)
     accentSource?: 'brand' | 'system';  // Accent source (default: 'brand')
   };
   // Auto-update
@@ -194,7 +199,7 @@ export interface StoredConfig {
     negativeFirst?: boolean;     // distill prompts prefer negative/MUST-NOT lesson formulations (default: true)
     redactExtraPatterns?: string[]; // extra literal strings masked by redactSecrets (project names, paths, …), case-insensitive (default: [])
     ftsLimit?: number;           // top-K results from memory FTS queries (default: 20)
-    semantic?: boolean;          // M2: semantic (episodic) memory via local embeddings model, lazy-downloaded to {configDir}/models (default: false)
+    semantic?: boolean;          // M2: semantic (episodic) memory via local embeddings model, lazy-downloaded to {configDir}/models (default: true; set false to opt out)
     dreamIntervalHours?: number; // dream §9: hours between background dream runs (default: 4)
     dreamModel?: string;         // dream: distillation mini-model id (absent → default mini-model)
     dreamNotes?: boolean;        // dream: run the notes→proposals step (default: true)
@@ -768,7 +773,7 @@ const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
   description: 'Default configuration values for Rox',
   defaults: {
     notificationsEnabled: true,
-    colorTheme: 'rox-ink', // ROX_THEME_ID (literal: config-defaults-parity evaluates this object)
+    colorTheme: 'arc-glass', // ROX_THEME_ID (literal: config-defaults-parity evaluates this object)
     autoCapitalisation: true,
     sendMessageKey: 'enter',
     spellCheck: false,
@@ -1311,6 +1316,30 @@ export function setQuickComposerShortcut(accelerator: string | null): void {
   saveConfig(config);
 }
 
+/** Whether minimizing shows the mini glass companion. Defaults to true. */
+export function getMiniGlassEnabled(): boolean {
+  return loadStoredConfig()?.miniGlassEnabled !== false;
+}
+
+export function setMiniGlassEnabled(enabled: boolean): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  config.miniGlassEnabled = enabled;
+  saveConfig(config);
+}
+
+export function getMiniGlassPosition(): { x: number; y: number } | null {
+  const position = loadStoredConfig()?.miniGlassPosition;
+  return position && Number.isFinite(position.x) && Number.isFinite(position.y) ? position : null;
+}
+
+export function setMiniGlassPosition(position: { x: number; y: number }): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  config.miniGlassPosition = { x: Math.round(position.x), y: Math.round(position.y) };
+  saveConfig(config);
+}
+
 /**
  * Get whether auto-capitalisation is enabled.
  * Defaults to true if not set.
@@ -1431,28 +1460,33 @@ export function setRichToolDescriptions(enabled: boolean): void {
  * unreadable global config returns the defaults rather than throwing, so the
  * shell renders before the first successful config write.
  */
-export function getUiPreferences(): { statusBarVisible: boolean; accentSource: 'brand' | 'system' } {
+export function getUiPreferences(): { statusBarVisible: boolean; modePillVisible: boolean; accentSource: 'brand' | 'system' } {
   const config = loadStoredConfig();
   const ui = config?.ui;
   return {
     statusBarVisible: ui?.statusBar !== false,
+    modePillVisible: ui?.modePill !== false,
     accentSource: ui?.accentSource === 'system' ? 'system' : 'brand',
   };
 }
 
 /** Persist a UI preference patch; never rewrites the file when unchanged. */
-export function setUiPreferences(patch: { statusBarVisible?: boolean; accentSource?: 'brand' | 'system' }): void {
+export function setUiPreferences(patch: { statusBarVisible?: boolean; modePillVisible?: boolean; accentSource?: 'brand' | 'system' }): void {
   const config = loadStoredConfig();
   if (!config) return;
   const current = getUiPreferences();
   const next = {
     statusBar: patch.statusBarVisible !== undefined ? patch.statusBarVisible : current.statusBarVisible,
+    ...(patch.modePillVisible !== undefined
+      ? { modePill: patch.modePillVisible }
+      : config.ui?.modePill !== undefined ? { modePill: config.ui.modePill } : {}),
     ...(patch.accentSource !== undefined
       ? { accentSource: patch.accentSource }
       : config.ui?.accentSource !== undefined ? { accentSource: config.ui.accentSource } : {}),
   };
   if (
     config.ui?.statusBar === next.statusBar &&
+    config.ui?.modePill === next.modePill &&
     config.ui?.accentSource === next.accentSource &&
     (next.accentSource !== undefined || config.ui?.statusBar !== undefined)
   ) {
@@ -1603,7 +1637,7 @@ export function getMemoryConfig(): MemoryConfig {
       typeof raw.ftsLimit === 'number' && Number.isFinite(raw.ftsLimit) && raw.ftsLimit > 0
         ? Math.floor(raw.ftsLimit)
         : DEFAULT_MEMORY_CONFIG.ftsLimit,
-    semantic: raw.semantic !== undefined ? raw.semantic === true : DEFAULT_MEMORY_CONFIG.semantic,
+    semantic: typeof raw.semantic === 'boolean' ? raw.semantic : DEFAULT_MEMORY_CONFIG.semantic,
     dreamIntervalHours:
       typeof raw.dreamIntervalHours === 'number' && Number.isFinite(raw.dreamIntervalHours) && raw.dreamIntervalHours > 0
         ? raw.dreamIntervalHours
@@ -2060,6 +2094,43 @@ export function updateWorkspaceRemoteServer(
       ? { ...workspace.remoteServer, ...remoteServer }
       : remoteServer,
   };
+  saveConfig(config);
+}
+
+/**
+ * Rename a workspace in the global registry, the record the switcher and
+ * every window list read. The workspace's own config.json `name` is written by
+ * the settings RPC; this keeps both in step.
+ */
+/**
+ * Throws when the registry record can't be renamed (missing, or not accessible
+ * to the current identity). Call before writing the workspace config so a
+ * rename never lands half-way.
+ */
+export function assertWorkspaceRecordRenamable(workspaceId: string): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  const record = config.workspaces.find((workspace) => workspace.id === workspaceId);
+  if (!record) throw new Error('Workspace not found');
+  if (!isWorkspaceAccessibleToCurrentIdentity(normalizeWorkspaceRecord(record))) {
+    throw new Error('Not authorized to rename this workspace');
+  }
+}
+
+export function renameWorkspaceRecord(workspaceId: string, name: string): void {
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('Workspace name must not be empty');
+  const config = loadStoredConfig();
+  if (!config) return;
+  const index = config.workspaces.findIndex(
+    (workspace) => workspace.id === workspaceId,
+  );
+  if (index === -1) throw new Error('Workspace not found');
+  const workspace = normalizeWorkspaceRecord(config.workspaces[index]!);
+  if (!isWorkspaceAccessibleToCurrentIdentity(workspace)) {
+    throw new Error('Not authorized to rename this workspace');
+  }
+  config.workspaces[index] = { ...workspace, name: trimmed };
   saveConfig(config);
 }
 
@@ -2581,7 +2652,7 @@ export function getAllSessionDrafts(): Record<string, SessionDraft> {
 // ============================================
 
 import type { ThemeOverrides, ThemeFile, PresetTheme } from './theme.ts';
-import { ROX_THEME_ID, type MaterialSettings } from './theme.ts';
+import { ROX_INK_THEME_ID, ROX_THEME_ID, type MaterialSettings } from './theme.ts';
 
 const APP_THEME_FILE = join(resolveConfigDir(), 'theme.json');
 const APP_THEMES_DIR = join(resolveConfigDir(), 'themes');
@@ -3722,7 +3793,7 @@ function migrateAppearanceInkDefault(config: StoredConfig, v1Seeded: boolean): b
     || LEGACY_DEFAULT_THEMES.has(config.colorTheme)
     || (v1Seeded && config.colorTheme === 'super-engineering')
   ) {
-    config.colorTheme = ROX_THEME_ID;
+    config.colorTheme = ROX_INK_THEME_ID;
   }
   try {
     const appTheme = loadAppTheme();
@@ -3752,7 +3823,7 @@ function migrateAppearanceDefaults(config: StoredConfig): boolean {
     return false;
   }
   if (config.colorTheme === undefined || config.colorTheme === 'nordfox-opaque' || config.colorTheme === 'haze') {
-    config.colorTheme = ROX_THEME_ID;
+    config.colorTheme = ROX_INK_THEME_ID;
   }
   config.migrationsApplied = [...(config.migrationsApplied ?? []), APPEARANCE_DEFAULTS_MIGRATION];
   return true;

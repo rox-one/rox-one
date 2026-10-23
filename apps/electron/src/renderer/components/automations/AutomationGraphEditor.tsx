@@ -151,7 +151,7 @@ export function AutomationGraphEditor({
   const graphHeight = fittedNodes.reduce((max, node) => Math.max(max, node.y + NODE_HEIGHT + 8), 1)
 
   return (
-    <section className={cn('flex min-h-0 flex-col overflow-hidden rounded-[var(--radius-card)] border border-border/60 bg-background', className)}>
+    <section className={cn('flex min-h-0 flex-col overflow-hidden rounded-[var(--radius-card)] border border-border/60 bg-background', className)} data-glass-slot="card">
       <div className="flex min-h-0 flex-1">
         <div ref={canvasRef} className="min-w-0 flex-1 overflow-auto bg-muted/[0.14] p-3">
           <div className="relative" style={{ width: graphWidth, height: graphHeight }}>
@@ -241,7 +241,7 @@ export function AutomationGraphEditor({
           </div>
         </div>
 
-        <aside className="flex w-56 shrink-0 flex-col border-l border-border/60">
+        <aside className="flex w-56 shrink-0 flex-col border-l border-border/60" data-glass-slot="panel" data-glass-side="left">
           <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3">
             {selectedNode ? (
               <>

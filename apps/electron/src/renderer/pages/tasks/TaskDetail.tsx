@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils'
 import { useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { formatHotkeyDisplay } from '@/lib/platform'
 import { Badge, Button, Card, SectionLabel, Tabs } from '@/components/mode-screen/ModeScreen'
+import { TaskDependencies } from './TaskDependencies'
 import { ConfirmDialog, Glyph, MiniCalendar, TaskCheckbox } from './parts'
 // W1-08 (#1505): «Упоминается в» backlinks (renders nothing while entities.previews.v1 is off).
 import { TaskEntityBacklinks } from '@/components/entities/TaskEntityBacklinks'
@@ -171,7 +172,7 @@ export function TaskDetail(props: TaskDetailProps) {
   }
 
   return (
-    <div className="flex flex-col px-5 py-4" data-testid="task-detail">
+    <div className="flex flex-col px-5 py-4" data-testid="task-detail" data-glass-slot="editor">
       {trashed ? (
         <div className="mb-3 flex items-center gap-2 rounded-[var(--radius-control)] bg-destructive/10 px-3 py-2 text-sm" role="status" data-testid="task-trashed">
           <span className="min-w-0 flex-1">{t('tasks.trash.inTrash')}</span>
@@ -312,6 +313,8 @@ export function TaskDetail(props: TaskDetailProps) {
               className="h-7 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-text-muted"
             />
           </form>
+
+          <TaskDependencies task={task} store={props.store} mutate={mutate} />
 
           {props.subtasks.length ? (
             <>

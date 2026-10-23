@@ -29,13 +29,20 @@ import type {
   CookbooksCancelResult,
   CookbooksCard,
   CookbooksCell,
+  CookbooksDisplay,
   CookbooksDocument,
   CookbooksExportResult,
   CookbooksFailureReason,
+  CookbooksMutateInput,
+  CookbooksMutateResult,
   CookbooksOutput,
   CookbooksRunAllResult,
+  CookbooksRunAllStreamInput,
   CookbooksRunCell,
   CookbooksRunResult,
+  CookbooksRunStreamEvent,
+  CookbooksRunStreamHandle,
+  CookbooksRunStreamInput,
   CookbooksStartup,
   CookbooksState,
   CookbooksStatus,
@@ -112,6 +119,18 @@ const RUN_ALL_CELL_TIMEOUT_MS = 60_000
 const RUN_ALL_OVERHEAD_MS = 30_000
 const RUN_ALL_MAX_TIMEOUT_MS = 15 * 60_000
 
+/**
+ * Wave 11: тот же cap, что у сайдкара — путь чтения недоверенного ipynb не
+ * должен декодировать гигантов (G4-F1: 512 KiB на запись, ≤12 записей, 1.5 MiB
+ * на ячейку/прогон). The sidecar already applied them when it wrote; main
+ * re-applies them so a copy that arrived from outside cannot hang the renderer.
+ */
+export const DISPLAY_MAX_RECORD_CHARS = 524_288
+export const DISPLAY_MAX_RECORDS = 12
+export const DISPLAY_MAX_TOTAL_CHARS = 1_572_864
+/** Byte-for-byte the sidecar's own marker (`kernel.py::_DISPLAY_TRUNCATION_MARKER`). */
+export const DISPLAY_TRUNCATION_MARKER = '…[display output truncated]'
+
 export function buildCookbooksChildEnv(parent: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const out: NodeJS.ProcessEnv = {}
   for (const key of COOKBOOKS_ENV_ALLOWLIST) {
@@ -159,14 +178,26 @@ export function redactCookbooksLogLine(line: string): string {
 /** Lab-key → secret-value snapshot (`openai.api_key` → `sk-…`). */
 export type CookbooksStore = Record<string, string>
 
+/** The lab catalog key the shared ROX gateway key stands in for. */
+const OPENAI_LAB_KEY = 'openai.api_key'
+
 /**
  * Default store source: the vendored catalog's `secretMap` (read through
  * `getBundledAssetsDir`) resolved through the canonical chain — environment
- * (`ROX_SECRET_<ENV>`) → local-encrypted → infisical. A key that no provider
- * holds is simply absent; an unreadable catalog or a resolver failure yields an
- * empty store. Never throws.
+ * (`ROX_SECRET_<ENV>`) → local-encrypted → infisical.
+ *
+ * Precedence: a key the credential chain resolves always wins. When the catalog
+ * maps `openai.api_key` and the chain resolved nothing for it, the shared ROX
+ * gateway key (`ROX_API_KEY`) is used instead — `installRoxDefaults` (branch
+ * feat/default-rox-r1-max) embeds it in the client, so notebooks work out of
+ * the box against api.rox.one. A key the catalog does not map is never
+ * invented, an absent/blank `ROX_API_KEY` fills nothing, and an unreadable
+ * catalog or a resolver failure yields an empty store. Never throws.
  */
-export async function defaultCookbooksStore(dir?: string): Promise<CookbooksStore> {
+export async function defaultCookbooksStore(
+  dir?: string,
+  env: NodeJS.ProcessEnv = process.env,
+): Promise<CookbooksStore> {
   try {
     const root = dir ?? getBundledAssetsDir('cookbooks')
     if (!root) return {}
@@ -185,6 +216,15 @@ export async function defaultCookbooksStore(dir?: string): Promise<CookbooksStor
     for (const [labKey, envName] of Object.entries(secretMap)) {
       const value = resolved.env[envName]
       if (typeof value === 'string' && value.length > 0) store[labKey] = value
+    }
+    // Embedded ROX gateway fallback: the shared key is baked into the client by
+    // `installRoxDefaults` (branch feat/default-rox-r1-max), so a notebook mapped
+    // to `openai.api_key` works out of the box against api.rox.one. The
+    // credential-chain result always wins — this only fills a gap the chain left
+    // open for a key the catalog actually maps, and a blank value fills nothing.
+    if (OPENAI_LAB_KEY in secretMap && !(OPENAI_LAB_KEY in store)) {
+      const embedded = env.ROX_API_KEY?.trim()
+      if (embedded) store[OPENAI_LAB_KEY] = embedded
     }
     return store
   } catch {
@@ -282,6 +322,28 @@ async function defaultShowSaveDialog(options: CookbooksSaveDialogOptions): Promi
 const defaultWriteFile: NonNullable<CookbooksExportDeps['writeFile']> = (path, data, encoding) =>
   fsWriteFile(path, data, encoding)
 
+/**
+ * Wave 14 §8: the save dialog's filter list follows the export's own file
+ * extension, so a `.py` script is saved as a Python file and an `.ipynb` as a
+ * notebook. The extension is read from the basename (`/a.b/c.py` → `py`,
+ * case-insensitively); an unknown or absent extension falls back to `*`.
+ */
+function exportSaveFilters(filename: string): { name: string; extensions: string[] }[] {
+  const basename = filename.slice(Math.max(filename.lastIndexOf('/'), filename.lastIndexOf('\\')) + 1)
+  const dot = basename.lastIndexOf('.')
+  const extension = dot === -1 ? '' : basename.slice(dot + 1).toLowerCase()
+  switch (extension) {
+    case 'ipynb':
+      return [{ name: 'Jupyter Notebook', extensions: ['ipynb'] }]
+    case 'py':
+      return [{ name: 'Python Script', extensions: ['py'] }]
+    case 'html':
+      return [{ name: 'HTML', extensions: ['html'] }]
+    default:
+      return [{ name: 'All Files', extensions: ['*'] }]
+  }
+}
+
 type TimerHandle = unknown
 
 // ---------------------------------------------------------------------------
@@ -309,6 +371,97 @@ function asStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((part): part is string => typeof part === 'string') : []
 }
 
+/**
+ * Wave 11 (G3-3): one canonical record per payload at the DTO boundary — the
+ * mime is `String(mime).trim().toLowerCase()` so a copy may not smuggle the
+ * same thing under `IMAGE/PNG` and ` image/png `, an empty mime is not a record
+ * at all, and byte-identical records are not repeated. Payloads that differ stay
+ * separate records even under one mime: a cell may legitimately display the same
+ * mime twice (`display('a'); display('b')`), and the renderer draws one widget
+ * per record. Runs after the cap, so it only ever walks the bounded list.
+ */
+function normaliseDisplays(entries: CookbooksDisplay[]): CookbooksDisplay[] {
+  const seen = new Set<string>()
+  const unique: CookbooksDisplay[] = []
+  for (const entry of entries) {
+    const mime = String(entry.mime).trim().toLowerCase()
+    if (mime.length === 0) continue
+    const key = `${mime}\u0000${entry.data}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    unique.push({ mime, data: entry.data })
+  }
+  return unique
+}
+
+/**
+ * Wave 11: the runner's own record list (`[{mime, data}]` from the results
+ * file). Entry-wise, like `asStringArray`: only an object carrying string
+ * `mime` and `data` survives, so a malformed entry is dropped rather than
+ * rendered half-built; anything that is not an array — including a pre-wave-11
+ * payload — is simply no display at all.
+ */
+function mapDisplays(value: unknown): CookbooksDisplay[] {
+  if (!Array.isArray(value)) return []
+  const displays: CookbooksDisplay[] = []
+  for (const entry of value) {
+    const record = asRecord(entry)
+    if (typeof record.mime === 'string' && typeof record.data === 'string') {
+      displays.push({ mime: record.mime, data: record.data })
+    }
+  }
+  return normaliseDisplays(capDisplays(displays))
+}
+
+/**
+ * Wave 11 (G4-F1): тот же cap, что у сайдкара — путь чтения недоверенного ipynb
+ * не должен декодировать гигантов. Mirrors the sidecar (`kernel.py::_rox_add` +
+ * `_rox_records`): a record over 512 KiB is clipped in place, the list stops at
+ * 12 records or when the 1.5 MiB budget would be exceeded, and ONE marker record
+ * is appended if anything had to be dropped or clipped; a list that already fits
+ * passes through untouched.
+ */
+function capDisplays(entries: CookbooksDisplay[]): CookbooksDisplay[] {
+  const capped: CookbooksDisplay[] = []
+  let total = 0
+  let truncated = false
+  for (const entry of entries) {
+    if (capped.length >= DISPLAY_MAX_RECORDS) {
+      truncated = true
+      break
+    }
+    const clipped = entry.data.length > DISPLAY_MAX_RECORD_CHARS
+      ? entry.data.slice(0, DISPLAY_MAX_RECORD_CHARS)
+      : entry.data
+    if (clipped !== entry.data) truncated = true
+    if (total + clipped.length > DISPLAY_MAX_TOTAL_CHARS) {
+      truncated = true
+      break
+    }
+    capped.push(clipped === entry.data ? entry : { mime: entry.mime, data: clipped })
+    total += clipped.length
+  }
+  if (truncated) capped.push({ mime: 'text/plain', data: DISPLAY_TRUNCATION_MARKER })
+  return capped
+}
+
+/**
+ * Wave 11: a persisted `display_data` output keeps its mime bundle in `data`
+ * (`{mime: value}`), so a document read flattens that object into the ordered
+ * record list the renderer consumes. A value the runner stored as a JSON
+ * document (nbformat parses `application/json`) is re-serialised; anything that
+ * is not a mime-bundle object — a stream output, a malformed payload — is `[]`.
+ */
+function mapDisplayBundle(value: unknown): CookbooksDisplay[] {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return []
+  const displays: CookbooksDisplay[] = []
+  for (const [mime, entry] of Object.entries(value as RawRecord)) {
+    if (typeof entry === 'string') displays.push({ mime, data: entry })
+    else if (entry !== undefined) displays.push({ mime, data: JSON.stringify(entry) })
+  }
+  return normaliseDisplays(capDisplays(displays))
+}
+
 function mapCard(raw: unknown): CookbooksCard {
   const card = asRecord(raw)
   return {
@@ -328,16 +481,21 @@ function mapOutput(raw: unknown): CookbooksOutput {
   return {
     text: asText(output.text),
     traceback: output.traceback == null ? null : asText(output.traceback),
+    // Wave 11: a persisted `display_data` carries its mime bundle in `data`.
+    displays: mapDisplayBundle(output.data),
   }
 }
 
 function mapCell(raw: unknown): CookbooksCell {
   const cell = asRecord(raw)
+  const count = cell.execution_count
   return {
     // Same rule as the lab page: `code` is runnable, everything else is prose.
     cellType: cell.cell_type === 'code' ? 'code' : 'markdown',
     source: asText(cell.source),
     outputs: Array.isArray(cell.outputs) ? cell.outputs.map(mapOutput) : [],
+    // Wave 11: nbformat writes an int or the literal `null` ("never ran").
+    executionCount: typeof count === 'number' && Number.isInteger(count) ? count : null,
   }
 }
 
@@ -357,26 +515,214 @@ function mapDocument(itemId: string, raw: unknown): CookbooksDocument {
 function mapRunResult(raw: unknown): CookbooksRunResult {
   const result = asRecord(raw)
   const cancelled = result.cancelled
+  const duration = result.duration_ms
   return {
     ok: result.ok === true,
     stdout: asText(result.stdout),
     error: typeof result.error === 'string' ? result.error : null,
     timedOut: result.timed_out === true,
     missing: asStringArray(result.missing),
+    // Wave 11: the results-file records, validated entry-wise; a kill/timeout
+    // leaves no file behind and therefore no display.
+    displays: mapDisplays(result.displays),
     // Additive wave-9 field: only present when the sidecar actually sent it, so
     // a pre-wave-9 payload maps to exactly the same object as before.
     ...(typeof cancelled === 'boolean' ? { cancelled } : {}),
+    // Additive wave-15 field, same rule as `mapRunCell`: a non-finite/absent
+    // value stays `undefined` (never 0, which would read as "instant").
+    ...(typeof duration === 'number' && Number.isFinite(duration)
+      ? { durationMs: Math.round(duration) }
+      : {}),
+  }
+}
+
+/**
+ * Wave 15: the `/run-all-stream` `end.result`, mirroring the inline mapping in
+ * `apiRunAll` (deliberately duplicated: the synchronous path stays untouched).
+ * The same `duration_ms`-when-finite rule as `mapRunResult`.
+ */
+function mapRunAllResult(raw: unknown): CookbooksRunAllResult {
+  const payload = asRecord(raw)
+  const records = payload.cells
+  const cancelled = payload.cancelled
+  const duration = payload.duration_ms
+  return {
+    cells: Array.isArray(records) ? records.map(mapRunCell) : [],
+    ...(typeof cancelled === 'boolean' ? { cancelled } : {}),
+    ...(typeof duration === 'number' && Number.isFinite(duration)
+      ? { durationMs: Math.round(duration) }
+      : {}),
   }
 }
 
 function mapRunCell(raw: unknown): CookbooksRunCell {
   const cell = asRecord(raw)
   const index = typeof cell.index === 'number' ? cell.index : Number(cell.index)
+  const duration = cell.duration_ms
   return {
     index: Number.isInteger(index) ? index : 0,
     status: cell.status === 'error' ? 'error' : cell.status === 'skipped' ? 'skipped' : 'ok',
     stdout: asText(cell.stdout),
     error: typeof cell.error === 'string' ? cell.error : null,
+    // Wave 11: this cell's own records, validated entry-wise like every other
+    // array main maps (a malformed entry never reaches the renderer).
+    displays: mapDisplays(cell.displays),
+    // Wave 13: the sidecar has always timed each cell of a batch run; main used
+    // to drop it. A non-finite/absent value stays `undefined` (never 0, which
+    // would read as "instant"), so the renderer shows a duration only when there
+    // really is one.
+    durationMs:
+      typeof duration === 'number' && Number.isFinite(duration) ? Math.round(duration) : undefined,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Wave 15: NDJSON stream reader (SPEC wave 15 §Решения 7 + §Контракт кадров)
+//
+// The sidecar's stream routes answer `application/x-ndjson`: one JSON frame per
+// line, written as it is produced, with no `Content-Length`. Main reads the body
+// with `response.body.getReader()` and splits it into frames itself.
+// ---------------------------------------------------------------------------
+
+/** One decoded NDJSON frame — an untyped sidecar record. */
+export type CookbooksRawFrame = Record<string, unknown>
+
+/** Incremental NDJSON reader (one instance per stream). */
+export interface CookbooksNdjsonParser {
+  /**
+   * Feed one decoded text chunk; returns every COMPLETE frame it unlocked. A
+   * partial trailing line stays buffered until the rest of it arrives (the
+   * sidecar may split a frame across reads), `\r\n` is accepted, and blank
+   * lines are skipped. A line that is not a JSON object throws — a body that is
+   * not NDJSON must never be read as frames.
+   */
+  push(chunk: string): CookbooksRawFrame[]
+}
+
+export function createCookbooksNdjsonParser(): CookbooksNdjsonParser {
+  let buffer = ''
+  return {
+    push(chunk: string): CookbooksRawFrame[] {
+      buffer += chunk
+      const frames: CookbooksRawFrame[] = []
+      let newline = buffer.indexOf('\n')
+      while (newline !== -1) {
+        const line = buffer.slice(0, newline).replace(/\r$/, '')
+        buffer = buffer.slice(newline + 1)
+        if (line.trim().length > 0) frames.push(parseCookbooksFrame(line))
+        newline = buffer.indexOf('\n')
+      }
+      return frames
+    },
+  }
+}
+
+/** Decode one NDJSON line; anything but a JSON object is a protocol error. */
+function parseCookbooksFrame(line: string): CookbooksRawFrame {
+  const parsed: unknown = JSON.parse(line)
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new SyntaxError('NDJSON frame is not an object')
+  }
+  return parsed as CookbooksRawFrame
+}
+
+function asInteger(value: unknown, fallback = 0): number {
+  return typeof value === 'number' && Number.isInteger(value) ? value : fallback
+}
+
+function asNullableInteger(value: unknown): number | null {
+  return typeof value === 'number' && Number.isInteger(value) ? value : null
+}
+
+/**
+ * Convert one sidecar frame (snake_case) into a renderer-facing event (camelCase)
+ * carrying its identity and order. The sidecar owns the wire shape; main owns
+ * the DTO (`timed_out` → `timedOut`, `duration_ms` → `durationMs`), exactly like
+ * `mapRunResult` already does for the synchronous routes.
+ *
+ * Returns `null` for a frame whose `t` is not part of the frozen contract, so a
+ * future additive frame is ignored rather than surfaced half-built.
+ */
+export function mapRunStreamFrame(
+  raw: CookbooksRawFrame,
+  runId: string,
+  seq: number,
+): CookbooksRunStreamEvent | null {
+  switch (raw.t) {
+    case 'start':
+      return {
+        t: 'start',
+        runId,
+        seq,
+        itemId: asText(raw.itemId),
+        index: asNullableInteger(raw.index),
+        cells: Array.isArray(raw.cells)
+          ? raw.cells.filter((cell): cell is number => Number.isInteger(cell))
+          : null,
+        timeout: typeof raw.timeout === 'number' && Number.isFinite(raw.timeout) ? raw.timeout : 0,
+      }
+    case 'cell-start':
+      return { t: 'cell-start', runId, seq, index: asInteger(raw.index) }
+    case 'stdout':
+      return { t: 'stdout', runId, seq, index: asNullableInteger(raw.index), data: asText(raw.data) }
+    case 'stderr':
+      return { t: 'stderr', runId, seq, index: asNullableInteger(raw.index), data: asText(raw.data) }
+    case 'display':
+      return {
+        t: 'display',
+        runId,
+        seq,
+        index: asNullableInteger(raw.index),
+        mime: asText(raw.mime),
+        data: asText(raw.data),
+      }
+    case 'cell-end': {
+      const duration = raw.duration_ms
+      return {
+        t: 'cell-end',
+        runId,
+        seq,
+        index: asInteger(raw.index),
+        status: raw.status === 'error' ? 'error' : raw.status === 'skipped' ? 'skipped' : 'ok',
+        ok: raw.ok === true,
+        timedOut: raw.timed_out === true,
+        durationMs:
+          typeof duration === 'number' && Number.isFinite(duration) ? Math.round(duration) : undefined,
+        returncode: asNullableInteger(raw.returncode),
+        error: typeof raw.error === 'string' ? raw.error : null,
+        stdout: asText(raw.stdout),
+        stderr: asText(raw.stderr),
+        displays: mapDisplays(raw.displays),
+      }
+    }
+    case 'end': {
+      const result = raw.result
+      return {
+        t: 'end',
+        runId,
+        seq,
+        ok: raw.ok === true,
+        returncode: asNullableInteger(raw.returncode),
+        timedOut: raw.timed_out === true,
+        cancelled: raw.cancelled === true,
+        missing: asStringArray(raw.missing),
+        durationMs: asNullableInteger(raw.duration_ms),
+        // The `end` result is either a `/run` result or a `/run-all` one; a
+        // batch result always carries `cells` and a single-cell result never
+        // does, so the shape is the discriminator the wire contract defines.
+        result: Array.isArray(asRecord(result).cells) ? mapRunAllResult(result) : mapRunResult(result),
+      }
+    }
+    case 'error':
+      return {
+        t: 'error',
+        runId,
+        seq,
+        status: asInteger(raw.status),
+        error: asText(raw.error),
+      }
+    default:
+      return null
   }
 }
 
@@ -410,6 +756,12 @@ export class CookbooksRuntime {
    * emptied store can only be cleared by replacing the process (see pushStore).
    */
   private storeSeeded = false
+  /**
+   * Wave 15: one controller per in-flight `/run-stream` / `/run-all-stream`
+   * read. `stop()` aborts them all, so a runtime shutdown can never leave a
+   * background reader attached to a dying sidecar (SPEC wave 15 §Решения 7).
+   */
+  private readonly activeStreams = new Set<AbortController>()
   private readonly o: Required<
     Pick<
       CookbooksRuntimeOptions,
@@ -532,6 +884,9 @@ export class CookbooksRuntime {
       return
     }
     this.clearRunTimers()
+    // Wave 15: detach every background stream reader before the sidecar goes
+    // away, so a dying process can never keep an IPC push channel pinned.
+    this.abortActiveStreams()
     const child = this.child
     if (!child) {
       this.setState('stopped')
@@ -754,13 +1109,185 @@ export class CookbooksRuntime {
     return { ok: payload.ok === true, cancelled: Number.isInteger(cancelled) ? cancelled : 0 }
   }
 
+  // -------------------------------------------------------------------------
+  // Wave 15: live streaming (SPEC wave 15 §Решения 7)
+  //
+  // Same loopback origin, bearer token and budgets as the synchronous routes,
+  // but the answer is NDJSON read frame by frame. The invoke resolves as soon as
+  // the sidecar ACCEPTS the run (`{runId}`), so a run longer than the transport's
+  // 60 s handler ceiling can no longer be cut off; the frames keep arriving on
+  // the push channel afterwards. The old `apiRun`/`apiRunAll` are untouched.
+  // -------------------------------------------------------------------------
+
+  /** `POST /run-stream` → the frames of one cell, streamed to `onEvent`. */
+  async apiRunStream(
+    input: CookbooksRunStreamInput,
+    onEvent: (event: CookbooksRunStreamEvent) => void,
+  ): Promise<CookbooksRunStreamHandle> {
+    // One-shot store: the freshest snapshot at launch, merged by the sidecar
+    // into its in-memory store for this run only (same rule as apiRun).
+    const store = await this.resolveStoreSnapshot()
+    const body: Record<string, unknown> = { itemId: input.itemId, code: input.code, store }
+    // Never send an `undefined` index: the sidecar applies its own default.
+    if (input.index !== undefined) body.index = input.index
+    return this.startStream('/run-stream', body, this.o.runApiTimeoutMs, input.runId, onEvent)
+  }
+
+  /** `POST /run-all-stream` → per-cell frames of one batch, streamed to `onEvent`. */
+  async apiRunAllStream(
+    input: CookbooksRunAllStreamInput,
+    onEvent: (event: CookbooksRunStreamEvent) => void,
+  ): Promise<CookbooksRunStreamHandle> {
+    const store = await this.resolveStoreSnapshot()
+    return this.startStream(
+      '/run-all-stream',
+      { itemId: input.itemId, cells: input.cells, store },
+      this.o.runAllTimeoutMs(input.cells.length),
+      input.runId,
+      onEvent,
+    )
+  }
+
   /**
-   * Main-side `.ipynb` export: ask the user where to save `content`, then write
-   * it. `dialog`/`fs` are injected so the flow is unit-testable without
-   * Electron; the defaults are the real `dialog.showSaveDialog` and
-   * `fsPromises.writeFile` (imported lazily — this module must not pull in
-   * Electron at load time). A dismissed dialog resolves `{saved:false}`; a
-   * failed write rejects, and the renderer turns that into a notice.
+   * Open a stream route and hand its frames to `onEvent` in the background.
+   *
+   * Rejects (so the invoke rejects too) when the run is refused BEFORE the
+   * stream starts: not `running`, unreachable, or a 4xx/5xx JSON answer — the
+   * sidecar validates itemId/gates/secrets before the first frame, exactly like
+   * `/run`, and that answer is a normal JSON error body.
+   *
+   * Once the response is `ok`, this resolves `{runId}` and the remaining frames
+   * are read detached from the invoke.
+   */
+  private async startStream(
+    path: string,
+    body: unknown,
+    timeoutMs: number,
+    runId: string,
+    onEvent: (event: CookbooksRunStreamEvent) => void,
+  ): Promise<CookbooksRunStreamHandle> {
+    const startup = this.state === 'running' ? this.startup : null
+    if (!startup) throw new CookbooksApiError(0, 'runtime not running')
+    const controller = new AbortController()
+    this.activeStreams.add(controller)
+    // The same absolute budget the synchronous routes use; it covers the whole
+    // stream and is dropped the moment the read finishes (or is aborted).
+    const timer = this.o.setTimer(() => controller.abort(), timeoutMs)
+    let response: Response
+    try {
+      response = await fetch(`http://127.0.0.1:${startup.port}${path}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${startup.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      })
+    } catch (err) {
+      this.finishStream(controller, timer)
+      throw new CookbooksApiError(0, err instanceof Error ? err.message : String(err))
+    }
+    if (!response.ok) {
+      this.finishStream(controller, timer)
+      const payload: unknown = await response.json().catch(() => null)
+      const reported = asRecord(payload).error
+      const message = typeof reported === 'string' && reported.length > 0
+        ? reported
+        : response.statusText || `HTTP ${response.status}`
+      throw new CookbooksApiError(response.status, message)
+    }
+    // Detached: the invoke has already been answered. `onEvent` is main's own
+    // push closure, so a throw there must never become an unhandled rejection.
+    void this.readStreamBody(response, runId, onEvent, controller)
+      .catch(() => {})
+      .finally(() => this.finishStream(controller, timer))
+    return { runId }
+  }
+
+  /** Drop a stream's budget timer and release its abort controller. */
+  private finishStream(controller: AbortController, timer: TimerHandle): void {
+    this.o.clearTimer(timer)
+    this.activeStreams.delete(controller)
+  }
+
+  /** `stop()` hook: cut every background stream read (abort → read rejects). */
+  private abortActiveStreams(): void {
+    for (const controller of this.activeStreams) controller.abort()
+    this.activeStreams.clear()
+  }
+
+  /**
+   * Read one NDJSON response to its end, converting each frame into an event
+   * with a monotonic `seq` (starting at 0).
+   *
+   * A broken connection, an abort (budget elapsed or runtime stopped) or a
+   * non-JSON body cannot reject the already-answered invoke, so — unless the
+   * sidecar already sent its authoritative `end` — it is reported as a terminal
+   * `error` frame (`status: 0`). The surface then leaves its busy state instead
+   * of waiting for an `end` that will never come (SPEC wave 15 §Решения 7).
+   */
+  private async readStreamBody(
+    response: Response,
+    runId: string,
+    onEvent: (event: CookbooksRunStreamEvent) => void,
+    controller: AbortController,
+  ): Promise<void> {
+    const body = response.body
+    if (!body) {
+      onEvent({ t: 'error', runId, seq: 0, status: 0, error: 'empty stream body' })
+      return
+    }
+    const reader = body.getReader()
+    const decoder = new TextDecoder()
+    const parser = createCookbooksNdjsonParser()
+    let seq = 0
+    // `end` and a sidecar-emitted `error` are both terminal: whichever arrives
+    // first is the run's own verdict, and main must not append a second one.
+    let sawTerminal = false
+    let failure: string | null = null
+    try {
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+        for (const frame of parser.push(decoder.decode(value, { stream: true }))) {
+          const event = mapRunStreamFrame(frame, runId, seq)
+          // Unknown frames (a future additive `t`) are ignored, never surfaced
+          // half-built, and never consume a seq.
+          if (!event) continue
+          seq += 1
+          if (event.t === 'end' || event.t === 'error') sawTerminal = true
+          onEvent(event)
+        }
+      }
+    } catch (err) {
+      failure = err instanceof Error ? err.message : String(err)
+    } finally {
+      // `read()` may be mid-flight when the controller aborts; releasing is
+      // best-effort and a no-op once the stream has already closed.
+      try {
+        reader.releaseLock()
+      } catch {
+        /* already released */
+      }
+    }
+    // A reader that stopped on an abort may resolve as "done" rather than throw
+    // (the exact shape depends on the runtime), so the signal is checked too.
+    if (!sawTerminal && (failure !== null || controller.signal.aborted)) {
+      onEvent({ t: 'error', runId, seq, status: 0, error: failure ?? 'stream aborted' })
+    }
+  }
+
+  /**
+   * Main-side notebook/script export: ask the user where to save `content`,
+   * then write it. The save dialog's filter is derived from the filename's own
+   * extension (wave 14 §8: `.ipynb` → Jupyter Notebook, `.py` → Python Script,
+   * `.html` → HTML, anything else → All Files). `dialog`/`fs` are injected so
+   * the flow is unit-testable without Electron; the defaults are the real
+   * `dialog.showSaveDialog` and `fsPromises.writeFile` (imported lazily — this
+   * module must not pull in Electron at load time). A dismissed dialog resolves
+   * `{saved:false}`; a failed write rejects, and the renderer turns that into a
+   * notice.
    */
   async exportNotebook(
     input: { itemId: string; filename: string; content: string },
@@ -770,7 +1297,7 @@ export class CookbooksRuntime {
     const writeFile = deps.writeFile ?? defaultWriteFile
     const result = await showSaveDialog({
       defaultPath: input.filename,
-      filters: [{ name: 'Jupyter Notebook', extensions: ['ipynb'] }],
+      filters: exportSaveFilters(input.filename),
     })
     const filePath = result.filePath
     if (result.canceled || typeof filePath !== 'string' || filePath.length === 0) {
@@ -790,6 +1317,67 @@ export class CookbooksRuntime {
     // The confirmation dialog belongs to the surface; by the time it calls in,
     // the user has already agreed (`/reset` refuses a dirty copy without it).
     await this.request<unknown>('/reset', { method: 'POST', body: { itemId, confirm: true } })
+  }
+
+  /**
+   * Wave 10: `POST /cells/<op>` → the sidecar's `{ok, index}`, then a fresh
+   * `GET /document/<itemId>` (SPEC wave 10 §Контракт shared/main/IPC). The
+   * request body carries exactly the fields of the chosen op — never `op`
+   * itself and never an `undefined` field (an absent `source` stays absent, so
+   * the sidecar applies its own default). A sidecar 400/409 surfaces as the
+   * existing `CookbooksApiError` with the sidecar's own `error` text.
+   */
+  async apiMutate(input: CookbooksMutateInput): Promise<CookbooksMutateResult> {
+    // Defense-in-depth: the compile-time union does not protect a caller that
+    // casts, so an op outside the five routes is rejected before any URL/body
+    // is built (never interpolated into the path).
+    if (
+      input.op !== 'add' &&
+      input.op !== 'delete' &&
+      input.op !== 'move' &&
+      input.op !== 'duplicate' &&
+      input.op !== 'convert'
+    ) {
+      throw new CookbooksApiError(400, 'unknown op')
+    }
+    const { itemId } = input
+    // switch (not `body: input`) so `op` never reaches the sidecar body.
+    const body: Record<string, unknown> = { itemId }
+    switch (input.op) {
+      case 'add':
+        body.cellType = input.cellType
+        body.index = input.index
+        if (input.source !== undefined) body.source = input.source
+        break
+      case 'delete':
+        body.index = input.index
+        break
+      case 'move':
+        body.from = input.from
+        body.to = input.to
+        break
+      case 'duplicate':
+        body.index = input.index
+        break
+      // Wave 13: same fields as `add` minus `source` — the cell keeps its own
+      // text and only its type changes.
+      case 'convert':
+        body.index = input.index
+        body.cellType = input.cellType
+        break
+    }
+    const raw = await this.request<unknown>(`/cells/${input.op}`, { method: 'POST', body })
+    // Wave 10: контракт {ok:true, index:int} — битый ответ это протокольная
+    // ошибка, не тихий фолбэк (иначе фокус молча встал бы на ячейку 0).
+    const record = asRecord(raw)
+    const index = record.index
+    if (record.ok !== true || typeof index !== 'number' || !Number.isInteger(index)) {
+      throw new CookbooksApiError(0, 'malformed /cells response')
+    }
+    // Re-read through the document route: the sidecar answers a mutation with
+    // just the focus index, never the whole document.
+    const document = await this.apiDocument(itemId)
+    return { document, index }
   }
 
   // -------------------------------------------------------------------------

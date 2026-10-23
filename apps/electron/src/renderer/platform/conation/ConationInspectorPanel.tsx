@@ -10,9 +10,10 @@ export function ConationInspectorPanel() {
     <aside
       className="rox-shell-pane rox-shell-divider-l flex w-[320px] shrink-0 flex-col overflow-hidden bg-background"
       data-testid="conation-inspector-placeholder"
+      data-glass-slot="panel"
       aria-label="Conation"
     >
-      <div className="flex h-8 shrink-0 items-center border-b border-border/40 px-3">
+      <div className="flex h-8 shrink-0 items-center border-b border-border/40 px-3" data-glass-slot="toolbar">
         <span className="chrome-label truncate text-xs font-medium text-foreground/80" title={t('inspector.tab.context', { defaultValue: 'Контекст' })}>
           {t('inspector.tab.context', { defaultValue: 'Контекст' })}
         </span>

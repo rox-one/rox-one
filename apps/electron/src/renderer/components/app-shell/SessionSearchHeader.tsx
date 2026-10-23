@@ -60,7 +60,7 @@ export function SessionSearchHeader({
   const { t } = useTranslation()
   const resolvedPlaceholder = placeholder ?? t('session.searchTitlesAndContent')
   return (
-    <div className="sticky top-0 z-10 shrink-0 px-2 pt-2 pb-1.5 bg-background/95 backdrop-blur-sm">
+    <div data-glass-slot="toolbar" className="sticky top-0 z-10 shrink-0 px-2 pt-2 pb-1.5 bg-background/95 backdrop-blur-sm">
       {/* Search input */}
       <div className="relative rounded-[var(--radius-card)] shadow-minimal bg-muted/50 has-[:focus-visible]:bg-background">
         {/* Search icon - always static, never changes to spinner */}

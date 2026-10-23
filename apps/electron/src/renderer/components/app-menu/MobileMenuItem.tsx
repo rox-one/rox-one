@@ -42,6 +42,7 @@ export function MobileMenuItem({
     <button
       type="button"
       onClick={onClick}
+      data-glass-slot="row"
       className={cn(
         'flex w-full items-center gap-3 px-4 min-h-[44px] py-2.5 text-left',
         'active:bg-foreground/10 transition-colors',

@@ -19,11 +19,17 @@ export interface RoxCloudAccount {
   connectError: string | null
 }
 
-export function useRoxCloudAccount(): RoxCloudAccount {
+export interface RoxCloudAccountWithRefresh extends RoxCloudAccount {
+  /** Re-read the host snapshot now (e.g. after a handle claim). */
+  refresh: () => void
+}
+
+export function useRoxCloudAccount(): RoxCloudAccountWithRefresh {
   const [state, setState] = React.useState<RoxCloudAccount>({
     account: null, connected: false, updating: false, lastSyncedAt: null, connectError: null,
   })
 
+  const readRef = React.useRef<() => void>(() => {})
   React.useEffect(() => {
     let cancelled = false
     let reading = false
@@ -48,6 +54,7 @@ export function useRoxCloudAccount(): RoxCloudAccount {
           : { ...previous, connectError: 'ROX_AUTH_REQUEST_FAILED' })
       } finally { reading = false }
     }
+    readRef.current = () => { void read() }
     void read()
     const offSlow = subscribeSlowRefresh(() => { void read() })
     const refreshWhenVisible = () => { if (document.visibilityState === 'visible') void read() }
@@ -61,5 +68,6 @@ export function useRoxCloudAccount(): RoxCloudAccount {
     }
   }, [])
 
-  return state
+  const refresh = React.useCallback(() => readRef.current(), [])
+  return React.useMemo(() => ({ ...state, refresh }), [state, refresh])
 }

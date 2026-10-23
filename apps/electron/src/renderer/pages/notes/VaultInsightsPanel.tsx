@@ -51,6 +51,7 @@ export function VaultInsightsPanel({
           {insights.linkSuggestions.length ? insights.linkSuggestions.slice(0, 8).map((suggestion) => (
             <div
               key={`${suggestion.targetId}:${suggestion.line}:${suggestion.mention}`}
+              data-glass-slot="card"
               className="rounded-[var(--radius-control)] px-2 py-1.5 hover:bg-foreground/[0.04]"
             >
               <div className="truncate text-xs font-medium" title={suggestion.targetTitle}>[[{suggestion.targetTitle}]]</div>
@@ -83,7 +84,7 @@ export function VaultInsightsPanel({
         {insights.suggestedMerges.length > 0 && (
           <div className="mt-2 space-y-1">
             {insights.suggestedMerges.slice(0, 4).map((merge) => (
-              <div key={`${merge.fromId}:${merge.toId}`} className="rounded-[var(--radius-card)] border border-dashed border-border/70 px-2 py-1.5">
+              <div key={`${merge.fromId}:${merge.toId}`} data-glass-slot="card" className="rounded-[var(--radius-card)] border border-dashed border-border/70 px-2 py-1.5">
                 <div className="text-xs">{t('notes.inspector.mergeEntities', { name: merge.toName })}</div>
                 <div className="text-xs text-muted-foreground">{merge.fromName} → {merge.toName}</div>
                 <div className="mt-1 flex gap-1">

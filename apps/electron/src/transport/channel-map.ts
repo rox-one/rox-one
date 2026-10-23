@@ -235,6 +235,9 @@ export const CHANNEL_MAP = {
   serviceLifecycleUninstall: invoke(RPC_CHANNELS.serviceLifecycle.UNINSTALL),
   onServiceLifecycleStatusChanged: listener(RPC_CHANNELS.serviceLifecycle.STATUS_CHANGED),
 
+  // Menu-bar tray snapshot (local host)
+  reportTrayState: invoke(RPC_CHANNELS.tray.REPORT_STATE),
+
   // Diagnostics (local host doctor checks)
   runDiagnostics: invoke(RPC_CHANNELS.diagnostics.RUN),
   getDiagnosticsLast: invoke(RPC_CHANNELS.diagnostics.GET_LAST),
@@ -373,6 +376,11 @@ export const CHANNEL_MAP = {
   clearRoxCloud: invoke(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD),
   getRoxBalance: invoke(RPC_CHANNELS.onboarding.GET_ROX_BALANCE),
   checkOnboardingHandle: invoke(RPC_CHANNELS.onboarding.CHECK_HANDLE),
+  listRoxSessions: invoke(RPC_CHANNELS.onboarding.LIST_ROX_SESSIONS),
+  revokeRoxSession: invoke(RPC_CHANNELS.onboarding.REVOKE_ROX_SESSION),
+  revokeOtherRoxSessions: invoke(RPC_CHANNELS.onboarding.REVOKE_OTHER_ROX_SESSIONS),
+  rotateRoxKey: invoke(RPC_CHANNELS.onboarding.ROTATE_ROX_KEY),
+  setRoxHandle: invoke(RPC_CHANNELS.onboarding.SET_ROX_HANDLE),
   ensureFirstSessionWelcome: invoke(RPC_CHANNELS.onboarding.ENSURE_FIRST_SESSION),
   getOnboardingPermissionsStatus: invoke(RPC_CHANNELS.onboarding.PERMISSIONS_STATUS),
   openOnboardingPermissionSettings: invoke(RPC_CHANNELS.onboarding.OPEN_PERMISSION_SETTINGS),
@@ -619,12 +627,23 @@ export const CHANNEL_MAP = {
   'cookbooksLab.catalog': invoke(RPC_CHANNELS.cookbooksLab.CATALOG),
   'cookbooksLab.open': invoke(RPC_CHANNELS.cookbooksLab.OPEN),
   'cookbooksLab.document': invoke(RPC_CHANNELS.cookbooksLab.DOCUMENT),
-  'cookbooksLab.run': invoke(RPC_CHANNELS.cookbooksLab.RUN),
-  'cookbooksLab.runAll': invoke(RPC_CHANNELS.cookbooksLab.RUN_ALL),
+  // Wave 11: 30-с дефолт транспорта рубил легитимные долгие прогоны (холодный
+  // импорт matplotlib) — бюджет > runtime runApiTimeoutMs
+  'cookbooksLab.run': invoke(RPC_CHANNELS.cookbooksLab.RUN, undefined, 120_000),
+  // Wave 11: тот же дефолт рубил run-all на холодном ядре — бюджет > runtime-капа
+  'cookbooksLab.runAll': invoke(RPC_CHANNELS.cookbooksLab.RUN_ALL, undefined, 16 * 60_000),
   'cookbooksLab.save': invoke(RPC_CHANNELS.cookbooksLab.SAVE),
   'cookbooksLab.reset': invoke(RPC_CHANNELS.cookbooksLab.RESET),
   'cookbooksLab.cancel': invoke(RPC_CHANNELS.cookbooksLab.CANCEL),
   'cookbooksLab.export': invoke(RPC_CHANNELS.cookbooksLab.EXPORT),
+  // Wave 10: structural cell operations (add/delete/move/duplicate)
+  'cookbooksLab.mutate': invoke(RPC_CHANNELS.cookbooksLab.MUTATE),
+  // Wave 15: live streaming. The invokes answer `{runId}` as soon as the sidecar
+  // accepts the run, so the transport default is plenty; the NDJSON frames
+  // arrive on the push channel below.
+  'cookbooksLab.runStream': invoke(RPC_CHANNELS.cookbooksLab.RUN_STREAM),
+  'cookbooksLab.runAllStream': invoke(RPC_CHANNELS.cookbooksLab.RUN_ALL_STREAM),
+  'cookbooksLab.onRunEvent': listener(RPC_CHANNELS.cookbooksLab.RUN_EVENT),
   'cookbooksLab.onStatusChanged': listener(RPC_CHANNELS.cookbooksLab.STATUS_CHANGED),
 
   // Debug logging
@@ -914,6 +933,23 @@ export const CHANNEL_MAP = {
 
   // Organizations (P3.1)
   listOrganizations: invoke(RPC_CHANNELS.orgs.LIST),
+  teamChatListChannels: invoke(RPC_CHANNELS.teamChat.LIST_CHANNELS),
+  teamChatCreateChannel: invoke(RPC_CHANNELS.teamChat.CREATE_CHANNEL),
+  teamChatJoin: invoke(RPC_CHANNELS.teamChat.JOIN),
+  teamChatLeave: invoke(RPC_CHANNELS.teamChat.LEAVE),
+  teamChatAddMembers: invoke(RPC_CHANNELS.teamChat.ADD_MEMBERS),
+  teamChatSetSubscribed: invoke(RPC_CHANNELS.teamChat.SET_SUBSCRIBED),
+  teamChatArchive: invoke(RPC_CHANNELS.teamChat.ARCHIVE),
+  teamChatListMessages: invoke(RPC_CHANNELS.teamChat.LIST_MESSAGES),
+  teamChatPost: invoke(RPC_CHANNELS.teamChat.POST),
+  teamChatMarkRead: invoke(RPC_CHANNELS.teamChat.MARK_READ),
+  teamChatCallJoin: invoke(RPC_CHANNELS.teamChat.CALL_JOIN),
+  teamChatCallLeave: invoke(RPC_CHANNELS.teamChat.CALL_LEAVE),
+  teamChatCallSync: invoke(RPC_CHANNELS.teamChat.CALL_SYNC),
+  teamChatCallTranscript: invoke(RPC_CHANNELS.teamChat.CALL_TRANSCRIPT),
+  teamChatCallList: invoke(RPC_CHANNELS.teamChat.CALL_LIST),
+  teamChatSearch: invoke(RPC_CHANNELS.teamChat.SEARCH),
+  onTeamChatChanged: listener(RPC_CHANNELS.teamChat.CHANGED),
   createOrganization: invoke(RPC_CHANNELS.orgs.CREATE),
   inviteToOrganization: invoke(RPC_CHANNELS.orgs.INVITE),
   acceptOrganizationInvite: invoke(RPC_CHANNELS.orgs.ACCEPT),
@@ -928,6 +964,9 @@ export const CHANNEL_MAP = {
   onLlmConnectionsChanged: listener(RPC_CHANNELS.llmConnections.CHANGED),
 
   // Views
+  getChatFolders: invoke(RPC_CHANNELS.chatFolders.GET),
+  mutateChatFolders: invoke(RPC_CHANNELS.chatFolders.MUTATE),
+  onChatFoldersChanged: listener(RPC_CHANNELS.chatFolders.CHANGED),
   listViews: invoke(RPC_CHANNELS.views.LIST),
   saveViews: invoke(RPC_CHANNELS.views.SAVE),
 
@@ -945,6 +984,8 @@ export const CHANNEL_MAP = {
   getColorTheme: invoke(RPC_CHANNELS.theme.GET_COLOR_THEME),
   setColorTheme: invoke(RPC_CHANNELS.theme.SET_COLOR_THEME),
   setAppMaterial: invoke(RPC_CHANNELS.theme.SET_APP_MATERIAL),
+  setAppLayers: invoke(RPC_CHANNELS.theme.SET_APP_LAYERS),
+  saveUserThemePreset: invoke(RPC_CHANNELS.theme.SAVE_USER_PRESET),
   getWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME),
   setWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME),
   getAllWorkspaceThemes: invoke(RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES),

@@ -101,6 +101,8 @@ export interface EntityRowProps {
   contextMenuContent?: React.ReactNode
   /** Extra controls in the title-row hover cluster, immediately before the MoreHorizontal button. */
   hoverActions?: React.ReactNode
+  /** 'compact' shrinks hover buttons (incl. the more button) to 22px targets for dense rows. */
+  hoverActionSize?: 'default' | 'compact'
   /** Whether to hide the more button (e.g. when overlay is showing) */
   hideMoreButton?: boolean
   /** Whether to render the menu surface in compact (drawer) mode. Pass-through
@@ -150,6 +152,7 @@ export function EntityRow({
   menuContent,
   contextMenuContent,
   hoverActions,
+  hoverActionSize = 'default',
   hideMoreButton = false,
   isCompactMode = false,
   compactMenu,
@@ -327,8 +330,11 @@ export function EntityRow({
       data-entity-row-hover-slot=""
       data-touch-reveal="true"
       className={cn(
-        "flex items-center justify-end gap-0",
-        "[&_button]:inline-flex [&_button]:items-center [&_button]:justify-center [&_button]:min-w-[var(--control-hit-min)] [&_button]:min-h-[var(--control-hit-min)]",
+        "flex items-center justify-end",
+        "[&_button]:inline-flex [&_button]:items-center [&_button]:justify-center",
+        hoverActionSize === 'compact'
+          ? "gap-px [&_button]:size-[22px]! [&_button]:min-w-[22px]! [&_button]:min-h-[22px]! [&_button]:p-0! [&_svg]:size-3.5"
+          : "gap-0 [&_button]:min-w-[var(--control-hit-min)] [&_button]:min-h-[var(--control-hit-min)]",
         hoverRevealed
           ? "opacity-100"
           : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100",
@@ -342,7 +348,13 @@ export function EntityRow({
     </div>
   ) : null
 
-  // Build the inner content (shared between with-context-menu and without)
+  // Build the inner content (shared between with-context-menu and without).
+  // Arc Glass: the interactive lane carries `data-glass-slot="row"`; the frozen
+  // recipe (packages/ui/src/components/glass/arc-glass-surfaces.css) paints the
+  // transparent base plus hover/selection. Selection is mirrored as
+  // `data-state="selected"` because that recipe's selected branch reads
+  // `[aria-selected="true"]` / `[data-state="selected"]` — a consumer's own
+  // `aria-selected` passed through `buttonProps` keeps working unchanged.
   const innerContent = (
     <div className="relative group select-none pl-2 mr-2">
       {/* Selection indicator bar — suppressed when an outer wrapper draws its
@@ -361,6 +373,8 @@ export function EntityRow({
       {/* Main content row — div role=option so checkbox/hover-action buttons are not nested in a <button>. */}
       <div
         tabIndex={0}
+        data-glass-slot="row"
+        data-state={isSelected || isInMultiSelect ? 'selected' : undefined}
         {...(buttonProps as React.HTMLAttributes<HTMLDivElement>)}
         role="option"
         className={cn(

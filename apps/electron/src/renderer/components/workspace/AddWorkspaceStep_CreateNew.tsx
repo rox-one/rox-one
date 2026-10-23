@@ -266,7 +266,7 @@ export function AddWorkspaceStep_CreateNew({
             </p>
           )}
           {showOrganizationCreator && (
-            <div className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-3">
+            <div data-glass-slot="card" className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-3">
               <Input
                 value={newOrganizationName}
                 onChange={(event) =>

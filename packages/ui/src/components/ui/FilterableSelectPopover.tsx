@@ -170,6 +170,7 @@ export function FilterableSelectPopover<T>({
       />
 
       <div
+        data-glass-slot="popover"
         className="fixed z-island overflow-hidden rounded-md bg-background text-foreground shadow-modal-small"
         style={{
           top: position.top - 8,

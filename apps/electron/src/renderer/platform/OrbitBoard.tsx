@@ -1014,7 +1014,7 @@ export function OrbitBoard() {
             if (e.target === e.currentTarget) closePalette()
           }}
         >
-          <div className="flex max-h-[60vh] w-[520px] max-w-full flex-col overflow-hidden rounded-[var(--radius-overlay)] bg-[var(--surface-popover)] shadow-modal-small">
+          <div className="flex max-h-[60vh] w-[520px] max-w-full flex-col overflow-hidden rounded-[var(--radius-overlay)] bg-[var(--surface-popover)] shadow-modal-small" data-glass-slot="dialog">
             <div className="flex items-center gap-2 border-b border-[color:var(--border-subtle)] px-3 py-2.5">
               <CornerDownRight className="icon-toolbar text-[color:var(--orbit-text-quiet)]" aria-hidden />
               <input

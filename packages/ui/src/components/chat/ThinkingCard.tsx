@@ -1,10 +1,11 @@
 import * as React from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronDown, Brain } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { Spinner } from '../ui/LoadingIndicator'
+import { ThinkingOrbFx } from '../../fx/ThinkingOrbFx'
 import { SIZE_CONFIG, type ResponseContent } from './TurnCard'
 
 /**
@@ -18,6 +19,23 @@ import { SIZE_CONFIG, type ResponseContent } from './TurnCard'
 export interface ThinkingCardProps {
   /** Streaming/complete thinking content for the turn */
   thinking: ResponseContent
+}
+
+/** Orb threshold: short waits keep the plain spinner (author's 2 s rule). */
+export const THINKING_ORB_DELAY_MS = 2000
+
+/** True once `active` has stayed true for `delayMs`; resets when it drops. */
+export function useDelayedFlag(active: boolean, delayMs: number): boolean {
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    if (!active) {
+      setOn(false)
+      return
+    }
+    const timer = setTimeout(() => setOn(true), delayMs)
+    return () => clearTimeout(timer)
+  }, [active, delayMs])
+  return on
 }
 
 export function ThinkingCard({ thinking }: ThinkingCardProps) {
@@ -34,12 +52,14 @@ export function ThinkingCard({ thinking }: ThinkingCardProps) {
     setPrevStreaming(isStreaming)
   }
   const expanded = userExpanded ?? isStreaming
+  const longWait = useDelayedFlag(isStreaming, THINKING_ORB_DELAY_MS)
 
   const rawText = thinking.text || ''
 
   return (
     <div
       className={cn("mb-2 rounded-lg border border-border/60 bg-muted/30")}
+      data-glass-slot="card"
       role="region"
       aria-label={t('turnCard.thinking')}
     >
@@ -53,7 +73,16 @@ export function ThinkingCard({ thinking }: ThinkingCardProps) {
         aria-expanded={expanded}
       >
         {isStreaming ? (
-          <Spinner className={SIZE_CONFIG.spinnerSize} />
+          longWait ? (
+            <ThinkingOrbFx
+              state="working"
+              size={20}
+              className="shrink-0"
+              fallback={<Spinner className={SIZE_CONFIG.spinnerSize} />}
+            />
+          ) : (
+            <Spinner className={SIZE_CONFIG.spinnerSize} />
+          )
         ) : (
           <Brain className={cn(SIZE_CONFIG.iconSize, "shrink-0")} />
         )}

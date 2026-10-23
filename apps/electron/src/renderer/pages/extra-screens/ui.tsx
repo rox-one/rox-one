@@ -4,6 +4,7 @@
  * is reserved for the active row, counters and the primary button. Colours
  * come from theme tokens so high-contrast themes keep working.
  */
+import { PanelHeading } from '@/components/app-shell/ShellSidebarPortal'
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +20,7 @@ export function ScreenRoot({ children, className }: { children: React.ReactNode;
 export function ScreenColumn({ children, className, width = 360 }: { children: React.ReactNode; className?: string; width?: number | string }) {
   return (
     <section
+      data-glass-slot="panel"
       className={cn('flex h-full min-h-0 shrink-0 flex-col bg-foreground/[0.03]', className)}
       style={{ width }}
     >
@@ -43,7 +45,7 @@ export function ScreenHeader({
 }) {
   return (
     <div data-screen-header="" className="flex shrink-0 items-baseline gap-2 px-4 pb-2 pt-3">
-      <h1 data-screen-title="" className="text-xl font-bold">{title}</h1>
+      <PanelHeading data-screen-title="" className="text-xl font-bold">{title}</PanelHeading>
       {subtitle != null && <span data-screen-count="" className="text-muted-foreground">{subtitle}</span>}
       <span className="flex-1" />
       {actions && <div className="flex items-center gap-1.5">{actions}</div>}
@@ -116,6 +118,8 @@ export function ListRow({
       type="button"
       onClick={onClick}
       aria-current={active || undefined}
+      data-glass-slot="row"
+      data-state={active ? 'selected' : undefined}
       className={cn(
         'relative mx-1.5 flex w-[calc(100%-12px)] items-start gap-2.5 rounded-[var(--radius-card)] px-2.5 py-1.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground',
         // HC: selection also gets an inset accent bar, not just a tint
@@ -130,7 +134,13 @@ export function ListRow({
 
 export function Card({ children, accent, className }: { children: React.ReactNode; accent?: boolean; className?: string }) {
   return (
-    <div className={cn('mt-3 rounded-[var(--radius-card)] px-3.5 py-3', accent ? 'bg-accent/10' : 'bg-foreground/[0.04]', className)}>
+    <div
+      // The accent variant is a soft accent slab, not a glass card: the card
+      // recipe would repaint its fill grey, so only the neutral variant takes
+      // the slot (the accent card keeps its local tint).
+      data-glass-slot={accent ? undefined : 'card'}
+      className={cn('mt-3 rounded-[var(--radius-card)] px-3.5 py-3', accent ? 'bg-accent/10' : 'bg-foreground/[0.04]', className)}
+    >
       {children}
     </div>
   )
@@ -177,7 +187,7 @@ export function Counter({ children }: { children: React.ReactNode }) {
 
 export function EmptyState({ title, body, action }: { title: string; body?: React.ReactNode; action?: React.ReactNode }) {
   return (
-    <div className="flex h-full min-h-[220px] w-full flex-col items-center justify-center gap-2 px-8 text-center">
+    <div data-glass-slot="empty" className="flex h-full min-h-[220px] w-full flex-col items-center justify-center gap-2 px-8 text-center">
       <div className="text-lg font-bold text-foreground">{title}</div>
       {body && <div className="max-w-[440px] text-muted-foreground">{body}</div>}
       {action && <div className="mt-2">{action}</div>}

@@ -216,7 +216,7 @@ const WEEKDAY_TOKENS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as cons
 
 function Step({ n, title, hint, children, testId, tourRef }: { n: number; title: string; hint?: string; children: React.ReactNode; testId?: string; tourRef?: React.Ref<HTMLElement> }) {
   return (
-    <section ref={tourRef} className="rox-autom-step" data-testid={testId}>
+    <section ref={tourRef} className="rox-autom-step" data-glass-slot="card" data-testid={testId}>
       <span className="rox-autom-step-num">{n}</span>
       <div className="rox-autom-step-head">
         <span className="rox-autom-step-title">{title}</span>
@@ -486,7 +486,7 @@ function RunHistory({ entries, loading, onRefresh }: { entries: ExecutionEntry[]
         <p className="rox-autom-note" style={{ paddingLeft: 10 }}>{t('automations.historyEmpty')}</p>
       ) : (
         entries.map((e) => (
-          <div key={e.id} className="rox-autom-history-row">
+          <div key={e.id} className="rox-autom-history-row" data-glass-slot="row">
             <span className={cn('rox-autom-dot', e.status === 'success' ? 'is-ok' : 'is-error')} aria-label={e.status === 'success' ? t('automations.runOk') : t('automations.runFailed')} />
             <span className="rox-autom-when">
               {new Date(e.timestamp).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })}
@@ -695,7 +695,7 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
 
   return (
     <div className={cn('rox-autom-editor', className)} data-testid="automation-editor" data-automation-id={automation.id}>
-      <div ref={controlsTarget} className="rox-autom-editor-bar">
+      <div ref={controlsTarget} className="rox-autom-editor-bar" data-glass-slot="toolbar">
         <input
           className="rox-autom-title-input"
           value={draft.name}

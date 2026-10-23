@@ -749,7 +749,7 @@ export default function MarketplaceSettingsPage() {
         <ScrollArea className="h-full">
           <div className="px-5 pb-8 space-y-[var(--spacing)] max-w-3xl mx-auto w-full">
             {entries.length === 0 ? (
-              <div className="text-center py-12 border border-border/60 rounded-lg">
+              <div className="text-center py-12 border border-border/60 rounded-lg" data-glass-slot="empty">
                 <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-40" />
                 <div className="text-sm font-medium">{t('marketplace.emptyTitle')}</div>
                 <div className="text-xs opacity-70 mt-1">{t('marketplace.emptyDescription')}</div>

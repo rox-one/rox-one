@@ -178,6 +178,9 @@ export function NotesCommandPalette({
   let offset = 0
   return (
     <div
+      /* Arc Glass: the @ palette is a floating menu — the skin's readable
+         popover fill + spring pop (arc-glass-skin.css). */
+      data-glass-slot="popover"
       className="notes-authoring-palette absolute z-30 w-80 rounded-md border border-foreground/[0.08] bg-popover p-1 shadow-strong"
       role="listbox"
       aria-label={t('notes.palette.title')}

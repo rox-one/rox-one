@@ -129,6 +129,8 @@ export function BindingAllowListPopover({ access, workspaceOwners, onChange }: P
                     <button
                       key={owner.userId}
                       type="button"
+                      data-glass-slot="row"
+                      data-state={checked ? 'selected' : undefined}
                       onClick={() => {
                         const next = checked
                           ? draftIds.filter((id) => id !== owner.userId)
@@ -179,6 +181,8 @@ function ModeRow({
     <button
       type="button"
       onClick={onSelect}
+      data-glass-slot="row"
+      data-state={selected ? 'selected' : undefined}
       className="flex w-full items-start gap-3 px-3 py-2 text-left transition-colors hover:bg-foreground/[0.05]"
     >
       <Icon

@@ -171,7 +171,7 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
   })()
 
   return (
-    <div className="mx-3 rounded-[var(--radius-card)] bg-foreground/[0.04] p-4" data-testid="feed-add">
+    <div data-glass-slot="card" className="mx-3 rounded-[var(--radius-card)] bg-foreground/[0.04] p-4" data-testid="feed-add">
       <div className="flex items-baseline gap-2">
         <h3 className="shrink-0 whitespace-nowrap text-lg font-semibold">{t('feed.add.title')}</h3>
         <span className="truncate text-sm text-text-muted">{t('feed.add.subtitle')}</span>
@@ -213,7 +213,7 @@ function AddSource({ api, sources, suggestions, xConnected, onAdded, fmt }: {
       ) : null}
 
       {preview?.ok && preview.items.length ? (
-        <div className="mt-2 rounded-[var(--radius-card)] bg-background/60 p-2" data-testid="feed-add-preview">
+        <div data-glass-slot="editor" className="mt-2 rounded-[var(--radius-card)] bg-background/60 p-2" data-testid="feed-add-preview">
           <div className="flex items-center gap-2 px-1 pb-1">
             <SourceIcon source={{ url: preview.url, kind: preview.kind }} size={20} />
             <span className="min-w-0 flex-1 truncate font-semibold" title={preview.title ?? preview.url}>{preview.title ?? preview.url}</span>
@@ -276,11 +276,14 @@ function SourceCard({ source, items, now, selected, onSelect, onCheck, onToggleP
       aria-pressed={selected}
       data-testid="feed-source-card"
       data-health={health}
+      data-glass-slot="card"
       onClick={onSelect}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect() } }}
       className={cn(
         'group flex min-w-0 flex-col gap-2 rounded-[var(--radius-control)] p-3 outline-none',
-        selected ? 'bg-accent/10 ring-2 ring-inset ring-accent' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
+        // Arc Glass — the `card` recipe owns the box-shadow, so the selected
+        // card keeps an accent frame through `outline` (paint, no reflow).
+        selected ? 'bg-accent/10 outline-2 -outline-offset-2 outline-accent' : 'bg-foreground/[0.04] hover:bg-foreground/[0.07]',
         source.paused && 'opacity-70',
       )}
     >
@@ -386,7 +389,7 @@ export function SourcesView({ api, sources, items, now, x, suggestions, selected
           </div>
         ) : (
           <div className="px-3 pt-4" data-testid="feed-sources-empty">
-            <div className="rounded-[var(--radius-card)] bg-foreground/[0.025] p-4">
+            <div data-glass-slot="empty" className="rounded-[var(--radius-card)] bg-foreground/[0.025] p-4">
               <h3 className="text-lg font-semibold">{t('feed.sources.emptyTitle')}</h3>
               <ol className="flex flex-col gap-2 pt-3 text-sm text-text-secondary">
                 {[1, 2, 3].map((n) => (
@@ -431,7 +434,7 @@ export function SourceEditor({ api, source, suggestions, reload, onShowItems, on
 
   if (!source) {
     return (
-      <div className="flex flex-col px-4 py-4" data-testid="feed-source-help">
+      <div data-glass-slot="editor" className="flex flex-col px-4 py-4" data-testid="feed-source-help">
         <h2 className="text-lg font-semibold">{t('feed.help.title')}</h2>
         <ul className="flex flex-col gap-2 pt-2 text-sm text-text-secondary">
           <li>{t('feed.help.detect')}</li>
@@ -448,7 +451,7 @@ export function SourceEditor({ api, source, suggestions, reload, onShowItems, on
   const patch = (p: FeedSourcePatch) => void run('patch', () => api!.feedUpdateSource(source.id, p))
   const saveName = () => { const v = name.trim(); if (v && v !== sourceLabel(source)) patch({ title: v }) }
   return (
-    <div className="flex flex-col px-4 py-4" data-testid="feed-source-detail">
+    <div data-glass-slot="editor" className="flex flex-col px-4 py-4" data-testid="feed-source-detail">
       <div className="flex items-center gap-2">
         <SourceIcon source={source} size={32} />
         <div className="min-w-0 flex-1">

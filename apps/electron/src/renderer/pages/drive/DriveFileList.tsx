@@ -5,6 +5,7 @@
  * a delete action. Empty folders show an honest empty state with the two ways
  * to add content (browser upload / device backup), never a fake spinner.
  */
+import type { Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { File as FileIcon, Folder, HardDriveUpload, Loader2, Trash2 } from 'lucide-react'
 import type { DriveFile, DriveListing } from '@rox/shared/drive'
@@ -26,6 +27,8 @@ export interface DriveFileListProps {
   onDeleteFile: (fileId: string) => void
   onCreateFolder: () => void
   onPickFiles: (files: FileList) => void
+  /** The hidden upload input, so the panel's own Upload action targets this list (not another panel's). */
+  fileInputRef?: Ref<HTMLInputElement>
 }
 
 const SOURCE_LABEL_KEY: Record<DriveFile['source'], string> = {
@@ -35,12 +38,12 @@ const SOURCE_LABEL_KEY: Record<DriveFile['source'], string> = {
 }
 
 export function DriveFileList({
-  listing, loading, breadcrumb, activeUploads, onOpenFolder, onDeleteFile, onCreateFolder, onPickFiles,
+  listing, loading, breadcrumb, activeUploads, onOpenFolder, onDeleteFile, onCreateFolder, onPickFiles, fileInputRef,
 }: DriveFileListProps) {
   const { t } = useTranslation()
   return (
-    <section data-testid="drive-file-list" className="flex min-h-0 flex-1 flex-col rounded-lg border border-border/60 bg-card/60">
-      <header className="flex flex-wrap items-center gap-2 border-b border-border/50 px-3 py-2">
+    <section data-testid="drive-file-list" data-glass-slot="card" className="flex min-h-0 flex-1 flex-col rounded-lg border border-border/60 bg-card/60">
+      <header data-glass-slot="toolbar" className="flex flex-wrap items-center gap-2 border-b border-border/50 px-3 py-2">
         <nav aria-label={t('drive.list.breadcrumb')} className="flex min-w-0 flex-1 items-center gap-1 text-xs text-muted-foreground">
           {breadcrumb.map((crumb, index) => (
             <span key={crumb.id} className="flex items-center gap-1">
@@ -63,6 +66,7 @@ export function DriveFileList({
             type="file"
             multiple
             hidden
+            ref={fileInputRef}
             data-testid="drive-file-input"
             onChange={event => {
               if (event.target.files && event.target.files.length > 0) onPickFiles(event.target.files)
@@ -99,6 +103,7 @@ export function DriveFileList({
                   type="button"
                   data-testid={`drive-folder-${folder.id}`}
                   onClick={() => onOpenFolder(folder.id)}
+                  data-glass-slot="row"
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted/60"
                 >
                   <Folder className="icon-toolbar text-primary/80" />
@@ -107,7 +112,7 @@ export function DriveFileList({
               </li>
             ))}
             {listing.files.map(file => (
-              <li key={file.id} data-testid={`drive-file-${file.id}`} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/60">
+              <li key={file.id} data-testid={`drive-file-${file.id}`} data-glass-slot="row" className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted/60">
                 <FileIcon className="icon-toolbar text-muted-foreground" />
                 <span className="truncate">{file.name}</span>
                 <span className="rounded bg-muted px-1.5 py-0.5 text-caption text-muted-foreground">{t(SOURCE_LABEL_KEY[file.source])}</span>

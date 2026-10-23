@@ -130,7 +130,7 @@ export function AskQuestionComposer({ workspaceId, projectId, projectSlug, repoL
       ) : null}
       {errorMessage ? <p className="text-sm text-destructive" role="alert" data-testid="dev-space-ask-error">{errorMessage}</p> : null}
       {answer ? (
-        <div className="space-y-2 rounded-[var(--radius-card)] border border-border-subtle p-3" data-testid="dev-space-ask-answer">
+        <div data-glass-slot="editor" className="space-y-2 rounded-[var(--radius-card)] border border-border-subtle p-3" data-testid="dev-space-ask-answer">
           <div className="dev-space-markdown text-sm"><Markdown mode="full">{answer}</Markdown></div>
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" size="sm" variant="outline" disabled={!canShowOnScreens} title={canShowOnScreens ? undefined : t('devSpace.ask.noTours')} onClick={() => onShowOnScreens(answer)} data-testid="dev-space-ask-show-on-screens">

@@ -39,6 +39,7 @@ export function CellEditor({ cell, index, total, result, workspaceId, projectSlu
 
   return (
     <li
+      data-glass-slot="editor"
       className="min-w-0 rounded-[var(--radius-card)] border border-border-subtle p-3"
       data-testid={`playbooks-codebook-cell-${cell.id}`}
       data-codebook-cell={index}

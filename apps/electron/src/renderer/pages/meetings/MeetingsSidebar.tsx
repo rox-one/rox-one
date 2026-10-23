@@ -12,17 +12,9 @@ import type { LocalBucket } from './local-meetings-model'
 
 type IconTone = 'violet' | 'sky' | 'orange' | 'pink' | 'green' | 'muted'
 
-const ICON_TONE: Record<IconTone, string> = {
-  violet: 'bg-violet-500/10 text-violet-600 dark:text-violet-300',
-  sky: 'bg-sky-500/10 text-sky-600 dark:text-sky-300',
-  orange: 'bg-orange-500/10 text-orange-600 dark:text-orange-300',
-  pink: 'bg-pink-500/10 text-pink-600 dark:text-pink-300',
-  green: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300',
-  muted: 'bg-foreground/[0.05] text-text-muted',
-}
-
 function NavIcon({ icon: Icon, tone }: { icon: LucideIcon; tone: IconTone }) {
-  return <span aria-hidden className={cn('grid size-6 shrink-0 place-items-center rounded-lg', ICON_TONE[tone])}><Icon className="size-3.5" strokeWidth={1.75} /></span>
+  // Bare 16px glyph (icon-inline) in muted grey: no tinted box (Mark 2026-10-14).
+  return <Icon aria-hidden data-tone={tone} className="icon-inline text-text-muted" />
 }
 
 function Count({ count }: { count?: number }) {
@@ -33,9 +25,13 @@ function MeetingsNavButton({ label, count, active, icon, tone, onClick, testId }
   label: string; count?: number; active?: boolean; icon: LucideIcon; tone: IconTone
   onClick: () => void; testId: string
 }) {
+  // The row recipe's transparent base drops the local active fill, so the
+  // active destination is republished as the recipe's selected state.
   return (
     <button type="button" onClick={onClick} aria-current={active ? 'page' : undefined} data-testid={testId}
-      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
+      data-glass-slot="row"
+      data-state={active ? 'selected' : undefined}
+      className={cn('flex min-h-8 w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-sm outline-none transition-colors motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring', active ? 'bg-[var(--state-selected)] text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground')}>
       <NavIcon icon={icon} tone={tone} />
       <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
       <Count count={count} />
@@ -75,7 +71,7 @@ export function MeetingsSidebar({ bucket, counts, engine, onBucketSelect, onConn
     <MeetingsNavButton label={t(value === 'needsAction' ? 'meetings.local.needsAction' : `meetings.screen.${value}`)} count={counts[value]} active={bucket === value} icon={icon} tone={tone} onClick={() => onBucketSelect(value)} testId={`meetings-nav-${value}`} />
   )
   return (
-    <div data-meetings-sidebar data-focus-zone="sidebar" onKeyDown={handleSidebarTreeKeyDown}>
+    <div data-meetings-sidebar data-focus-zone="sidebar" data-glass-slot="panel" onKeyDown={handleSidebarTreeKeyDown}>
       <style>{`
         @supports (interpolate-size: allow-keywords) {
           [data-meetings-sidebar] details { interpolate-size: allow-keywords; }

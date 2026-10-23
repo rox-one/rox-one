@@ -27,6 +27,8 @@ import type { LocalAsrEngine, LocalMeeting } from '../../shared/meetings-local'
 import type { MeetingGrant } from '@rox/shared/meeting-agents/browser'
 import { LocalMeetingDetail, transcriptTone, type DetailTab } from './meetings/LocalMeetingDetail'
 import { MeetingsSidebar } from './meetings/MeetingsSidebar'
+import { useCalendarScreenSidebar, useCalendarVisibility } from '@/screens/calendar/useCalendarScreenSidebar'
+import { startOfDay } from '@/screens/calendar/calendar-visibility'
 import ProposalInbox from './meetings/ProposalInbox'
 import {
   approveNativeProposalViaRpc,
@@ -77,7 +79,7 @@ const ERROR_KEYS: Record<string, string> = {
   unavailable: 'meetings.local.err.unavailable',
 }
 
-export default function MeetingsPage(props: { selectedId?: string | null; workspaceId?: string | null }) {
+export default function MeetingsPage(props: { selectedId?: string | null; workspaceId?: string | null; /** Shell screen id this page is mounted as (Календарь surface vs legacy Встречи route). */ screenId?: 'calendar' | 'meetings' }) {
   const { t, i18n } = useTranslation()
   const canHandleKeyboard = usePanelKeyboardGuard()
   const shell = useOptionalAppShellContext()
@@ -270,10 +272,16 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     return () => { cancelled = true; request.finish() }
   }, [api, terms, meetings, transcriptText, workspaceId, requestTracker])
 
-  const counts = useMemo(() => localBucketCounts(meetings, now), [meetings, now])
+  // Per-calendar visibility (sidebar toggles) and the mini-calendar day filter.
+  const calendarVisibility = useCalendarVisibility()
+  const { isShown: isCalendarShown } = calendarVisibility
+  const [day, setDay] = useState<number | null>(null)
+  const shownMeetings = useMemo(() => meetings.filter((m) => isCalendarShown(m.calendarEventId)), [meetings, isCalendarShown])
+  const meetingDays = useMemo(() => new Set(shownMeetings.map((m) => startOfDay(meetingTime(m)))), [shownMeetings])
+  const counts = useMemo(() => localBucketCounts(shownMeetings, now), [shownMeetings, now])
   const visible = useMemo(
-    () => meetings.filter((m) => inLocalBucket(m, bucket, now) && meetingMatches(m, terms, transcriptText[m.id])),
-    [meetings, bucket, now, terms, transcriptText],
+    () => shownMeetings.filter((m) => (day == null ? inLocalBucket(m, bucket, now) : startOfDay(meetingTime(m)) === day) && meetingMatches(m, terms, transcriptText[m.id])),
+    [shownMeetings, bucket, now, terms, transcriptText, day],
   )
   const groups = useMemo(() => groupLocalMeetings(visible, now), [visible, now])
   const ordered = useMemo(() => groups.flatMap((g) => g.items), [groups])
@@ -481,6 +489,29 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
     needsAction: t('meetings.local.needsAction'),
   }
 
+  // Shell second sidebar (shell-layout).
+  const sidebarMeetings = useMemo(() => shownMeetings.map((m) => ({ id: m.id, title: m.title, at: meetingTime(m), live: isLiveMeeting(m) })), [shownMeetings])
+  useCalendarScreenSidebar({
+    screenId: props.screenId ?? 'meetings',
+    meetings: sidebarMeetings,
+    counts,
+    now,
+    bucket,
+    selectedMeetingId: selectedId,
+    onBucket: (next) => { setBucket(next); setDay(null); selectMeeting(null) },
+    onMeeting: (id) => selectMeeting(id),
+    onConnectCalendar: () => navigate(routes.view.connections()),
+    onRecord: api ? () => { void handleRecord() } : null,
+    recording: rec.status !== 'idle',
+    onRetry: () => setReload((n) => n + 1),
+    loadState: loadState === 'ready' && loadedWorkspaceId !== workspaceId ? 'loading' : loadState,
+    accounts: calendarVisibility.accounts,
+    hiddenAccounts: calendarVisibility.hidden,
+    onToggleAccount: calendarVisibility.toggle,
+    day,
+    onDay: (next) => { setDay(next); selectMeeting(null) },
+    meetingDays,
+  })
   const navigator = (
     <MeetingsSidebar bucket={bucket} counts={counts} engine={engine} onBucketSelect={setBucket} onConnectCalendar={() => navigate(routes.view.connections())} />
   )
@@ -496,6 +527,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
   const listPanel = (
     <div
       className={cn('flex min-h-0 flex-1 flex-col pb-16', dropActive && 'bg-accent/[0.05] ring-1 ring-inset ring-accent')}
+      data-glass-slot="panel"
       onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDropActive(true) } }}
       onDragLeave={() => setDropActive(false)}
       onDrop={(e) => {
@@ -507,7 +539,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
       }}
     >
       <ListHeader
-        title={bucketTitle[bucket]}
+        title={day != null ? dayFmt.format(day) : bucketTitle[bucket]}
         subtitle={dayFmt.format(now)}
         actions={(
           <>

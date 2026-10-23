@@ -83,7 +83,15 @@ const motionCache = new Map<string, ReturnType<typeof createMotionTag>>()
 export const motion = new Proxy(
   {},
   {
-    get(_target, tag: string) {
+    // `tag` is `string | symbol` at runtime despite the old annotation: React
+    // Refresh probes module exports through `Object.prototype.toString`, which
+    // reads `Symbol.toStringTag` off this proxy. Minting a component for a
+    // symbol then throws inside `DeferredMotion.${tag}` — a symbol cannot be
+    // interpolated — and the throw escapes as an uncaught page error. Only
+    // string keys name motion tags; hand everything else to the target so
+    // `Object.prototype.toString` and friends keep working.
+    get(_target, tag: string | symbol) {
+      if (typeof tag !== 'string') return undefined
       let comp = motionCache.get(tag)
       if (!comp) {
         comp = createMotionTag(tag)

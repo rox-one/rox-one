@@ -32,6 +32,7 @@ import { premiumMenuComponents } from './premium-menu'
 import { collectionComponents } from './collection'
 import { notesComponents } from './notes'
 import { settingsComponents } from './settings'
+import { glassComponents } from './glass'
 import { normalizeDiscoveredPlaygroundStories, normalizePlaygroundStories } from './story-loader'
 // W1-08 (#1505): entity UI primitives.
 import { entityPrimitiveComponents } from './entity-primitives'
@@ -85,6 +86,7 @@ export const componentRegistry: ComponentEntry[] = normalizePlaygroundStories([
   ...collectionComponents,
   ...notesComponents,
   ...settingsComponents,
+  ...glassComponents,
   ...normalizeDiscoveredPlaygroundStories(discoveredStoryModules),
   // W1-08 (#1505)
   ...entityPrimitiveComponents,

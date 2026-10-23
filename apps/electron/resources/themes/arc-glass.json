@@ -1,0 +1,47 @@
+{
+  "name": "Arc Glass",
+  "description": "Glass frame over a teal radial wallpaper; the content floats as one rounded card. Dark.",
+  "author": "Rox One",
+  "license": "MIT",
+  "supportedModes": ["dark"],
+  "shikiTheme": {
+    "light": "github-dark",
+    "dark": "github-dark"
+  },
+  "background": "#15171b",
+  "foreground": "#eef1f4",
+  "accent": "#38bdf8",
+  "info": "#f0b45a",
+  "success": "#5fc48a",
+  "destructive": "#f07167",
+  "textSecondary": "#b5bcc6",
+  "paper": "#1d2026",
+  "navigator": "#101418",
+  "input": "#1d2026",
+  "popover": "#1f232a",
+  "popoverSolid": "#1f232a",
+  "layers": {
+    "wallpaper": {
+      "type": "radial",
+      "at": [0, 0],
+      "stops": [["#1d3b4a", 0], ["#121a22", 0.45], ["#0c0e12", 1]]
+    },
+    "frame": {
+      "bg": "#101418",
+      "fg": "#eef1f4",
+      "muted": "#9aa3ae",
+      "border": "rgba(255,255,255,0.08)"
+    },
+    "content": {
+      "bg": "#15171b",
+      "fg": "#eef1f4",
+      "border": "rgba(255,255,255,0.08)",
+      "join": "float",
+      "radius": 12
+    },
+    "elevation": { "1": "#1d2026", "2": "#1f232a", "3": "#252a32" },
+    "accent": "#38bdf8",
+    "glass": 0.6,
+    "gridDivider": "rgba(255,255,255,0.12)"
+  }
+}

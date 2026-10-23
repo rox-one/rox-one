@@ -63,3 +63,15 @@
 | 2026-10-14 | W8 merge PR #2010 | merge `074b820f` | ✅ влито в main |
 | 2026-10-14 | W9 «Colab Controls & Navigation» (PR #2027): стоп/Esc, оглавление, выше/ниже, `\r`, копия исходника, экспорт `.ipynb`; sidecar `/cancel`, CBK-01, dev:isolated; фиксы G3/G4 | `4c0959082` | ✅ |
 | 2026-10-14 | W9 merge PR #2027 | merge `475034b4` | ✅ влито в main |
+| 2026-10-14 | W10 «Cell Structure» (PR #2050): структурные операции ячеек + hover-«+»/«⋯»/Ctrl+M; sidecar `/cells/*`, run-guard 409, `_document_lock`; IPC `mutate`; фиксы G3/G4 | `a5de9a58c` | ✅ |
+| 2026-10-14 | W10 merge PR #2050 | merge `2b18fe4f` | ✅ влито в main |
+| 2026-10-14 | W11 «Rich Output & Persistence» (PR #2073): display_data end-to-end (display/хвост/matplotlib), персист выводов + execution_count, CSP-iframe, транспорт-бюджеты; фиксы G3/G4 | `8321dc035` | ✅ |
+| 2026-10-14 | W11 merge PR #2073 | merge `cb707f2b` | ✅ влито в main |
+| 2026-10-15 | W12 «Rox R1 Max defaults» (PR #2093): общий ROX-ключ в клиенте (gen-rox-defaults + installRoxDefaults, CI-секрет), `api.rox.one/v1` в ядрах кукбуков (lab defaultEnv + credential-only redaction), вендор-ресинк; фикс G3 (P2 redaction, P3 доки) | `2d59d871f` | ✅ |
+| 2026-10-15 | W12 merge PR #2093 | merge `52d427a22` | ✅ влито в main |
+| 2026-10-15 | W13 «Colab Convenience & Informativity» (PR #2127): командный режим, поиск/замена, автосейв+индикатор, статус-бар, длительности, scroll-spy, «Перезапустить и выполнить», md-микро, конвертация ячеек; + fix AppShellProvider, re-record bundle-size | `f1352a97c` | ✅ |
+| 2026-10-15 | W13 merge PR #2127 | merge `3fcb612d4` | ✅ влито в main |
+| 2026-10-15 | W14 «Cell Manipulation & Focus» (PR #2165): DnD-перестановка ячеек, мультивыделение + ячеечный буфер (copy/cut/paste), undo/redo структурных операций (Shift+Tab — takeover реестра), fold, меню «Скачать» (.ipynb/.py), Alt+Enter, Tab-индент, прогресс batch, latex-вывод, нумерация оглавления; + re-record bundle-size | `cd7f26803` + `d2519b5ac` | ✅ |
+| 2026-10-15 | W14 merge PR #2165 | merge `f56d3e747` | ✅ влито в main |
+| 2026-10-16 | W15 «Live Streaming & Honest Progress» (PR #2178): NDJSON-стриминг `/run-stream` и `/run-all-stream` (кадры, watchdog, tee драйвера, redaction с holdback), main — runStream/runAllStream + run-event (обход 60-с потолка handler), renderer — живой буфер + N/M + follow-scroll; вендор-ресинк 2026-10-16 | `fb8339251` | ✅ |
+| 2026-10-16 | W15 merge PR #2178 | merge `8543add56` | ✅ влито в main |

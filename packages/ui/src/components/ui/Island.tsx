@@ -784,6 +784,7 @@ export function Island({
         tabIndex={isDialogMode ? -1 : undefined}
         data-ca-island-dialog={isDialogMode ? 'true' : undefined}
         data-state={effectiveVisible ? 'open' : 'closed'}
+        data-glass-slot="card"
         className={cn('mx-auto w-fit overflow-hidden border border-border/50 bg-background shadow-strong', className)}
       >
         <div className="relative">

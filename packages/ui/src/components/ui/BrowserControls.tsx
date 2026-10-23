@@ -311,6 +311,7 @@ export function BrowserControls({
         compact ? 'h-[40px] px-2' : 'h-[48px] border-b border-foreground/6 px-3',
         className,
       )}
+      data-glass-slot="toolbar"
       data-themed={safeThemeColor ? '' : undefined}
       style={{
         ...(safeThemeColor ? {

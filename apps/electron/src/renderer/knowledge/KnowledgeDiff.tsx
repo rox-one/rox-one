@@ -131,14 +131,22 @@ export function KnowledgeDiff({ proposalId }: { proposalId: string }) {
 
   if (state === 'loading') {
     return (
-      <div className="flex h-full items-center justify-center text-muted-foreground">
+      <div
+        className="flex h-full items-center justify-center text-muted-foreground"
+        // Arc Glass: centred notice = the `empty` slab.
+        data-glass-slot="empty"
+      >
         <p className="text-sm">{t('knowledge.surface.loading')}</p>
       </div>
     )
   }
   if (state === 'error' || !proposal) {
     return (
-      <div className="flex h-full items-center justify-center text-destructive">
+      <div
+        className="flex h-full items-center justify-center text-destructive"
+        // Arc Glass: centred notice = the `empty` slab.
+        data-glass-slot="empty"
+      >
         <p className="text-sm">{t('knowledge.surface.error')}</p>
       </div>
     )
@@ -279,7 +287,11 @@ export function KnowledgeDiff({ proposalId }: { proposalId: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="border-b border-border px-4 py-2.5">
+      <header
+        className="border-b border-border px-4 py-2.5"
+        // Arc Glass: review header = toolbar material (static blur + hairline).
+        data-glass-slot="toolbar"
+      >
         <div className="flex items-center gap-2">
           <h2 className="min-w-0 flex-1 truncate text-base font-semibold text-foreground">
             {proposal.status === 'conflict'
@@ -341,7 +353,11 @@ export function KnowledgeDiff({ proposalId }: { proposalId: string }) {
         </div>
       )}
 
-      <footer className="flex items-center gap-2 border-t border-border px-4 py-2.5">
+      <footer
+        className="flex items-center gap-2 border-t border-border px-4 py-2.5"
+        // Arc Glass: action bar = toolbar material (static blur + hairline).
+        data-glass-slot="toolbar"
+      >
         {/* The selector owns the action set per status (TC-1 invariant). */}
         {conflictActionsFor(proposal.status).map(renderAction)}
       </footer>
@@ -363,8 +379,16 @@ function DiffColumn({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-border">
-      <div className="shrink-0 border-b border-border bg-muted/40 px-2.5 py-1.5">
+    <div
+      className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md border border-border"
+      // Arc Glass: a diff pane is a `card` (tint + top sheen + ring, no blur).
+      data-glass-slot="card"
+    >
+      <div
+        className="shrink-0 border-b border-border bg-muted/40 px-2.5 py-1.5"
+        // Arc Glass: pane title strip = toolbar material.
+        data-glass-slot="toolbar"
+      >
         <div className="truncate text-sm font-medium text-foreground/80" title={title}>{title}</div>
         {meta && <div className="truncate font-mono text-xs text-muted-foreground" title={meta}>{meta}</div>}
       </div>
@@ -412,7 +436,12 @@ function OpsList({ ops }: { ops: MutationOp[] }) {
   return (
     <div className="flex flex-col gap-2 px-2.5 py-2">
       {ops.map((op, index) => (
-        <div key={index} className="rounded-md border border-border/60">
+        <div
+          key={index}
+          className="rounded-md border border-border/60"
+          // Arc Glass: op block = a `card` surface.
+          data-glass-slot="card"
+        >
           <div className="border-b border-border/60 bg-muted/30 px-2 py-1 font-mono text-xs text-foreground/70">
             {op.op}
           </div>

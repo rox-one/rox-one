@@ -43,7 +43,7 @@ export function ActivityTimeline({ events, renderers, now, timeZone, className }
   const timeFmt = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', timeZone })
 
   if (events.length === 0) {
-    return <div className={cn('py-3 text-sm text-text-muted', className)}>{t('entities.ui.activity.empty')}</div>
+    return <div data-glass-slot="empty" className={cn('py-3 text-sm text-text-muted', className)}>{t('entities.ui.activity.empty')}</div>
   }
 
   return (

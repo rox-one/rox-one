@@ -393,7 +393,7 @@ function SubtaskCard({
     (s) => !subtask.dependsOn.includes(s.uid) && canDependOn(allSubtasks, subtask.uid, s.uid),
   )
   return (
-    <div className="group rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
+    <div data-glass-slot="card" className="group rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
       <div className="flex items-start gap-2">
         <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-indigo-500/10 text-sm font-bold numeric text-indigo-500 dark:text-indigo-300">
           {index + 1}
@@ -914,7 +914,10 @@ export function TaskEditor({
   return (
     <div className="flex h-full flex-col gap-3 bg-background p-3 text-foreground">
       {/* Header */}
-      <div className="flex items-center gap-2.5 rounded-[var(--radius-control)] border border-border bg-card px-3 py-2.5 shadow-minimal">
+      <div
+        data-glass-slot="toolbar"
+        className="flex items-center gap-2.5 rounded-[var(--radius-control)] border border-border bg-card px-3 py-2.5 shadow-minimal"
+      >
         <Btn variant="ghost" className="px-2" onClick={onClose}>
           <ChevronLeft className="icon-toolbar" strokeWidth={2} /> {t('kanban.board')}
         </Btn>
@@ -978,7 +981,10 @@ export function TaskEditor({
       {/* Body */}
       <div className="grid min-h-0 flex-1 grid-cols-[minmax(360px,2fr)_3fr] gap-3">
         {/* Left — definition */}
-        <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-minimal">
+        <div
+          data-glass-slot="editor"
+          className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-minimal"
+        >
           <div className="text-lg font-bold">{t('tasks.definition')}</div>
 
           <div className="inline-flex w-fit rounded-[var(--radius-card)] bg-surface-hover p-0.5">
@@ -1151,7 +1157,7 @@ export function TaskEditor({
         </div>
 
         {/* Right — subtasks (Manual) / scaffold (Generate) */}
-        <div className="flex min-h-0 flex-col rounded-[var(--radius-card)] border border-border bg-card shadow-minimal">
+        <div data-glass-slot="panel" className="flex min-h-0 flex-col rounded-[var(--radius-card)] border border-border bg-card shadow-minimal">
           {mode === 'manual' ? (
             <>
               <div className="flex shrink-0 items-center gap-2 px-4 pt-4">
@@ -1237,6 +1243,7 @@ export function TaskEditor({
       {isEdit && editSlug ? (
         <section
           aria-label={t('board.widget.sectionTitle')}
+          data-glass-slot="card"
           className="shrink-0 overflow-hidden rounded-[var(--radius-card)] border border-border bg-card shadow-minimal"
         >
           <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2.5">
@@ -1270,7 +1277,10 @@ function ResultsPanel({
 
   if (loading && !results) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center rounded-[var(--radius-control)] border border-border bg-card text-foreground/50 shadow-minimal">
+      <div
+        data-glass-slot="empty"
+        className="flex min-h-0 flex-1 items-center justify-center rounded-[var(--radius-control)] border border-border bg-card text-foreground/50 shadow-minimal"
+      >
         <Spinner className="text-lg" />
       </div>
     )
@@ -1278,7 +1288,10 @@ function ResultsPanel({
 
   if (!results || !results.runId || results.nodes.length === 0) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 rounded-[var(--radius-control)] border border-border bg-card px-6 text-center text-muted-foreground shadow-minimal">
+      <div
+        data-glass-slot="empty"
+        className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 rounded-[var(--radius-control)] border border-border bg-card px-6 text-center text-muted-foreground shadow-minimal"
+      >
         <CircleSlash className="h-6 w-6 text-muted-foreground" strokeWidth={2} />
         <p className="text-base">{t('tasks.resultsEmpty')}</p>
       </div>
@@ -1289,7 +1302,7 @@ function ResultsPanel({
   const verdicts = results.verdicts ?? (verdict ? [verdict] : [])
   const repair = results.repair
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-minimal">
+    <div data-glass-slot="editor" className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-[var(--radius-card)] border border-border bg-card p-4 shadow-minimal">
       {results.acceptanceCriteria && (
         <div className="rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] px-3 py-2.5">
           <div className="text-xs font-bold uppercase caps-label text-foreground/45">{t('tasks.acceptanceCriteria')}</div>

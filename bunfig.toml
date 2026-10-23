@@ -12,8 +12,12 @@ linker = "hoisted"
 [test]
 # Isolation first: set ROX_CONFIG_DIR / CRAFT_CONFIG_DIR before any config import.
 # pdfjs ?url mock is required for MarkdownPdfBlock renderer tests (inventory 8.7).
+# `test-reset-route-gates` installs a process-wide `beforeEach` that clears the
+# three module-global route gates, which otherwise leak between test files — see
+# the file header for the failure mode.
 preload = [
   "./scripts/test-config-isolation.ts",
+  "./scripts/test-reset-route-gates.ts",
   "./packages/shared/src/unified-network-interceptor.ts",
   "./packages/shared/src/test-preload-pdfjs-url.ts",
   "./scripts/test-vite-url-shim.ts",

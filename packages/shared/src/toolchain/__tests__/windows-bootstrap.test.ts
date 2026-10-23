@@ -25,7 +25,12 @@ async function read(preference?: 'auto' | 'bundled' | 'system', pathEnv = '', ex
   return readWindowsBootstrap({ platform: 'win32', localAppData: dir, preference, pathEnv, probe, excludedRoots });
 }
 beforeEach(() => {
-  dir = mkdtempSync(join(process.platform === 'win32' ? join(process.env.LOCALAPPDATA!, 'Temp', 'opencode') : tmpdir(), 'rox-runtime-bootstrap-'));
+  // mkdtempSync не создаёт родительские каталоги, а `%LOCALAPPDATA%\Temp\opencode`
+  // — каталог машины автора (см. WINDOWS-BOOTSTRAP-INTEGRATION-20261003.md),
+  // которого на CI-раннере нет: ENOENT в beforeEach ронял весь файл. Тест
+  // задаёт ОС явным `platform: 'win32'`, поэтому хост-платформа на смысл не
+  // влияет — как и в соседних toolchain-тестах, берём `tmpdir()`.
+  dir = mkdtempSync(join(tmpdir(), 'rox-runtime-bootstrap-'));
   root = join(dir, 'Rox', 'bootstrap'); probes = []; files = {};
   for (const name of WINDOWS_BOOTSTRAP_TOOLS) {
     const entry = MANIFEST_DATA[name]!;

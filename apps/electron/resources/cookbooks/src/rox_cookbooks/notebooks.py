@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import copy
 import json
 import os
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -81,7 +83,17 @@ def save_notebook(path: Path, nb: dict[str, Any]) -> None:
 
 
 def _md_cell(markdown: str) -> dict[str, Any]:
-    return {"cell_type": "markdown", "metadata": {}, "source": to_source(markdown if markdown.endswith("\n") else markdown + "\n")}
+    # An empty source must round-trip as [] (reads back as ""), the same rule
+    # _code_cell and Notebook.set_markdown already follow: /save and the wave-10
+    # /cells/add route both treat "" as no lines, so an empty markdown cell must
+    # not gain a stray "\n" that would show up as a blank line in the editor.
+    return {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": to_source(
+            markdown if (markdown == "" or markdown.endswith("\n")) else markdown + "\n"
+        ),
+    }
 
 
 def _code_cell(code: str) -> dict[str, Any]:
@@ -147,6 +159,38 @@ def persist_code_output(
     save_notebook(path, nb)
 
 
+def _display_outputs(result: dict[str, Any]) -> list[dict[str, Any]]:
+    """The ``display_data`` outputs of one cell result (Wave 11).
+
+    ``result["displays"]`` is a list of ``{"mime", "data"}`` records from the
+    kernel, already redacted and capped there (and re-checked by the caller). An
+    ``application/json`` record is stored parsed — nbformat wants a JSON value,
+    not its serialisation — and falls back to the raw string when it does not
+    parse; every other mime (base64 for images) is stored verbatim.
+    """
+    outputs: list[dict[str, Any]] = []
+    records = result.get("displays")
+    if not isinstance(records, list):
+        return outputs
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        mime = record.get("mime")
+        data = record.get("data")
+        if not isinstance(mime, str) or not mime or not isinstance(data, str):
+            continue
+        value: Any = data
+        if mime == "application/json":
+            try:
+                value = json.loads(data)
+            except (TypeError, ValueError):
+                value = data
+        outputs.append(
+            {"output_type": "display_data", "metadata": {}, "data": {mime: value}}
+        )
+    return outputs
+
+
 def _apply_result(cell: dict[str, Any], result: dict[str, Any]) -> None:
     stdout = result.get("stdout") or ""
     stderr = result.get("stderr") or ""
@@ -162,6 +206,9 @@ def _apply_result(cell: dict[str, Any], result: dict[str, Any]) -> None:
                 "text": to_source(stdout if stdout.endswith("\n") else stdout + "\n"),
             }
         )
+    # Wave 11: rich displays sit between the stdout stream and the error/stderr
+    # output, so the ipynb reads back in the order the cell produced it.
+    outputs.extend(_display_outputs(result))
     if not ok:
         tb = (stderr or stdout or result.get("error") or "").splitlines(keepends=True)
         if tb and not str(tb[-1]).endswith("\n"):
@@ -253,6 +300,91 @@ class Notebook:
             self.cells.append(cell)
             return len(self.cells) - 1
         self.cells.insert(index, cell)
+        return index
+
+    # -- Wave 10: structural cell operations -------------------------------- #
+    # Indices are positional (vendored ipynb carry no stable cell ids) and each
+    # op returns the index the caller should focus next, so the HTTP layer has
+    # nothing to recompute. Callers own persistence: mutate, then ``save()``.
+
+    def delete_cell(self, index: int) -> int:
+        """Remove cell ``index`` and return the index to focus afterwards.
+
+        The answer is the cell that slid into the removed one's slot
+        (``min(index, len-2)`` measured before the delete), so deleting the last
+        cell focuses the new last one instead of falling off the end. Deleting
+        the only cell leaves nothing to focus: ``-1``.
+        """
+        count = len(self.cells)
+        if not 0 <= index < count:
+            raise NotebookError(f"cell index out of range: {index}")
+        del self.cells[index]
+        return min(index, count - 2)
+
+    def move_cell(self, from_index: int, to_index: int) -> int:
+        """Move a cell in place and return its new index.
+
+        Implemented as remove-then-insert, so ``to_index`` is the destination
+        position in the resulting order (``[a,b,c].move(0,2) -> [b,c,a]``).
+        ``from_index == to_index`` is a successful no-op.
+        """
+        count = len(self.cells)
+        if not 0 <= from_index < count:
+            raise NotebookError(f"cell index out of range: {from_index}")
+        if not 0 <= to_index < count:
+            raise NotebookError(f"cell index out of range: {to_index}")
+        if from_index == to_index:
+            return to_index
+        cell = self.cells.pop(from_index)
+        self.cells.insert(to_index, cell)
+        return to_index
+
+    def duplicate_cell(self, index: int) -> int:
+        """Deep-copy cell ``index`` into ``index+1`` and return the new index.
+
+        ``copy.deepcopy`` (not a shallow copy) because the copy must be fully
+        independent: nbformat cells nest ``metadata``/``outputs``, and editing
+        the duplicate's source or clearing its outputs must not touch the
+        original. A string ``id`` (nbformat 4.5) is regenerated with a fresh
+        UUID so notebook tooling that keys on cell ids still sees a unique set.
+        """
+        count = len(self.cells)
+        if not 0 <= index < count:
+            raise NotebookError(f"cell index out of range: {index}")
+        cell = copy.deepcopy(self.cells[index])
+        if isinstance(cell.get("id"), str):
+            cell["id"] = uuid.uuid4().hex[:12]
+        self.cells.insert(index + 1, cell)
+        return index + 1
+
+    # -- Wave 13: cell-type conversion -------------------------------------- #
+
+    def convert_cell(self, index: int, cell_type: str) -> int:
+        """Switch cell ``index`` to ``cell_type`` and return the focus index.
+
+        The cell keeps its position, its source, its ``metadata`` and — when
+        nbformat 4.5 stamped one — its ``id``; only the run state moves with the
+        type. ``code -> markdown`` drops ``outputs``/``execution_count`` (an md
+        cell is ``{cell_type, metadata, source}``), ``markdown -> code`` adds
+        ``execution_count: None`` and ``outputs: []`` so the result is a
+        well-formed code cell. Converting to the type the cell already has is a
+        successful no-op (``index`` comes back unchanged), which keeps ``y```
+        /``m`` idempotent in the renderer.
+        """
+        if cell_type not in ("code", "markdown"):
+            raise NotebookError("cellType must be 'code' or 'markdown'")
+        if not 0 <= index < len(self.cells):
+            raise NotebookError(f"cell index out of range: {index}")
+        if self.cell_type(index) == cell_type:
+            return index
+        cell = self.cells[index]
+        if cell_type == "markdown":
+            cell.pop("outputs", None)
+            cell.pop("execution_count", None)
+        else:
+            cell["execution_count"] = None
+            cell["outputs"] = []
+        cell["cell_type"] = cell_type
         return index
 
     def save(self) -> None:

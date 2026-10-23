@@ -21,16 +21,26 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
 
   return (
     <section
-      className={cn('mx-1 mb-3 rounded-lg border border-white/5 bg-white/[0.02] px-2 py-2', className)}
+      className={cn('mx-2 mb-1', className)}
       data-testid="workspace-navigator"
       data-layout={layout}
       aria-label={t('se.workspace.navigator')}
     >
-      <header className="flex items-center gap-2 px-1 pb-2 text-xs font-semibold uppercase caps-label text-foreground/50">
-        <FolderGit2 className="size-3.5" aria-hidden />
-        <span className="truncate" title={git.repoLabel}>{git.repoLabel}</span>
+      {/* One compact 32px row: repo name + muted inline dirty-count badge. */}
+      <header className="flex h-8 items-center gap-2 rounded-[var(--radius-control)] px-2 text-caption text-text-secondary">
+        <FolderGit2 className="icon-caption shrink-0 opacity-60" aria-hidden />
+        <span className="min-w-0 flex-1 truncate font-medium" title={git.repoLabel}>{git.repoLabel}</span>
+        <span
+          className="inline-flex shrink-0 items-center gap-0.5 rounded bg-surface-hover px-1 text-mark text-muted-foreground numeric"
+          title={t('se.workspace.dirtyCount', { count: git.dirtyFileCount })}
+          aria-label={t('se.workspace.dirtyCount', { count: git.dirtyFileCount })}
+          data-testid="workspace-dirty-count"
+        >
+          <GitPullRequest className="icon-status" aria-hidden />
+          {git.dirtyFileCount}
+        </span>
       </header>
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         {git.branches.map((branch) => (
           <div
             key={branch.id}
@@ -40,8 +50,10 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
           >
             <button
               type="button"
+              data-glass-slot="row"
+              data-state={branch.isCurrent ? 'selected' : undefined}
               className={cn(
-                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-base',
+                'flex h-7 w-full items-center gap-2 rounded-[var(--radius-control)] px-2 text-left text-caption',
                 branch.isCurrent ? 'bg-white/6 text-foreground' : 'text-foreground/80 hover:bg-white/4',
               )}
               data-testid={`workspace-branch-${branch.id}`}
@@ -69,10 +81,6 @@ export function WorkspaceNavigator({ workspaceRootPath, className }: WorkspaceNa
           </div>
         ))}
       </div>
-      <footer className="mt-2 flex items-center gap-2 border-t border-white/5 px-1 pt-2 text-xs text-muted-foreground">
-        <GitPullRequest className="size-3.5" aria-hidden />
-        <span>{t('se.workspace.dirtyCount', { count: git.dirtyFileCount })}</span>
-      </footer>
     </section>
   )
 }

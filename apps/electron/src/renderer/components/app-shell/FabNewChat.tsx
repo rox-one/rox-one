@@ -32,6 +32,8 @@ export function FabNewChat({ onClick, className }: FabNewChatProps) {
       ref={target}
       onClick={() => { beginChatSessionCreation(tourSignals.capture()); onClick() }}
       aria-label={t("menu.newChat")}
+      data-glass-slot="mini-button"
+      data-glass-tone="accent"
       className={cn(
         "fixed right-4 z-raised size-14 rounded-full",
         "bg-accent text-white",

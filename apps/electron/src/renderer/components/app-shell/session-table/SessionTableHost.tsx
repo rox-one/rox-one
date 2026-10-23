@@ -674,6 +674,7 @@ export function SessionTableHost() {
         ref={scrollContainerRef}
         role="table"
         aria-label={t('collection.table.a11yLabel')}
+        data-glass-slot="table"
         className="min-h-0 flex-1 overflow-auto"
         onScroll={updateScrollMetrics}
         onDrop={handleTableDrop}
@@ -685,6 +686,7 @@ export function SessionTableHost() {
         <div
           ref={tableHeaderRef}
           role="row"
+          data-glass-slot="toolbar"
           className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-xs font-semibold text-muted-foreground backdrop-blur"
         >
           <span role="columnheader" className="w-6 shrink-0">
@@ -721,7 +723,7 @@ export function SessionTableHost() {
         </div>
 
         {totalRows === 0 ? (
-          <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 py-12 text-muted-foreground">
+          <div data-glass-slot="empty" className="flex min-h-[200px] flex-col items-center justify-center gap-3 py-12 text-muted-foreground">
             <p className="text-sm">{t('collection.table.empty')}</p>
             <button
               type="button"
