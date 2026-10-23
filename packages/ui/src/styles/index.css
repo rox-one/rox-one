@@ -1054,6 +1054,10 @@ html[data-ui-profile="graphite"] :is([role="menu"], [role="listbox"], [data-prem
   animation-name: rox-opacity-in;
 }
 
+[data-slot="drawer-overlay"][data-state="open"] {
+  animation-name: rox-opacity-in;
+}
+
 [data-slot="popover-content"][data-state="open"],
 [data-slot="tooltip-content"][data-state="delayed-open"],
 [data-slot="tooltip-content"][data-state="instant-open"] {
@@ -1069,8 +1073,8 @@ html[data-ui-profile="graphite"] :is([role="menu"], [role="listbox"], [data-prem
    (mirrors apps/electron/.../super-engineering-springs.ts SE_SPRING_MODAL
    ~0.35s). Reuses rox-overlay-* / rox-opacity-in — transform + opacity only.
    --motion-spring / --motion-spring-exit ride packages/ui motion tokens and
-   go to 0 under prefers-reduced-motion and html[data-resizing]. Tooltips and
-   non-SE profiles keep --motion-fast above. Do not animate blur/width/height. */
+   go to 0 under prefers-reduced-motion and html[data-resizing]. Menus/tooltips
+   follow in the block below; non-SE profiles keep --motion-fast. No blur. */
 html[data-ui-profile="super-engineering"] :is(
   [data-slot="dialog-content"],
   [data-slot="popover-content"]
@@ -1090,6 +1094,47 @@ html[data-ui-profile="super-engineering"] [data-slot="dialog-overlay"][data-stat
 }
 
 html[data-ui-profile="super-engineering"] [data-slot="dialog-overlay"][data-state="closed"] {
+  animation: rox-overlay-out var(--motion-spring-exit) var(--ease-exit) both;
+}
+
+/* Rox Engineering: remaining shared overlays. Drawer overlay is modal-like
+   (--motion-spring ≈ SE_SPRING_MODAL). Dropdown / context menus and tooltips
+   use a lighter enter (--motion-disclosure / --motion-base + --ease-spring);
+   exit stays --motion-spring-exit. Transform/opacity only; tokens zero under
+   reduced-motion and html[data-resizing]. No blur. Vaul owns drawer-content
+   slide — do not override its transform here. */
+html[data-ui-profile="super-engineering"] [data-slot="drawer-overlay"][data-state="open"] {
+  animation: rox-opacity-in var(--motion-spring) var(--ease-spring) both;
+}
+
+html[data-ui-profile="super-engineering"] [data-slot="drawer-overlay"][data-state="closed"] {
+  animation: rox-overlay-out var(--motion-spring-exit) var(--ease-exit) both;
+}
+
+html[data-ui-profile="super-engineering"] :is(
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="context-menu-content"],
+  [data-slot="context-menu-sub-content"]
+)[data-state="open"] {
+  animation: rox-overlay-in var(--motion-disclosure) var(--ease-spring) both;
+}
+
+html[data-ui-profile="super-engineering"] :is(
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="context-menu-content"],
+  [data-slot="context-menu-sub-content"]
+)[data-state="closed"] {
+  animation: rox-overlay-out var(--motion-spring-exit) var(--ease-exit) both;
+}
+
+html[data-ui-profile="super-engineering"] [data-slot="tooltip-content"][data-state="delayed-open"],
+html[data-ui-profile="super-engineering"] [data-slot="tooltip-content"][data-state="instant-open"] {
+  animation: rox-overlay-in var(--motion-base) var(--ease-spring) both;
+}
+
+html[data-ui-profile="super-engineering"] [data-slot="tooltip-content"][data-state="closed"] {
   animation: rox-overlay-out var(--motion-spring-exit) var(--ease-exit) both;
 }
 

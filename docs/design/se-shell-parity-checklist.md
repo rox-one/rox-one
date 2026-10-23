@@ -27,6 +27,7 @@ Glass / blur is **optional and pointwise** (blur ~20px on chrome accents). Not a
 | Compact WorktreeHoverCard **200–300ms** delay | DONE | `WORKTREE_HOVER_DELAY_MS=250` in WorkspaceNavigator |
 | Optional icons v2 SVG extract | DONE | `packages/ui/src/icons/se/` (stroke 1.5; WorkspaceNavigator wired) |
 | Dialog / Popover enter–exit springs | DONE | SE CSS → `--motion-spring` / `--ease-spring` (mirrors `SE_SPRING_MODAL`) |
+| Menu / Drawer overlay / Tooltip SE springs | DONE | Dropdown+Context `data-overlay-motion`; drawer overlay modal spring; menus/tooltip lighter `--motion-disclosure`/`--motion-base` |
 
 ## Pointwise glass / popover blur (DONE — do not re-PR)
 

@@ -318,7 +318,7 @@ html .popover-styled {
 }
 
 /* Context menu content */
-[data-radix-context-menu-content] {
+[data-radix-context-menu-content]:not([data-overlay-motion]) {
   animation: none !important;
 }
 
