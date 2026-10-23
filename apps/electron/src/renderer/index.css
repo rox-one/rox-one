@@ -2193,6 +2193,9 @@ html[data-ui-profile="super-engineering"] [data-slot="shell-search"] {
 
 html[data-ui-profile="super-engineering"] [data-slot="shell-search"]:focus-within {
   border-color: var(--focus, var(--accent));
+  /* Drop Tailwind ring-* box-shadow so only the #2211 inset accent ring paints. */
+  --tw-ring-shadow: 0 0 transparent;
+  --tw-ring-offset-shadow: 0 0 transparent;
   box-shadow: var(--se-shell-focus-ring);
 }
 
