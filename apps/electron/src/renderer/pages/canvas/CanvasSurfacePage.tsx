@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as Y from 'yjs'
-import { ArrowLeft, Circle, Clock, LayoutGrid, Link2, MousePointer2, Pencil, Plus, RotateCcw, Search, Share2, Square, Star, StickyNote, Trash2, Type, ZoomIn } from 'lucide-react'
+import { ArrowLeft, Circle, Clock, LayoutGrid, Link2, Minus, MousePointer2, Pencil, Plus, RotateCcw, Search, Share2, Square, Star, StickyNote, Trash2, Type, ZoomIn } from 'lucide-react'
 import {
   actorOrigin, CanvasDoc, createUndoManager, guardEntityCards, linkEntityCard, removeEntityCards, SpatialIndex, watchEntityLinks,
   type CanvasObject, type EntityCardContext, type EntityRef, type ResolvedEntity,
@@ -20,6 +20,10 @@ import {
 } from './entity-wiring'
 import { onCanvasTarget, takeCanvasTarget, type CanvasTarget } from './canvas-target'
 import { resizeRotated } from './geometry'
+import {
+  isTinyStroke, lineFromEndpoints, pushStrokeSample, readPoints, scaleLocalPoints, strokeBounds,
+  toPolylineAttr, toSmoothPath,
+} from './ink-path'
 import { bindTextArea } from './live-text'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
@@ -220,7 +224,7 @@ function BoardList({ workspaceId, boards, error, setError, favs, onToggleFav, on
   )
 }
 
-type Tool = 'select' | 'sticky' | 'rect' | 'ellipse' | 'text'
+type Tool = 'select' | 'sticky' | 'rect' | 'ellipse' | 'text' | 'line' | 'ink'
 
 function useBoard(workspaceId: string, boardId: string) {
   const [board, setBoard] = useState<CanvasDoc | null>(null)
@@ -283,8 +287,10 @@ function useBoard(workspaceId: string, boardId: string) {
 type Drag =
   | { kind: 'pan'; sx: number; sy: number; ox: number; oy: number }
   | { kind: 'move'; id: string; sx: number; sy: number; ox: number; oy: number }
-  | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; rotation: number; o: { x: number; y: number; w: number; h: number } }
+  | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; rotation: number; o: { x: number; y: number; w: number; h: number }; points?: number[] }
   | { kind: 'rotate'; id: string; cx: number; cy: number }
+  | { kind: 'draw-line'; id: string; x0: number; y0: number; undoLen: number }
+  | { kind: 'draw-ink'; id: string; undoLen: number; abs: number[] }
 
 export { resizeBox } from './geometry'
 
@@ -303,6 +309,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const svgRef = useRef<SVGSVGElement>(null)
   const drag = useRef<Drag | null>(null)
   const undo = useMemo(() => (board ? createUndoManager(board, LOCAL) : null), [board])
+  useEffect(() => () => { if (undo) undo.captureTimeout = 400 }, [undo])
   const index = useMemo(() => (board ? new SpatialIndex(board) : null), [board])
   useEffect(() => () => index?.dispose(), [index])
   // Entity cards: doc holds only {kind, entityId, origin}; previews batched per frame, per viewer.
@@ -440,6 +447,29 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
 
   const onCanvasDown = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (!board) return
+    if (tool === 'line' || tool === 'ink') {
+      const p = toWorld(e.clientX, e.clientY)
+      const stroke = { stroke: { color: 'currentColor', width: 2 } }
+      // Capture stack length BEFORE add: post-add undoLen makes tiny-stroke rollback a no-op
+      // when add+updates merge into one UndoManager item (default captureTimeout 400).
+      const undoLen = undo?.undoStack.length ?? 0
+      // Keep the whole gesture in one undo item even if the pointer pauses mid-stroke.
+      if (undo) undo.captureTimeout = 60_000
+      if (tool === 'line') {
+        const b = lineFromEndpoints(p.x, p.y, p.x, p.y)
+        const [id] = board.add([{ type: 'line', x: b.x, y: b.y, w: b.w, h: b.h, rotation: 0, style: stroke, props: { points: b.points } }], LOCAL)
+        setSelected(id!)
+        drag.current = { kind: 'draw-line', id: id!, x0: p.x, y0: p.y, undoLen }
+      } else {
+        const abs = [p.x, p.y]
+        const b = strokeBounds(abs)
+        const [id] = board.add([{ type: 'ink', x: b.x, y: b.y, w: b.w, h: b.h, rotation: 0, style: stroke, props: { points: b.points } }], LOCAL)
+        setSelected(id!)
+        drag.current = { kind: 'draw-ink', id: id!, undoLen, abs }
+      }
+      e.currentTarget.setPointerCapture(e.pointerId)
+      return
+    }
     if (tool !== 'select') {
       const p = toWorld(e.clientX, e.clientY)
       const base = { x: p.x, y: p.y, rotation: 0 }
@@ -470,7 +500,11 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     if (o.locked) return
     drag.current = h === 'rotate'
       ? { kind: 'rotate', id: o.id, cx: o.x + o.w / 2, cy: o.y + o.h / 2 }
-      : { kind: 'resize', id: o.id, corner: h, sx: e.clientX, sy: e.clientY, rotation: o.rotation ?? 0, o: { x: o.x, y: o.y, w: o.w, h: o.h } }
+      : {
+          kind: 'resize', id: o.id, corner: h, sx: e.clientX, sy: e.clientY, rotation: o.rotation ?? 0,
+          o: { x: o.x, y: o.y, w: o.w, h: o.h },
+          points: (o.type === 'line' || o.type === 'ink') ? readPoints(o.props) : undefined,
+        }
     svgRef.current?.setPointerCapture(e.pointerId)
   }
   const onMove = (e: ReactPointerEvent) => {
@@ -478,15 +512,54 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     if (!d || !board) return
     if (d.kind === 'pan') setView(v => ({ ...v, x: d.ox + e.clientX - d.sx, y: d.oy + e.clientY - d.sy }))
     else if (d.kind === 'move') board.update(d.id, { x: d.ox + (e.clientX - d.sx) / view.zoom, y: d.oy + (e.clientY - d.sy) / view.zoom }, LOCAL)
-    else if (d.kind === 'resize') board.update(d.id, resizeRotated(d.o, d.rotation, d.corner, (e.clientX - d.sx) / view.zoom, (e.clientY - d.sy) / view.zoom), LOCAL)
-    else {
+    else if (d.kind === 'resize') {
+      const minSize = d.points && d.points.length >= 2 ? 1 : undefined
+      const box = resizeRotated(d.o, d.rotation, d.corner, (e.clientX - d.sx) / view.zoom, (e.clientY - d.sy) / view.zoom, minSize)
+      if (d.points && d.points.length >= 2) {
+        board.update(d.id, { ...box, props: { points: scaleLocalPoints(d.points, d.o, box) } }, LOCAL)
+      } else {
+        board.update(d.id, box, LOCAL)
+      }
+    } else if (d.kind === 'draw-line') {
+      const p = toWorld(e.clientX, e.clientY)
+      const b = lineFromEndpoints(d.x0, d.y0, p.x, p.y)
+      board.update(d.id, { x: b.x, y: b.y, w: b.w, h: b.h, props: { points: b.points } }, LOCAL)
+    } else if (d.kind === 'draw-ink') {
+      const p = toWorld(e.clientX, e.clientY)
+      // Mutate the gesture buffer in place — re-reading Yjs + spreading every move is O(n²).
+      if (!pushStrokeSample(d.abs, p.x, p.y)) return
+      const b = strokeBounds(d.abs)
+      board.update(d.id, { x: b.x, y: b.y, w: b.w, h: b.h, props: { points: b.points } }, LOCAL)
+    } else {
       const p = toWorld(e.clientX, e.clientY)
       let deg = (Math.atan2(p.y - d.cy, p.x - d.cx) * 180) / Math.PI + 90
       if (e.shiftKey) deg = Math.round(deg / 15) * 15
       board.update(d.id, { rotation: ((deg % 360) + 360) % 360 }, LOCAL)
     }
   }
-  const onUp = () => { drag.current = null; undo?.stopCapturing() }
+  const onUp = () => {
+    const d = drag.current
+    drag.current = null
+    if (d && (d.kind === 'draw-line' || d.kind === 'draw-ink')) {
+      if (undo) undo.captureTimeout = 400
+      if (!board) { undo?.stopCapturing(); setTool('select'); return }
+      const o = board.get(d.id)
+      const pts = o ? readPoints(o.props) : []
+      undo?.stopCapturing()
+      if (!o || isTinyStroke(o, pts.length / 2)) {
+        // Roll back the in-progress stroke so Undo is not left with a stub.
+        while (undo && undo.undoStack.length > d.undoLen) undo.undo()
+        // undo() parks the stub on redoStack — clear it or Ctrl+Shift+Z cannot resurrect crumbs.
+        undo?.clear(false, true)
+        setSelected(null)
+      } else {
+        setSelected(d.id)
+      }
+      setTool('select')
+      return
+    }
+    undo?.stopCapturing()
+  }
   const onWheel = (e: React.WheelEvent) => {
     const r = svgRef.current!.getBoundingClientRect()
     const mx = e.clientX - r.left, my = e.clientY - r.top
@@ -508,6 +581,8 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     { id: 'rect', icon: Square, label: t('canvas.tool.rect') },
     { id: 'ellipse', icon: Circle, label: t('canvas.tool.ellipse') },
     { id: 'text', icon: Type, label: t('canvas.tool.text') },
+    { id: 'line', icon: Minus, label: t('canvas.tool.line') },
+    { id: 'ink', icon: Pencil, label: t('canvas.tool.ink') },
   ]
   const editingObj = editing ? all.find(o => o.id === editing) : undefined
   const selectedObj = selected ? all.find(o => o.id === selected) : undefined
@@ -540,7 +615,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
           </button></Tip>
         </div>
         <svg ref={svgRef} className={`h-full w-full touch-none select-none ${tool === 'select' ? 'cursor-default' : 'cursor-crosshair'}`}
-          onPointerDown={onCanvasDown} onPointerMove={onMove} onPointerUp={onUp} onWheel={onWheel}
+          onPointerDown={onCanvasDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel}
           onDragOver={e => { if ([...e.dataTransfer.types].some(x => x === ENTITY_DRAG_MIME || x === 'text/plain')) e.preventDefault() }} onDrop={onDrop} data-testid="canvas-stage">
           <defs>
             <pattern id="canvas-grid" width={24 * view.zoom} height={24 * view.zoom} patternUnits="userSpaceOnUse" x={view.x} y={view.y}>
@@ -727,6 +802,27 @@ function ObjectView({ o, selected, editing, placeholder, onDown, onEdit }: { o: 
         {ellipse
           ? <ellipse cx={o.x + o.w / 2} cy={o.y + o.h / 2} rx={o.w / 2} ry={o.h / 2} className={`fill-accent/5 ${selected ? 'stroke-accent' : 'stroke-border-strong'}`} strokeWidth={1.5} />
           : <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={6} className={`fill-accent/5 ${selected ? 'stroke-accent' : 'stroke-border-strong'}`} strokeWidth={1.5} />}
+      </g>
+    )
+  }
+  if (o.type === 'line' || o.type === 'ink') {
+    const pts = readPoints(o.props)
+    const sw = typeof o.style?.stroke?.width === 'number' ? o.style.stroke.width : 2
+    const stroke = selected ? 'stroke-accent' : 'stroke-foreground'
+    const hit = Math.max(12, sw + 8)
+    const poly = toPolylineAttr(pts, o.x, o.y)
+    const path = o.type === 'ink' ? toSmoothPath(pts, o.x, o.y) : ''
+    return (
+      <g {...common} transform={transform} data-testid={o.type === 'ink' ? 'canvas-ink' : 'canvas-line'}>
+        {o.type === 'line'
+          ? <>
+              <polyline points={poly} fill="none" stroke="transparent" strokeWidth={hit} strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points={poly} fill="none" className={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+            </>
+          : <>
+              <path d={path} fill="none" stroke="transparent" strokeWidth={hit} strokeLinecap="round" strokeLinejoin="round" />
+              <path d={path} fill="none" className={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+            </>}
       </g>
     )
   }
