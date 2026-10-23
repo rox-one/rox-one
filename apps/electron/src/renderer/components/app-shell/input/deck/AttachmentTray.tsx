@@ -67,8 +67,7 @@ export function AttachmentTray({
       {Array.from({ length: loadingCount }).map((_, index) => (
         <span
           key={`loading-${index}`}
-          role="status"
-          aria-busy="true"
+          aria-hidden="true"
           className="inline-flex h-9 w-40 shrink-0 items-center gap-2 rounded-[var(--radius-control)] border border-border-subtle bg-surface-elevated px-2 text-muted-foreground"
         >
           <Skeleton circle className="size-4 shrink-0" />

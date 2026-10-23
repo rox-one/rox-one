@@ -57,8 +57,7 @@ function LoadingBubble() {
   return (
     <div
       className="h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-control)] bg-background text-muted-foreground shadow-minimal"
-      role="status"
-      aria-busy="true"
+      aria-hidden="true"
     >
       <Skeleton className="h-full w-full rounded-[var(--radius-control)]" />
     </div>
@@ -138,7 +137,7 @@ function AttachmentBubble({ attachment, onRemove, onRetry, disabled }: Attachmen
               <FileTypeIcon type={attachment.type} mimeType={attachment.mimeType} className="h-5 w-5" />
             )}
             {isTranscribing && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/70" aria-busy="true">
+              <div className="absolute inset-0 flex items-center justify-center bg-background/70" aria-hidden="true">
                 <Skeleton circle className="h-4 w-4" />
               </div>
             )}
