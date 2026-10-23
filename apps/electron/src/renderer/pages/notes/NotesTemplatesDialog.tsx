@@ -37,13 +37,25 @@ export function NotesTemplatesDialog({
   const [title, setTitle] = React.useState('')
   const [templateId, setTemplateId] = React.useState('')
   const [replaceConfirm, setReplaceConfirm] = React.useState(false)
+  const wasOpenRef = React.useRef(false)
 
   React.useEffect(() => {
+    const opened = open && !wasOpenRef.current
+    wasOpenRef.current = open
     if (!open) return
-    setTitle(defaultTitle ?? '')
-    setTemplateId(sanitizeTemplateId(defaultTitle ?? 'template'))
-    setSelectedId(templates[0]?.id ?? '')
-    setReplaceConfirm(false)
+    if (opened) {
+      setTitle(defaultTitle ?? '')
+      setTemplateId(sanitizeTemplateId(defaultTitle ?? 'template'))
+      setSelectedId(templates[0]?.id ?? '')
+      setReplaceConfirm(false)
+      return
+    }
+    // Templates list refreshed while dialog stays open: keep typed fields,
+    // only heal selectedId if it vanished or was empty.
+    setSelectedId((current) => {
+      if (current && templates.some((item) => item.id === current)) return current
+      return templates[0]?.id ?? ''
+    })
   }, [open, defaultTitle, templates])
 
   const safeId = sanitizeTemplateId(templateId)

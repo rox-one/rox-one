@@ -60,15 +60,20 @@ export function NoteCoverIconChrome({
     setIconDraft(typeof properties.icon === 'string' ? properties.icon : '')
   }, [properties.cover, properties.icon])
 
-  const coverStyle: React.CSSProperties | undefined = !cover
-    ? undefined
-    : cover.startsWith('http') || cover.startsWith('data:image')
-      ? {
-          backgroundImage: `url(${JSON.stringify(cover)})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }
-      : { backgroundImage: cover }
+  const coverStyle: React.CSSProperties | undefined = (() => {
+    if (!cover) return undefined
+    const lower = cover.toLowerCase()
+    if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('data:image')) {
+      return {
+        backgroundImage: `url(${JSON.stringify(cover)})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }
+    }
+    if (cover.startsWith('#')) return { backgroundColor: cover }
+    // Gradients and other CSS background-image values.
+    return { backgroundImage: cover }
+  })()
 
   return (
     <div className="mx-auto mb-4 w-full max-w-[70ch]" data-testid="notes-library-chrome">

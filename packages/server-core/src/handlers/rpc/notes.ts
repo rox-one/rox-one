@@ -1937,22 +1937,17 @@ export async function saveNoteAsTemplateForRoot(
 ): Promise<NoteTemplateSummary> {
   const id = assertSafeTemplateId(input.templateId)
   const filePath = await assertSafeTemplateFilePath(notesRoot, id)
-  let exists = false
-  try {
-    const info = await lstat(filePath)
-    if (info.isSymbolicLink()) throw new Error('Invalid template path')
-    exists = info.isFile()
-  } catch (error) {
-    if (!isErrnoException(error, 'ENOENT')) throw error
-  }
-  if (exists && input.confirmReplace !== true) {
-    throw new CodedError('CONFLICT', 'Template already exists')
-  }
   const properties: Record<string, unknown> = { ...(input.properties ?? {}), title: input.title.trim() || titleFromId(id) }
   // Templates keep content identity only — drop path/runtime-ish keys.
   for (const key of ['createdAt', 'cover', 'icon']) delete properties[key]
   const content = stringifyNoteContent(input.body ?? '', properties)
-  await writeFile(filePath, content, 'utf-8')
+  if (input.confirmReplace === true) {
+    await writeAtomicFileNoFollow(notesRoot, filePath, content)
+  } else {
+    // Exclusive create: EEXIST must become CONFLICT (no silent overwrite).
+    const created = await writeNewNoteFile(filePath, content)
+    if (!created) throw new CodedError('CONFLICT', 'Template already exists')
+  }
   const listed = await listNoteTemplatesForRoot(notesRoot)
   const hit = listed.find(item => item.id === id)
   if (!hit) throw new Error('Template save failed')
