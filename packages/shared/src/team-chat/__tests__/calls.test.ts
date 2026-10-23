@@ -34,6 +34,11 @@ describe('team calls', () => {
     s.appendCallTranscript(general.id, a.call.id, [{ speakerId: 'alice', speakerName: 'Анна', text: 'Тесты закончим к пятнице', startMs: 9000, endMs: 12000 }], bob)
     // A segment can't be attributed to someone else.
     expect(s.listChannels(ORG, alice)[0]!.activeCall).toMatchObject({ transcript: [], transcriptSegments: 2 })
+    // Members who never joined the call can't write into its transcript.
+    expect(() => s.appendCallTranscript(general.id, a.call.id, [{ text: 'x', startMs: 0, endMs: 1 }], carol)).toThrow()
+    // …and a roster sync doesn't make them a participant either.
+    s.syncCallParticipants(general.id, ['alice', 'bob', 'carol'], carol)
+    expect(() => s.appendCallTranscript(general.id, a.call.id, [{ text: 'x', startMs: 0, endMs: 1 }], carol)).toThrow()
     // Non-members can't be injected into the participant list.
     s.syncCallParticipants(general.id, ['alice', 'bob', 'mallory'], alice)
     expect(s.listChannels(ORG, alice)[0]!.activeCall!.participantIds.sort()).toEqual(['alice', 'bob'])
@@ -50,8 +55,8 @@ describe('team calls', () => {
     const events = messages.map(m => toMessengerCallEvent(m, ended)?.type)
     expect(events).toEqual(['call.started', 'call.ended', 'call.transcript'])
     expect(toMessengerCallEvent(messages.find(m => m.event === 'call.ended')!, ended)).toMatchObject({ participants: ['alice', 'bob'] })
-    expect(s.postCallSummary(general.id, a.call.id, '- Релиз на этой неделе', alice).message?.kind).toBe('summary')
-    expect(s.postCallSummary(general.id, a.call.id, 'again', alice).message).toBeNull()
+    expect(s.postCallSummaryAsSystem(general.id, a.call.id, '- Релиз на этой неделе')).toBe(true)
+    expect(s.postCallSummaryAsSystem(general.id, a.call.id, 'again')).toBe(false)
     expect(s.searchMessages(ORG, 'пятниц', carol).map(m => m.kind)).toEqual(['transcript'])
     expect(s.searchMessages(ORG, 'релиз', carol).map(m => m.kind).sort()).toEqual(['summary', 'transcript'])
   })
@@ -72,7 +77,7 @@ describe('mintLiveKitToken', () => {
     const [h, p, sig] = t.split('.')
     expect(createHmac('sha256', 's').update(`${h}.${p}`).digest('base64url')).toBe(sig!)
     const claims = JSON.parse(Buffer.from(p!, 'base64url').toString())
-    expect(claims).toMatchObject({ iss: 'k', sub: 'alice', name: 'Марк', exp: 1600, video: { room: 'rox-c1', roomJoin: true, canPublish: true } })
+    expect(claims).toMatchObject({ iss: 'k', sub: 'alice', name: 'Марк', exp: 1000 + 4 * 3600, video: { room: 'rox-c1', roomJoin: true, canPublish: true } })
   })
   it('refuses to mint without credentials', () => {
     expect(() => mintLiveKitToken({ apiKey: '', apiSecret: '', identity: 'a', room: 'r' })).toThrow()

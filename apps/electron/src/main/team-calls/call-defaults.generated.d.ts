@@ -3,5 +3,4 @@ export declare const CALL_DEFAULTS: {
   readonly livekitUrl: string
   readonly livekitApiKey: string
   readonly livekitApiSecret: string
-  readonly exaApiKey: string
 }
