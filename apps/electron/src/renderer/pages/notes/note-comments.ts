@@ -192,8 +192,10 @@ export function anchorFromQuote(
     }
   }
 
+  // Without preferred offsets, refuse to guess when the quote repeats — callers toast errorAttachSelection.
   const start = fullText.indexOf(selectedText)
   if (start < 0) return null
+  if (fullText.indexOf(selectedText, start + 1) >= 0) return null
   return createNoteCommentAnchor({
     fullText,
     start,

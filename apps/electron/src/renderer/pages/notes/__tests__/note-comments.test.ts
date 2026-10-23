@@ -90,8 +90,12 @@ describe('note comment anchors', () => {
     }))).toBe(false)
   })
 
-  it('builds an anchor from the first quote occurrence in note text', () => {
-    const anchor = anchorFromQuote('One Target Two Target', 'Target')
+  it('returns null when the quote repeats and preferred offsets are absent', () => {
+    expect(anchorFromQuote('One Target Two Target', 'Target')).toBeNull()
+  })
+
+  it('builds an anchor when the quote occurs exactly once', () => {
+    const anchor = anchorFromQuote('One Target Two', 'Target')
     expect(anchor?.selectedText).toBe('Target')
     expect(anchor?.selectors.find(s => s.type === 'text-position')).toMatchObject({ start: 4, end: 10 })
   })
