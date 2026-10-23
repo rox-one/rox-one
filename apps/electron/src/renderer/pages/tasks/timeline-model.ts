@@ -220,8 +220,15 @@ export function timelineGroupTitle(
   projectName: (id: string) => string | undefined,
   areaName: (id: string) => string | undefined,
 ): string {
-  if (group.id == null) return t('tasks.move.noPlace')
   if (group.kind === 'list') return t(`tasks.projection.${group.id}`)
-  if (group.kind === 'area') return areaName(group.id) ?? t('tasks.move.noPlace')
-  return projectName(group.id) ?? group.id
+  if (group.kind === 'area') {
+    const name = group.id != null ? areaName(group.id) : undefined
+    return name || t('tasks.move.noArea')
+  }
+  if (group.kind === 'project') {
+    const name = group.id != null ? projectName(group.id) : undefined
+    return name || t('tasks.move.noPlace')
+  }
+  // kind === 'none' (single ungrouped bucket)
+  return group.id != null ? (projectName(group.id) ?? group.id) : t('tasks.move.noPlace')
 }

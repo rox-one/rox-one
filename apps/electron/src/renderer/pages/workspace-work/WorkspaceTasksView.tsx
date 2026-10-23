@@ -6,7 +6,7 @@ import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
 import { isOpenTask } from '@rox/core/tasks/personal'
 import { cn } from '@/lib/utils'
 import { TimelinePanel } from '../tasks/TimelinePanel'
-import { withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../tasks/timeline-adapters'
+import { draftAfterOwnScheduleWrite, overlayAfterScheduleWrite, reconcileOptimisticDue, timelineOwnedDueInput, withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../tasks/timeline-adapters'
 import type { SchedulePatch, TimelineGroup } from '../tasks/timeline-model'
 import { localDateTimeInput, parseLocalDateTime, workspaceProjectOptions, type WorkspaceProjectOption } from '@/lib/workspace-work-client'
 
@@ -81,18 +81,42 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
     if (ok) setDraft(null)
   }
   // Timeline: open workspace tasks across projects, one-day bars on their deadlines.
-  // Optimistic deadlines shown until the next snapshot arrives (or the write is rejected).
+  // Optimistic deadlines stay until the snapshot dueAt matches (confirmed write).
   const [overlay, setOverlay] = useState<ReadonlyMap<string, number>>(() => new Map())
-  useEffect(() => { setOverlay(new Map()) }, [snapshot])
+  useEffect(() => {
+    if (!snapshot) return
+    setOverlay(prev => {
+      const next = reconcileOptimisticDue(prev, snapshot.tasks)
+      if (next.size === prev.size && [...next].every(([id, due]) => prev.get(id) === due)) return prev
+      return next
+    })
+  }, [snapshot])
+  // When the timeline owns the open task's deadline, mirror due into the form.
+  // Do not touch expectedRevision — unrelated snapshot bumps must still warn via
+  // navigation.work.draftChanged so remote title/description/status are not overwritten.
+  useEffect(() => {
+    if (!draft?.id) return
+    const due = timelineOwnedDueInput(overlay, draft.id, localDateTimeInput)
+    if (due == null) return
+    setDraft(current => {
+      if (!current || current.id !== draft.id) return current
+      if (current.due === due) return current
+      return { ...current, due }
+    })
+  }, [overlay, draft?.id])
   const timelineTasks = useMemo(() => withOptimisticDue(tasks, overlay).map(workspaceTaskToTimeline).filter(isOpenTask), [tasks, overlay])
   const schedule = (id: string, patch: SchedulePatch) => {
     const task = snapshot?.tasks.find(item => item.id === id)
     const dueAt = task ? workspaceDuePatch(patch, task.dueAt) : null
     if (!snapshot || !canWrite || work.pending || dueAt == null) return
     setOverlay(prev => new Map(prev).set(id, dueAt))
-    // A rejection clears the overlay; the hook's error surfaces in the banner above.
-    void work.write({ kind: 'updateTask', id, patch: { dueAt } }, snapshot.revision).then(ok => {
-      if (!ok) setOverlay(prev => { const next = new Map(prev); next.delete(id); return next })
+    // skipped (write never ran) keeps the overlay; rejected drops this id;
+    // ok keeps it until reconcile sees a matching snapshot dueAt.
+    void work.writeOutcome({ kind: 'updateTask', id, patch: { dueAt } }, snapshot.revision).then(outcome => {
+      setOverlay(prev => overlayAfterScheduleWrite(prev, id, dueAt, outcome.status))
+      // Own successful schedule write advanced snapshot.revision via accept;
+      // advance draft.expectedRevision too so Save does not send the pre-drag revision.
+      setDraft(current => draftAfterOwnScheduleWrite(current, id, outcome) ?? null)
     })
   }
   const projectTitle = (group: TimelineGroup) => (group.id == null ? t('navigation.work.tasks.noProject') : projects.find(project => project.id === group.id)?.name ?? t('navigation.work.tasks.missingProject'))
@@ -103,7 +127,7 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
   return <section className="flex h-full min-h-0 flex-col bg-background font-sans text-base" data-testid="workspace-tasks-view">
     <header data-glass-slot="toolbar" className="flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3">
       <ListTodo className="size-4 text-accent" aria-hidden /><h2 className="mr-auto text-lg font-semibold">{t('navigation.work.tasks.title')}</h2>
-      <button type="button" className={buttonClass} disabled={work.loading} onClick={() => { void work.refresh(); setProjectReload(value => value + 1) }} aria-label={t('navigation.work.refresh')}><RefreshCw className="size-3.5" aria-hidden /></button>
+      <button type="button" className={buttonClass} disabled={work.loading} onClick={() => { setOverlay(new Map()); void work.refresh(); setProjectReload(value => value + 1) }} aria-label={t('navigation.work.refresh')}><RefreshCw className="size-3.5" aria-hidden /></button>
       <div role="radiogroup" aria-label={t('tasks.timeline.layout')} className="inline-flex rounded-[var(--radius-control)] border border-border-subtle p-0.5 text-sm">
         {(['list', 'timeline'] as const).map(id => <button key={id} type="button" role="radio" aria-checked={layout === id} data-testid={`workspace-tasks-layout-${id}`} onClick={() => setLayout(id)}
           className={cn('rounded-[var(--radius-control)] px-2 py-0.5', layout === id ? 'bg-accent text-accent-foreground' : 'text-text-secondary hover:bg-surface-hover')}>{t(id === 'list' ? 'collection.view.list' : 'tasks.timeline.layout')}</button>)}
