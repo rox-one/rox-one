@@ -142,6 +142,34 @@ describe('ActionButtonBlock TipTap', () => {
     expect(payload.attrs.code).not.toContain('<script>')
   })
 
+  it('createActionButtonContent routes Partial through normalize+serialize', () => {
+    const safe = createActionButtonContent({
+      kind: 'safeFormula',
+      label: 'Calc',
+      formula: 'sum(a,b)',
+      reviewState: 'reviewed',
+    })
+    expect(safe.attrs.language).toBe('rox-action')
+    const safeParsed = parseActionFenceBody(safe.attrs.code, { language: 'rox-action' })
+    expect(safeParsed.ok).toBe(true)
+    if (!safeParsed.ok) throw new Error('expected ok')
+    expect(safeParsed.spec.formula).toBe('sum(a,b)')
+    expect(safeParsed.spec.rejectedUnsafe).toBe(false)
+
+    const unsafe = createActionButtonContent({
+      kind: 'safeFormula',
+      label: 'Calc',
+      formula: 'eval("1+1")',
+      reviewState: 'reviewed',
+    })
+    const unsafeParsed = parseActionFenceBody(unsafe.attrs.code, { language: 'rox-action' })
+    const unsafeSpec = unsafeParsed.ok ? unsafeParsed.spec : unsafeParsed.inertSpec
+    expect(unsafeSpec.rejectedUnsafe).toBe(true)
+    expect(unsafeSpec.formula).toBeUndefined()
+    expect(unsafeSpec.reviewState).toBe('unreviewed')
+    expect(unsafe.attrs.code).not.toContain('eval(')
+  })
+
 
   it('inert copy distinguishes slash draft vs imported', () => {
     const draft = parseActionFenceBody(

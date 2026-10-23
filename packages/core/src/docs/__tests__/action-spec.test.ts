@@ -254,7 +254,74 @@ describe('LSX-WP-033 ActionSpec helpers', () => {
     expect(missingTargetImport.spec.rejectedUnsafe).toBe(false)
   })
 
-  test('sanitizeActionLabel strips HTML and rejects javascript URLs', () => {
+  test('invalid-shape inert defaults keep rejectedUnsafe false', () => {
+    const empty = parseActionFenceBody('', { language: 'rox-action' })
+    expect(empty.ok).toBe(false)
+    if (empty.ok) throw new Error('expected inert')
+    expect(empty.issues).toContain('invalid-shape')
+    expect(empty.inertSpec.rejectedUnsafe).toBe(false)
+
+    const badJson = parseActionFenceBody('{not-json', { language: 'rox-action' })
+    expect(badJson.ok).toBe(false)
+    if (badJson.ok) throw new Error('expected inert')
+    expect(badJson.issues).toContain('invalid-shape')
+    expect(badJson.inertSpec.rejectedUnsafe).toBe(false)
+
+    const noKeys = parseActionFenceBody('just prose without key lines', { language: 'button' })
+    expect(noKeys.ok).toBe(false)
+    if (noKeys.ok) throw new Error('expected inert')
+    expect(noKeys.issues).toContain('invalid-shape')
+    expect(noKeys.inertSpec.rejectedUnsafe).toBe(false)
+
+    const notObject = normalizeActionSpec('string-payload')
+    expect(notObject.ok).toBe(false)
+    if (notObject.ok) throw new Error('expected inert')
+    expect(notObject.inertSpec.rejectedUnsafe).toBe(false)
+  })
+
+  test('Obsidian key-lines map action into kind-appropriate targets', () => {
+    const link = parseActionFenceBody(
+      ['name Open task', 'type link', 'action task:42'].join('\n'),
+      { language: 'button', imported: true },
+    )
+    expect(link.ok).toBe(true)
+    if (!link.ok) throw new Error('expected ok')
+    expect(link.spec.kind).toBe('entityLink')
+    expect(link.spec.entityRef).toBe('task:42')
+    expect(link.spec.commandId).toBeUndefined()
+
+    const template = parseActionFenceBody(
+      ['name Daily', 'type template', 'action tpl.daily'].join('\n'),
+      { language: 'button', imported: true },
+    )
+    expect(template.ok).toBe(true)
+    if (!template.ok) throw new Error('expected ok')
+    expect(template.spec.kind).toBe('template')
+    expect(template.spec.templateId).toBe('tpl.daily')
+    expect(template.spec.commandId).toBeUndefined()
+
+    const command = parseActionFenceBody(
+      ['name Sync', 'type command', 'action notes.sync'].join('\n'),
+      { language: 'button', imported: true },
+    )
+    expect(command.ok).toBe(true)
+    if (!command.ok) throw new Error('expected ok')
+    expect(command.spec.kind).toBe('command')
+    expect(command.spec.commandId).toBe('notes.sync')
+    expect(command.spec.entityRef).toBeUndefined()
+
+    const workflow = parseActionFenceBody(
+      ['name Review', 'type workflow', 'action wf.review'].join('\n'),
+      { language: 'button', imported: true },
+    )
+    expect(workflow.ok).toBe(true)
+    if (!workflow.ok) throw new Error('expected ok')
+    expect(workflow.spec.kind).toBe('workflow')
+    expect(workflow.spec.workflowRef).toBe('wf.review')
+    expect(workflow.spec.commandId).toBeUndefined()
+  })
+
+    test('sanitizeActionLabel strips HTML and rejects javascript URLs', () => {
     expect(sanitizeActionLabel('<b>Hi</b> there')).toBe('Hi there')
     expect(sanitizeActionLabel('javascript:alert(1)')).toBe('')
     expect(canonicalizeActionKind('entity-link')).toBe('entityLink')

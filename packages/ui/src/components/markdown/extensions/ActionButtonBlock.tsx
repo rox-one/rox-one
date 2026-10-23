@@ -12,6 +12,7 @@ import {
   ACTION_FENCE_LANGUAGES,
   beginClientActionAttempt,
   createClientActionUiState,
+  normalizeActionSpec,
   parseActionFenceBody,
   presentationStateForSpec,
   renderActionBasicExport,
@@ -94,35 +95,21 @@ export function createActionButtonContent(spec?: Partial<ActionSpec>): {
   attrs: { code: string; language: string }
 } {
   const base = defaultSlashSpec()
-  const merged: ActionSpec = {
+  // Route Partial through normalize → serialize so insert/slash match fence ingest
+  // (rejectedUnsafe/sourceLanguage + validated formula/inputs).
+  const result = normalizeActionSpec({
     ...base,
     ...spec,
     label: sanitizeActionLabel(spec?.label ?? base.label) || base.label,
     reviewState: spec?.reviewState ?? 'unreviewed',
-    rejectedUnsafe: spec?.rejectedUnsafe === true,
     failurePolicy: spec?.failurePolicy ?? 'stopOnError',
     kind: spec?.kind ?? 'command',
-  }
+  })
+  const normalized = result.ok ? result.spec : result.inertSpec
   return {
     type: 'actionButton',
     attrs: {
-      code: JSON.stringify(
-        {
-          kind: merged.kind,
-          label: merged.label,
-          reviewState: merged.reviewState,
-          failurePolicy: merged.failurePolicy,
-          ...(merged.commandId ? { commandId: merged.commandId } : {}),
-          ...(merged.entityRef ? { entityRef: merged.entityRef } : {}),
-          ...(merged.templateId ? { templateId: merged.templateId } : {}),
-          ...(merged.blockKind ? { blockKind: merged.blockKind } : {}),
-          ...(merged.formula ? { formula: merged.formula } : {}),
-          ...(merged.workflowRef ? { workflowRef: merged.workflowRef } : {}),
-          ...(merged.inputs ? { inputs: merged.inputs } : {}),
-        },
-        null,
-        2,
-      ),
+      code: serializeActionSpec(normalized).replace(/\n$/, ''),
       language: 'rox-action',
     },
   }

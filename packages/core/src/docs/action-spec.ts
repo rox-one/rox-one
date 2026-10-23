@@ -222,12 +222,15 @@ function objectHasUnsafeKeys(raw: Record<string, unknown>): boolean {
 }
 
 function defaultInertSpec(partial?: Partial<ActionSpec>): ActionSpec {
+  // Invalid-shape paths (empty body, JSON parse failure, no key-lines) stay
+  // rejectedUnsafe:false unless unsafe content was actually seen. Only
+  // unsafe-payload / unsafe-label / invalid-inputs flip the flag.
   return {
     kind: partial?.kind ?? 'command',
     label: sanitizeActionLabel(partial?.label) || 'Action',
     reviewState: 'unreviewed',
     failurePolicy: 'stopOnError',
-    rejectedUnsafe: true,
+    rejectedUnsafe: partial?.rejectedUnsafe === true,
     sourceLanguage: partial?.sourceLanguage,
     commandId: partial?.commandId,
     entityRef: partial?.entityRef,
@@ -450,10 +453,36 @@ export function parseActionFenceBody(
   }
 
   // Obsidian Buttons-style key lines: name / type / action
+  // Accept `key: value`, `key = value`, or space-separated `key value` for known keys.
+  const OBSIDIAN_KEYS = new Set([
+    'name',
+    'type',
+    'kind',
+    'actiontype',
+    'action',
+    'command',
+    'target',
+    'label',
+    'title',
+    'entityref',
+    'ref',
+    'templateid',
+    'template',
+    'blockkind',
+    'block',
+    'formula',
+    'workflowref',
+    'workflow',
+    'commandid',
+  ])
   const lines = trimmed.split(/\r?\n/)
   const map: Record<string, string> = {}
   for (const line of lines) {
-    const match = /^\s*([A-Za-z][\w-]*)\s*[:=]\s*(.*)\s*$/.exec(line)
+    let match = /^\s*([A-Za-z][\w-]*)\s*[:=]\s*(.*)\s*$/.exec(line)
+    if (!match) {
+      match = /^\s*([A-Za-z][\w-]*)\s+(.+)\s*$/.exec(line)
+      if (match && !OBSIDIAN_KEYS.has(match[1]!.toLowerCase())) match = null
+    }
     if (!match) continue
     map[match[1]!.toLowerCase()] = match[2] ?? ''
   }
@@ -467,18 +496,48 @@ export function parseActionFenceBody(
 
   const type = map.type ?? map.kind ?? map.actiontype
   const action = map.action ?? map.command ?? map.target
+  const typeUnsafe = typeof type === 'string' && UNSAFE_TYPE_RE.test(type)
+  const canonical = canonicalizeActionKind(type)
   const payload: Record<string, unknown> = {
     kind: type,
     type,
     label: map.name ?? map.label ?? map.title,
-    action,
-    command: type && UNSAFE_TYPE_RE.test(type) ? undefined : action,
-    commandId: type === 'command' || type === 'cmd' ? action : map.commandid,
     entityRef: map.entityref ?? map.ref,
     templateId: map.templateid ?? map.template,
     blockKind: map.blockkind ?? map.block,
     formula: map.formula,
     workflowRef: map.workflowref ?? map.workflow,
+  }
+  // Only set command/commandId for command/cmd kinds. Map `action` into the
+  // kind-appropriate target so entityLink URLs do not land in commandId.
+  if (!typeUnsafe && action) {
+    switch (canonical) {
+      case 'command':
+        payload.command = action
+        payload.commandId = action
+        break
+      case 'entityLink':
+        payload.entityRef = payload.entityRef ?? action
+        break
+      case 'template':
+        payload.templateId = payload.templateId ?? action
+        break
+      case 'appendBlock':
+        payload.blockKind = payload.blockKind ?? action
+        break
+      case 'safeFormula':
+        payload.formula = payload.formula ?? action
+        break
+      case 'workflow':
+        payload.workflowRef = payload.workflowRef ?? action
+        break
+      default:
+        // Unknown/unsafe kinds: keep explicit commandid only, never spill action into command.
+        if (map.commandid) payload.commandId = map.commandid
+        break
+    }
+  } else if (map.commandid && (canonical === 'command' || canonical === null)) {
+    payload.commandId = map.commandid
   }
   return normalizeActionSpec(payload, { imported: true, sourceLanguage: language ?? 'button' })
 }
