@@ -2,8 +2,11 @@
  * Daily USD cost cap for LLM-heavy cognee work (cognify / insights).
  * Stored under `~/rox/memory/cognee/cost/<yyyy-mm-dd>.json` (process-wide, not
  * per-workspace) so a single user cannot exceed the cap across workspaces.
+ *
+ * Reservations are check-and-write in one step so concurrent rebuilds cannot
+ * TOCTOU past the cap (single-process; file IO is sync).
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 
@@ -57,6 +60,30 @@ export function canSpendGraphUsd(
   if (!(addUsd >= 0) || !(capUsd >= 0)) return false
   const ledger = readGraphCostLedger(roxHome, now)
   return ledger.spentUsd + addUsd <= capUsd + 1e-9
+}
+
+/**
+ * Atomically reserve `addUsd` against the daily cap.
+ * Returns the updated ledger on success, or `null` if the cap would be exceeded
+ * or inputs are invalid. Prefer this over canSpend+record to avoid TOCTOU.
+ */
+export function tryReserveGraphSpend(
+  addUsd: number,
+  capUsd = DEFAULT_GRAPH_DAILY_COST_CAP_USD,
+  roxHome?: string,
+  now = Date.now(),
+): GraphCostLedger | null {
+  if (!(addUsd >= 0) || !(capUsd >= 0)) return null
+  const ledger = readGraphCostLedger(roxHome, now)
+  if (ledger.spentUsd + addUsd > capUsd + 1e-9) return null
+  ledger.spentUsd = Math.max(0, ledger.spentUsd + addUsd)
+  ledger.cognifyCount += 1
+  try {
+    writeGraphCostLedger(ledger, roxHome)
+  } catch {
+    /* best-effort: still return reserved ledger so caller proceeds once */
+  }
+  return ledger
 }
 
 /** Record a spend; returns the updated ledger. No-op clamp if file IO fails. */

@@ -56,8 +56,8 @@ class FakeProvider implements GraphMemoryProvider {
   }
 }
 
-function flush(): Promise<void> {
-  return new Promise(r => setTimeout(r, 30))
+function flush(ms = 50): Promise<void> {
+  return new Promise(r => setTimeout(r, ms))
 }
 
 describe('toInjectableGraphDocs', () => {
@@ -109,7 +109,7 @@ describe('scheduleGraphIngest', () => {
     const cold = new FakeProvider()
     cold.state = 'cold'
     scheduleGraphIngest({ provider: cold, docs: [doc('a.md', 'owner text', 'owner')] })
-    await flush()
+    await flush(80)
     expect(cold.ingested).toHaveLength(1)
   })
 

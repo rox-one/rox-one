@@ -9,8 +9,7 @@ import type { ChunkSourceDoc } from '../chunk-index'
 import {
   DEFAULT_COGNIFY_ESTIMATE_USD,
   DEFAULT_GRAPH_DAILY_COST_CAP_USD,
-  canSpendGraphUsd,
-  recordGraphSpend,
+  tryReserveGraphSpend,
 } from './cost-cap'
 
 export function graphSourceForPath(path: string): GraphMemorySource {
@@ -60,9 +59,13 @@ export interface ScheduleGraphIngestOptions {
   roxHome?: string
 }
 
+/** Coalesce overlapping fire-and-forget runs (rebuild storms). */
+let ingestTail: Promise<void> = Promise.resolve()
+
 /**
  * Fire-and-forget ingest (+ optional cognify under the daily cost cap).
  * Never throws into the caller; never blocks rebuild on a cold sidecar.
+ * Concurrent calls are serialized so we do not stampede cognify.
  */
 export function scheduleGraphIngest(opts: ScheduleGraphIngestOptions): void {
   const provider = opts.provider
@@ -74,26 +77,28 @@ export function scheduleGraphIngest(opts: ScheduleGraphIngestOptions): void {
   const injectable = toInjectableGraphDocs(opts.docs)
   if (injectable.length === 0) return
 
-  void (async () => {
-    try {
-      await provider.ingest(injectable)
-    } catch (err) {
-      opts.logger?.warn('graph ingest failed', err)
-      return
-    }
-    if (opts.runCognify === false) return
-    if (typeof (provider as { cognify?: (s?: string[]) => Promise<void> }).cognify !== 'function') return
-    const estimate = opts.cognifyEstimateUsd ?? DEFAULT_COGNIFY_ESTIMATE_USD
-    const cap = opts.dailyCostCapUsd ?? DEFAULT_GRAPH_DAILY_COST_CAP_USD
-    if (!canSpendGraphUsd(estimate, cap, opts.roxHome)) {
-      opts.logger?.warn('graph cognify skipped: daily cost cap reached')
-      return
-    }
-    try {
-      await (provider as { cognify: (s?: string[]) => Promise<void> }).cognify()
-      recordGraphSpend(estimate, opts.roxHome)
-    } catch (err) {
-      opts.logger?.warn('graph cognify failed', err)
-    }
-  })()
+  ingestTail = ingestTail
+    .catch(() => {})
+    .then(async () => {
+      try {
+        await provider.ingest(injectable)
+      } catch (err) {
+        opts.logger?.warn('graph ingest failed', err)
+        return
+      }
+      if (opts.runCognify === false) return
+      if (typeof (provider as { cognify?: (s?: string[]) => Promise<void> }).cognify !== 'function') return
+      const estimate = opts.cognifyEstimateUsd ?? DEFAULT_COGNIFY_ESTIMATE_USD
+      const cap = opts.dailyCostCapUsd ?? DEFAULT_GRAPH_DAILY_COST_CAP_USD
+      // Reserve before cognify so concurrent rebuilds cannot TOCTOU past the cap.
+      if (!tryReserveGraphSpend(estimate, cap, opts.roxHome)) {
+        opts.logger?.warn('graph cognify skipped: daily cost cap reached')
+        return
+      }
+      try {
+        await (provider as { cognify: (s?: string[]) => Promise<void> }).cognify()
+      } catch (err) {
+        opts.logger?.warn('graph cognify failed', err)
+      }
+    })
 }

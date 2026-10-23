@@ -8,6 +8,7 @@ import {
   canSpendGraphUsd,
   readGraphCostLedger,
   recordGraphSpend,
+  tryReserveGraphSpend,
 } from '../cost-cap'
 
 const dirs: string[] = []
@@ -68,5 +69,16 @@ describe('graph cost cap', () => {
     const h = home()
     expect(canSpendGraphUsd(-1, 2, h)).toBe(false)
     expect(canSpendGraphUsd(0.01, -1, h)).toBe(false)
+    expect(tryReserveGraphSpend(-1, 2, h)).toBeNull()
+  })
+
+  test('tryReserveGraphSpend is atomic vs canSpend+later record', () => {
+    const h = home()
+    const now = Date.parse('2026-10-23T12:00:00Z')
+    const a = tryReserveGraphSpend(1.9, 2, h, now)
+    expect(a?.spentUsd).toBeCloseTo(1.9, 6)
+    expect(tryReserveGraphSpend(0.2, 2, h, now)).toBeNull()
+    expect(readGraphCostLedger(h, now).spentUsd).toBeCloseTo(1.9, 6)
+    expect(tryReserveGraphSpend(0.1, 2, h, now)?.cognifyCount).toBe(2)
   })
 })
