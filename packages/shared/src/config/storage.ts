@@ -773,7 +773,7 @@ const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
   description: 'Default configuration values for Rox',
   defaults: {
     notificationsEnabled: true,
-    colorTheme: 'arc-glass', // ROX_THEME_ID (literal: config-defaults-parity evaluates this object)
+    colorTheme: 'super-engineering', // ROX_THEME_ID (literal: config-defaults-parity evaluates this object)
     autoCapitalisation: true,
     sendMessageKey: 'enter',
     spellCheck: false,
