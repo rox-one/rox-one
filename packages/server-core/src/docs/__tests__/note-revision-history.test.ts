@@ -138,6 +138,52 @@ describe('note-revision-history', () => {
       operationId: 'o',
     })).rejects.toThrow(/Invalid note ID/)
   })
+
+  it('skips workspace-wide native scan when sidecar already covers the note', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'rox-note-history-skip-native-'))
+    const workspaceId = 'ws'
+    const noteId = 'covered'
+    const body = '# Covered\n'
+    await recordNoteRevision(root, {
+      noteId, content: body, revisionId: markdownRevision(body), operationId: 'side-1',
+      committedAt: '2026-10-23T11:00:00.000Z', actorPrincipalId: 'local-uid:1:ws',
+    })
+    const nativeDir = join(root, '.rox-docs', 'commits', digest(`native\0${workspaceId}`))
+    await mkdir(nativeDir, { recursive: true })
+    // Would collide if scanned: same noteId, different operation — must be ignored because sidecar covers.
+    await writeFile(join(nativeDir, `native-${'b'.repeat(64)}.json`), JSON.stringify({
+      phase: 'committed',
+      command: { changes: [{ kind: 'write', noteId, content: '# From native only\n', expectedRevision: null }] },
+      receipt: { operationId: 'native-only', committedAt: '2026-10-23T11:05:00.000Z', actorPrincipalId: 'x' },
+    }))
+    const listed = await listNoteRevisions(root, workspaceId, noteId)
+    expect(listed.map((e) => e.operationId)).toEqual(['side-1'])
+  })
+
+  it('early-filters native journals by noteId without requiring coverage skip', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'rox-note-history-native-filter-'))
+    const workspaceId = 'ws'
+    const noteId = 'target'
+    const nativeDir = join(root, '.rox-docs', 'commits', digest(`native\0${workspaceId}`))
+    await mkdir(nativeDir, { recursive: true })
+    const content = '# Target from native\n'
+    await writeFile(join(nativeDir, `native-${'c'.repeat(64)}.json`), JSON.stringify({
+      phase: 'committed',
+      command: { changes: [{ kind: 'write', noteId, content, expectedRevision: null }] },
+      receipt: { operationId: 'native-hit', committedAt: '2026-10-23T12:00:00.000Z', actorPrincipalId: 'local-uid:9:ws' },
+    }))
+    await writeFile(join(nativeDir, `native-${'d'.repeat(64)}.json`), JSON.stringify({
+      phase: 'committed',
+      command: { changes: [{ kind: 'write', noteId: 'other', content: '# Other\n', expectedRevision: null }] },
+      receipt: { operationId: 'native-miss', committedAt: '2026-10-23T12:01:00.000Z', actorPrincipalId: 'x' },
+    }))
+    const listed = await listNoteRevisions(root, workspaceId, noteId)
+    expect(listed).toHaveLength(1)
+    expect(listed[0]?.operationId).toBe('native-hit')
+    expect(listed[0]?.actorPrincipalId).toBe('local-uid:9:ws')
+    expect((await getNoteRevision(root, workspaceId, noteId, markdownRevision(content)))?.content).toBe(content)
+  })
+
   it('serializes concurrent sidecar writes for the same noteId', async () => {
     const root = await mkdtemp(join(tmpdir(), 'rox-note-history-lock-'))
     const noteId = 'locked'

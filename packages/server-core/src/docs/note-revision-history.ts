@@ -252,10 +252,14 @@ async function listNativeWriteJournals(notesRoot: string, workspaceId: string, n
     throw error
   }
   const out: NoteHistoryRevision[] = []
+  // noteId appears as a JSON string in command.changes[].noteId — reject files that cannot match.
+  const noteNeedle = JSON.stringify(noteId)
   for (const name of names) {
     if (!/^native-[a-f0-9]{64}\.json$/.test(name)) continue
     try {
-      const value = JSON.parse(await readFile(join(directory, name), 'utf8')) as {
+      const raw = await readFile(join(directory, name), 'utf8')
+      if (!raw.includes(noteNeedle)) continue
+      const value = JSON.parse(raw) as {
         phase?: string
         command?: { changes?: Array<{ kind?: string; noteId?: string; content?: string; expectedRevision?: string | null }> }
         receipt?: { operationId?: string; committedAt?: string; actorPrincipalId?: string }
@@ -297,10 +301,13 @@ async function findInNativeWriteJournals(
     if (isMissing(error)) return null
     throw error
   }
+  const noteNeedle = JSON.stringify(noteId)
   for (const name of names) {
     if (!/^native-[a-f0-9]{64}\.json$/.test(name)) continue
     try {
-      const value = JSON.parse(await readFile(join(directory, name), 'utf8')) as {
+      const raw = await readFile(join(directory, name), 'utf8')
+      if (!raw.includes(noteNeedle)) continue
+      const value = JSON.parse(raw) as {
         phase?: string
         command?: { changes?: Array<{ kind?: string; noteId?: string; content?: string; expectedRevision?: string | null }> }
         receipt?: { operationId?: string; committedAt?: string; actorPrincipalId?: string }
@@ -338,8 +345,11 @@ export async function listNoteRevisions(
 ): Promise<NoteHistoryEntry[]> {
   assertSafeNoteId(noteId)
   const fromJournals = await listCommittedJournals(notesRoot, workspaceId, noteId)
-  const fromNative = await listNativeWriteJournals(notesRoot, workspaceId, noteId)
   const fromSidecar = (await readSidecar(notesRoot, noteId))?.revisions ?? []
+  // Workspace-wide native journals are expensive; skip when per-note sources already cover the note.
+  const fromNative = (fromJournals.length > 0 || fromSidecar.length > 0)
+    ? []
+    : await listNativeWriteJournals(notesRoot, workspaceId, noteId)
   // Distinct tip events are keyed by operationId so identical-byte restores stay listed.
   const byOp = new Map<string, NoteHistoryRevision>()
   for (const entry of [...fromJournals, ...fromNative, ...fromSidecar]) {
