@@ -57,13 +57,13 @@ export function VersionHistoryPanel({
   const [restoring, setRestoring] = React.useState(false)
   const [confirmRestore, setConfirmRestore] = React.useState(false)
 
-  const reload = React.useCallback(async () => {
+  const reload = React.useCallback(async (opts?: { selectTip?: boolean }) => {
     setLoading(true)
     setError(null)
     try {
       const list = await window.electronAPI.listNoteRevisions(workspaceId, noteId)
       setEntries(list)
-      if (list[0] && !selectedId) setSelectedId(list[0].operationId)
+      if (list[0] && (opts?.selectTip || !selectedId)) setSelectedId(list[0].operationId)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
       setEntries([])
@@ -115,7 +115,7 @@ export function VersionHistoryPanel({
       // Restore RPC uses revisionId (content identity); list selection uses operationId.
       await onRestore(selectedEntry.revisionId)
       setConfirmRestore(false)
-      await reload()
+      await reload({ selectTip: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {

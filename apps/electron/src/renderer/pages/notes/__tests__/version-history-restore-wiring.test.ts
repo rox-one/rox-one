@@ -23,11 +23,14 @@ describe('version history restore wiring', () => {
     expect(notesPage).not.toContain('onRestored={(note) => {')
   })
 
-  test('NotesPage re-resolves content after restore so prior error does not leave canEdit false', () => {
-    expect(notesPage).toContain('Rebuild content resolution after restore')
+  test('NotesPage re-resolves content after restore; resolve failure falls through to previous-OK patch', () => {
+    expect(notesPage).toContain('Prefer a fresh resolve after restore')
     expect(notesPage).toContain('restoredResolution = await window.electronAPI.resolveContent')
-    expect(notesPage).toContain('...restoredResolution')
-    expect(notesPage).toContain('setContentResolution({')
+    expect(notesPage).toContain('restoredResolution = null')
+    expect(notesPage).toContain('never install error')
+    expect(notesPage).toContain('previous && previous.status !== \'error\'')
+    // Must not install an error resolution after a successful restore.
+    expect(notesPage).not.toContain("restoredResolution = { status: 'error', code: 'denied' }")
   })
 
   test('VersionHistoryPanel keys and selects by operationId; restore/get use revisionId', () => {
@@ -39,6 +42,8 @@ describe('version history restore wiring', () => {
     expect(panel).toContain('getNoteRevision(workspaceId, noteId, selectedEntry.revisionId)')
     expect(panel).not.toContain('key={entry.revisionId}')
     expect(panel).not.toContain('window.electronAPI.restoreNoteRevision')
+    expect(panel).toContain('reload({ selectTip: true })')
+    expect(panel).toContain('opts?.selectTip || !selectedId')
   })
 
   test('notes RPC reuses the commit operationId for rememberSavedNoteRevision', () => {
@@ -48,6 +53,8 @@ describe('version history restore wiring', () => {
     expect(notesRpc).toContain('operationId: markdownRestoreOperationId')
     expect(notesRpc).toContain('operationId: commitOperation.operationId')
     expect(notesRpc).toContain('operationId: nativeOperation(operation).operationId')
+    expect(notesRpc).toContain('localDeviceHistoryActor(workspaceId)')
+    expect(notesRpc).toContain('function localDeviceHistoryActor')
     // Must not mint a fresh UUID only for the sidecar remember on markdown paths.
     const markdownRememberBlocks = notesRpc.split('rememberSavedNoteRevision').slice(1)
     for (const block of markdownRememberBlocks) {
