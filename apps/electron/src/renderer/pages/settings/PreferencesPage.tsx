@@ -16,9 +16,9 @@ import {
   SettingsCard,
   SettingsInput,
   SettingsTextarea,
+  SettingsLoadingSkeleton,
 } from '@/components/settings'
 import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
-import { Spinner } from '@rox/ui'
 import { persistAgentIdentity, resolveAgentIdentity } from '@rox/shared/identity'
 
 interface PreferencesFormState {
@@ -264,11 +264,7 @@ export function PreferencesForm() {
   )
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-6">
-        <Spinner className="w-4 h-4 text-muted-foreground" />
-      </div>
-    )
+    return <SettingsLoadingSkeleton className="py-6" />
   }
 
   return (
