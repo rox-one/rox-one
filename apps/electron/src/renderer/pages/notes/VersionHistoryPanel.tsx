@@ -63,7 +63,7 @@ export function VersionHistoryPanel({
     try {
       const list = await window.electronAPI.listNoteRevisions(workspaceId, noteId)
       setEntries(list)
-      if (list[0] && !selectedId) setSelectedId(list[0].revisionId)
+      if (list[0] && !selectedId) setSelectedId(list[0].operationId)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
       setEntries([])
@@ -79,22 +79,28 @@ export function VersionHistoryPanel({
     void reload()
   }, [workspaceId, noteId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const selectedEntry = React.useMemo(
+    () => entries.find(entry => entry.operationId === selectedId) ?? null,
+    [entries, selectedId],
+  )
+
   React.useEffect(() => {
-    if (!selectedId) {
+    if (!selectedEntry) {
       setPreview(null)
       return
     }
     let cancelled = false
     void (async () => {
       try {
-        const body = await window.electronAPI.getNoteRevision(workspaceId, noteId, selectedId)
+        // Preview/restore RPC keys by content identity (revisionId), not tip event.
+        const body = await window.electronAPI.getNoteRevision(workspaceId, noteId, selectedEntry.revisionId)
         if (!cancelled) setPreview(body)
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err))
       }
     })()
     return () => { cancelled = true }
-  }, [workspaceId, noteId, selectedId])
+  }, [workspaceId, noteId, selectedEntry])
 
   const diffRows = React.useMemo(
     () => (preview ? previewDiff(currentContent, preview.content) : []),
@@ -102,11 +108,12 @@ export function VersionHistoryPanel({
   )
 
   const restore = React.useCallback(async () => {
-    if (!selectedId || !currentRevision) return
+    if (!selectedEntry || !currentRevision) return
     setRestoring(true)
     setError(null)
     try {
-      await onRestore(selectedId)
+      // Restore RPC uses revisionId (content identity); list selection uses operationId.
+      await onRestore(selectedEntry.revisionId)
       setConfirmRestore(false)
       await reload()
     } catch (err) {
@@ -114,7 +121,7 @@ export function VersionHistoryPanel({
     } finally {
       setRestoring(false)
     }
-  }, [selectedId, currentRevision, onRestore, reload])
+  }, [selectedEntry, currentRevision, onRestore, reload])
 
   return (
     <aside
@@ -134,18 +141,20 @@ export function VersionHistoryPanel({
             <p className="px-1 text-xs text-muted-foreground">{t('notes.history.empty')}</p>
           ) : null}
           {entries.map((entry) => {
-            const active = entry.revisionId === selectedId
+            const active = entry.operationId === selectedId
             return (
               <button
-                key={entry.revisionId}
+                key={entry.operationId}
                 type="button"
                 data-glass-slot="row"
                 data-testid="notes-history-entry"
+                data-operation-id={entry.operationId}
+                data-revision-id={entry.revisionId}
                 aria-pressed={active}
                 className={`mb-1 flex w-full flex-col rounded-[var(--radius-card)] px-2.5 py-2 text-left ${
                   active ? 'bg-muted ring-1 ring-border' : 'bg-muted/40 hover:bg-muted'
                 }`}
-                onClick={() => { setSelectedId(entry.revisionId); setConfirmRestore(false) }}
+                onClick={() => { setSelectedId(entry.operationId); setConfirmRestore(false) }}
               >
                 <span className="text-sm text-foreground">{formatWhen(entry.committedAt, i18n.language)}</span>
                 <span className="text-xs text-muted-foreground">
