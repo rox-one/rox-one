@@ -1,7 +1,7 @@
 import * as React from "react"
 import { X, Image as ImageIcon, RotateCw } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { Spinner, FileTypeIcon, getFileTypeLabel } from "@rox/ui"
+import { Skeleton, FileTypeIcon, getFileTypeLabel } from "@rox/ui"
 import { cn } from "@/lib/utils"
 import type { FileAttachment } from "../../../shared/types"
 
@@ -25,14 +25,17 @@ interface AttachmentPreviewProps {
  * - Icon + filename for text/PDF/code files
  * - X button on hover to remove
  * - Horizontally scrollable when many files
- * - Loading placeholders while files are being read
- * - Audio files surface live transcription state (spinner / error + retry)
+ * - Skeleton placeholders while files are being read
+ * - Audio files surface live transcription state (skeleton / error + retry)
  */
 export function AttachmentPreview({ attachments, onRemove, onRetryTranscription, disabled, loadingCount = 0 }: AttachmentPreviewProps) {
   if (attachments.length === 0 && loadingCount === 0) return null
 
   return (
-    <div className="flex gap-2 px-4 py-3 border-b border-border/50 overflow-x-auto">
+    <div
+      className="flex gap-2 px-4 py-3 border-b border-border/50 overflow-x-auto"
+      aria-busy={loadingCount > 0 || attachments.some(a => a.type === 'audio' && a.transcript?.status === 'pending') || undefined}
+    >
       {attachments.map((attachment, index) => (
         <AttachmentBubble
           key={`${attachment.path}-${index}`}
@@ -52,8 +55,11 @@ export function AttachmentPreview({ attachments, onRemove, onRetryTranscription,
 
 function LoadingBubble() {
   return (
-    <div className="h-16 w-16 rounded-[var(--radius-control)] bg-background shadow-minimal flex items-center justify-center shrink-0">
-      <Spinner className="text-muted-foreground" />
+    <div
+      className="h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-control)] bg-background text-muted-foreground shadow-minimal"
+      aria-hidden="true"
+    >
+      <Skeleton className="h-full w-full rounded-[var(--radius-control)]" />
     </div>
   )
 }
@@ -72,7 +78,7 @@ function AttachmentBubble({ attachment, onRemove, onRetry, disabled }: Attachmen
   const hasImageBase64 = isImage && attachment.base64
 
   // Audio attachments show live transcription progress instead of the plain
-  // type label: spinner while ASR runs, error + retry when it failed.
+  // type label: skeleton while ASR runs, error + retry when it failed.
   const transcript = attachment.type === 'audio' ? attachment.transcript : undefined
   const isTranscribing = transcript?.status === 'pending'
   const transcriptFailed = transcript?.status === 'error'
@@ -131,8 +137,8 @@ function AttachmentBubble({ attachment, onRemove, onRetry, disabled }: Attachmen
               <FileTypeIcon type={attachment.type} mimeType={attachment.mimeType} className="h-5 w-5" />
             )}
             {isTranscribing && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/70">
-                <Spinner className="h-4 w-4 text-muted-foreground" />
+              <div className="absolute inset-0 flex items-center justify-center bg-background/70" aria-hidden="true">
+                <Skeleton circle className="h-4 w-4" />
               </div>
             )}
           </div>
