@@ -2011,8 +2011,15 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
       const id = templateIdFromRelativePath(rel).toLowerCase()
       // Full relative path must already match normalized `${id}.md` (nested case too).
       if (rel !== `${id}.md`) continue
-      // System Daily / imports templates are not library catalog entries (basename at any path).
-      if (id.split('/').some(part => part === 'daily' || part === 'imports')) continue
+      // Round-trip through assertSafeTemplateId — skip hand-placed ids CREATE_FROM cannot open
+      // (spaces/dots → hyphens) and reserved basenames (daily/imports).
+      let safeId: string
+      try {
+        safeId = assertSafeTemplateId(id)
+      } catch {
+        continue
+      }
+      if (safeId !== id) continue
       let content: string
       try {
         content = await readFileNoFollow(abs)

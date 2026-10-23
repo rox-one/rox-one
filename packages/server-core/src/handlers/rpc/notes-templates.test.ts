@@ -309,4 +309,14 @@ describe('note templates library', () => {
     expect(listed.some((item) => item.id === 'imports' || item.id.endsWith('/imports'))).toBe(false)
   })
 
+
+  it('skips hand-placed ids that do not round-trip assertSafeTemplateId', async () => {
+    writeFileSync(join(notesRoot, 'templates', 'my template.md'), '---\ntitle: Spaced\n---\n\nbody\n', 'utf-8')
+    writeFileSync(join(notesRoot, 'templates', 'meeting.v2.md'), '---\ntitle: Dotted\n---\n\nbody\n', 'utf-8')
+    const listed = await listNoteTemplatesForRoot(notesRoot)
+    expect(listed.some((item) => item.id === 'my template' || item.id === 'my-template')).toBe(false)
+    expect(listed.some((item) => item.id === 'meeting.v2' || item.id === 'meeting-v2')).toBe(false)
+    expect(listed.map((item) => item.id)).toEqual(['meeting'])
+  })
+
 })
