@@ -30,7 +30,7 @@ function pill(shellFlags: ReadonlySet<string>) {
 
 describe('W1-07 flags', () => {
   it('registers every W1-07 flag default OFF (Мессенджер + «Доска» default ON) and rollback-safe', () => {
-    const defaultOn = new Set([WORKBENCH_FLAG.modeMessengerV1, WORKBENCH_FLAG.modeCanvasV1])
+    const defaultOn: ReadonlySet<string> = new Set([WORKBENCH_FLAG.modeMessengerV1, WORKBENCH_FLAG.modeCanvasV1])
     for (const id of W1_07_FLAG_IDS) {
       const definition = WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === id)
       expect(definition).toBeDefined()
@@ -47,7 +47,7 @@ describe('W1-07 flags', () => {
   })
 
   it('a fresh store enables Мессенджер + «Доска» among the W1-07 flags', () => {
-    const defaultOn = new Set([WORKBENCH_FLAG.modeMessengerV1, WORKBENCH_FLAG.modeCanvasV1])
+    const defaultOn: ReadonlySet<string> = new Set([WORKBENCH_FLAG.modeMessengerV1, WORKBENCH_FLAG.modeCanvasV1])
     const flags = createStore().get(enabledShellFlagsAtom)
     for (const id of W1_07_FLAG_IDS) expect(flags.has(id)).toBe(defaultOn.has(id))
     expect(enabledUnifiedSurfaces(flags)).toEqual(['messenger', 'canvas'])
