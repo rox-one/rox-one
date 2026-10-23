@@ -11575,6 +11575,7 @@
   "tasks.modeGenerate": "Generieren",
   "tasks.modeManual": "Manuell",
   "tasks.move.lists": "Lists",
+  "tasks.move.noArea": "Ohne Bereich",
   "tasks.move.noPlace": "No project",
   "tasks.move.none": "Nothing found",
   "tasks.move.other": "Other",
