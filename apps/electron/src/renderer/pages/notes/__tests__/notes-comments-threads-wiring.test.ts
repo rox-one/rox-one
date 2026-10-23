@@ -96,7 +96,7 @@ describe('notes comments threads wiring', () => {
   })
 
   it('orphan roots disable allowReplies', () => {
-    expect(threadsPanel).toContain('allowReplies={!root.orphan}')
+    expect(threadsPanel).toContain('allowReplies={!readOnly && !root.orphan}')
   })
 
   it('CommentsThread awaits onCreate/onEdit before closing editors', () => {

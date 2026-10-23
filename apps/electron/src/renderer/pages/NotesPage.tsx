@@ -1017,7 +1017,7 @@ function NativeNotesPage({ selectedNoteId, shareToken }: NotesPageProps) {
     return applied.status === 'ok' ? applied.text : null
   }, [markerPreview])
   const applyMarkers = async () => {
-    if (!markerPreview || markerBusy || !activeNote || !activeWorkspaceId) return
+    if (!markerPreview || markerBusy || !activeNote || !activeWorkspaceId || !canEditContent) return
     const command = markerPreview
     if (command.preview.ref.workspaceId !== activeWorkspaceId || dirtyRef.current
       || command.preview.sourceStoreId !== activeNote.sourceStoreId
@@ -1515,6 +1515,8 @@ function NativeNotesPage({ selectedNoteId, shareToken }: NotesPageProps) {
           if (cancelled) return
           if (!access.ok) {
             toast.error(t('notes.share.linkRejected'), { description: t(`notes.share.linkRejectedReason.${access.reason}`) })
+            // Show nothing for the target: drop the share route back to the Notes root.
+            navigate(routes.view.notes())
             return
           }
           setShareAccess(access)
@@ -1701,6 +1703,7 @@ function NativeNotesPage({ selectedNoteId, shareToken }: NotesPageProps) {
    */
   const restoreNoteFromHistory = React.useCallback(async (revisionId: string): Promise<NoteDocument> => {
     if (!activeWorkspaceId || !activeNote) throw new Error(t('notes.content.reloadRequired'))
+    if (noteShareBlocksWrite(shareAccessRef.current, activeNote.id)) throw new Error(t('notes.content.readOnly'))
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current)
       saveTimerRef.current = null
@@ -2555,6 +2558,7 @@ function NativeNotesPage({ selectedNoteId, shareToken }: NotesPageProps) {
 
   const importFiles = React.useCallback(async (files: File[] | FileList) => {
     if (!activeWorkspaceId || !activeNote || assetsUnavailable) return
+    if (noteShareBlocksWrite(shareAccessRef.current, activeNote.id)) return
     const list = Array.from(files)
     if (list.length === 0) return
     try {
@@ -3771,6 +3775,11 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
               }}
               onMouseUpCapture={syncRichWikiQuery}
               onPasteCapture={(event) => {
+                if (!canEditContent) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  return
+                }
                 if (event.clipboardData.files.length > 0) {
                   event.preventDefault()
                   event.stopPropagation()
@@ -3785,6 +3794,11 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
                 }
               }}
               onDropCapture={(event) => {
+                if (!canEditContent) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  return
+                }
                 if (event.dataTransfer.files.length > 0) {
                   event.preventDefault()
                   event.stopPropagation()
@@ -3847,7 +3861,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
               {commentTooltip && !commentsShown ? (
                 <NotesCommentTooltip comment={{ id: 'tooltip', quote: commentTooltip.quote, body: commentTooltip.body, createdAt: 0 }} top={commentTooltip.top} left={commentTooltip.left} />
               ) : null}
-              {!commentsShown && commentDraftQuote ? (
+              {!commentsShown && commentDraftQuote && !shareReadOnly ? (
                 <NotesCommentComposer
                   className="absolute right-3 z-20"
                   top={commentComposerTop}
@@ -3865,6 +3879,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
                   onSubmit={() => {
                     const text = commentComposerBody.trim()
                     if (!text || !activeNote || !activeWorkspaceId || commentCreateBusy) return
+                    if (noteShareBlocksWrite(shareAccessRef.current, activeNote.id)) return
                     // Prefer the sidecar RPC stack (threads / resolve / reactions).
                     // Selection compose from the overlay mirrors the rail submit.
                     const requestWorkspaceId = activeWorkspaceId
@@ -3957,6 +3972,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
                   onFocusHandled={() => setFocusCommentComposer(false)}
                   createBusy={commentCreateBusy}
                   beginCreate={() => tryBeginCommentCreate(activeWorkspaceId, activeNote.id)}
+                  readOnly={shareReadOnly}
                   endCreate={endCommentCreate}
                   onClearDraft={(scope) => {
                     if (scope) clearCommentDraftAt(scope.workspaceId, scope.noteId)
@@ -4011,6 +4027,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
                 currentRevision={activeNote.revision ?? null}
                 width={280}
                 onRestore={(revisionId) => restoreNoteFromHistory(revisionId)}
+                readOnly={shareReadOnly}
               />
             </NotesResponsiveRail> : null}
             </div>

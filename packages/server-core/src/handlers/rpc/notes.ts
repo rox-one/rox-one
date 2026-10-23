@@ -821,16 +821,26 @@ async function deleteNoteShareForRoot(notesRoot: string, noteId: string): Promis
   })
 }
 
-async function renameNoteShareForRoot(notesRoot: string, oldNoteId: string, newNoteId: string): Promise<void> {
+export async function renameNoteShareForRoot(notesRoot: string, oldNoteId: string, newNoteId: string): Promise<void> {
   const oldId = assertSafeNoteId(oldNoteId)
   const newId = assertSafeNoteId(newNoteId)
   if (oldId === newId) return
-  const oldPath = await assertSafeNoteShareFilePath(notesRoot, oldId)
-  if (!existsSync(oldPath)) return
-  const current = await readNoteShareFile(notesRoot, oldId)
-  const moved: NoteShareState = { ...current, noteId: newId }
-  await writeAtomicFileNoFollow(notesRoot, await assertSafeNoteShareFilePath(notesRoot, newId), `${JSON.stringify(moved, null, 2)}\n`)
-  await rm(oldPath, { force: true })
+  const [first, second] = [`share:${oldId}`, `share:${newId}`].sort()
+  try {
+    await withNoteCommentsLock(notesRoot, first!, () => withNoteCommentsLock(notesRoot, second!, async () => {
+      // Re-check inside both locks: a concurrent update/delete may have run.
+      const oldPath = await assertSafeNoteShareFilePath(notesRoot, oldId)
+      if (!existsSync(oldPath)) return
+      const current = await readNoteShareFile(notesRoot, oldId)
+      const moved: NoteShareState = { ...current, noteId: newId }
+      await writeAtomicFileNoFollow(notesRoot, await assertSafeNoteShareFilePath(notesRoot, newId), `${JSON.stringify(moved, null, 2)}\n`)
+      await rm(oldPath, { force: true })
+    }))
+  } catch (error) {
+    // Best effort: the note rename already succeeded; a lost share record only
+    // makes the note private again (fail closed).
+    console.warn('[notes] could not move share settings on rename', error)
+  }
 }
 
 async function listMarkdownFiles(dir: string, root = dir): Promise<string[]> {
@@ -2691,19 +2701,24 @@ function uniquifyNativeNoteRelativeId(notesRoot: string, title: string, folder?:
     return true
   })
 
-  server.handle(RPC_CHANNELS.notes.GET_SHARE, async (_ctx, workspaceId: string, noteId: string) => {
+  server.handle(RPC_CHANNELS.notes.GET_SHARE, async (ctx, workspaceId: string, noteId: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
     return getNoteShareForRoot(getWorkspaceNotesRoot(workspaceId), noteId)
-  })
+  }, { nativeAction: 'read' })
 
-  server.handle(RPC_CHANNELS.notes.UPDATE_SHARE, async (_ctx, workspaceId: string, noteId: string, update: NoteShareUpdate) => {
+  server.handle(RPC_CHANNELS.notes.UPDATE_SHARE, async (ctx, workspaceId: string, noteId: string, update: NoteShareUpdate) => {
+    // Changing share settings is a write: native principals need write scope.
+    if (ctx.principal) nativeNotesContext(deps, ctx, workspaceId, 'write')
+    else nativeContent.assertScope(ctx, workspaceId)
     const share = await updateNoteShareForRoot(getWorkspaceNotesRoot(workspaceId), noteId, update)
     changed({ workspaceId, reason: 'share', noteId: share.noteId })
     return share
-  })
+  }, { nativeAction: 'write' })
 
-  server.handle(RPC_CHANNELS.notes.RESOLVE_SHARE_LINK, async (_ctx, workspaceId: string, noteId: string, token: string) => {
+  server.handle(RPC_CHANNELS.notes.RESOLVE_SHARE_LINK, async (ctx, workspaceId: string, noteId: string, token: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
     return resolveNoteShareLinkForRoot(getWorkspaceNotesRoot(workspaceId), noteId, token)
-  })
+  }, { nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.notes.LIST_REVISIONS, async (ctx, workspaceId: string, noteId: string): Promise<NoteHistoryEntry[]> => {
     nativeContent.assertScope(ctx, workspaceId)

@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, 
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { noteShareBlocksWrite } from '@rox/core/docs'
-import { getNoteShareForRoot, resolveNoteShareLinkForRoot, updateNoteShareForRoot } from './notes'
+import { getNoteShareForRoot, renameNoteShareForRoot, resolveNoteShareLinkForRoot, updateNoteShareForRoot } from './notes'
 
 let notesRoot: string
 let extra: string[]
@@ -93,5 +93,18 @@ describe('share link resolution', () => {
     expect(await resolveNoteShareLinkForRoot(notesRoot, 42, on.link.token)).toMatchObject({ ok: false, reason: 'invalid' })
     writeFileSync(sidecar(), '{corrupt', 'utf-8')
     expect(await resolveNoteShareLinkForRoot(notesRoot, 'Daily', on.link.token)).toMatchObject({ ok: false })
+  })
+})
+
+describe('share rename', () => {
+  it('moves the share record to the new id under locks', async () => {
+    const on = await updateNoteShareForRoot(notesRoot, 'Daily', { enabled: true })
+    writeFileSync(join(notesRoot, 'Renamed.md'), '# R\n', 'utf-8')
+    await Promise.all([renameNoteShareForRoot(notesRoot, 'Daily', 'Renamed'), renameNoteShareForRoot(notesRoot, 'Daily', 'Renamed')])
+    expect(existsSync(sidecar())).toBe(false)
+    expect((await getNoteShareForRoot(notesRoot, 'Renamed')).link.token).toBe(on.link.token)
+  })
+  it('is best-effort and never throws', async () => {
+    await expect(renameNoteShareForRoot(notesRoot, 'Nope', 'Other')).resolves.toBeUndefined()
   })
 })

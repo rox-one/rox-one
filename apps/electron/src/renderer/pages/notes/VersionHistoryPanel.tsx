@@ -39,6 +39,7 @@ export function VersionHistoryPanel({
   currentRevision,
   width,
   onRestore,
+  readOnly = false,
 }: {
   workspaceId: string
   noteId: string
@@ -47,6 +48,8 @@ export function VersionHistoryPanel({
   width?: number
   /** Flush dirty edits, then restore under the shared save queue. */
   onRestore: (revisionId: string) => Promise<unknown>
+  /** View-only share session: preview history, never restore. */
+  readOnly?: boolean
 }) {
   const { t, i18n } = useTranslation()
   const [entries, setEntries] = React.useState<NoteHistoryEntry[]>([])
@@ -108,7 +111,7 @@ export function VersionHistoryPanel({
   )
 
   const restore = React.useCallback(async () => {
-    if (!selectedEntry || !currentRevision) return
+    if (readOnly || !selectedEntry || !currentRevision) return
     setRestoring(true)
     setError(null)
     try {
@@ -121,7 +124,7 @@ export function VersionHistoryPanel({
     } finally {
       setRestoring(false)
     }
-  }, [selectedEntry, currentRevision, onRestore, reload])
+  }, [readOnly, selectedEntry, currentRevision, onRestore, reload])
 
   return (
     <aside
@@ -167,7 +170,7 @@ export function VersionHistoryPanel({
         <div className="flex min-h-[40%] flex-col overflow-hidden px-3 py-2" data-testid="notes-history-preview">
           <div className="mb-2 flex items-center justify-between gap-2">
             <p className="text-xs font-medium text-muted-foreground">{t('notes.history.preview')}</p>
-            <Button
+            {!readOnly && <Button
               type="button"
               size="sm"
               variant="outline"
@@ -177,9 +180,9 @@ export function VersionHistoryPanel({
             >
               <RotateCcw className="icon-caption mr-1" aria-hidden />
               {t('notes.history.restore')}
-            </Button>
+            </Button>}
           </div>
-          {confirmRestore ? (
+          {!readOnly && confirmRestore ? (
             <div className="mb-2 rounded-[var(--radius-card)] bg-muted p-2 text-xs" data-glass-slot="card">
               <p className="mb-2 text-foreground">{t('notes.history.restoreConfirm')}</p>
               <div className="flex gap-2">
