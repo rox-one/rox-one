@@ -50,12 +50,22 @@ describe('exclusive placement — one surface, one place', () => {
     for (const id of ['inbox', 'tasks', 'projects', 'memory', 'knowledge', 'missions', 'settings']) expect(sidebar).toContain(id)
   })
 
-  it('defaults: Главная · Лента · Сессии · Заметки · Браузер · Задачи, plus Мессенджер while its flag is on', () => {
-    for (const flags of [new Set<string>(), new Set([WORKBENCH_FLAG.modeMessengerV1])]) {
+  it('defaults: Главная · Лента · Сессии · Заметки · Браузер · Задачи, plus Мессенджер / «Доска» while their flags are on', () => {
+    for (const flags of [
+      new Set<string>(),
+      new Set([WORKBENCH_FLAG.modeMessengerV1]),
+      new Set([WORKBENCH_FLAG.modeCanvasV1]),
+      new Set([WORKBENCH_FLAG.modeMessengerV1, WORKBENCH_FLAG.modeCanvasV1]),
+    ]) {
       const surfaces = resolveNavSurfaces({ shellFlags: flags })
       const pills = surfaces.filter(e => e.placement === 'pills').map(e => e.id).sort()
       const expected = ['browser', 'docs', 'feed', 'home', 'sessions', 'tasks']
-      expect(pills).toEqual(flags.has(WORKBENCH_FLAG.modeMessengerV1) ? [...expected, 'messenger'].sort() : expected)
+      const withFlags = [
+        ...expected,
+        ...(flags.has(WORKBENCH_FLAG.modeMessengerV1) ? ['messenger'] : []),
+        ...(flags.has(WORKBENCH_FLAG.modeCanvasV1) ? ['canvas'] : []),
+      ].sort()
+      expect(pills).toEqual(withFlags)
     }
   })
 

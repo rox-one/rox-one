@@ -12,7 +12,7 @@ export interface LiveKitGrantInput {
   identity: string
   name?: string
   room: string
-  /** Seconds; default 10 minutes (the client reconnects with a fresh token). */
+  /** Seconds; default 4 h so LiveKit reconnects (which re-validate the token) work for long calls. */
   ttlSeconds?: number
   canPublish?: boolean
   canSubscribe?: boolean
@@ -29,7 +29,7 @@ export function mintLiveKitToken(input: LiveKitGrantInput): string {
   if (!input.apiKey || !input.apiSecret) throw new Error('LiveKit credentials are not configured')
   if (!input.identity || !input.room) throw new Error('identity and room are required')
   const now = input.nowSeconds ?? Math.floor(Date.now() / 1000)
-  const ttl = Math.min(Math.max(60, input.ttlSeconds ?? 600), 6 * 3600)
+  const ttl = Math.min(Math.max(60, input.ttlSeconds ?? 4 * 3600), 6 * 3600)
   const payload = {
     iss: input.apiKey,
     sub: input.identity,

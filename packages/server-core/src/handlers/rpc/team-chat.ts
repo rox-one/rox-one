@@ -64,7 +64,6 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.teamChat.CALL_LEAVE,
   RPC_CHANNELS.teamChat.CALL_SYNC,
   RPC_CHANNELS.teamChat.CALL_TRANSCRIPT,
-  RPC_CHANNELS.teamChat.CALL_LIST,
   RPC_CHANNELS.teamChat.SEARCH,
 ] as const
 
@@ -182,9 +181,6 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
     if (added) changed(orgId, channelId)
     return { added }
   }, { nativeAction: 'write' })
-
-  handle(RPC_CHANNELS.teamChat.CALL_LIST, async (ctx, channelId: string) =>
-    store().listCalls(channelId, actorOf(ctx)), { nativeAction: 'read' })
 
   handle(RPC_CHANNELS.teamChat.SEARCH, async (ctx, orgId: string, query: string) =>
     store().searchMessages(orgId, query, actorOf(ctx)), { nativeAction: 'read' })
