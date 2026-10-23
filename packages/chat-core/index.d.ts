@@ -61,6 +61,8 @@ export interface ChatCore {
   onStatus(cb: (s: ChatCoreStatus) => void): () => void;
   pendingCount(): Promise<number>;
   flushOutbox(): Promise<void>;
+  /** Releases the native handle. Call after `stop()`; later calls reject. */
+  dispose(): void;
 }
 
 export function createChatCore(options: ChatCoreOptions): ChatCore;

@@ -46,9 +46,9 @@ function loadNative() {
     );
   }
 
-  if (binding === null || typeof binding.createChatCore !== 'function') {
+  if (binding === null || typeof binding.chatCoreCreate !== 'function') {
     throw new ChatCoreUnavailableError(
-      `The native @rox/chat-core addon (${ADDON_FILE}) does not export createChatCore — ${BUILD_HINT}.`,
+      `The native @rox/chat-core addon (${ADDON_FILE}) does not export chatCoreCreate — ${BUILD_HINT}.`,
     );
   }
 
@@ -62,7 +62,46 @@ function loadNative() {
  * Throws {@link ChatCoreUnavailableError} when the native addon is not built.
  */
 export function createChatCore(options) {
-  return loadNative().createChatCore(options);
+  const native = loadNative();
+  const handle = native.chatCoreCreate(options);
+  let disposed = false;
+  const listen = (register, callback) => {
+    const id = register(handle, callback);
+    let active = true;
+    return () => {
+      if (!active || disposed) return;
+      active = false;
+      native.chatCoreOff(handle, id);
+    };
+  };
+
+  // The addon exposes free functions over an opaque numeric handle (no napi
+  // class, so no raw native pointer is ever unwrapped from a JS object). This
+  // object re-creates the `ChatCore` surface declared in index.d.ts.
+  return {
+    start: () => native.chatCoreStart(handle),
+    stop: () => native.chatCoreStop(handle),
+    subscribe: (channel) => native.chatCoreSubscribe(handle, channel),
+    unsubscribe: (channel) => native.chatCoreUnsubscribe(handle, channel),
+    sendMessage: (channel, content) => native.chatCoreSendMessage(handle, channel, content),
+    editMessage: (id, content) => native.chatCoreEditMessage(handle, id, content),
+    deleteMessage: (id) => native.chatCoreDeleteMessage(handle, id),
+    listMessages: (channel, opts) => native.chatCoreListMessages(handle, channel, opts),
+    markRead: (channel, seq) => native.chatCoreMarkRead(handle, channel, seq),
+    searchMessages: (query, opts) => native.chatCoreSearchMessages(handle, query, opts),
+    publishTyping: (channel, untilMs) => native.chatCorePublishTyping(handle, channel, untilMs),
+    onMessage: (callback) => listen(native.chatCoreOnMessage, callback),
+    onPresence: (callback) => listen(native.chatCoreOnPresence, callback),
+    onTyping: (callback) => listen(native.chatCoreOnTyping, callback),
+    onStatus: (callback) => listen(native.chatCoreOnStatus, callback),
+    pendingCount: () => native.chatCorePendingCount(handle),
+    flushOutbox: () => native.chatCoreFlushOutbox(handle),
+    dispose: () => {
+      if (disposed) return;
+      disposed = true;
+      native.chatCoreDispose(handle);
+    },
+  };
 }
 
 export default createChatCore;

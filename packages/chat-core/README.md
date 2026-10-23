@@ -52,6 +52,14 @@ await core.sendMessage(channelId, 'hello');
 `createChatCore` throws `ChatCoreUnavailableError` when the platform addon is not
 built, so callers can fall back to a web implementation.
 
+Every `on*` method returns an unsubscribe function. Call `core.dispose()` after
+`stop()` to release the native instance; any later call rejects.
+
+The addon itself exports plain functions over an opaque numeric handle
+(`chatCoreCreate`, `chatCoreStart(handle)`, …, `chatCoreDispose(handle)`) rather
+than a napi class, so no native pointer is ever unwrapped from a JS object;
+`index.js` assembles the `ChatCore` object from those functions.
+
 ## Building the addon
 
 ```sh
