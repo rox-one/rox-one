@@ -53,6 +53,7 @@ describe('SE shell parity checklist (docs + contract)', () => {
     expect(contract.done.some((d) => d.id === 'dialog-popover-springs')).toBe(true)
     expect(contract.done.some((d) => d.id === 'overlay-menu-drawer-springs')).toBe(true)
     expect(contract.done.some((d) => d.id === 'simple-dropdown-springs')).toBe(true)
+    expect(contract.done.some((d) => d.id === 'select-content-springs')).toBe(true)
     expect(contract.done.some((d) => d.id === 'navigator-width-260')).toBe(true)
   })
 })

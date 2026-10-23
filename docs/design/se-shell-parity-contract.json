@@ -103,6 +103,16 @@
         "packages/ui/src/components/ui/SimpleDropdown.tsx",
         "packages/ui/src/styles/index.css"
       ]
+    },
+    {
+      "id": "select-content-springs",
+      "title": "SelectContent + StyledContextMenuSubContent overlay-motion (SE menu spring)",
+      "paths": [
+        "apps/electron/src/renderer/components/ui/select.tsx",
+        "apps/electron/src/renderer/components/ui/styled-context-menu.tsx",
+        "apps/electron/src/renderer/index.css",
+        "packages/ui/src/styles/index.css"
+      ]
     }
   ],
   "gaps": [
