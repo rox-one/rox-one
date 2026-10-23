@@ -192,7 +192,10 @@ describe('degradations', () => {
   })
 
   it('arc-glass-skin.css: the low-power profile drops blur only', () => {
-    const blocks = ruleBlocks(SKIN).filter((b) => b.selector.includes('data-render-profile="performance"'))
+    // Positive [data-render-profile="performance"] only — ignore :not(...) gates.
+    const blocks = ruleBlocks(SKIN).filter(
+      (b) => /\[data-render-profile="performance"\]/.test(b.selector) && !/:not\(\[data-render-profile="performance"\]\)/.test(b.selector),
+    )
     expect(blocks.length).toBeGreaterThan(0)
     for (const block of blocks) {
       expect(block.body).toMatch(/--glass-blur:\s*0px/)
