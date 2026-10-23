@@ -3,9 +3,12 @@
  *
  * Left: the org's shared default channel, public/private channels and group
  * chats the viewer can see, plus a create form. Right: the conversation with
- * join / leave / follow-in-Лента controls and a composer. All data comes from
- * teamChat:* (host store, org-membership checked server-side).
+ * join / leave / follow-in-Лента controls and a composer. Channel roster stays
+ * on teamChat:*; message list/send prefer im:* when the native relay is live
+ * (fallback to team-chat.json — eu-swiss offline tolerant). Follow syncs into
+ * the Лента channel-filter hook.
  */
+
 import { onMessengerCreateRequest, takeMessengerCreateRequest } from '@/platform/messenger-create-request'
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
@@ -17,7 +20,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { messengerStatusAtom } from '@/atoms/messenger-status'
-import { teamChatErrorText, useTeamChannels, useTeamMessages, useTeamSearch } from './use-team-chat'
+import { postTeamMessage, teamChatErrorText, useTeamChannels, useTeamMessages, useTeamSearch } from './use-team-chat'
+import { hydrateMessengerFeedChannelsFromRoster, setMessengerFeedChannel } from '@/platform/messenger-feed-channels'
 import { useTeamCall } from './use-team-call'
 import { Avatar, ChannelInfoPanel, type Presence } from './ChannelInfoPanel'
 import { CallStage } from './CallStage'
@@ -67,6 +71,15 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
 
   const selected = channels.channels.find(c => c.id === selectedId) ?? channels.channels[0] ?? null
   const messages = useTeamMessages(selected?.id ?? null)
+  const live = messages.live
+  const relayStatus = messages.relay
+
+  // Hydrate Лента filters from roster subscriptions (not click-only).
+  React.useEffect(() => {
+    if (channels.loading) return
+    hydrateMessengerFeedChannelsFromRoster(orgId, channels.channels, (c) => channelLabel(c as TeamChannelView, t))
+  }, [orgId, channels.channels, channels.loading, t])
+
   const nameOf = React.useMemo(() => {
     const map = new Map(members.map(m => [m.userId, m.displayName]))
     return (userId: string) => (userId === selfUserId ? t('teamCollab.you') : map.get(userId) ?? userId.slice(0, 8))
@@ -152,7 +165,7 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
   })
 
   return (
-    <div className="flex min-h-0 flex-1" data-testid="messenger-channels">
+    <div className="flex min-h-0 flex-1 bg-background" data-testid="messenger-channels" data-messenger-chrome="rox-engineering" data-relay-live={live ? 'true' : 'false'}>
       <aside data-glass-slot="panel" className="flex w-64 shrink-0 flex-col border-e border-border/60" aria-label={t('messenger.channels.listLabel')}>
         <div className="px-2 pt-2">
           <label className="flex h-8 items-center gap-2 rounded-md bg-surface-input px-2 text-small text-text-muted">
@@ -232,7 +245,16 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
                       variant="ghost" size="icon"
                       aria-pressed={selected.viewerSubscribed}
                       aria-label={selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')}
-                      onClick={() => void run(() => window.electronAPI.teamChatSetSubscribed(selected.id, !selected.viewerSubscribed))}
+                      onClick={() => void run(async () => {
+                        const next = !selected.viewerSubscribed
+                        await window.electronAPI.teamChatSetSubscribed(selected.id, next)
+                        setMessengerFeedChannel({
+                          channelId: selected.id,
+                          name: channelLabel(selected, t),
+                          orgId,
+                          subscribed: next,
+                        })
+                      })}
                     >
                       {selected.viewerSubscribed ? <BellOff aria-hidden /> : <Bell aria-hidden />}
                     </Button>
@@ -272,6 +294,15 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
             {inThisCall || (joining && call.channelId === selected.id) ? <CallStage call={call} /> : null}
             {call.status === 'error' && call.channelId === selected.id ? <p className="border-b border-border/60 px-4 py-1.5 text-caption text-destructive" role="alert">{call.error}</p> : null}
             {actionError ? <p className="border-b border-border/60 px-4 py-1.5 text-caption text-destructive" role="alert">{actionError}</p> : null}
+            {relayStatus.mode === 'fallback' || relayStatus.reason === 'offline' || relayStatus.reason === 'reconnecting' ? (
+              <p className="border-b border-border/60 px-4 py-1.5 text-caption text-text-muted" role="status" data-testid="messenger-relay-status" data-relay-mode={relayStatus.mode} data-relay-reason={relayStatus.reason ?? ''}>
+                {relayStatus.reason === 'reconnecting'
+                  ? t('messenger.relay.reconnecting')
+                  : relayStatus.reason === 'offline'
+                    ? t('messenger.relay.offline')
+                    : t('messenger.relay.local')}
+              </p>
+            ) : null}
             <MessageList
               loading={messages.loading}
               error={messages.error}
@@ -284,7 +315,7 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
                 key={selected.id}
                 placeholder={t('messenger.channels.composerPlaceholder', { name: channelLabel(selected, t) })}
                 onSend={async (text) => {
-                  await window.electronAPI.teamChatPost(selected.id, text)
+                  await postTeamMessage(selected.id, text, live)
                   await messages.reload()
                 }}
               />

@@ -33,6 +33,8 @@ export interface FeedFilter {
   tab: FeedTab
   chip: FeedChip
   sourceId?: string | null
+  /** Followed messenger channel (team tab). */
+  channelId?: string | null
   query?: string
 }
 
@@ -119,6 +121,7 @@ export function filterFeed(items: readonly FeedItem[], filter: FeedFilter, now: 
   return items
     .filter((i) => i.tab === filter.tab)
     .filter((i) => !filter.sourceId || i.sourceId === filter.sourceId)
+    .filter((i) => !filter.channelId || !i.channelId || i.channelId === filter.channelId)
     .filter((i) => matchesChip(i, filter.chip, now, byId))
     .filter((i) => !q || `${i.title} ${i.summary ?? ''} ${i.author ?? ''} ${i.sourceTitle ?? ''}`.toLowerCase().includes(q))
     .sort((a, b) => b.at - a.at)
@@ -246,6 +249,8 @@ export interface FeedViewFilter {
   tab: FeedTab
   chip: FeedChip
   sourceId?: string | null
+  /** Followed messenger channel (team tab). */
+  channelId?: string | null
   query?: string
   colors?: ReadonlySet<FeedColor>
   tag?: string | null
@@ -263,6 +268,7 @@ export function filterView(items: readonly FeedViewItem[], f: FeedViewFilter, no
   return items.filter((i) =>
     i.tab === f.tab
     && (!f.sourceId || i.sourceId === f.sourceId)
+    && (!f.channelId || !i.channelId || i.channelId === f.channelId)
     && matchesChip(i, f.chip, now, byId)
     && (!f.colors?.size || (!!i.color && f.colors.has(i.color)))
     && (!tag || i.tags.some((x) => x.toLowerCase() === tag))
