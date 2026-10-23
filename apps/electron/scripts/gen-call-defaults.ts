@@ -4,6 +4,10 @@
  * Source: ROX_CALLS_ENV_FILE (dotenv) or LIVEKIT_URL / LIVEKIT_API_KEY /
  * LIVEKIT_API_SECRET in the environment. Missing values → empty
  * (calls then need a Settings override). Never prints the values.
+ *
+ * Webhooks: when these credentials resolve, the local RPC server accepts
+ * POST /livekit/webhook (LiveKit JWT). Point LiveKit Cloud / self-hosted
+ * webhook URLs at that host:port (often via a tunnel to 127.0.0.1).
  */
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
