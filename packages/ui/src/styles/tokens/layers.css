@@ -45,7 +45,7 @@
   --elev-2: var(--popover-solid);
   --elev-3: var(--popover-solid);
   --accent-soft: color-mix(in oklch, var(--accent) 14%, transparent);
-  --glass-intensity: 0.6;
+  --glass-intensity: 0;
   --grid-divider: color-mix(in oklch, var(--foreground) 9%, transparent);
 }
 

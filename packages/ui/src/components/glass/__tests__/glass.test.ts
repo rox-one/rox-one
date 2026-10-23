@@ -59,13 +59,14 @@ describe('closed surface', () => {
 
 const material = strip(readFileSync(join(import.meta.dir, '../../../styles/tokens/material.css'), 'utf8'))
 describe('per-surface intensity', () => {
-  const block = material.slice(material.indexOf('.glass-surface,'))
+  const block = material.slice(material.indexOf('.glass-surface'))
   it('re-derives every glass token on .glass-surface from --glass-intensity', () => {
     for (const t of ['blur', 'saturate', 'tint', 'edge-alpha', 'specular-alpha'])
       expect(block).toMatch(new RegExp(`--glass-${t}:\\s*calc\\([^;]*var\\(--glass-intensity\\)`))
   })
-  it('declares derived tokens exactly once (single source)', () => {
-    expect(material.match(/--glass-blur:/g)?.length).toBe(1)
+  it('declares the non-SE blur formula once; SE accents override separately', () => {
+    expect(material.match(/--glass-blur:\s*calc\(8px \+ 24px/g)?.length).toBe(1)
+    expect(material.match(/--glass-blur:\s*calc\(var\(--chrome-glass-blur/g)?.length).toBe(1)
     expect(css).not.toMatch(/--glass-blur:/)
     expect(block).toMatch(/--glass-shadow:/)
   })
@@ -116,6 +117,35 @@ describe('keyboard press', () => {
 })
 
 describe('SE optional glass accents', () => {
+  it('base paint and degradations are chrome-only (never bare [data-glass-slot])', () => {
+    const chrome = ['.rox-mode-pill', '[data-glass-slot="popover"]', '[data-glass-slot="composer"]', '[data-glass-slot="mini-button"]']
+    expect(skin).toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\]\s*:is\(\.rox-mode-pill,\s*\[data-glass-slot="popover"\],\s*\[data-glass-slot="composer"\],\s*\[data-glass-slot="mini-button"\]\)/,
+    )
+    // No content-layer slots in the skin.
+    for (const slot of ['panel', 'toolbar', 'card', 'table', 'row', 'empty', 'editor', 'dialog', 'sheet', 'toast'])
+      expect(skin).not.toContain(`[data-glass-slot="${slot}"]`)
+    // Bare attribute must not appear in selectors.
+    for (const rule of skin.split('}').filter((r) => r.includes('{'))) {
+      const sel = rule.split('{')[0]
+      if (!sel.includes('[data-glass-slot]')) continue
+      expect(sel).not.toMatch(/\[data-glass-slot\](?!=")/)
+    }
+    for (const c of chrome) expect(skin).toContain(c)
+  })
+  it('default --glass-intensity is 0 in material and layers (off until themes emit glass)', () => {
+    const layers = strip(readFileSync(join(import.meta.dir, '../../../styles/tokens/layers.css'), 'utf8'))
+    expect(material).toMatch(/:root\s*{[^}]*--glass-intensity:\s*0;/)
+    expect(layers).toMatch(/:root\s*{[^}]*--glass-intensity:\s*0;/)
+    expect(material).not.toMatch(/:root\s*{[^}]*--glass-intensity:\s*0\.6;/)
+    expect(layers).not.toMatch(/:root\s*{[^}]*--glass-intensity:\s*0\.6;/)
+  })
+  it('SE accents blur uses chrome-glass-blur; non-SE keeps 8px + 24px * intensity', () => {
+    expect(material).toMatch(/\.glass-surface\s*{[^}]*--glass-blur:\s*calc\(8px \+ 24px \* var\(--glass-intensity\)\)/)
+    expect(material).toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][^{]*{[\s\S]*?--glass-blur:\s*calc\(var\(--chrome-glass-blur/,
+    )
+  })
   it('is scoped to super-engineering + data-glass-accents (not arc-glass theme)', () => {
     for (const rule of skin.split('}').filter((r) => r.includes('{') && !r.trim().startsWith('@') && !/^\s*(from|to)\b/.test(r.split('{')[0].trim())))
       if (!/^\s*(from|to)\s*$/.test(rule.split('{')[0])) {

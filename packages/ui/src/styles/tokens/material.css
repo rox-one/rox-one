@@ -101,13 +101,13 @@
   --material-light-tint-lift: 3;
 }
 
-/* Derived glass tokens — the single source. Declared on :root and again on
-   every glass element so a per-surface --glass-intensity (GlassSurface
-   `intensity`, theme layers) re-resolves them locally. */
+/* Derived glass tokens — the single source for non-SE. Declared on :root and
+   again on .glass-surface so a per-surface --glass-intensity (GlassSurface
+   `intensity`, theme layers) re-resolves them locally. Default intensity is 0
+   (off); themes that want glass emit layers.glass explicitly. */
 :root,
-.glass-surface,
-html[data-ui-profile="super-engineering"][data-glass-accents] :is([data-glass-slot], .rox-mode-pill) {
-  --glass-blur: calc(var(--chrome-glass-blur, 20px) * var(--glass-intensity));
+.glass-surface {
+  --glass-blur: calc(8px + 24px * var(--glass-intensity));
   --glass-saturate: calc(1 + 0.6 * var(--glass-intensity));
   --glass-tint: calc(4% + 10% * var(--glass-intensity));
   --glass-edge-alpha: calc(8% + 22% * var(--glass-intensity));
@@ -124,7 +124,7 @@ html[data-ui-profile="super-engineering"][data-glass-accents] :is([data-glass-sl
        hairline     the 1px tinted edge every content surface draws
        sheen        top specular highlight for cards / empty states / editors
        card/overlay shadow + per-slot fill mixes. */
-  --glass-blur-tight: calc(var(--chrome-glass-blur, 20px) * 0.5 * var(--glass-intensity));
+  --glass-blur-tight: calc(4px + 10px * var(--glass-intensity));
   --glass-hairline: color-mix(in srgb, white calc(var(--glass-edge-alpha) * 0.55), transparent);
   --glass-sheen: calc(3% + 13% * var(--glass-intensity));
   --glass-card-shadow:
@@ -144,6 +144,17 @@ html[data-ui-profile="super-engineering"][data-glass-accents] :is([data-glass-sl
   --glass-empty-mix: calc(26% + 22% * var(--glass-intensity));
   --glass-editor-mix: max(80%, calc(66% + 16% * var(--glass-intensity)));
   --glass-overlay-mix: max(84%, calc(74% + 12% * var(--glass-intensity)));
+}
+
+/* SE chrome accents only: blur scales toward --chrome-glass-blur (20px). */
+html[data-ui-profile="super-engineering"][data-glass-accents] :is(
+  .rox-mode-pill,
+  [data-glass-slot="popover"],
+  [data-glass-slot="composer"],
+  [data-glass-slot="mini-button"]
+) {
+  --glass-blur: calc(var(--chrome-glass-blur, 20px) * var(--glass-intensity));
+  --glass-blur-tight: calc(var(--chrome-glass-blur, 20px) * 0.5 * var(--glass-intensity));
 }
 
 /* Light palettes lift the glass; dark palettes keep the source lightness. The

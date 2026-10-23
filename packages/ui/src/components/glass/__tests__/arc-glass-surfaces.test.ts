@@ -90,7 +90,16 @@ describe('scoping', () => {
     for (const block of blocks) {
       expect(block.selector).toContain('html[data-ui-profile="super-engineering"][data-glass-accents]')
       expect(block.selector).not.toContain('data-theme="arc-glass"')
+      // Chrome-only: never paint bare [data-glass-slot] (content vocabulary).
+      expect(block.selector).not.toMatch(/\[data-glass-slot\](?!=")/)
     }
+  })
+  it('arc-glass-skin.css: base paint lists only chrome slots', () => {
+    expect(SKIN).toMatch(
+      /:is\(\.rox-mode-pill,\s*\[data-glass-slot="popover"\],\s*\[data-glass-slot="composer"\],\s*\[data-glass-slot="mini-button"\]\)/,
+    )
+    for (const slot of ['panel', 'card', 'table', 'editor', 'dialog', 'toast'])
+      expect(SKIN).not.toContain(`[data-glass-slot="${slot}"]`)
   })
   it('arc-glass-surfaces.css: legacy content recipes stay arc-glass-scoped (unused by install)', () => {
     const blocks = ruleBlocks(SURFACES)
@@ -140,7 +149,7 @@ describe('refraction stays on static skin slots at the full tier', () => {
 })
 
 describe('derived tokens', () => {
-  const derived = MATERIAL.slice(MATERIAL.indexOf('.glass-surface,'))
+  const derived = MATERIAL.slice(MATERIAL.indexOf('.glass-surface'))
 
   it('declares the content-layer tokens', () => {
     for (const token of [
@@ -196,7 +205,7 @@ describe('degradations', () => {
   for (const [name, css] of SHEETS) {
     it(`${name}: high contrast goes solid with no blur`, () => {
       const blocks = ruleBlocks(css).filter(
-        (b) => b.selector.includes('data-contrast="high"') && b.selector.includes('[data-glass-slot]'),
+        (b) => b.selector.includes('data-contrast="high"') && (b.selector.includes('[data-glass-slot') || b.selector.includes('.rox-mode-pill')),
       )
       expect(blocks.length).toBeGreaterThan(0)
       const body = blocks.map((b) => b.body).join('\n')
