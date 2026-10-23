@@ -30,6 +30,10 @@ describe('note-library', () => {
     expect(readNoteCover({ cover: 'linear-gradient(red, element(#x))' })).toBeNull()
     expect(readNoteCover({ cover: 'linear-gradient(red, paint(foo))' })).toBeNull()
     expect(readNoteCover({ cover: 'linear-gradient(red, attr(data-x))' })).toBeNull()
+    // Single balanced end-anchored gradient only — no multi-layer or trailing tokens.
+    expect(readNoteCover({ cover: 'linear-gradient(red, blue), linear-gradient(green, yellow)' })).toBeNull()
+    expect(readNoteCover({ cover: 'linear-gradient(red, blue) trailing' })).toBeNull()
+    expect(readNoteCover({ cover: 'linear-gradient(135deg, color-mix(in oklab, var(--accent) 55%, transparent), blue)' })).toContain('linear-gradient')
     expect(readNoteIcon({ icon: '📝' })).toBe('📝')
     // ZWJ family emoji is one grapheme but many UTF-16 units — must not reject solely for length>32.
     const family = '👨\u200D👩\u200D👧\u200D👦'

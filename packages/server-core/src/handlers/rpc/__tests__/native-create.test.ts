@@ -194,3 +194,21 @@ test('uniquifies blank CREATE and PREPARE_CREATE like CREATE_FROM (Title-2…)',
   const prepared = plan.result as { mutation: { nativeId: string } }
   expect(prepared.mutation.nativeId).toBe('Dup Title-3')
 })
+
+
+test('reuses one baseName for -N uniquify (Report.md → Report-2, not Report.md-2)', async () => {
+  const f = await fixture(true)
+  const writer = await connect(f.url, f.issued.credential)
+  const first = await invoke(writer, RPC_CHANNELS.notes.CREATE, f.workspaceId, 'Report.md', undefined, {
+    operationId: 'report-create-1', expectedRevision: null, schemaVersion: 1,
+  })
+  expect(first.type).toBe('response')
+  expect((first.result as { id: string }).id).toBe('Report')
+
+  const second = await invoke(writer, RPC_CHANNELS.notes.CREATE, f.workspaceId, 'Report.md', undefined, {
+    operationId: 'report-create-2', expectedRevision: null, schemaVersion: 1,
+  })
+  expect(second.type).toBe('response')
+  expect((second.result as { id: string }).id).toBe('Report-2')
+  expect((second.result as { id: string }).id).not.toContain('Report.md-')
+})

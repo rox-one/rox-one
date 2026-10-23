@@ -2412,13 +2412,12 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
 /** Title.md → Title-2.md… under notesRoot so expectedRevision:null creates never collide. */
 function uniquifyNativeNoteRelativeId(notesRoot: string, title: string, folder?: string | null): string {
   const safeFolder = assertSafeCreateFolder(folder)
-  const baseTitle = title || 'Untitled'
-  let relativeId = safeFolder
-    ? `${safeFolder}/${stripMdExtension(safeNoteFilename(baseTitle))}`
-    : stripMdExtension(safeNoteFilename(baseTitle))
+  // One stem for both first try and -N suffixes (avoids Report.md-2 from sanitizeFilename).
+  const baseName = stripMdExtension(safeNoteFilename(title || 'Untitled'))
+  let relativeId = safeFolder ? `${safeFolder}/${baseName}` : baseName
   let suffix = 2
   while (existsSync(join(notesRoot, `${relativeId}.md`))) {
-    const uniquified = `${sanitizeFilename(baseTitle)}-${suffix++}`
+    const uniquified = `${baseName}-${suffix++}`
     relativeId = safeFolder ? `${safeFolder}/${uniquified}` : uniquified
   }
   return relativeId
@@ -2879,10 +2878,11 @@ function uniquifyNativeNoteRelativeId(notesRoot: string, title: string, folder?:
     const dir = safeFolder ? resolve(notesRoot, safeFolder) : notesRoot
     if (!isInsidePath(notesRoot, dir)) throw new Error('Invalid note folder')
     await ensureSafeNoteDirectory(notesRoot, dir)
-    let filePath = join(dir, safeNoteFilename(noteTitle || 'Untitled'))
+    const baseName = stripMdExtension(safeNoteFilename(noteTitle || 'Untitled'))
+    let filePath = join(dir, `${baseName}.md`)
     let suffix = 2
     while (existsSync(filePath)) {
-      filePath = join(dir, `${sanitizeFilename(noteTitle || 'Untitled')}-${suffix++}.md`)
+      filePath = join(dir, `${baseName}-${suffix++}.md`)
     }
     const noteId = noteIdFromRelativePath(relative(notesRoot, filePath))
     await nativeContent.writeNative(ctx, workspaceId, 'create', [{ kind: 'write', noteId, expectedRevision: null, content: initialContent }])

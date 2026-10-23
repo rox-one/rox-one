@@ -71,7 +71,7 @@ import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
 import { NoteCoverIconChrome, NoteFavoriteButton } from './notes/NoteLibraryChrome'
 import { NotesTemplatesDialog } from './notes/NotesTemplatesDialog'
-import { patchNoteLibraryChromeContent, readNoteCover, readNoteIcon } from './notes/note-library'
+import { patchNoteLibraryChromeContent, readNoteCover, readNoteIcon, withNoteLibraryProperties } from './notes/note-library'
 import type { NoteTemplateSummary } from '../../shared/types'
 import {
   defaultNoteEntityCapabilities,
@@ -2429,6 +2429,13 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       if (patched == null) {
         toast.error(t('notes.toast.updatePropertiesFailed'))
         return false
+      }
+      // Optimistic cover/icon merge so banner/popover aren't stale while save awaits.
+      if (workspaceIdRef.current === workspaceId && activeNoteIdRef.current === noteId) {
+        setActiveNote((current) => {
+          if (!current || current.id !== noteId) return current
+          return { ...current, properties: withNoteLibraryProperties(current.properties, patch) }
+        })
       }
       if (patched === contentRef.current) return true
       const source = retainSource(contentRef.current)

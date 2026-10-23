@@ -27,10 +27,26 @@ export function readNoteCover(properties: Record<string, unknown> | null | undef
   if (/url\s*\(/i.test(value)) return null
   // Reject CSS image*() / element() / paint() / attr() that can smuggle urls inside gradients.
   if (/\b(?:image|image-set|cross-fade|element|paint|attr)\s*\(/i.test(value)) return null
-  // Solid hex or url-free gradients only.
+  // Solid hex or a single balanced, end-anchored gradient (no multi-layer / trailing tokens).
   if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return value
-  if (/^(linear|radial)-gradient\(/i.test(value)) return value
+  if (isSingleBalancedGradient(value)) return value
   return null
+}
+
+/** True when value is exactly one linear/radial-gradient(...) with balanced parens and nothing after. */
+function isSingleBalancedGradient(value: string): boolean {
+  if (!/^(linear|radial)-gradient\(/i.test(value)) return false
+  let depth = 0
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i]!
+    if (ch === '(') depth++
+    else if (ch === ')') {
+      depth--
+      if (depth < 0) return false
+      if (depth === 0) return value.slice(i + 1).trim() === ''
+    }
+  }
+  return false
 }
 
 export function readNoteIcon(properties: Record<string, unknown> | null | undefined): string | null {
