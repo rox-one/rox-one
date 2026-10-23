@@ -27,6 +27,8 @@ export const KEYS = {
   shellSidebarMode: 'shell-sidebar-mode-v1',
   shellRailPins: 'shell-rail-pins-v1',
   shellPills: 'shell-pills-v1',
+  /** Followed messenger channels → Лента per-channel filter (PR2). */
+  messengerFeedChannels: 'messenger-feed-channels-v1',
   shellPanels: 'shell-panels-v1',
   errorJournal: 'error-journal-v1',
   liteMode: 'lite-mode-v1',

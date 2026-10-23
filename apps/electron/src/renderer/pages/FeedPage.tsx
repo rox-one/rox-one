@@ -88,6 +88,7 @@ import { feedDayGroupStyle } from './feed/feed-list-render'
 import { ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEditor } from './feed/FeedParts'
 import { SourceEditor, SourcesView } from './feed/FeedSources'
 import { FeedSidebar, type FeedView } from './feed/FeedSidebar'
+import { listMessengerFeedChannels, subscribeMessengerFeedChannels } from '@/platform/messenger-feed-channels'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
 import { useFeedReaderTour } from '@/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour'
@@ -259,6 +260,10 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const [view, setView] = useState<View>(initialPrefs.view)
   const [chip, setChip] = useState<FeedChip>(initialPrefs.chip)
   const [sourceFilter, setSourceFilter] = useState<string | null>(initialPrefs.sourceFilter)
+  const [channelFilter, setChannelFilter] = useState<string | null>(null)
+  const [messengerChannels, setMessengerChannels] = useState(() => [...listMessengerFeedChannels()])
+  useEffect(() => subscribeMessengerFeedChannels(() => setMessengerChannels([...listMessengerFeedChannels()])), [])
+
   const [query, setQuery] = useState(initialPrefs.query)
   const [colors, setColors] = useState<ReadonlySet<FeedColor>>(() => new Set(initialPrefs.colors))
   const [tagFilter, setTagFilter] = useState<string | null>(initialPrefs.tagFilter)
@@ -387,8 +392,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const tabItems = useMemo(() => allItems.filter((i) => i.tab === tab), [allItems, tab])
   const tabTags = useMemo(() => tagsInUse(tabItems), [tabItems])
   const visible = useMemo(
-    () => filterView(allItems, { tab, chip, sourceId: tab === 'news' ? sourceFilter : null, query, colors, tag: tagFilter, mark }, now, data.sources),
-    [allItems, tab, chip, sourceFilter, query, colors, tagFilter, mark, now, data.sources],
+    () => filterView(allItems, { tab, chip, sourceId: tab === 'news' ? sourceFilter : null, channelId: tab === 'team' ? channelFilter : null, query, colors, tag: tagFilter, mark }, now, data.sources),
+    [allItems, tab, chip, sourceFilter, channelFilter, query, colors, tagFilter, mark, now, data.sources],
   )
   const colorCounts = useMemo(() => {
     const out: Partial<Record<FeedColor, number>> = {}
@@ -402,7 +407,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const ordered = useMemo(() => groups.flatMap((g) => g.items), [groups])
   const selected = useMemo(() => allItems.find((i) => i.id === currentId) ?? null, [allItems, currentId])
   const suggestions = useMemo(() => suggestTags(allItems, data.sources, [], 10, t('feed.tags.defaults').split(',').map((x) => x.trim()).filter(Boolean)), [allItems, data.sources, t])
-  const filtersActive = !!(query || chip !== 'all' || sourceFilter || colors.size || tagFilter || mark !== 'all')
+  const filtersActive = !!(query || chip !== 'all' || sourceFilter || channelFilter || colors.size || tagFilter || mark !== 'all')
   const { selectItem: selectFeedItem, readerRef: readerTourRef } = useFeedReaderTour({
     selected, workspaceId, readerVisible: view !== 'sources', loaded, failed: !!loadError, select,
   })
@@ -557,11 +562,13 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     <div ref={view === 'sources' ? undefined : sourcesTourRef} data-tour-id={view === 'sources' ? undefined : 'feed.sources'}>
     <FeedSidebar
       view={view} sourceFilter={sourceFilter} tagFilter={tagFilter}
+      messengerChannels={messengerChannels} channelFilter={channelFilter}
       sources={data.sources} tags={tabTags} counts={counts} visibleCount={visible.length} attention={attention}
       x={data.x} hasTeam={Boolean(roster.org)} teamName={roster.org ? roster.org.name ?? t('feed.nav.teamLocal') : t('feed.nav.teamNoOrg')}
-      onViewSelect={(next) => { switchView(next); if (next !== 'sources') setSourceFilter(null) }}
-      onSourceSelect={(id) => { switchView('news'); setSourceFilter(id) }}
+      onViewSelect={(next) => { switchView(next); if (next !== 'sources') setSourceFilter(null); if (next !== 'team') setChannelFilter(null) }}
+      onSourceSelect={(id) => { switchView('news'); setSourceFilter(id); setChannelFilter(null) }}
       onTagSelect={setTagFilter}
+      onChannelSelect={setChannelFilter}
     />
     </div>
   )

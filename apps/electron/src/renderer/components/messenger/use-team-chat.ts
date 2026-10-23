@@ -1,10 +1,13 @@
 /**
- * Team messenger data hooks over teamChat:* RPC. Real host data only: the
- * server filters by org membership and private-channel membership, and
- * teamChat:changed (ids only) triggers a refetch.
+ * Team messenger data hooks. Channel roster stays on teamChat:* (org store).
+ * Message list/send prefer native im:* when the relay reports live; otherwise
+ * fall back to the JSON team-chat store (eu-swiss offline / no native addon).
  */
 import * as React from 'react'
 import type { TeamChannelMessage, TeamChannelView } from '@rox/shared/team-chat'
+import type { ImMessageEvent } from '@rox/shared/protocol'
+import { imMessageToTeam, imMessagesToTeam } from './im-message-map'
+import { useImChannelSubscription, useImMessageListener, useImRelay } from './use-im-relay'
 
 function errorText(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error)
@@ -39,13 +42,27 @@ export function useTeamChannels(orgId: string | null) {
 }
 
 export function useTeamMessages(channelId: string | null) {
+  const { live, status } = useImRelay()
   const [state, setState] = React.useState<{ loading: boolean; messages: TeamChannelMessage[]; error: string | null }>({ loading: false, messages: [], error: null })
   const version = React.useRef(0)
+
+  useImChannelSubscription(channelId, live)
 
   const reload = React.useCallback(async () => {
     if (!channelId) { setState({ loading: false, messages: [], error: null }); return }
     const v = ++version.current
     try {
+      if (live && window.electronAPI.imListMessages) {
+        const result = await window.electronAPI.imListMessages({ channelId, limit: 200 })
+        if (v !== version.current) return
+        if (result.ok) {
+          const messages = imMessagesToTeam(result.messages)
+          setState({ loading: false, messages, error: null })
+          void window.electronAPI.imMarkRead?.(channelId).catch(() => {})
+          return
+        }
+        // ok:false → fall through to team-chat store
+      }
       const result = await window.electronAPI.teamChatListMessages({ channelId, limit: 200 })
       if (v !== version.current) return
       setState({ loading: false, messages: result.messages, error: null })
@@ -53,7 +70,7 @@ export function useTeamMessages(channelId: string | null) {
     } catch (error) {
       if (v === version.current) setState({ loading: false, messages: [], error: errorText(error) })
     }
-  }, [channelId])
+  }, [channelId, live])
 
   React.useEffect(() => {
     setState({ loading: Boolean(channelId), messages: [], error: null })
@@ -64,7 +81,15 @@ export function useTeamMessages(channelId: string | null) {
     return () => { version.current++; off?.() }
   }, [channelId, reload])
 
-  return { ...state, reload }
+  useImMessageListener(channelId, live, (message: ImMessageEvent) => {
+    setState((prev) => {
+      if (prev.messages.some((m) => m.id === message.id)) return prev
+      const seq = (prev.messages.at(-1)?.seq ?? 0) + 1
+      return { ...prev, messages: [...prev.messages, imMessageToTeam(message, seq)] }
+    })
+  })
+
+  return { ...state, reload, relay: status, live }
 }
 
 /** Debounced search over messages, transcripts and AI summaries in visible channels. */
@@ -83,6 +108,15 @@ export function useTeamSearch(orgId: string | null, query: string) {
     return () => { live = false; clearTimeout(id) }
   }, [orgId, query])
   return state
+}
+
+/** Post via im:* when live; always keep team-chat as durable fallback. */
+export async function postTeamMessage(channelId: string, text: string, live: boolean): Promise<void> {
+  if (live && window.electronAPI.imSendMessage) {
+    const result = await window.electronAPI.imSendMessage(channelId, text)
+    if (result.ok) return
+  }
+  await window.electronAPI.teamChatPost(channelId, text)
 }
 
 export { errorText as teamChatErrorText }

@@ -43,6 +43,8 @@ export interface FeedItem {
   /** In-app object the item points at. */
   ref?: FeedItemRef
   sourceId?: string
+  /** Messenger channel this item belongs to (Лента per-channel filter). */
+  channelId?: string
   sourceTitle?: string
   author?: string
   /** Error text for failed automation runs / fetches. */

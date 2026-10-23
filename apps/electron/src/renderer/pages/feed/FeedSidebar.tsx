@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { FeedSource, FeedSourceKind, FeedTab, XConnectionStatus } from '@rox/shared/feed'
 import {
-  AtSign, Bot, Cable, ChevronRight, Github, Globe, Hash, Network,
+  AtSign, Bot, Cable, ChevronRight, Github, Globe, Hash, MessagesSquare, Network,
   Newspaper, PlusCircle, Radio, Rss, SlidersHorizontal, Tags, Users, Youtube,
   type LucideIcon,
 } from 'lucide-react'
@@ -83,25 +83,45 @@ function FeedNavGroup({ id, label, icon, tone, count, active, revealKey, initial
   )
 }
 
-export function FeedSidebar({ view, sourceFilter, tagFilter, sources, tags, counts, visibleCount, attention, x, teamName, hasTeam, onViewSelect, onSourceSelect, onTagSelect }: {
+export function FeedSidebar({ view, sourceFilter, tagFilter, sources, tags, counts, visibleCount, attention, x, teamName, hasTeam, messengerChannels = [], channelFilter = null, onViewSelect, onSourceSelect, onTagSelect, onChannelSelect }: {
   view: FeedView; sourceFilter: string | null; tagFilter: string | null
   sources: readonly FeedSource[]; tags: readonly { tag: string; count: number }[]
   counts: Record<FeedTab, number>; visibleCount: number; attention: number
   x: XConnectionStatus; teamName: string; hasTeam: boolean
+  /** Followed messenger channels (Лента per-channel filter hook). */
+  messengerChannels?: readonly { channelId: string; name: string }[]
+  channelFilter?: string | null
   onViewSelect: (view: FeedView) => void; onSourceSelect: (id: string) => void
   onTagSelect: (tag: string | null) => void
+  onChannelSelect?: (channelId: string | null) => void
 }) {
   const { t } = useTranslation()
   const xConnected = x.state === 'connected'
   const countFor = (tab: FeedTab) => view === tab ? visibleCount : counts[tab]
   const inNews = view === 'news' || view === 'sources'
   return (
-    // Arc Glass: the navigator rail is a `panel` surface (tint + seam
-    // hairline, static blur) — see packages/ui/src/components/glass/.
+    // Rox Engineering chrome; optional glass slot is a spot accent only.
     <div data-feed-sidebar data-glass-slot="panel" data-focus-zone="sidebar" onKeyDown={handleSidebarTreeKeyDown}>
       <NavTitle>{t('feed.title')}</NavTitle>
       <FeedNavButton testId="feed-nav-agents" label={t('feed.tab.agents')} icon={Bot} tone="violet" count={countFor('agents')} dot={attention ? 'warning' : undefined} active={view === 'agents'} onClick={() => onViewSelect('agents')} />
-      <FeedNavButton testId="feed-nav-team" label={t('feed.tab.team')} icon={Users} tone="sky" count={countFor('team')} active={view === 'team'} onClick={() => onViewSelect('team')} />
+      {messengerChannels.length > 0 ? (
+        <FeedNavGroup id="team" label={t('feed.tab.team')} icon={Users} tone="sky" count={counts.team} active={view === 'team'} revealKey={`${view}:${channelFilter ?? ''}`} initialOpen>
+          <FeedNavButton testId="feed-nav-team" label={t('feed.nav.allTeam')} icon={Users} tone="sky" count={view === 'team' && !channelFilter ? visibleCount : counts.team} active={view === 'team' && !channelFilter} onClick={() => { onChannelSelect?.(null); onViewSelect('team') }} />
+          {messengerChannels.map((ch) => (
+            <FeedNavButton
+              key={ch.channelId}
+              testId={`feed-nav-channel-${ch.channelId}`}
+              label={ch.name}
+              icon={MessagesSquare}
+              tone="sky"
+              active={view === 'team' && channelFilter === ch.channelId}
+              onClick={() => { onChannelSelect?.(ch.channelId); onViewSelect('team') }}
+            />
+          ))}
+        </FeedNavGroup>
+      ) : (
+        <FeedNavButton testId="feed-nav-team" label={t('feed.tab.team')} icon={Users} tone="sky" count={countFor('team')} active={view === 'team'} onClick={() => onViewSelect('team')} />
+      )}
       <FeedNavGroup id="news" label={t('feed.tab.news')} icon={Newspaper} tone="orange" count={counts.news} active={inNews} revealKey={`${view}:${sourceFilter ?? ''}`}>
         <FeedNavButton testId="feed-nav-news" label={t('feed.nav.allNews')} icon={Newspaper} tone="orange" count={view === 'news' && !sourceFilter ? visibleCount : counts.news} active={view === 'news' && !sourceFilter} onClick={() => onViewSelect('news')} />
         <FeedNavGroup id="sources" label={t('feed.nav.sources')} icon={Rss} tone="orange" count={sources.length} active={view === 'sources' || view === 'news' && Boolean(sourceFilter)} revealKey={`${view}:${sourceFilter ?? ''}`} initialOpen>

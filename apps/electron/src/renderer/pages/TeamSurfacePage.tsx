@@ -34,6 +34,7 @@ export function TeamSurfacePage(_props: SurfacePageProps) {
       className="flex h-full min-h-0 flex-col bg-background"
       data-testid="team-surface-page"
       data-surface="messenger"
+      data-messenger-chrome="rox-engineering"
     >
       <header data-glass-slot="toolbar" className="flex shrink-0 items-center gap-3 border-b border-border/60 px-4 py-2">
         <MessagesSquare className="icon-inline text-text-muted" aria-hidden />
