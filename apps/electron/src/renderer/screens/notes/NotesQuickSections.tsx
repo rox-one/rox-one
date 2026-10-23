@@ -16,6 +16,7 @@ import {
 } from './notes-sidebar-sections'
 import { notesPinnedByWorkspaceAtom } from './notes-pins'
 import { notesRecentOpenedByWorkspaceAtom } from './notes-recents'
+import { touchRecentOpened } from '@/pages/notes/note-library'
 
 const ICONS = { 'file-text': FileText } as const
 const NONE: string[] = []
@@ -53,11 +54,9 @@ export function useNoteRecents(workspaceId: string | null | undefined) {
   const opened = (workspaceId && byWs[workspaceId]) || NONE
   const touch = useCallback((noteId: string) => {
     if (!workspaceId) return
-    const id = noteId.trim()
-    if (!id) return
     setByWs((prev) => {
       const cur = prev[workspaceId] ?? []
-      const next = [id, ...cur.filter((item) => item !== id)].slice(0, 20)
+      const next = touchRecentOpened(cur, noteId)
       if (next.length === cur.length && next.every((item, index) => item === cur[index])) return prev
       return { ...prev, [workspaceId]: next }
     })

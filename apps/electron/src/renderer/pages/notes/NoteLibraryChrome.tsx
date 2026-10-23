@@ -54,10 +54,12 @@ export function NoteCoverIconChrome({
   const icon = readNoteIcon(properties)
   const [coverDraft, setCoverDraft] = React.useState('')
   const [iconDraft, setIconDraft] = React.useState('')
+  const [coverError, setCoverError] = React.useState(false)
 
   React.useEffect(() => {
     setCoverDraft(typeof properties.cover === 'string' ? properties.cover : '')
     setIconDraft(typeof properties.icon === 'string' ? properties.icon : '')
+    setCoverError(false)
   }, [properties.cover, properties.icon])
 
   const coverStyle: React.CSSProperties | undefined = (() => {
@@ -114,12 +116,21 @@ export function NoteCoverIconChrome({
               </div>
               <Input
                 value={coverDraft}
-                onChange={(event) => setCoverDraft(event.target.value)}
+                onChange={(event) => {
+                  setCoverDraft(event.target.value)
+                  setCoverError(false)
+                }}
                 placeholder={t('notes.library.coverUrlPlaceholder')}
                 data-testid="notes-cover-url"
+                aria-invalid={coverError || undefined}
               />
+              {(coverError || (coverDraft.trim() !== '' && !readNoteCover({ cover: coverDraft.trim() }))) ? (
+                <p className="text-caption text-destructive" data-testid="notes-cover-invalid" role="alert">
+                  {t('notes.library.coverInvalid')}
+                </p>
+              ) : null}
               <div className="flex justify-end gap-2">
-                <Button type="button" size="sm" variant="ghost" onClick={() => onChange({ cover: null })}>{t('notes.library.clear')}</Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => { setCoverError(false); onChange({ cover: null }) }}>{t('notes.library.clear')}</Button>
                 <Button
                   type="button"
                   size="sm"
@@ -127,11 +138,16 @@ export function NoteCoverIconChrome({
                   onClick={() => {
                     const trimmed = coverDraft.trim()
                     if (!trimmed) {
+                      setCoverError(false)
                       onChange({ cover: null })
                       return
                     }
                     const safe = readNoteCover({ cover: trimmed })
-                    if (!safe) return
+                    if (!safe) {
+                      setCoverError(true)
+                      return
+                    }
+                    setCoverError(false)
                     onChange({ cover: safe })
                   }}
                 >

@@ -1,5 +1,6 @@
 import type { SidebarSection, SidebarSectionItem } from '../sidebar-section'
 import { nonEmptySections } from '../sidebar-section'
+import { mergeRecentsByOpened } from '@/pages/notes/note-library'
 
 export interface NotesSidebarNote {
   id: string
@@ -46,24 +47,7 @@ export function buildNotesSidebarSections(
     pinnedSet.add(id)
     pinned.push(noteItem(n, [{ id: 'unpin', labelKey: 'screens.notes.unpin' }]))
   }
-  const recentIds: string[] = []
-  const recentSet = new Set<string>()
-  for (const id of openedIds) {
-    if (pinnedSet.has(id) || recentSet.has(id) || !byId.has(id)) continue
-    recentSet.add(id)
-    recentIds.push(id)
-    if (recentIds.length >= NOTES_RECENT_POOL) break
-  }
-  if (recentIds.length < NOTES_RECENT_POOL) {
-    const byUpdated = [...notes]
-      .filter((n) => !pinnedSet.has(n.id) && !recentSet.has(n.id))
-      .sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id))
-    for (const n of byUpdated) {
-      recentSet.add(n.id)
-      recentIds.push(n.id)
-      if (recentIds.length >= NOTES_RECENT_POOL) break
-    }
-  }
+  const recentIds = mergeRecentsByOpened(notes, openedIds, pinnedIds, NOTES_RECENT_POOL)
   const recent = recentIds.map((id) => noteItem(byId.get(id)!, [{ id: 'pin', labelKey: 'screens.notes.pin' }]))
   return nonEmptySections([
     { id: 'pinned', titleKey: 'screens.notes.groups.pinned', items: pinned, limit: 8, collapsible: true },

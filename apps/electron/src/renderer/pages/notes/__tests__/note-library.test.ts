@@ -12,7 +12,10 @@ describe('note-library', () => {
   it('reads safe cover and icon values', () => {
     expect(readNoteCover({ cover: 'linear-gradient(red, blue)' })).toContain('linear-gradient')
     expect(readNoteCover({ cover: 'https://cdn.example/cover.jpg' })).toContain('https://')
+    expect(readNoteCover({ cover: '#112233' })).toBe('#112233')
     expect(readNoteCover({ cover: 'javascript:alert(1)' })).toBeNull()
+    expect(readNoteCover({ cover: 'linear-gradient(red, blue), url(https://evil.example/x.png)' })).toBeNull()
+    expect(readNoteCover({ cover: 'url(https://cdn.example/x.png)' })).toBeNull()
     expect(readNoteIcon({ icon: '📝' })).toBe('📝')
     expect(readNoteIcon({ icon: 'x'.repeat(40) })).toBeNull()
   })

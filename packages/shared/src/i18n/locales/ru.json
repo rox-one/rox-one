@@ -6407,6 +6407,7 @@
   "notes.library.cover": "Обложка",
   "notes.library.coverEmpty": "Добавить обложку",
   "notes.library.coverHint": "Выберите градиент или вставьте URL изображения.",
+  "notes.library.coverInvalid": "Укажите hex-цвет, градиент или один http(s)/data URL изображения.",
   "notes.library.coverPreset.aurora": "Аврора",
   "notes.library.coverPreset.dusk": "Сумерки",
   "notes.library.coverPreset.rose": "Роза",

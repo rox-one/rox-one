@@ -711,6 +711,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [templatesDialogMode, setTemplatesDialogMode] = React.useState<'create' | 'save'>('create')
   const [noteTemplates, setNoteTemplates] = React.useState<NoteTemplateSummary[]>([])
   const [templatesBusy, setTemplatesBusy] = React.useState(false)
+  const [templatesPendingReplaceId, setTemplatesPendingReplaceId] = React.useState<string | null>(null)
   const [createTitle, setCreateTitle] = React.useState('')
   const [createFolderDialogOpen, setCreateFolderDialogOpen] = React.useState(false)
   const [createFolderName, setCreateFolderName] = React.useState('')
@@ -2985,6 +2986,7 @@ h1,h2,h3{margin-top:1.5em}
 
   const handleSaveAsTemplate = React.useCallback(async (templateId: string, title: string, confirmReplace?: boolean) => {
     if (!activeWorkspaceId || !activeNote || typeof window.electronAPI.saveNoteAsTemplate !== 'function') return
+    if (!await flushBeforeAction()) return
     setTemplatesBusy(true)
     try {
       const { body } = splitFrontmatter(contentRef.current)
@@ -2996,19 +2998,21 @@ h1,h2,h3{margin-top:1.5em}
         ...(confirmReplace ? { confirmReplace: true } : {}),
       })
       setTemplatesDialogOpen(false)
+      setTemplatesPendingReplaceId(null)
       toast.success(t('notes.library.templateSaved'))
       await refreshNoteTemplates()
     } catch (error) {
       const code = error && typeof error === 'object' && 'code' in error ? String((error as { code: unknown }).code) : ''
       if (code === 'CONFLICT') {
-        toast.error(t('notes.library.templatesReplaceRequired'))
+        await refreshNoteTemplates()
+        setTemplatesPendingReplaceId(templateId)
       } else {
         toast.error(error instanceof Error ? error.message : t('notes.toast.updatePropertiesFailed'))
       }
     } finally {
       setTemplatesBusy(false)
     }
-  }, [activeWorkspaceId, activeNote, refreshNoteTemplates, t])
+  }, [activeWorkspaceId, activeNote, flushBeforeAction, refreshNoteTemplates, t])
 
   const notesSidebarSlots = useNotesScreenSidebar({
     enabled: !!shellSidebarTarget && !!activeWorkspaceId && !readUnavailable,
@@ -3960,10 +3964,14 @@ h1,h2,h3{margin-top:1.5em}
       templates={noteTemplates}
       busy={templatesBusy}
       defaultTitle={templatesDialogMode === 'save' ? activeNote?.title : createTitle}
+      pendingReplaceId={templatesPendingReplaceId}
+      onPendingReplaceHandled={() => setTemplatesPendingReplaceId(null)}
       onOpenChange={(open) => {
+        if (!open && templatesBusy) return
         setTemplatesDialogOpen(open)
         // Cancel / dismiss: clear folder target like blank-note create dialog.
         if (!open && templatesDialogMode === 'create') setCreateInFolder(undefined)
+        if (!open) setTemplatesPendingReplaceId(null)
       }}
       onCreateFromTemplate={(templateId, title) => { void handleCreateFromTemplate(templateId, title) }}
       onSaveAsTemplate={(templateId, title, confirmReplace) => { void handleSaveAsTemplate(templateId, title, confirmReplace) }}

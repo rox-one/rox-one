@@ -6376,6 +6376,7 @@
   "notes.library.cover": "Cover",
   "notes.library.coverEmpty": "Add a cover",
   "notes.library.coverHint": "Choose a preset gradient or paste an image URL.",
+  "notes.library.coverInvalid": "Use a hex color, gradient, or a single http(s)/data image URL.",
   "notes.library.coverPreset.aurora": "Aurora",
   "notes.library.coverPreset.dusk": "Dusk",
   "notes.library.coverPreset.rose": "Rose",

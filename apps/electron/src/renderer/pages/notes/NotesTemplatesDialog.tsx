@@ -19,18 +19,23 @@ export function NotesTemplatesDialog({
   templates,
   busy,
   defaultTitle,
+  pendingReplaceId,
   onOpenChange,
   onCreateFromTemplate,
   onSaveAsTemplate,
+  onPendingReplaceHandled,
 }: {
   open: boolean
   mode: 'create' | 'save'
   templates: readonly NoteTemplateSummary[]
   busy?: boolean
   defaultTitle?: string
+  /** When set (e.g. after server CONFLICT), show replace-confirm for this id. */
+  pendingReplaceId?: string | null
   onOpenChange(open: boolean): void
   onCreateFromTemplate(templateId: string, title: string): void
   onSaveAsTemplate(templateId: string, title: string, confirmReplace?: boolean): void
+  onPendingReplaceHandled?(): void
 }) {
   const { t } = useTranslation()
   const [selectedId, setSelectedId] = React.useState<string>('')
@@ -58,6 +63,15 @@ export function NotesTemplatesDialog({
     })
   }, [open, defaultTitle, templates])
 
+  React.useEffect(() => {
+    if (!pendingReplaceId) return
+    const id = sanitizeTemplateId(pendingReplaceId)
+    if (!id) return
+    setTemplateId(id)
+    setReplaceConfirm(true)
+    onPendingReplaceHandled?.()
+  }, [pendingReplaceId, onPendingReplaceHandled])
+
   const safeId = sanitizeTemplateId(templateId)
   const collision = mode === 'save' && safeId ? templates.some((item) => item.id === safeId) : false
 
@@ -72,6 +86,7 @@ export function NotesTemplatesDialog({
 
   return (
     <Dialog open={open} onOpenChange={(next) => {
+      if (!next && busy) return
       if (!next) setReplaceConfirm(false)
       onOpenChange(next)
     }}>
@@ -151,7 +166,7 @@ export function NotesTemplatesDialog({
         <DialogFooter>
           {replaceConfirm ? (
             <>
-              <Button variant="outline" onClick={() => setReplaceConfirm(false)}>{t('notes.dialog.cancel')}</Button>
+              <Button variant="outline" disabled={busy} onClick={() => setReplaceConfirm(false)}>{t('notes.dialog.cancel')}</Button>
               <Button
                 disabled={busy}
                 data-testid="notes-template-replace"
@@ -162,7 +177,7 @@ export function NotesTemplatesDialog({
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>{t('notes.dialog.cancel')}</Button>
+              <Button variant="outline" disabled={busy} onClick={() => { if (!busy) onOpenChange(false) }}>{t('notes.dialog.cancel')}</Button>
               {mode === 'create' ? (
                 <Button
                   disabled={busy || !selectedId}

@@ -17,8 +17,14 @@ export function readNoteCover(properties: Record<string, unknown> | null | undef
   if (typeof raw !== 'string') return null
   const value = raw.trim()
   if (!value || value.length > 2048) return null
-  // Allow http(s) URLs, data:image, or CSS gradients / solid colors used as background.
-  if (/^(https?:\/\/|data:image\/|linear-gradient\(|radial-gradient\(|#)[\s\S]*$/i.test(value)) return value
+  // Sole http(s) / data:image URL (whole value). Reject multi-layer values that embed url(...).
+  if (/^https?:\/\/\S+$/i.test(value) || /^data:image\/[a-z0-9.+-]+;base64,\S+$/i.test(value) || /^data:image\/[a-z0-9.+-]+,.+/i.test(value)) {
+    return value
+  }
+  if (/url\s*\(/i.test(value)) return null
+  // Solid hex or url-free gradients only.
+  if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return value
+  if (/^(linear|radial)-gradient\(/i.test(value)) return value
   return null
 }
 
