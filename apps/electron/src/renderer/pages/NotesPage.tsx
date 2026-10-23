@@ -630,14 +630,41 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [commentComposerTop, setCommentComposerTop] = React.useState(48)
   const [focusCommentComposer, setFocusCommentComposer] = React.useState(false)
   const [rpcCommentThreads, setRpcCommentThreads] = React.useState<NoteCommentThread[]>([])
-  const commentCreateInFlightRef = React.useRef(false)
+  // One parent-level create flight lock shared by overlay + NotesCommentThreads so collapsing
+  // the rail mid-flight cannot start a duplicate create. Keyed by [workspaceId, noteId].
   const commentCreateFlightKeyRef = React.useRef<string | null>(null)
-  // React state mirrors the flight lock so the overlay composer can disable while busy.
-  const [commentCreateBusy, setCommentCreateBusy] = React.useState(false)
+  const [commentCreateBusyKey, setCommentCreateBusyKey] = React.useState<string | null>(null)
+  const commentCreateFlightKeyFor = React.useCallback((workspaceId: string, noteId: string) => (
+    JSON.stringify([workspaceId, noteId])
+  ), [])
+  const tryBeginCommentCreate = React.useCallback((workspaceId: string, noteId: string): string | null => {
+    const key = commentCreateFlightKeyFor(workspaceId, noteId)
+    // Same note already creating — reject. A different note (or free lock) may take/re-key.
+    if (commentCreateFlightKeyRef.current === key) return null
+    commentCreateFlightKeyRef.current = key
+    setCommentCreateBusyKey(key)
+    return key
+  }, [commentCreateFlightKeyFor])
+  const endCommentCreate = React.useCallback((flightKey: string) => {
+    if (commentCreateFlightKeyRef.current === flightKey) {
+      commentCreateFlightKeyRef.current = null
+      setCommentCreateBusyKey(null)
+    }
+  }, [])
+  const activeCommentCreateKey = (
+    activeWorkspaceId && activeNote?.id
+      ? commentCreateFlightKeyFor(activeWorkspaceId, activeNote.id)
+      : null
+  )
+  // Composer stays disabled only while THIS note owns the lock.
+  const commentCreateBusy = commentCreateBusyKey != null && commentCreateBusyKey === activeCommentCreateKey
   // Collapsed comments rail unmounts NotesCommentThreads — clear highlights here so a
-  // prior note's threads cannot paint on the newly opened body.
+  // prior note's threads cannot paint on the newly opened body. Also clear/re-key the
+  // shared create flight lock so a stale in-flight create cannot block the new note.
   React.useEffect(() => {
     setRpcCommentThreads([])
+    commentCreateFlightKeyRef.current = null
+    setCommentCreateBusyKey(null)
   }, [activeWorkspaceId, activeNote?.id])
   const [commentTooltip, setCommentTooltip] = React.useState<{ body: string; quote: string; top: number; left: number } | null>(null)
   const [footnoteDraft, setFootnoteDraft] = React.useState('')
@@ -3534,33 +3561,31 @@ h1,h2,h3{margin-top:1.5em}
                   focusRequested={focusCommentComposer}
                   onFocusHandled={() => setFocusCommentComposer(false)}
                   onCancel={() => {
-                    if (commentCreateInFlightRef.current) return
+                    if (commentCreateBusy) return
                     setCommentDraftQuote('')
                     setCommentComposerBody('')
                   }}
                   onSubmit={() => {
                     const text = commentComposerBody.trim()
-                    if (!text || !activeNote || !activeWorkspaceId || commentCreateInFlightRef.current) return
+                    if (!text || !activeNote || !activeWorkspaceId || commentCreateBusy) return
                     // Prefer the sidecar RPC stack (threads / resolve / reactions).
                     // Selection compose from the overlay mirrors the rail submit.
                     const requestWorkspaceId = activeWorkspaceId
                     const requestNoteId = activeNote.id
-                    const flightKey = JSON.stringify([requestWorkspaceId, requestNoteId])
-                    commentCreateInFlightRef.current = true
-                    commentCreateFlightKeyRef.current = flightKey
-                    setCommentCreateBusy(true)
+                    const quote = commentDraftQuote.trim()
+                    const anchor = quote ? anchorFromQuote(contentRef.current, quote, commentDraftAnchor) : null
+                    if (quote && !anchor) {
+                      toast.error(t('notes.comments.errorAttachSelection'))
+                      return
+                    }
+                    const flightKey = tryBeginCommentCreate(requestWorkspaceId, requestNoteId)
+                    if (!flightKey) return
                     void (async () => {
                       const stillActive = () => (
                         workspaceIdRef.current === requestWorkspaceId
                         && activeNoteIdRef.current === requestNoteId
                       )
                       try {
-                        const quote = commentDraftQuote.trim()
-                        const anchor = quote ? anchorFromQuote(contentRef.current, quote, commentDraftAnchor) : null
-                        if (quote && !anchor) {
-                          toast.error(t('notes.comments.errorAttachSelection'))
-                          return
-                        }
                         const created = await window.electronAPI.createNoteComment(requestWorkspaceId, {
                           noteId: requestNoteId,
                           body: text,
@@ -3587,11 +3612,7 @@ h1,h2,h3{margin-top:1.5em}
                       } catch {
                         if (stillActive()) toast.error(t('notes.comments.errorCreate'))
                       } finally {
-                        if (commentCreateFlightKeyRef.current === flightKey) {
-                          commentCreateFlightKeyRef.current = null
-                          commentCreateInFlightRef.current = false
-                          setCommentCreateBusy(false)
-                        }
+                        endCommentCreate(flightKey)
                       }
                     })()
                   }}
@@ -3637,6 +3658,9 @@ h1,h2,h3{margin-top:1.5em}
                   onDraftBodyChange={setCommentComposerBody}
                   focusRequested={focusCommentComposer}
                   onFocusHandled={() => setFocusCommentComposer(false)}
+                  createBusy={commentCreateBusy}
+                  beginCreate={() => tryBeginCommentCreate(activeWorkspaceId, activeNote.id)}
+                  endCreate={endCommentCreate}
                   onClearDraft={(scope) => {
                     if (scope) clearCommentDraftAt(scope.workspaceId, scope.noteId)
                     else setCommentDraftQuote('')

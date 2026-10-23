@@ -62,6 +62,9 @@ export function NotesCommentThreads({
   onFocusHandled,
   onJumpToQuote,
   onThreadsChange,
+  createBusy = false,
+  beginCreate,
+  endCreate,
 }: {
   workspaceId: string
   noteId: string
@@ -82,6 +85,12 @@ export function NotesCommentThreads({
   onFocusHandled?: () => void
   onJumpToQuote?: (quote: string) => void
   onThreadsChange?: (comments: NoteCommentThread[]) => void
+  /** True when the shared parent flight lock is held by this note. */
+  createBusy?: boolean
+  /** Acquire the shared parent create lock; returns flightKey or null if this note already owns it. */
+  beginCreate: () => string | null
+  /** Release the shared parent create lock if still owned by flightKey. */
+  endCreate: (flightKey: string) => void
 }) {
   const { t } = useTranslation()
   const [comments, setComments] = React.useState<NoteCommentThread[]>([])
@@ -92,9 +101,6 @@ export function NotesCommentThreads({
   const [docCompose, setDocCompose] = React.useState(false)
   const onThreadsChangeRef = React.useRef(onThreadsChange)
   onThreadsChangeRef.current = onThreadsChange
-  const createInFlightRef = React.useRef(false)
-  /** Which note owns the create lock — stale finally must match before clearing. */
-  const createFlightKeyRef = React.useRef<string | null>(null)
   const reloadGenerationRef = React.useRef(0)
   /** Latest mounted note key — compared after awaits so stale work cannot publish. */
   const activeKeyRef = React.useRef({ workspaceId, noteId })
@@ -156,8 +162,7 @@ export function NotesCommentThreads({
 
   React.useEffect(() => {
     // Invalidate in-flight lists and clear prior note's threads/highlights immediately.
-    // Do not reset createInFlightRef here — a stale create's finally must not unlock a newer create,
-    // and unlocking on switch would let the previous create's finally clear a lock owned by a later submit.
+    // Create flight lock lives on NotesPage (shared with overlay) and is cleared/re-keyed there on switch.
     reloadGenerationRef.current += 1
     const key = { workspaceId, noteId }
     publish([], key)
@@ -205,7 +210,7 @@ export function NotesCommentThreads({
 
   const createRoot = React.useCallback(async () => {
     const text = body.trim()
-    if (!text || createInFlightRef.current) return
+    if (!text || createBusy) return
     const quote = draftQuote.trim()
     // Match overlay: anchor against the live contentRef body, not React state.
     const liveText = getNoteText()
@@ -216,9 +221,8 @@ export function NotesCommentThreads({
     }
     setError(null)
     const requestKey = { workspaceId, noteId }
-    createInFlightRef.current = true
-    const flightKey = JSON.stringify([requestKey.workspaceId, requestKey.noteId])
-    createFlightKeyRef.current = flightKey
+    const flightKey = beginCreate()
+    if (!flightKey) return
     setBusyId(CREATE_BUSY)
     try {
       const created = await window.electronAPI.createNoteComment(requestKey.workspaceId, {
@@ -235,14 +239,10 @@ export function NotesCommentThreads({
     } catch {
       if (isActiveKey(requestKey)) setError(t('notes.comments.errorCreate'))
     } finally {
-      // Only the owner of the lock may release it (stale finally must not unlock a newer create).
-      if (createFlightKeyRef.current === flightKey) {
-        createFlightKeyRef.current = null
-        createInFlightRef.current = false
-      }
+      endCreate(flightKey)
       if (isActiveKey(requestKey)) setBusyId(null)
     }
-  }, [body, draftQuote, draftAnchor, getNoteText, workspaceId, noteId, clearComposer, publishUpdate, reload, isActiveKey, t])
+  }, [body, draftQuote, draftAnchor, getNoteText, workspaceId, noteId, createBusy, beginCreate, endCreate, clearComposer, publishUpdate, reload, isActiveKey, t])
 
   const onCreate = React.useCallback(async (text: string, parentId?: string) => {
     const requestKey = { workspaceId, noteId }
@@ -328,7 +328,7 @@ export function NotesCommentThreads({
 
   const showSelectionComposer = Boolean(draftQuote)
   const showDocComposer = docCompose && !draftQuote
-  const creating = busyId === CREATE_BUSY
+  const creating = createBusy || busyId === CREATE_BUSY
 
   return (
     <aside
@@ -476,8 +476,8 @@ export function NotesCommentThreads({
           body={body}
           onBodyChange={setBody}
           creating={creating}
-          onSubmit={() => { if (!createInFlightRef.current) void createRoot() }}
-          onCancel={() => { if (!createInFlightRef.current) clearComposer() }}
+          onSubmit={() => { if (!creating) void createRoot() }}
+          onCancel={() => { if (!creating) clearComposer() }}
           focusRequested={focusRequested || showDocComposer}
           onFocusHandled={onFocusHandled}
         />
