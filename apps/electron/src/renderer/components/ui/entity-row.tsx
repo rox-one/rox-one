@@ -350,7 +350,7 @@ export function EntityRow({
 
   // Build the inner content (shared between with-context-menu and without).
   // Arc Glass: the interactive lane carries `data-glass-slot="row"`; the frozen
-  // recipe (packages/ui/src/components/glass/arc-glass-surfaces.css) paints the
+  // recipe (GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed)) paints the
   // transparent base plus hover/selection. Selection is mirrored as
   // `data-state="selected"` because that recipe's selected branch reads
   // `[aria-selected="true"]` / `[data-state="selected"]` — a consumer's own

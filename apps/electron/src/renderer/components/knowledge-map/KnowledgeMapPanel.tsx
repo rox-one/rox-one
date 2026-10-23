@@ -200,7 +200,7 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
       <div
         className="flex flex-wrap items-center gap-2"
         // Arc Glass: mode switch + zoom/fit controls + search = toolbar material
-        // (static blur + bottom hairline, arc-glass-surfaces.css).
+        // (static blur + bottom hairline, GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed)).
         data-glass-slot="toolbar"
       >
         <SettingsSegmentedControl<KnowledgeMapMode>

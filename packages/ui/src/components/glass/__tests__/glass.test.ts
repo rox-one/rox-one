@@ -230,8 +230,8 @@ describe('SE optional glass accents', () => {
   })
   it('pop-in is scoped to the explicit popover slot, with a symmetric exit', () => {
     expect(skin).not.toMatch(/role="menu"|\.popover-styled/)
-    expect(skin).toMatch(/\[data-glass-slot="popover"\]\[data-state="open"\]\s*{[^}]*rox-glass-pop-in[^}]*--motion-spring/)
-    expect(skin).toMatch(/\[data-glass-slot="popover"\]\[data-state="closed"\]\s*{[^}]*rox-glass-pop-out[^}]*--motion-spring-exit/)
+    expect(skin).toMatch(/\[data-glass-slot="popover"\]\[data-state="open"\]\s*{[^}]*animation:\s*rox-glass-pop-in[^}]*!important/)
+    expect(skin).toMatch(/\[data-glass-slot="popover"\]\[data-state="closed"\]\s*{[^}]*animation:\s*rox-glass-pop-out[^}]*!important/)
     // No mount spring for elements without data-state (PremiumMenu/Command).
     expect(skin).not.toMatch(/\[data-glass-slot="popover"\]:is\([^)]*:not\(\[data-state\]\)/)
     expect(skin).not.toContain(':not([data-state])')

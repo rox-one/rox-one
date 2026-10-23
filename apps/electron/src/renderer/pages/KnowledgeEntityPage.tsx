@@ -129,7 +129,7 @@ export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEnti
           <aside
             className="w-[320px] shrink-0 overflow-y-auto border-l border-border/60 bg-muted/[0.12]"
             // Arc Glass: right-hand inspector rail = `panel` (background-family
-            // tint + static blur + hairline; arc-glass-surfaces.css).
+            // tint + static blur + hairline; GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed)).
             data-glass-slot="panel"
             aria-label={t('knowledge.inspector.title')}
           >

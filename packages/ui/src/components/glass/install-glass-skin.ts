@@ -10,8 +10,9 @@ let installed: (() => void) | null = null
  * chrome accent CSS, sets html[data-glass] (live), and mounts one shared
  * refraction filter for static slots. Idempotent; returns the uninstall.
  *
- * Content-layer Arc Glass recipes (arc-glass-surfaces.css) are intentionally
- * not loaded — Mark retired Arc Glass as a design base; accents only.
+ * Arc Glass content surfaces CSS was removed (Mark retired Arc Glass Design).
+ * Arc Glass theme remains selectable as wallpaper-only; this install only
+ * loads SE optional chrome accent CSS.
  */
 export function installGlassSkin(doc: Document = document): () => void {
   if (installed) return installed

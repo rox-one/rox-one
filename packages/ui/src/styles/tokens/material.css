@@ -118,8 +118,9 @@
     inset 0 0 0 1px color-mix(in srgb, white calc(var(--glass-edge-alpha) / 2), transparent),
     var(--shadow-popover, 0 8px 24px rgb(0 0 0 / 0.25));
 
-  /* --- Screen vocabulary (content layer, arc-glass-surfaces.css) -----------
+  /* --- Screen vocabulary (content-layer tokens; surfaces CSS removed) ------
      Same single knob: every step below is a function of --glass-intensity.
+     Retained for GlassSurface / optional consumers; Arc Glass Design gone.
        tight blur   glued toolbars/panels (shorter throw than --glass-blur)
        hairline     the 1px tinted edge every content surface draws
        sheen        top specular highlight for cards / empty states / editors

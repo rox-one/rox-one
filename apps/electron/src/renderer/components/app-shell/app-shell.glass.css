@@ -1,11 +1,8 @@
-/* Arc Glass chrome polish (wave: glass-all-screens, slice S12).
+/* Legacy Arc Glass chrome polish (wallpaper-only theme; Design removed).
  *
- * Corrections the shared recipes cannot express from markup alone. Every rule is
- * scoped to the arc-glass theme and uses tokens only, so other themes and the
- * degradations (high contrast / basic tier / reduced transparency / performance
- * profile) are untouched — the recipes in
- * packages/ui/src/components/glass/arc-glass-surfaces.css already flatten
- * themselves, and nothing here re-declares a --glass-* value.
+ * Corrections local to the arc-glass theme id. Arc Glass content surfaces CSS
+ * was deleted; optional SE chrome accents live in packages/ui glass skin.
+ * Tokens only; degradations untouched. Does not re-declare --glass-* values.
  *
  * 1. A glass toolbar draws its divider as the recipe's inset bottom hairline, so
  *    the component's own bottom border must not double it (PanelHeader and the

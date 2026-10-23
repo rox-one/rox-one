@@ -577,10 +577,9 @@ html .popover-styled {
   width: 356px !important;
 }
 
-/* Opaque like every other overlay (PERF-07 / UI-AUDIT P1-10). Arc Glass paints
-   the toast surface itself (`data-glass-slot="toast"` / `[data-sonner-toast]`
-   in packages/ui/src/components/glass/arc-glass-surfaces.css), so the opaque
-   fill is scoped to the other themes. */
+/* Opaque like every other overlay (PERF-07 / UI-AUDIT P1-10). Arc Glass Design
+   content surfaces CSS was removed; theme remains selectable as wallpaper-only.
+   Opaque toast fill applies to every theme except the legacy arc-glass id. */
 html:not([data-theme="arc-glass"]) [data-sonner-toast] {
   background-color: oklch(from var(--popover) l c h / 1) !important;
 }

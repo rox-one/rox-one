@@ -294,7 +294,7 @@ function NavRow({
         'hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
       )}
       // Arc Glass: tree rows are `row` surfaces — transparent base, hover from
-      // the shared state tokens (arc-glass-surfaces.css). Paint only.
+      // the shared state tokens (GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed)). Paint only.
       data-glass-slot="row"
     >
       <Icon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
