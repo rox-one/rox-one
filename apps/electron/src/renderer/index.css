@@ -2023,6 +2023,62 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   margin-inline: auto;
 }
 
+/* Rox Engineering shell micro-interactions (rail rows, top pills, panel
+   header buttons). Scoped to html[data-ui-profile="super-engineering"] so
+   other profiles keep their existing hover/press. Durations and easings come
+   from packages/ui motion tokens (--motion-fast / --motion-spring /
+   --ease-spring), which go to 0ms under prefers-reduced-motion and while
+   html[data-resizing] — live window drag never animates. Transform and
+   opacity only (plus colour/background on the state layer at --motion-fast);
+   no width/height/top/left, no blur. Spring feel mirrors
+   apps/electron/src/renderer/lib/motion/super-engineering-springs.ts.
+
+   Rail/pill: press scale only (hover scale on a full-width rail row or a
+   segmented pill shifts neighbours / clips). Panel header icons are small
+   hit targets, so they also get a light hover scale. */
+html[data-ui-profile="super-engineering"] {
+  --se-shell-press-scale: 0.97;
+  --se-shell-hover-scale: 1.04;
+}
+
+html[data-ui-profile="super-engineering"] :is(.rox-rail-row, .rox-mode-pill-item, .panel-header-btn) {
+  transition:
+    transform var(--motion-spring) var(--ease-spring),
+    opacity var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard),
+    box-shadow var(--motion-fast) var(--ease-standard);
+}
+
+html[data-ui-profile="super-engineering"] .rox-rail-row:not([aria-disabled="true"]):active {
+  transform: scale(var(--se-shell-press-scale));
+}
+
+html[data-ui-profile="super-engineering"] .rox-rail-row:focus-visible {
+  opacity: 1;
+}
+
+html[data-ui-profile="super-engineering"] .rox-mode-pill-item:not([aria-disabled="true"]):active {
+  transform: scale(var(--se-shell-press-scale));
+}
+
+html[data-ui-profile="super-engineering"] .rox-mode-pill-item:focus-visible {
+  opacity: 1;
+}
+
+html[data-ui-profile="super-engineering"] .panel-header-btn:not(:disabled):hover {
+  transform: scale(var(--se-shell-hover-scale));
+  opacity: 1;
+}
+
+html[data-ui-profile="super-engineering"] .panel-header-btn:not(:disabled):active {
+  transform: scale(var(--se-shell-press-scale));
+}
+
+html[data-ui-profile="super-engineering"] .panel-header-btn:focus-visible {
+  opacity: 1;
+}
+
 /* Rox Engineering ultra-wide / fluid shell. data-shell-band is set from
    SHELL_BREAKPOINTS (viewport-band.ts) on the shell row; these tiers only
    apply under html[data-ui-profile="super-engineering"]. Static layout
@@ -2054,3 +2110,4 @@ html[data-ui-profile="super-engineering"][data-content-join="float"] [data-shell
 html[data-ui-profile="super-engineering"][data-content-join="float"] [data-shell-band="ultra"] [data-panel-grid-viewport] {
   max-inline-size: min(100%, var(--shell-paper-max));
 }
+
