@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue } from 'jotai'
 import { selectAtom } from 'jotai/utils'
 import { useTranslation } from 'react-i18next'
@@ -10,6 +10,7 @@ import { routes, useNavigation } from '@/contexts/NavigationContext'
 import { toScreenSidebarGroups } from '../screen-sidebar-adapter'
 import type { SidebarTarget } from '../sidebar-section'
 import { buildMessengerSidebarSections, projectMessengerSessions, sameMessengerSessions, type MessengerBindingInput } from './messenger-sidebar-sections'
+import { MessengerListSkeleton } from '@/components/messenger/MessengerListSkeleton'
 
 const messengerSessionsAtom = selectAtom(sessionMetaMapAtom, (map) => projectMessengerSessions(map.values()), sameMessengerSessions)
 
@@ -61,7 +62,7 @@ export function useMessengerScreenSidebar(): void {
   const config = useMemo<ScreenSidebarConfig>(() => {
     const connect = { id: 'connect', label: t('screens.messenger.connect'), icon: Plug, onSelect: () => navigate(routes.view.settings('messaging')) }
     let groups: SidebarGroup[] = toScreenSidebarGroups(sections, { t, icons: ICONS, onTarget })
-    if (load.kind === 'loading') groups = [{ id: 'chats', title: t('screens.messenger.groups.chats'), items: [], state: { kind: 'loading' } }]
+    if (load.kind === 'loading') groups = [{ id: 'chats', title: t('screens.messenger.groups.chats'), items: [], content: createElement(MessengerListSkeleton, { rows: 6, testId: 'messenger-sidebar-loading' }) }]
     else if (load.kind === 'error') groups = [{ id: 'chats', title: t('screens.messenger.groups.chats'), items: [], state: { kind: 'error', label: t('screens.messenger.loadError'), onRetry: retry } }]
     else if (groups.length === 0) groups = [{ id: 'empty', items: [], state: { kind: 'empty', label: t('screens.messenger.empty'), action: connect } }]
     return {
