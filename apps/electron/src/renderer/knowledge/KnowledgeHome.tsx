@@ -19,13 +19,14 @@
  * selectKnowledgeView) keep logic-level bun:test coverage without a DOM harness.
  */
 import { atom, useAtom, useAtomValue } from 'jotai'
-import { Bookmark, Check, ChevronLeft, FileDiff, Search } from 'lucide-react'
+import { Bookmark, BookOpen, Check, ChevronLeft, FileDiff, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { KnowledgeRef, SearchHit } from '@rox/core/knowledge'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { EntityList } from '@/components/ui/entity-list'
+import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { navigate, routes } from '@/lib/navigate'
 import { lookupImportedNote } from '@/lib/notes-migration-map'
@@ -393,29 +394,21 @@ export function KnowledgeHome() {
 
   const emptyState =
     status === 'idle' && (noConnections || kernelHasNoConnections || kernelOffline) ? (
-      <div
-        className="flex flex-col items-center gap-3 px-4 py-8 text-center"
-        // Arc Glass: kernel/connection empty state = the `empty` slab
-        // (carries data-testid knowledge-open-rox-notes inside).
-        data-glass-slot="empty"
+      <EntityListEmptyScreen
+        icon={<BookOpen />}
+        title={t('knowledge.roxNotes.emptyTitle')}
+        description={t('knowledge.roxNotes.emptyBody')}
+        className="py-8"
       >
-        <p className="text-base font-medium text-foreground">
-          {t('knowledge.roxNotes.emptyTitle')}
-        </p>
-        <p className="max-w-sm text-sm text-muted-foreground">
-          {t('knowledge.roxNotes.emptyBody')}
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <button
-            type="button"
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
-            onClick={() => navigate(routes.view.notes())}
-            data-testid="knowledge-open-rox-notes"
-          >
-            {t('knowledge.roxNotes.openNotesCta')}
-          </button>
-        </div>
-      </div>
+        <button
+          type="button"
+          className="inline-flex items-center min-h-[var(--control-hit-min)] px-3 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover hover:bg-surface-pressed text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-fast)]"
+          onClick={() => navigate(routes.view.notes())}
+          data-testid="knowledge-open-rox-notes"
+        >
+          {t('knowledge.roxNotes.openNotesCta')}
+        </button>
+      </EntityListEmptyScreen>
     ) : status === 'idle' ? (
       <HomeHint text={t('knowledge.search.placeholder')} />
     ) : noConnections ? (

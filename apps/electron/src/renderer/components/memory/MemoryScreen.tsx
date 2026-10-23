@@ -734,7 +734,7 @@ export function MemoryScreen({ workspaceId }: MemoryScreenProps) {
           aria-label={t('memory.screen.select')}
           className="mt-1 size-4 shrink-0 accent-[var(--accent)] [color-scheme:light] dark:[color-scheme:dark]"
         />
-        <span className={cn('mt-0.5 grid size-7 shrink-0 place-items-center rounded-[var(--radius-control)]', lesson.category === 'preference' ? 'bg-pink-500/10 text-pink-500' : lesson.category === 'correction' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' : lesson.category === 'workflow' ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400' : 'bg-violet-500/10 text-violet-500')}><Icon aria-hidden="true" className="size-4" /></span>
+        <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-[var(--radius-control)] bg-surface-hover text-muted-foreground"><Icon aria-hidden="true" className="size-4" /></span>
         <div className="min-w-0 flex-1">
           <div className="line-clamp-4 whitespace-pre-wrap break-words prose-body">
             {lesson.negative ? <span className="mr-1 font-semibold text-destructive">{t('memory.screen.mustNot')}</span> : null}
