@@ -395,7 +395,7 @@ function SubtaskCard({
   return (
     <div data-glass-slot="card" className="group rounded-[var(--radius-card)] border border-border/70 bg-foreground/[0.015] p-3">
       <div className="flex items-start gap-2">
-        <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-indigo-500/10 text-sm font-bold numeric text-indigo-500 dark:text-indigo-300">
+        <div className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-surface-hover text-sm font-bold numeric text-muted-foreground">
           {index + 1}
         </div>
         <div className="min-w-0 flex-1">
@@ -1223,8 +1223,8 @@ export function TaskEditor({
             </div>
           ) : (
             <div className="flex min-h-full flex-col items-center justify-center gap-3 px-6 py-8 text-center">
-              <div className="grid h-12 w-12 place-items-center rounded-full bg-indigo-500/10 text-indigo-500 dark:text-indigo-300">
-                <Sparkles className="h-6 w-6" strokeWidth={2} />
+              <div className="grid size-8 place-items-center rounded-full bg-surface-hover text-muted-foreground">
+                <Sparkles className="h-4 w-4" strokeWidth={2} />
               </div>
               <div className="text-lg font-bold">{t('tasks.generatePlan')}</div>
               <p className="max-w-[360px] text-base text-foreground/55">{t('tasks.generateBody')}</p>

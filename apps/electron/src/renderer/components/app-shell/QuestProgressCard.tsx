@@ -11,12 +11,12 @@ import { Skeleton } from '@rox/ui'
 
 const QUEST_ICONS = { first_note: BookOpen, first_link: Link2, first_task: CheckSquare, first_workflow: GitBranch, first_browser: Globe, privacy_review: ShieldCheck }
 const QUEST_COLORS: Record<QuestId, string> = {
-  first_note: 'border-violet-500/25 bg-violet-500/5 text-violet-700 dark:text-violet-300',
-  first_link: 'border-blue-500/25 bg-blue-500/5 text-blue-700 dark:text-blue-300',
-  first_task: 'border-emerald-500/25 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300',
-  first_workflow: 'border-orange-500/25 bg-orange-500/5 text-orange-700 dark:text-orange-300',
-  first_browser: 'border-cyan-500/25 bg-cyan-500/5 text-cyan-700 dark:text-cyan-300',
-  privacy_review: 'border-rose-500/25 bg-rose-500/5 text-rose-700 dark:text-rose-300',
+  first_note: 'border-border bg-surface-hover text-foreground',
+  first_link: 'border-border bg-surface-hover text-foreground',
+  first_task: 'border-border bg-surface-hover text-foreground',
+  first_workflow: 'border-border bg-surface-hover text-foreground',
+  first_browser: 'border-border bg-surface-hover text-foreground',
+  privacy_review: 'border-border bg-surface-hover text-foreground',
 }
 const QUEST_TITLE: Record<QuestId, string> = {
   first_note: 'quests.firstNote', first_link: 'quests.firstLink', first_task: 'quests.firstTask',
@@ -160,17 +160,17 @@ export function QuestProgressCard({ cloudFeaturesEnabled = true, className, scop
     </div>}
     {profile && <>
       <div className="grid min-w-0 gap-3 md:grid-cols-2">
-        <div className="rounded-lg border border-violet-500/20 bg-gradient-to-br from-violet-500/10 to-blue-500/5 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 font-semibold"><Zap className="size-5 text-violet-500" />{t('quests.levelLabel', { level: profile.level })}</h3><span className="text-sm font-semibold numeric">{t('quests.xpAmount', { xp: profile.xp })}</span></div>
+        <div className="rounded-lg border border-border bg-surface-hover p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 font-semibold"><Zap className="size-4 text-muted-foreground" />{t('quests.levelLabel', { level: profile.level })}</h3><span className="text-sm font-semibold numeric">{t('quests.xpAmount', { xp: profile.xp })}</span></div>
           <p className="mt-2 text-xs text-muted-foreground">{profile.nextThreshold === null ? t('quests.maxLevel') : t('quests.levelProgress', { xp: profile.xpForNext })}</p>
-          <div role="progressbar" aria-label={t('quests.levelLabel', { level: profile.level })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(profile.progress * 100)} className="mt-3 h-2 overflow-hidden rounded-full bg-foreground/10"><div className="h-full rounded-full bg-violet-500 transition-[width] motion-reduce:transition-none" style={{ width: `${Math.max(0, Math.min(100, profile.progress * 100))}%` }} /></div>
+          <div role="progressbar" aria-label={t('quests.levelLabel', { level: profile.level })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(profile.progress * 100)} className="mt-3 h-2 overflow-hidden rounded-full bg-surface-pressed"><div className="h-full rounded-full bg-accent transition-[width] motion-reduce:transition-none" style={{ width: `${Math.max(0, Math.min(100, profile.progress * 100))}%` }} /></div>
           <p className="mt-3 text-xs text-muted-foreground">{t('quests.completedCount', { completed: completed.length, total: QUEST_IDS.length })}</p>
         </div>
-        <div className="rounded-lg border border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-orange-500/5 p-4">
-          <h3 className="flex items-center gap-2 font-semibold"><Trophy className="size-5 text-amber-500" />{t('quests.weeklyChallenge')}</h3>
+        <div className="rounded-lg border border-border bg-surface-hover p-4">
+          <h3 className="flex items-center gap-2 font-semibold"><Trophy className="size-4 text-muted-foreground" />{t('quests.weeklyChallenge')}</h3>
           <p className="mt-2 text-xs text-muted-foreground">{t('quests.weeklyWindow')}</p>
           <div className="mt-3 flex flex-wrap justify-between gap-2 text-xs numeric"><span>{t('quests.xpAmount', { xp: weekly.current })} / {t('quests.xpAmount', { xp: goal })}</span><span>{t('quests.previousWeek', { xp: weekly.previous })}</span></div>
-          <div role="progressbar" aria-label={t('quests.weeklyChallenge')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={weeklyProgress} className="mt-2 h-2 overflow-hidden rounded-full bg-foreground/10"><div className="h-full rounded-full bg-amber-500 transition-[width] motion-reduce:transition-none" style={{ width: `${weeklyProgress}%` }} /></div>
+          <div role="progressbar" aria-label={t('quests.weeklyChallenge')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={weeklyProgress} className="mt-2 h-2 overflow-hidden rounded-full bg-surface-pressed"><div className="h-full rounded-full bg-accent transition-[width] motion-reduce:transition-none" style={{ width: `${weeklyProgress}%` }} /></div>
           <p className="mt-3 text-xs text-muted-foreground">{t(weekly.current >= goal ? 'quests.weeklyGoalReached' : 'quests.personalChallenge')}</p>
         </div>
       </div>
@@ -179,12 +179,12 @@ export function QuestProgressCard({ cloudFeaturesEnabled = true, className, scop
           {value === 'completed' ? <Trophy className="size-3.5" /> : value === 'snoozed' ? <Clock3 className="size-3.5" /> : <Zap className="size-3.5" />}{t(TAB_KEYS[value])}<span className="rounded-full bg-foreground/5 px-1.5 numeric">{groups[value].length}</span>
         </button>)}
       </div>
-      {quests.length === 0 ? <div className="rounded-lg border border-dashed border-border/70 bg-foreground/[0.025] px-4 py-6 text-center" data-testid="quest-progress-card-empty"><Trophy className="mx-auto mb-2 size-6 text-amber-500" /><p className="text-sm font-medium">{t(tab === 'completed' ? 'quests.emptyCompleted' : tab === 'snoozed' ? 'quests.emptySnoozed' : 'quests.emptyActive')}</p><p className="mt-1 text-xs text-muted-foreground">{t('quests.emptyHint')}</p><span className="sr-only">{t('quests.empty')}</span></div> : <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {quests.length === 0 ? <div className="rounded-lg border border-dashed border-border/70 bg-foreground/[0.025] px-4 py-6 text-center" data-testid="quest-progress-card-empty"><Trophy className="mx-auto mb-2 size-4 text-muted-foreground" /><p className="text-sm font-medium">{t(tab === 'completed' ? 'quests.emptyCompleted' : tab === 'snoozed' ? 'quests.emptySnoozed' : 'quests.emptyActive')}</p><p className="mt-1 text-xs text-muted-foreground">{t('quests.emptyHint')}</p><span className="sr-only">{t('quests.empty')}</span></div> : <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {quests.slice(safePage * 3, safePage * 3 + 3).map(quest => {
           const Icon = QUEST_ICONS[quest.id]
           const title = t(QUEST_TITLE[quest.id])
           return <article key={quest.id} data-quest-id={quest.id} className={cn('flex min-w-0 flex-col gap-3 rounded-lg border p-4 shadow-xs', QUEST_COLORS[quest.id])}>
-            <div className="flex flex-wrap items-center justify-between gap-2"><span className="grid size-10 place-items-center rounded-lg bg-background/70"><Icon className="size-5" aria-hidden="true" /></span><span className="flex items-center gap-1 rounded-full bg-background/70 px-2 py-1 text-xs font-semibold">{quest.status === 'completed' ? <Check className="size-3" /> : <Zap className="size-3" />}{quest.status === 'completed' && `${t('quests.earned')} `}{t('quests.xpAmount', { xp: XP_EVENT_REWARDS[QUEST_XP_EVENT[quest.id]] })}</span></div>
+            <div className="flex flex-wrap items-center justify-between gap-2"><span className="grid size-8 place-items-center rounded-[var(--radius-control)] bg-background text-muted-foreground"><Icon className="size-4" aria-hidden="true" /></span><span className="flex items-center gap-1 rounded-full bg-background/70 px-2 py-1 text-xs font-semibold">{quest.status === 'completed' ? <Check className="size-3" /> : <Zap className="size-3" />}{quest.status === 'completed' && `${t('quests.earned')} `}{t('quests.xpAmount', { xp: XP_EVENT_REWARDS[QUEST_XP_EVENT[quest.id]] })}</span></div>
             <div className="flex-1"><p className="text-xs uppercase caps-label opacity-75">{t(QUEST_SERVICE[quest.id])}</p><h4 className="mt-1 break-words text-sm font-semibold">{title}</h4></div>
             {quest.status === 'completed' ? <p className="text-xs text-muted-foreground">{quest.completedAt ? new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(quest.completedAt) : t('quests.completed')}</p> : quest.status === 'snoozed' && (quest.snoozeUntil ?? 0) > now ? <p className="text-xs text-muted-foreground">{t('quests.snoozedUntil', { date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium' }).format(quest.snoozeUntil) })}</p> : <>
               {(['first_note', 'first_task', 'first_workflow'] as string[]).includes(quest.id) && <button type="button" className={BUTTON} onClick={() => { const tourId = ({ first_note: 'OBT-17', first_task: 'OBT-15', first_workflow: 'OBT-23' } as Partial<Record<QuestId, TourId>>)[quest.id]; if (learning?.enabled && tourId) void learning.start(tourId); else navigate(routes.view.settings('learning')) }}>{t('productTour.questShowHow')}</button>}
