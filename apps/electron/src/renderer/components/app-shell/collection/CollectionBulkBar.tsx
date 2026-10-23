@@ -362,7 +362,7 @@ export function CollectionBulkBar({
           type="button"
           disabled={busy}
           onClick={() => void applyMapReduce()}
-          className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-foreground/80 hover:bg-foreground/[0.03]"
+          className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-text-secondary hover:bg-surface-hover"
         >
           <Layers className="h-3.5 w-3.5" /> {t('collection.bulk.map')}
         </button>
@@ -371,7 +371,7 @@ export function CollectionBulkBar({
           type="button"
           disabled={busy}
           onClick={() => apply({ isFlagged: true })}
-          className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-foreground/80 hover:bg-foreground/[0.03]"
+          className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-text-secondary hover:bg-surface-hover"
         >
           <Flag className="h-3.5 w-3.5" /> {t('collection.bulk.flag')}
         </button>
@@ -380,7 +380,7 @@ export function CollectionBulkBar({
           type="button"
           disabled={busy}
           onClick={() => apply({ isFlagged: false })}
-          className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-foreground/80 hover:bg-foreground/[0.03]"
+          className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-text-secondary hover:bg-surface-hover"
         >
           {t('collection.bulk.unflag')}
         </button>
@@ -389,7 +389,7 @@ export function CollectionBulkBar({
           type="button"
           disabled={busy}
           onClick={applyArchive}
-          className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-foreground/80 hover:bg-foreground/[0.03]"
+          className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-text-secondary hover:bg-surface-hover"
         >
           <Archive className="h-3.5 w-3.5" /> {t('collection.bulk.archive')}
         </button>

@@ -205,7 +205,7 @@ export function CollectionFilterMenu({
                   }}
                   className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] border border-border-strong bg-surface-input px-2 text-sm outline-none focus-visible:border-focus focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus/25" data-slot="shell-search-input"
                 />
-                <button type="submit" className="h-7 rounded-[var(--radius-control)] px-2 text-xs font-medium hover:bg-foreground/[0.055]">
+                <button type="submit" className="h-7 rounded-[var(--radius-control)] px-2 text-xs font-medium hover:bg-surface-hover">
                   {t('collection.slice.rename')}
                 </button>
               </form>
@@ -271,7 +271,7 @@ export function CollectionFilterMenu({
           {count > 0 && !saving && (
             <button
               type="button"
-              className="mx-1 mt-0.5 h-7 rounded-[var(--radius-control)] px-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.055] hover:text-foreground"
+              className="mx-1 mt-0.5 h-7 rounded-[var(--radius-control)] px-2 text-left text-xs font-medium text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground"
               onClick={() => setSaving(true)}
             >
               {t('collection.slice.save')}
@@ -294,7 +294,7 @@ export function CollectionFilterMenu({
               />
               <button
                 type="submit"
-                className="h-7 rounded-[var(--radius-control)] px-2 text-xs font-medium hover:bg-foreground/[0.055]"
+                className="h-7 rounded-[var(--radius-control)] px-2 text-xs font-medium hover:bg-surface-hover"
               >
                 {t('collection.slice.save')}
               </button>
