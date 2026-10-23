@@ -43,10 +43,12 @@
     "./playbooks/codebook": "./src/playbooks/codebook/index.ts",
     "./handlers/rpc/google-meet": "./src/handlers/rpc/google-meet.ts",
     "./memory/graph/*": "./src/memory/graph/*.ts",
-    "./memory/graph": "./src/memory/graph/install.ts"
+    "./memory/graph": "./src/memory/graph/install.ts",
+    "./canvas/*": "./src/canvas/*.ts"
   },
   "scripts": {},
   "dependencies": {
+    "@rox/canvas-core": "workspace:*",
     "@rox/cloud-runner": "workspace:*",
     "@rox/core": "workspace:*",
     "@rox/session-tools-core": "workspace:*",

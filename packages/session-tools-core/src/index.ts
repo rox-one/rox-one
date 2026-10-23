@@ -152,6 +152,11 @@ export type {
   BoardWidgetToolRecord,
   BoardWidgetPutInput,
   BoardWidgetToolCallbacks,
+  // Canvas types
+  CanvasEntityCardResult,
+  CanvasCreateEntityCardInput,
+  CanvasLinkEntityInput,
+  CanvasToolCallbacks,
   // Memory types
   MemoryToolCallbacks,
   MemoryWikiCallbacks,
@@ -300,6 +305,8 @@ export {
   handleWritePageData,
   handleDeletePage,
   handleShowWidget,
+  handleCanvasCreateEntityCard,
+  handleCanvasLinkEntity,
   handleAgentTeams,
 } from './handlers/index.ts';
 
