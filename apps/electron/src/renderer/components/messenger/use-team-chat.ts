@@ -18,17 +18,6 @@ function errorText(error: unknown): string {
   return raw.replace(/^.*?Error:\s*/s, '').trim() || raw
 }
 
-/** Keys of own dual-writes (channelId+text, 8s TTL) — reserved for echo dedupe. */
-const recentDualWrites = new Set<string>()
-function dualWriteKey(channelId: string, text: string): string {
-  return `${channelId}\0${text}`
-}
-function rememberDualWrite(channelId: string, text: string): void {
-  const key = dualWriteKey(channelId, text)
-  recentDualWrites.add(key)
-  window.setTimeout(() => { recentDualWrites.delete(key) }, 8_000)
-}
-
 export function useTeamChannels(orgId: string | null) {
   const [state, setState] = React.useState<{ loading: boolean; channels: TeamChannelView[]; error: string | null }>({ loading: true, channels: [], error: null })
   const version = React.useRef(0)
@@ -138,8 +127,6 @@ export function useTeamSearch(orgId: string | null, query: string) {
  */
 export async function postTeamMessage(channelId: string, text: string, live: boolean): Promise<void> {
   if (live && window.electronAPI.imSendMessage) {
-    // Remember before await so a fast im:message echo cannot race a residual path.
-    rememberDualWrite(channelId, text)
     try {
       const result = await window.electronAPI.imSendMessage(channelId, text)
       if (result.ok) {

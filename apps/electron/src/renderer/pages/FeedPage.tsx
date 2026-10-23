@@ -261,8 +261,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const [chip, setChip] = useState<FeedChip>(initialPrefs.chip)
   const [sourceFilter, setSourceFilter] = useState<string | null>(initialPrefs.sourceFilter)
   const [channelFilter, setChannelFilter] = useState<string | null>(null)
-  const [messengerChannels, setMessengerChannels] = useState(() => [...listMessengerFeedChannels()])
-  useEffect(() => subscribeMessengerFeedChannels(() => setMessengerChannels([...listMessengerFeedChannels()])), [])
+  const [messengerChannelsAll, setMessengerChannelsAll] = useState(() => [...listMessengerFeedChannels()])
+  useEffect(() => subscribeMessengerFeedChannels(() => setMessengerChannelsAll([...listMessengerFeedChannels()])), [])
 
   const [query, setQuery] = useState(initialPrefs.query)
   const [colors, setColors] = useState<ReadonlySet<FeedColor>>(() => new Set(initialPrefs.colors))
@@ -372,6 +372,19 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   // Team («Команда») — renderer-side local-first store.
   const team = useTeamState()
   const roster = useTeamRoster()
+  const messengerChannels = useMemo(
+    () => {
+      const orgId = roster.org?.id
+      if (!orgId) return []
+      return messengerChannelsAll.filter((c) => c.orgId === orgId)
+    },
+    [messengerChannelsAll, roster.org?.id],
+  )
+  // Drop a channelFilter that is not in the current org's followed set.
+  useEffect(() => {
+    if (channelFilter && !messengerChannels.some((c) => c.channelId === channelFilter)) setChannelFilter(null)
+  }, [channelFilter, messengerChannels])
+
   const teamItems = useMemo(
     () => caller.native ? [] : buildTeamItems(team.activity ?? [], (e) => activityText(e, roster.members, roster.selfUserId, t)),
     [caller.native, team.activity, roster.members, roster.selfUserId, t],
@@ -426,7 +439,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const longFmt = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }), [locale])
   const when = useCallback((at: number) => (new Date(at).toDateString() === new Date(now).toDateString() ? timeFmt.format(at) : dateFmt.format(at)), [now, timeFmt, dateFmt])
 
-  const resetFilters = () => { setChip('all'); setQuery(''); setSourceFilter(null); setColors(new Set()); setTagFilter(null); setMark('all') }
+  const resetFilters = () => { setChip('all'); setQuery(''); setSourceFilter(null); setChannelFilter(null); setColors(new Set()); setTagFilter(null); setMark('all') }
   const switchView = (next: View) => {
     setView(next)
     setChip('all')
@@ -584,8 +597,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     x: { connected: data.x.state === 'connected', username: data.x.username },
     team: { connected: Boolean(roster.org), name: roster.org ? roster.org.name ?? t('feed.nav.teamLocal') : t('feed.nav.teamNoOrg') },
     activeKey: tagFilter ? `label:${tagFilter}` : view === 'news' && sourceFilter ? `source:${sourceFilter}` : `view:${view}`,
-    onView: (next) => { switchView(next); if (next !== 'sources') setSourceFilter(null) },
-    onSource: (id) => { switchView('news'); setSourceFilter(id) },
+    onView: (next) => { switchView(next); if (next !== 'sources') setSourceFilter(null); if (next !== 'team') setChannelFilter(null) },
+    onSource: (id) => { switchView('news'); setSourceFilter(id); setChannelFilter(null) },
     onTag: (tag) => setTagFilter(tagFilter?.toLowerCase() === tag.toLowerCase() ? null : tag),
     query,
     onQuery: setQuery,
