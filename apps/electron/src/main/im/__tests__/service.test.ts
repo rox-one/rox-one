@@ -155,6 +155,29 @@ describe('ImService — native available', () => {
     expect(await service.unsubscribeChannel('c1')).toEqual({ ok: true })
     expect(client.calls.unsubscribe).toEqual(['c1'])
   })
+
+  it('serializes concurrent subscribe so refcount cannot undercount under await', async () => {
+    await service.ensureStarted()
+    client.calls.subscribe = []
+    client.calls.unsubscribe = []
+    let inFlight = 0
+    let maxConcurrent = 0
+    const baseSubscribe = client.subscribe.bind(client)
+    client.subscribe = async (channelId: string) => {
+      inFlight += 1
+      maxConcurrent = Math.max(maxConcurrent, inFlight)
+      await new Promise((r) => setTimeout(r, 30))
+      inFlight -= 1
+      return baseSubscribe(channelId)
+    }
+    await Promise.all([service.subscribeChannel('c1'), service.subscribeChannel('c1')])
+    expect(client.calls.subscribe).toEqual(['c1'])
+    expect(maxConcurrent).toBe(1)
+    expect(await service.unsubscribeChannel('c1')).toEqual({ ok: true })
+    expect(client.calls.unsubscribe).toEqual([])
+    expect(await service.unsubscribeChannel('c1')).toEqual({ ok: true })
+    expect(client.calls.unsubscribe).toEqual(['c1'])
+  })
 })
 
 describe('ImService — native unavailable (fallback)', () => {

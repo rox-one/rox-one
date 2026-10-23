@@ -147,6 +147,8 @@ export class ImService {
   private startPromise: Promise<ImStatusEvent> | null = null
   /** Per-channel subscribe refcounts (open view + followed fan-out share one native sub). */
   private subscribeRefs = new Map<string, number>()
+  /** Per-channel promise chain so concurrent subscribe/unsubscribe cannot undercount. */
+  private subscribeLocks = new Map<string, Promise<void>>()
 
   constructor(options: ImServiceOptions = {}) {
     this.options = options
@@ -210,6 +212,7 @@ export class ImService {
     this.client = null
     this.startPromise = null
     this.subscribeRefs.clear()
+    this.subscribeLocks.clear()
     this.lastReason = 'stopped'
     this.publishStatus({ available: false, mode: 'fallback', reason: 'stopped' })
     if (client) {
@@ -225,28 +228,50 @@ export class ImService {
     return { ok: false, reason: this.lastReason, fallback: 'team-chat' }
   }
 
+  /** Run `fn` exclusively for `channelId` (serialize RMW around await). */
+  private async withSubscribeLock<T>(channelId: string, fn: () => Promise<T>): Promise<T> {
+    const prev = this.subscribeLocks.get(channelId) ?? Promise.resolve()
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => { release = resolve })
+    const tail = prev.then(() => gate)
+    this.subscribeLocks.set(channelId, tail)
+    await prev.catch(() => {})
+    try {
+      return await fn()
+    } finally {
+      release()
+      if (this.subscribeLocks.get(channelId) === tail) this.subscribeLocks.delete(channelId)
+    }
+  }
+
   async subscribeChannel(channelId: string): Promise<ImResult<Record<never, never>>> {
     await this.ensureStarted()
     if (!this.client) return this.fallback()
-    const prev = this.subscribeRefs.get(channelId) ?? 0
-    if (prev === 0) await this.client.subscribe(channelId)
-    this.subscribeRefs.set(channelId, prev + 1)
-    return { ok: true }
+    return this.withSubscribeLock(channelId, async () => {
+      if (!this.client) return this.fallback()
+      const prev = this.subscribeRefs.get(channelId) ?? 0
+      if (prev === 0) await this.client.subscribe(channelId)
+      this.subscribeRefs.set(channelId, prev + 1)
+      return { ok: true }
+    })
   }
 
   async unsubscribeChannel(channelId: string): Promise<ImResult<Record<never, never>>> {
     await this.ensureStarted()
     if (!this.client) return this.fallback()
-    const prev = this.subscribeRefs.get(channelId) ?? 0
-    if (prev <= 0) return { ok: true }
-    const next = prev - 1
-    if (next === 0) {
-      this.subscribeRefs.delete(channelId)
-      await this.client.unsubscribe(channelId)
-    } else {
-      this.subscribeRefs.set(channelId, next)
-    }
-    return { ok: true }
+    return this.withSubscribeLock(channelId, async () => {
+      if (!this.client) return this.fallback()
+      const prev = this.subscribeRefs.get(channelId) ?? 0
+      if (prev <= 0) return { ok: true }
+      const next = prev - 1
+      if (next === 0) {
+        this.subscribeRefs.delete(channelId)
+        await this.client.unsubscribe(channelId)
+      } else {
+        this.subscribeRefs.set(channelId, next)
+      }
+      return { ok: true }
+    })
   }
 
   async sendMessage(channelId: string, text: string): Promise<ImResult<{ message: ImMessageEvent }>> {

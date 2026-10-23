@@ -70,7 +70,8 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
   }, [])
 
   const selected = channels.channels.find(c => c.id === selectedId) ?? channels.channels[0] ?? null
-  const messages = useTeamMessages(selected?.id ?? null)
+  const selectedLabel = selected ? channelLabel(selected, t) : undefined
+  const messages = useTeamMessages(selected?.id ?? null, { channelName: selectedLabel })
   const live = messages.live
   const relayStatus = messages.relay
 
@@ -87,7 +88,11 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
       .map((c) => ({ channelId: c.id, name: channelLabel(c, t) })),
     [channels.channels, t],
   )
-  const followedIds = React.useMemo(() => followed.map((f) => f.channelId), [followed])
+  // Open channel is owned solely by useTeamMessages subscribe — exclude it here to avoid dual refcount.
+  const followedIds = React.useMemo(
+    () => followed.map((f) => f.channelId).filter((id) => id !== selected?.id),
+    [followed, selected?.id],
+  )
   useImChannelSubscriptions(followedIds, live)
   useFollowedChannelFanOut(live, followed, selected?.id ?? null)
 

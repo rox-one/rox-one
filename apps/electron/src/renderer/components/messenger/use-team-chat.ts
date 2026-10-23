@@ -60,12 +60,27 @@ export function useTeamChannels(orgId: string | null) {
   return { ...state, reload }
 }
 
-export function useTeamMessages(channelId: string | null) {
+export function useTeamMessages(channelId: string | null, opts?: { channelName?: string }) {
   const { live, status } = useImRelay()
   const [state, setState] = React.useState<{ loading: boolean; messages: TeamChannelMessage[]; error: string | null }>({ loading: false, messages: [], error: null })
   const version = React.useRef(0)
-  /** Skip one changed→reload after our own view-path markRead (badges still refresh via useTeamChannels). */
-  const suppressChangedReload = React.useRef(false)
+  const channelNameRef = React.useRef(opts?.channelName)
+  channelNameRef.current = opts?.channelName
+  /**
+   * One-shot suppress for markRead→changed→reload on the open channel.
+   * Armed before markRead; consumed once when a matching changed arrives (or times out).
+   * useTeamChannels still reloads on changed for badges.
+   */
+  const suppressMarkReadChanged = React.useRef<{ channelId: string; token: number } | null>(null)
+  const suppressTokenGen = React.useRef(0)
+
+  const armMarkReadSuppress = React.useCallback((id: string) => {
+    const token = ++suppressTokenGen.current
+    suppressMarkReadChanged.current = { channelId: id, token }
+    window.setTimeout(() => {
+      if (suppressMarkReadChanged.current?.token === token) suppressMarkReadChanged.current = null
+    }, 2_000)
+  }, [])
 
   useImChannelSubscription(channelId, live)
 
@@ -90,11 +105,10 @@ export function useTeamMessages(channelId: string | null) {
             setState({ loading: false, messages, error: null })
             void window.electronAPI.imMarkRead?.(channelId).catch(() => {})
             // Keep team-chat unread badges in sync while viewing live (ingest bumps lastSeq).
-            // Suppress the markRead→changed→reload loop for this open channel.
-            suppressChangedReload.current = true
-            void window.electronAPI.teamChatMarkRead?.(channelId).then(() => {
-              queueMicrotask(() => { suppressChangedReload.current = false })
-            }).catch(() => { suppressChangedReload.current = false })
+            armMarkReadSuppress(channelId)
+            void window.electronAPI.teamChatMarkRead?.(channelId).catch(() => {
+              if (suppressMarkReadChanged.current?.channelId === channelId) suppressMarkReadChanged.current = null
+            })
             return
           }
           // ok:false → fall through to team-chat store
@@ -106,23 +120,24 @@ export function useTeamMessages(channelId: string | null) {
       if (v !== version.current) return
       setState({ loading: false, messages: result.messages, error: null })
       if (result.channel.viewerRole && result.channel.unreadCount > 0) {
-        suppressChangedReload.current = true
-        void window.electronAPI.teamChatMarkRead(channelId).then(() => {
-          queueMicrotask(() => { suppressChangedReload.current = false })
-        }).catch(() => { suppressChangedReload.current = false })
+        armMarkReadSuppress(channelId)
+        void window.electronAPI.teamChatMarkRead(channelId).catch(() => {
+          if (suppressMarkReadChanged.current?.channelId === channelId) suppressMarkReadChanged.current = null
+        })
       }
     } catch (error) {
       if (v === version.current) setState({ loading: false, messages: [], error: errorText(error) })
     }
-  }, [channelId, live])
+  }, [channelId, live, armMarkReadSuppress])
 
   React.useEffect(() => {
     setState({ loading: Boolean(channelId), messages: [], error: null })
     void reload()
     const off = window.electronAPI.onTeamChatChanged?.((change) => {
       if (change?.channelId !== channelId) return
-      if (suppressChangedReload.current) {
-        suppressChangedReload.current = false
+      const armed = suppressMarkReadChanged.current
+      if (armed && armed.channelId === channelId) {
+        suppressMarkReadChanged.current = null // consume one-shot
         return
       }
       void reload()
@@ -147,7 +162,7 @@ export function useTeamMessages(channelId: string | null) {
       ...(message.replyToId ? { replyToId: message.replyToId, threadId: message.threadId ?? message.replyToId } : {}),
     }
     void window.electronAPI.teamChatIngest(input).then((stored) => {
-      fanOutIfFollowed(stored)
+      fanOutIfFollowed(stored, channelNameRef.current)
     }).catch(() => {
       // Local durability is best-effort; UI already shows the push.
     })
