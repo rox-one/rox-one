@@ -7,6 +7,7 @@ import { InlineMenuSurface } from '../ui/InlineMenuSurface'
 import { RICH_BLOCK_EDIT_EVENT } from './rich-block-events'
 import { insertRoxColumnsContent } from './extensions/ColumnsBlock'
 import { insertRoxTabsContent } from './extensions/TabsBlock'
+import { insertActionButtonContent } from './extensions/ActionButtonBlock'
 import {
   createRoxBlockContent,
   slashAliasesForRoxBlockKind,
@@ -553,6 +554,15 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
       },
     },
     calloutDetails,
+    {
+      id: 'action-button',
+      title: slashTitle('notes.slash.actionButton', 'Action button'),
+      description: slashTitle('notes.slash.actionButtonDescription', 'Insert a typed declarative action button'),
+      icon: 'workflow',
+      group: 'Blocks',
+      aliases: ['action', 'button', 'actionbutton', 'command', 'workflow', 'кнопка', 'действие'],
+      run: (e, insertPos) => insertActionButtonContent(e, insertPos),
+    },
     {
       id: 'embed',
       title: slashTitle('notes.slash.embed', 'Embed'),
