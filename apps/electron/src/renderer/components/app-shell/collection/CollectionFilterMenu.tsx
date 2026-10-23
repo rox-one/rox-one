@@ -203,7 +203,7 @@ export function CollectionFilterMenu({
                       setRenamingId(null)
                     }
                   }}
-                  className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] border border-border/50 bg-foreground/[0.03] px-2 text-sm outline-none"
+                  className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] border border-border-strong bg-surface-input px-2 text-sm outline-none focus-visible:border-focus focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus/25" data-slot="shell-search-input"
                 />
                 <button type="submit" className="h-7 rounded-[var(--radius-control)] px-2 text-xs font-medium hover:bg-foreground/[0.055]">
                   {t('collection.slice.rename')}
@@ -290,7 +290,7 @@ export function CollectionFilterMenu({
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder={t('collection.slice.savePlaceholder')}
-                className="h-7 min-w-0 flex-1 rounded-[var(--radius-card)] border border-border/50 bg-foreground/[0.03] px-2 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-foreground/25"
+                className="h-7 min-w-0 flex-1 rounded-[var(--radius-control)] border border-border-strong bg-surface-input px-2 text-sm outline-none placeholder:text-muted-foreground/70 focus-visible:border-focus focus-visible:ring-[length:var(--ring-width)] focus-visible:ring-focus/25" data-slot="shell-search-input"
               />
               <button
                 type="submit"

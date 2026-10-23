@@ -2177,6 +2177,36 @@ html[data-ui-profile="super-engineering"][data-shell-style="zen"] .sidebar-discl
   transition: opacity var(--motion-fast) var(--ease-standard);
 }
 
+
+/* Rox Engineering shared shell Input / search / filter chrome.
+   Theme role `input` (#1a1a1e in super-engineering.json) maps to
+   --input-surface via themeToCSS; --surface-input aliases it. Shared
+   Input/Select already use bg-surface-input. Shell search + collection
+   filter fields that previously used muted/alpha fills pin to the same
+   token under SE. Focus uses --focus / accent (same as #2211 shell rings
+   and shared Input); high contrast keeps a solid outline. */
+html[data-ui-profile="super-engineering"] [data-slot="shell-search"] {
+  background: var(--input-surface);
+  border-color: color-mix(in oklch, var(--foreground) 12%, transparent);
+  border-radius: var(--radius-control);
+}
+
+html[data-ui-profile="super-engineering"] [data-slot="shell-search"]:focus-within {
+  border-color: var(--focus, var(--accent));
+  box-shadow: var(--se-shell-focus-ring);
+}
+
+html[data-contrast="high"][data-ui-profile="super-engineering"] [data-slot="shell-search"]:focus-within {
+  outline: var(--focus-ring-width, 2px) solid var(--focus, var(--accent));
+  outline-offset: var(--focus-ring-inset-offset, -2px);
+  box-shadow: none;
+}
+
+html[data-ui-profile="super-engineering"] [data-slot="shell-search"] [data-slot="shell-search-input"] {
+  /* Nested in shell-search plate — plate owns the fill; field stays clear. */
+  background-color: transparent;
+}
+
 /* Rox Engineering mode-pill density (radius 8). Base titlebar-mode-pill.css
    keeps radius-full for other profiles; under SE the plate, segments, sliding
    indicator, and the «Все экраны» overflow trigger (.rox-mode-pill-item) use
