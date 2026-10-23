@@ -7,6 +7,15 @@ import {
 
 const me = actorOrigin('user', 'style-inspector')
 
+function stub(partial: Partial<CanvasObject> & Pick<CanvasObject, 'id' | 'type'>): CanvasObject {
+  return {
+    parentId: null, index: 'a0', x: 0, y: 0, w: 10, h: 10, rotation: 0, opacity: 1,
+    locked: false, hidden: false, style: {}, props: {}, links: [],
+    ...partial,
+  } as CanvasObject
+}
+
+
 function boardWith(...inputs: Array<Parameters<CanvasDoc['add']>[0][number]>) {
   const doc = new Y.Doc()
   const board = new CanvasDoc(doc)
@@ -16,10 +25,10 @@ function boardWith(...inputs: Array<Parameters<CanvasDoc['add']>[0][number]>) {
 
 describe('style-model applicable fields', () => {
   it('exposes fill/stroke/radius for rects and font for text/sticky', () => {
-    const rect = { id: 'r', type: 'shape', parentId: null, index: 'a0', x: 0, y: 0, w: 10, h: 10, props: { kind: 'rect' } } as CanvasObject
-    const ell = { ...rect, id: 'e', props: { kind: 'ellipse' } }
-    const text = { id: 't', type: 'text', parentId: null, index: 'a0', x: 0, y: 0, w: 10, h: 10, props: { text: '' } } as CanvasObject
-    const line = { id: 'l', type: 'line', parentId: null, index: 'a0', x: 0, y: 0, w: 10, h: 2, props: { points: [0, 0, 10, 0] } } as CanvasObject
+    const rect = stub({ id: 'r', type: 'shape', props: { kind: 'rect' } })
+    const ell = stub({ id: 'e', type: 'shape', props: { kind: 'ellipse' } })
+    const text = stub({ id: 't', type: 'text', props: { text: '' } })
+    const line = stub({ id: 'l', type: 'line', w: 10, h: 2, props: { points: [0, 0, 10, 0] } })
     expect(applicableFields(rect).has('cornerRadius')).toBe(true)
     expect(applicableFields(ell).has('cornerRadius')).toBe(false)
     expect(applicableFields(text).has('fontSize')).toBe(true)
