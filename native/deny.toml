@@ -1,6 +1,5 @@
 # cargo-deny configuration for the Craft native (Rust) workspace.
-# Mirrors the policy used by the relay upstream (see ../buzz-src/deny.toml):
-# permissive licenses only, no GPL/AGPL.
+# Permissive licenses only — no GPL/AGPL (mirrors the Apache-2.0 relay upstream policy).
 #
 # Run: cd native && cargo deny check licenses
 #      cd native && cargo deny check

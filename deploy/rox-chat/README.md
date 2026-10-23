@@ -1,6 +1,6 @@
 # rox-chat — self-hosted chat relay
 
-Deployment for the ROX chat relay: a self-hosted, Buzz-derived relay that
+Deployment for the ROX chat relay: a self-hosted Apache-2.0 relay (see NOTICE) that
 speaks the NIP-01/NIP-42 protocol (`wss://chat.rox.one`) and exposes the
 matching REST + media endpoints (`https://chat.rox.one/api/...`,
 `https://chat.rox.one/media`). It is what backs the messenger surface

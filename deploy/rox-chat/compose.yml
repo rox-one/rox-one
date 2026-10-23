@@ -1,4 +1,4 @@
-name: buzz-prod
+name: rox-chat
 
 services:
   relay:

@@ -38,3 +38,5 @@ futures-util = "0.3"
 secp256k1 = { version = "=0.29.1", features = ["rand", "rand-std"] }
 napi = "=2.16.17"
 napi-derive = "=2.16.13"
+# native-tls → security-framework: 3.7+ needs edition2024 (rustc ≥1.85). Pin for MSRV 1.83.
+security-framework = "=3.5.1"

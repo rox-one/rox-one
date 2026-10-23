@@ -423,9 +423,17 @@ impl ChatCore {
     }
 
     /// Persist into the outbox, then try to put it on the wire right away.
+    ///
+    /// Edit envelopes (`["e", id, "", "edit"]`) are *not* inserted into the
+    /// message cache — they rewrite the target row via `mark_event_edited`.
+    /// Inserting them as kind-9 rows would duplicate FTS hits (see
+    /// `edits_and_deletes_update_the_local_cache`). Deletion envelopes (kind 5)
+    /// still go into the table; `kind_exclusion` keeps them out of lists/search.
     fn queue_event(&self, event: &Event) -> Result<(), ChatError> {
         self.inner.with_store(|store| {
-            store.insert_event_with_pending(event, true)?;
+            if !is_edit_event(event) {
+                store.insert_event_with_pending(event, true)?;
+            }
             store.outbox_enqueue(event)?;
             Ok(())
         })?;

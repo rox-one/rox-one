@@ -1,6 +1,6 @@
 # Rox Messenger ↔ Rox Calls: channel/room id contract (v1, 2026-10-14)
 
-Owner: Rox Messenger (relay on Buzz Apache-2.0 code, Option A). Consumer: Rox Calls (LiveKit + transcription).
+Owner: Rox Messenger (self-hosted Apache-2.0 relay, Option A). Consumer: Rox Calls (LiveKit + transcription).
 
 ## Identifiers
 - **channelId**: lowercase canonical UUIDv4 string (e.g. `3f2b…-…`). Same value as the relay's NIP-29 `h` tag and the DB `channel_id`. Stable forever; renames don't change it.

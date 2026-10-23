@@ -733,6 +733,7 @@ dependencies = [
  "napi-derive",
  "rusqlite",
  "secp256k1",
+ "security-framework",
  "serde",
  "serde_json",
  "sha2",
@@ -804,9 +805,9 @@ dependencies = [
 
 [[package]]
 name = "security-framework"
-version = "3.7.0"
+version = "3.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7f4bc775c73d9a02cde8bf7b2ec4c9d12743edf609006c7facc23998404cd1d"
+checksum = "b3297343eaf830f66ede390ea39da1d462b6b0c1b000f420d0a83f898bbbe6ef"
 dependencies = [
  "bitflags",
  "core-foundation",

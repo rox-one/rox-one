@@ -34,3 +34,8 @@ tempfile.workspace = true
 [features]
 default = []
 napi-bindings = ["dep:napi", "dep:napi-derive"]
+
+# Keep security-framework on 3.5.1 (workspace pin) so `cargo` 1.83 can fetch it.
+# 3.7+ declares edition2024 and breaks the MSRV toolchain.
+[target.'cfg(target_os = "macos")'.dependencies]
+security-framework = { workspace = true }
