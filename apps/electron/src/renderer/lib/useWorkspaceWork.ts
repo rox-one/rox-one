@@ -37,6 +37,12 @@ function replacesCached(next: WorkspaceWorkSnapshot, cached: WorkspaceWorkSnapsh
   return meetsAnnouncedRevision(next) && (!cached || cached.revision <= next.revision)
 }
 
+/** Result of mutate/writeOutcome: ok carries the accepted snapshot revision. */
+export type WorkspaceWorkWriteOutcome =
+  | { status: 'ok'; revision: number }
+  | { status: 'rejected' }
+  | { status: 'skipped' }
+
 export function useWorkspaceWork(workspaceId: string) {
   const [snapshot, setSnapshot] = useState<WorkspaceWorkSnapshot | null>(() => cachedSnapshot(workspaceId))
   const [loading, setLoading] = useState(() => !cachedSnapshot(workspaceId))
@@ -129,12 +135,12 @@ export function useWorkspaceWork(workspaceId: string) {
     return () => { scope.active = false; scope.request++; off?.(); offCache() }
   }, [scope, load, accept])
 
-  const mutate = useCallback(async (input: WorkspaceWorkMutation | WorkspaceWorkRemoval, remove = false, expectedRevision?: number): Promise<'ok' | 'rejected' | 'skipped'> => {
-    if (!scope.active || scope.pending) return 'skipped'
+  const mutate = useCallback(async (input: WorkspaceWorkMutation | WorkspaceWorkRemoval, remove = false, expectedRevision?: number): Promise<WorkspaceWorkWriteOutcome> => {
+    if (!scope.active || scope.pending) return { status: 'skipped' }
     // A cached snapshot shown while revalidating is not a write base.
     if (!scope.verified && scope.inflight) await scope.inflight
     const before = current.current
-    if (!scope.active || scope.pending || !before || before.workspaceId !== scope.workspaceId) return 'skipped'
+    if (!scope.active || scope.pending || !before || before.workspaceId !== scope.workspaceId) return { status: 'skipped' }
     scope.pending = true; setPending(true); setError(null)
     const epoch = cacheWriteEpoch()
     try {
@@ -143,15 +149,16 @@ export function useWorkspaceWork(workspaceId: string) {
         ? await client.remove(expectedRevision ?? before.revision, input as WorkspaceWorkRemoval)
         : await client.write(expectedRevision ?? before.revision, input as WorkspaceWorkMutation)
       // Write landed; keep 'ok' even if this view unmounted so callers do not
-      // treat a successful mutate as a rejection.
+      // treat a successful mutate as a rejection. Return the post-write revision
+      // so open drafts can advance expectedRevision for own schedule writes.
       if (scope.active) accept(result.snapshot, epoch)
-      return 'ok'
+      return { status: 'ok', revision: result.snapshot.revision }
     } catch (failure) {
-      if (!scope.active) return 'skipped'
+      if (!scope.active) return { status: 'skipped' }
       const next = workspaceWorkFailure(failure)
       if (next.code === 'conflict') await load()
       if (scope.active) setError(next)
-      return 'rejected'
+      return { status: 'rejected' }
     } finally {
       scope.pending = false
       if (scope.active) setPending(false)
@@ -162,9 +169,9 @@ export function useWorkspaceWork(workspaceId: string) {
   return {
     snapshot: visible,
     loading, pending, error, refresh,
-    write: useCallback(async (input: WorkspaceWorkMutation, expectedRevision?: number) => (await mutate(input, false, expectedRevision)) === 'ok', [mutate]),
-    remove: useCallback(async (input: WorkspaceWorkRemoval, expectedRevision?: number) => (await mutate(input, true, expectedRevision)) === 'ok', [mutate]),
-    /** Tri-state write for optimistic UI (skipped = never ran, rejected = mutate threw). */
+    write: useCallback(async (input: WorkspaceWorkMutation, expectedRevision?: number) => (await mutate(input, false, expectedRevision)).status === 'ok', [mutate]),
+    remove: useCallback(async (input: WorkspaceWorkRemoval, expectedRevision?: number) => (await mutate(input, true, expectedRevision)).status === 'ok', [mutate]),
+    /** Tri-state write for optimistic UI (skipped = never ran, rejected = mutate threw; ok includes post-write revision). */
     writeOutcome: useCallback((input: WorkspaceWorkMutation, expectedRevision?: number) => mutate(input, false, expectedRevision), [mutate]),
   }
 }

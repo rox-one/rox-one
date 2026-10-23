@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import type { WorkspaceTask } from '@rox/shared/workspace-work'
-import { overlayAfterScheduleWrite, reconcileOptimisticDue, timelineOwnedDueInput, withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../timeline-adapters'
+import { draftAfterOwnScheduleWrite, overlayAfterScheduleWrite, reconcileOptimisticDue, timelineOwnedDueInput, withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../timeline-adapters'
 import { groupTasks, partitionTasks, timelineGroupTitle } from '../timeline-model'
 
 const ws = (patch: Partial<WorkspaceTask>): WorkspaceTask => ({
@@ -93,3 +93,18 @@ describe('overlayAfterScheduleWrite', () => {
   })
 })
 
+describe('draftAfterOwnScheduleWrite', () => {
+  const draft = { id: 'a', expectedRevision: 3, due: 'x' }
+  it('advances expectedRevision only on ok for the same open task', () => {
+    expect(draftAfterOwnScheduleWrite(draft, 'a', { status: 'ok', revision: 4 })).toEqual({ id: 'a', expectedRevision: 4, due: 'x' })
+    expect(draftAfterOwnScheduleWrite(draft, 'a', { status: 'ok', revision: 3 })).toBe(draft)
+    expect(draftAfterOwnScheduleWrite(draft, 'b', { status: 'ok', revision: 4 })).toBe(draft)
+    expect(draftAfterOwnScheduleWrite(draft, 'a', { status: 'rejected' })).toBe(draft)
+    expect(draftAfterOwnScheduleWrite(draft, 'a', { status: 'skipped' })).toBe(draft)
+    expect(draftAfterOwnScheduleWrite(null, 'a', { status: 'ok', revision: 4 })).toBeNull()
+  })
+  it('does not treat an unrelated id as own write', () => {
+    const other = { id: 'other', expectedRevision: 1 }
+    expect(draftAfterOwnScheduleWrite(other, 'a', { status: 'ok', revision: 9 })).toBe(other)
+  })
+})

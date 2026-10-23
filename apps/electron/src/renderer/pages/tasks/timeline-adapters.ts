@@ -96,3 +96,19 @@ export function overlayAfterScheduleWrite(
   return next
 }
 
+/**
+ * After an own timeline schedule write succeeds, advance the open draft's
+ * expectedRevision to the post-write revision so Save does not conflict.
+ * Unrelated snapshot bumps must NOT call this — only writeOutcome ok for the
+ * same task id (remote title/description/status still warn via draftChanged).
+ */
+export function draftAfterOwnScheduleWrite<T extends { id: string | null; expectedRevision: number }>(
+  draft: T | null | undefined,
+  taskId: string,
+  outcome: { status: 'ok'; revision: number } | { status: 'rejected' | 'skipped' },
+): T | null | undefined {
+  if (!draft || draft.id !== taskId) return draft
+  if (outcome.status !== 'ok') return draft
+  if (draft.expectedRevision === outcome.revision) return draft
+  return { ...draft, expectedRevision: outcome.revision }
+}

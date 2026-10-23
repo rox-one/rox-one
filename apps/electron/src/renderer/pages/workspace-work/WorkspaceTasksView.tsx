@@ -6,7 +6,7 @@ import { useWorkspaceWork } from '@/lib/useWorkspaceWork'
 import { isOpenTask } from '@rox/core/tasks/personal'
 import { cn } from '@/lib/utils'
 import { TimelinePanel } from '../tasks/TimelinePanel'
-import { overlayAfterScheduleWrite, reconcileOptimisticDue, timelineOwnedDueInput, withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../tasks/timeline-adapters'
+import { draftAfterOwnScheduleWrite, overlayAfterScheduleWrite, reconcileOptimisticDue, timelineOwnedDueInput, withOptimisticDue, workspaceDuePatch, workspaceTaskToTimeline } from '../tasks/timeline-adapters'
 import type { SchedulePatch, TimelineGroup } from '../tasks/timeline-model'
 import { localDateTimeInput, parseLocalDateTime, workspaceProjectOptions, type WorkspaceProjectOption } from '@/lib/workspace-work-client'
 
@@ -113,7 +113,10 @@ export function WorkspaceTasksView({ workspaceId, projectId, selectedTaskId }: {
     // skipped (write never ran) keeps the overlay; rejected drops this id;
     // ok keeps it until reconcile sees a matching snapshot dueAt.
     void work.writeOutcome({ kind: 'updateTask', id, patch: { dueAt } }, snapshot.revision).then(outcome => {
-      setOverlay(prev => overlayAfterScheduleWrite(prev, id, dueAt, outcome))
+      setOverlay(prev => overlayAfterScheduleWrite(prev, id, dueAt, outcome.status))
+      // Own successful schedule write advanced snapshot.revision via accept;
+      // advance draft.expectedRevision too so Save does not send the pre-drag revision.
+      setDraft(current => draftAfterOwnScheduleWrite(current, id, outcome) ?? null)
     })
   }
   const projectTitle = (group: TimelineGroup) => (group.id == null ? t('navigation.work.tasks.noProject') : projects.find(project => project.id === group.id)?.name ?? t('navigation.work.tasks.missingProject'))
