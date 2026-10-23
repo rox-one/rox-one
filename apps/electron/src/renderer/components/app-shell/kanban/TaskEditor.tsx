@@ -79,7 +79,7 @@ type TaskResults = Awaited<ReturnType<typeof window.electronAPI.getTaskResults>>
 // ---------------------------------------------------------------------------
 type BtnVariant = 'primary' | 'secondary' | 'ghost'
 const BTN_VARIANT: Record<BtnVariant, string> = {
-  primary: 'bg-indigo-500 text-white hover:bg-indigo-600',
+  primary: 'bg-accent text-white hover:bg-accent/90',
   secondary: 'border border-border bg-card text-foreground hover:bg-foreground/[0.03]',
   ghost: 'text-foreground/60 hover:bg-foreground/[0.06] hover:text-foreground',
 }
@@ -1382,7 +1382,7 @@ function ResultsPanel({
               <button
                 type="button"
                 onClick={() => onOpenChildSession(node.sessionId!)}
-                className="inline-flex shrink-0 items-center gap-1 rounded text-sm font-semibold text-indigo-500 hover:underline dark:text-indigo-300"
+                className="inline-flex shrink-0 items-center gap-1 rounded text-sm font-semibold text-accent hover:underline"
               >
                 <ExternalLink className="icon-status" strokeWidth={2.5} /> {t('tasks.openSession')}
               </button>
