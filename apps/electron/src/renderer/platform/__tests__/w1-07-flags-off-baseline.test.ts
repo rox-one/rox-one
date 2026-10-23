@@ -37,9 +37,10 @@ const ROUTES = [
 
 function captureModes() {
   __resetModeRegistryForTests()
-  // Every W1-07 flag OFF — Мессенджер is default ON, so the baseline turns it off explicitly.
+  // Every W1-07 flag OFF — Мессенджер + «Доска» are default ON, so the baseline turns them off explicitly.
   const store = createStore()
   store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+  store.set(workbenchFlagAtom(WORKBENCH_FLAG.modeCanvasV1), false)
   const shellFlags = store.get(enabledShellFlagsAtom)
   const resolved = resolveSeededModes(getModeRegistry().list(flagContextKeys(shellFlags)), {}, shellFlags)
   return {
