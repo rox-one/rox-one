@@ -555,7 +555,11 @@ html[data-ui-profile="super-engineering"] {
      the end of the G8 material section so it wins over the ladder steps. */
   /* Panels stay flush and square inside the grid in every profile (Mark, t77). */
   --rox-radius-panel: 0px;
-  --rox-radius-composer: var(--radius-lg);
+  /* SE canon (super-engineering-spec §5): composer chrome radius 10px.
+     Root scale stays {0,4,6,8,12,9999}; only this role leaves it under SE.
+     Shared InputContainer / FreeFormInput read --radius-composer. */
+  --radius-composer: 10px;
+  --rox-radius-composer: var(--radius-composer);
   --font-size-base: 13px;
   /* Alias shared motion tokens so disclosure zeros under
      prefers-reduced-motion and html[data-resizing] (spring-scale → 0).
@@ -578,6 +582,7 @@ html[data-ui-profile="super-engineering"] .input-container {
   backdrop-filter: blur(var(--chrome-glass-blur));
   -webkit-backdrop-filter: blur(var(--chrome-glass-blur));
   border: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
+  border-radius: var(--radius-composer);
 }
 
 /* --- Rox Graphite profile (rox-graphite.json, uiProfile "graphite") -------
