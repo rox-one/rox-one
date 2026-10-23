@@ -3069,7 +3069,7 @@ export function CookbooksSurfacePage({ writeClipboard = defaultWriteClipboard }:
     const canRunAll = doc.kind === 'ipynb' && doc.supported
     return (
       <>
-        <header data-glass-slot="toolbar" className="sticky top-0 z-sticky flex flex-wrap items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-2 backdrop-blur">
+        <header data-glass-slot="toolbar" className="sticky top-0 z-sticky flex flex-wrap items-center gap-2 border-b border-border/40 bg-background px-3 py-2">
           <h2 data-testid="cookbooks-document-title" className="text-title-sm font-semibold text-foreground">
             {doc.title}
           </h2>
