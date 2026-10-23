@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, X } from 'lucide-react'
-import { Spinner } from '@rox/ui/spinner'
+import { Skeleton } from '@rox/ui'
 
 /**
  * SessionSearchHeader - Presentational component for session list search UI.
@@ -100,7 +100,7 @@ export function SessionSearchHeader({
         <div className="px-2 pt-2.5 flex items-center gap-1.5 text-xs text-muted-foreground">
           {isSearching ? (
             <>
-              <Spinner className="text-xs text-foreground/50" />
+              <Skeleton className="h-3 w-16 shrink-0" />
               <span>{t('common.loading')}</span>
             </>
           ) : isUnavailable ? (
