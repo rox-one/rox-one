@@ -12802,5 +12802,16 @@
   "xfn.x23.title": "Actions à l'envoi du formulaire",
   "xfn.x24.title": "Démarrer une réunion depuis n'importe quel élément",
   "xfn.x25.title": "Ouvrir le panneau @rox",
-  "xfn.x26.title": "Épingles sur toutes les vues"
+  "xfn.x26.title": "Épingles sur toutes les vues",
+  "notes.history.title": "Historique des versions",
+  "notes.history.loading": "Chargement des versions…",
+  "notes.history.empty": "Aucune version enregistrée. Enregistrez la note pour démarrer l’historique.",
+  "notes.history.preview": "Comparer à l’actuel",
+  "notes.history.restore": "Restaurer",
+  "notes.history.restoring": "Restauration…",
+  "notes.history.restoreConfirm": "Restaurer cette version comme nouvel enregistrement ? Le texte actuel reste dans l’historique.",
+  "notes.history.cancel": "Annuler",
+  "notes.history.selectVersion": "Sélectionnez une version à prévisualiser.",
+  "notes.history.unknownAuthor": "Auteur inconnu",
+  "notes.history.localAuthor": "Cet appareil"
 }

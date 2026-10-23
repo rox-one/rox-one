@@ -12858,5 +12858,16 @@
   "xfn.x23.title": "Действия при отправке формы",
   "xfn.x24.title": "Начать встречу из любой сущности",
   "xfn.x25.title": "Открыть панель @rox",
-  "xfn.x26.title": "Закреплённое на всех экранах"
+  "xfn.x26.title": "Закреплённое на всех экранах",
+  "notes.history.title": "История версий",
+  "notes.history.loading": "Загрузка версий…",
+  "notes.history.empty": "Пока нет сохранённых версий. Измените и сохраните заметку, чтобы начать историю.",
+  "notes.history.preview": "Сравнение с текущим",
+  "notes.history.restore": "Восстановить",
+  "notes.history.restoring": "Восстановление…",
+  "notes.history.restoreConfirm": "Восстановить эту версию как новое сохранение? Текущий текст останется в истории.",
+  "notes.history.cancel": "Отмена",
+  "notes.history.selectVersion": "Выберите версию для просмотра.",
+  "notes.history.unknownAuthor": "Неизвестный автор",
+  "notes.history.localAuthor": "Это устройство"
 }

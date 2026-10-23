@@ -957,6 +957,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'teamChat:archive',
   'teamChat:callJoin',
   'teamChat:callLeave',
+  'teamChat:callList',
   'teamChat:callSync',
   'teamChat:callTranscript',
   'teamChat:changed',

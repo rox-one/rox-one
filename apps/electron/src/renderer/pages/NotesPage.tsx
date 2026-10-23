@@ -1,6 +1,7 @@
 import { useNavigationActions } from '@/contexts/NavigationContext'
 import * as React from 'react'
 import { NotesInspectorToggle, NotesRailTools, NotesResponsiveRail, NotesViewMenu, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
+import { VersionHistoryPanel } from './notes/VersionHistoryPanel'
 import { notesAuxiliaryFits, type NotesRail } from './notes/notes-layout'
 import { usePanelWorkspaceLayout, type PanelWorkspaceLayoutMode } from '@/hooks/usePanelWorkspaceLayout'
 import { type ProjectNoteScope, noteInProjectScope, noteCreationFolder, newProjectNoteFolder } from './notes/project-note-scope'
@@ -641,7 +642,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [panelLayoutMode, docRowWidth, railLayout.vault])
   const [inspectorSheetOpen, setInspectorSheetOpen] = React.useState(false)
   const inlineAuxiliary = notesAuxiliaryFits(shellWidth, inspectorCollapsed, false)
-  const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | null>(null)
+  const [railSheet, setRailSheet] = React.useState<'toc' | 'comments' | 'history' | null>(null)
   const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
   const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
   const [commandIndex, setCommandIndex] = React.useState(0)
@@ -2984,7 +2985,7 @@ h1,h2,h3{margin-top:1.5em}
             capabilities={noteViewCapabilities}
             compact={toolbarWidth < 560}
           />
-          {noteView === 'standard' ? <NotesRailTools tocShown={tocShown} commentsShown={commentsShown} sheet={railSheet} onOpen={setRailSheet} onCollapse={(rail) => setRailLayout({ [`${rail}Collapsed`]: true })} /> : null}
+          {noteView === 'standard' ? <NotesRailTools tocShown={tocShown} commentsShown={commentsShown} historyShown={false} sheet={railSheet} onOpen={setRailSheet} onCollapse={(rail) => { if (rail === 'history') setRailSheet(null); else setRailLayout({ [`${rail}Collapsed`]: true }) }} /> : null}
           </div>
         ) : null}
 
@@ -3400,6 +3401,24 @@ h1,h2,h3{margin-top:1.5em}
                   dirtyRef.current = true
                   setContent(next)
                   setDirty(true)
+                }}
+              />
+            </NotesResponsiveRail> : null}
+            {activeNote && activeWorkspaceId ? <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView, 'history'])} inline={false} open={railSheet === 'history'} title={t('notes.history.title')} onClose={() => setRailSheet(null)}>
+              <VersionHistoryPanel
+                workspaceId={activeWorkspaceId}
+                noteId={activeNote.id}
+                currentContent={content}
+                currentRevision={activeNote.revision ?? null}
+                width={280}
+                onRestored={(note) => {
+                  contentRef.current = note.content
+                  dirtyRef.current = false
+                  setContent(note.content)
+                  setDirty(false)
+                  setActiveNote((previous) => previous && previous.id === activeNote.id
+                    ? { ...previous, content: note.content, revision: note.revision ?? previous.revision }
+                    : previous)
                 }}
               />
             </NotesResponsiveRail> : null}

@@ -12788,5 +12788,16 @@
   "xfn.x23.title": "Műveletek űrlapbeküldéskor",
   "xfn.x24.title": "Megbeszélés indítása bármely elemből",
   "xfn.x25.title": "@rox panel megnyitása",
-  "xfn.x26.title": "Rögzítés minden felületen"
+  "xfn.x26.title": "Rögzítés minden felületen",
+  "notes.history.title": "Verziótörténet",
+  "notes.history.loading": "Verziók betöltése…",
+  "notes.history.empty": "Még nincsenek mentett verziók. Mentse a jegyzetet a történet indításához.",
+  "notes.history.preview": "Összehasonlítás a jelenlegivel",
+  "notes.history.restore": "Visszaállítás",
+  "notes.history.restoring": "Visszaállítás…",
+  "notes.history.restoreConfirm": "Visszaállítja ezt a verziót új mentésként? A jelenlegi szöveg megmarad a történetben.",
+  "notes.history.cancel": "Mégse",
+  "notes.history.selectVersion": "Válasszon verziót az előnézethez.",
+  "notes.history.unknownAuthor": "Ismeretlen szerző",
+  "notes.history.localAuthor": "Ez az eszköz"
 }

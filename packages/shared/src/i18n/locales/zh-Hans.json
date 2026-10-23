@@ -12788,5 +12788,16 @@
   "xfn.x23.title": "表单提交动作",
   "xfn.x24.title": "从任意实体发起会议",
   "xfn.x25.title": "打开 @rox 面板",
-  "xfn.x26.title": "跨界面固定"
+  "xfn.x26.title": "跨界面固定",
+  "notes.history.title": "版本历史",
+  "notes.history.loading": "正在加载版本…",
+  "notes.history.empty": "尚无已保存的版本。保存笔记后将开始记录历史。",
+  "notes.history.preview": "与当前比较",
+  "notes.history.restore": "恢复",
+  "notes.history.restoring": "正在恢复…",
+  "notes.history.restoreConfirm": "将此版本恢复为新的保存？当前正文会保留在历史中。",
+  "notes.history.cancel": "取消",
+  "notes.history.selectVersion": "选择要预览的版本。",
+  "notes.history.unknownAuthor": "未知作者",
+  "notes.history.localAuthor": "此设备"
 }

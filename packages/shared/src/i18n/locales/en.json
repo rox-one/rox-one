@@ -12788,5 +12788,16 @@
   "xfn.x23.title": "Form submit actions",
   "xfn.x24.title": "Start a meeting from any entity",
   "xfn.x25.title": "Open the @rox panel",
-  "xfn.x26.title": "Pins across surfaces"
+  "xfn.x26.title": "Pins across surfaces",
+  "notes.history.title": "Version history",
+  "notes.history.loading": "Loading versions…",
+  "notes.history.empty": "No saved versions yet. Edit and save the note to start a history.",
+  "notes.history.preview": "Compare with current",
+  "notes.history.restore": "Restore",
+  "notes.history.restoring": "Restoring…",
+  "notes.history.restoreConfirm": "Restore this version as a new save? The current text stays in history.",
+  "notes.history.cancel": "Cancel",
+  "notes.history.selectVersion": "Select a version to preview.",
+  "notes.history.unknownAuthor": "Unknown author",
+  "notes.history.localAuthor": "This device"
 }

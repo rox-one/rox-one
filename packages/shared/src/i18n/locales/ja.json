@@ -12788,5 +12788,16 @@
   "xfn.x23.title": "フォーム送信時の操作",
   "xfn.x24.title": "任意の項目から会議を開始",
   "xfn.x25.title": "@rox パネルを開く",
-  "xfn.x26.title": "サーフェスをまたぐピン留め"
+  "xfn.x26.title": "サーフェスをまたぐピン留め",
+  "notes.history.title": "版履歴",
+  "notes.history.loading": "版を読み込み中…",
+  "notes.history.empty": "保存された版はまだありません。ノートを保存すると履歴が始まります。",
+  "notes.history.preview": "現在と比較",
+  "notes.history.restore": "復元",
+  "notes.history.restoring": "復元中…",
+  "notes.history.restoreConfirm": "この版を新しい保存として復元しますか？現在の本文は履歴に残ります。",
+  "notes.history.cancel": "キャンセル",
+  "notes.history.selectVersion": "プレビューする版を選択してください。",
+  "notes.history.unknownAuthor": "不明な作者",
+  "notes.history.localAuthor": "このデバイス"
 }

@@ -12802,5 +12802,16 @@
   "xfn.x23.title": "Acciones al enviar el formulario",
   "xfn.x24.title": "Iniciar una reunión desde cualquier entidad",
   "xfn.x25.title": "Abrir el panel de @rox",
-  "xfn.x26.title": "Fijados en todas las vistas"
+  "xfn.x26.title": "Fijados en todas las vistas",
+  "notes.history.title": "Historial de versiones",
+  "notes.history.loading": "Cargando versiones…",
+  "notes.history.empty": "Aún no hay versiones guardadas. Guarde la nota para iniciar el historial.",
+  "notes.history.preview": "Comparar con el actual",
+  "notes.history.restore": "Restaurar",
+  "notes.history.restoring": "Restaurando…",
+  "notes.history.restoreConfirm": "¿Restaurar esta versión como un guardado nuevo? El texto actual permanece en el historial.",
+  "notes.history.cancel": "Cancelar",
+  "notes.history.selectVersion": "Seleccione una versión para previsualizar.",
+  "notes.history.unknownAuthor": "Autor desconocido",
+  "notes.history.localAuthor": "Este dispositivo"
 }

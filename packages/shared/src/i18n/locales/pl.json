@@ -12826,5 +12826,16 @@
   "xfn.x23.title": "Akcje po wysłaniu formularza",
   "xfn.x24.title": "Rozpocznij spotkanie z dowolnego elementu",
   "xfn.x25.title": "Otwórz panel @rox",
-  "xfn.x26.title": "Przypięcia we wszystkich widokach"
+  "xfn.x26.title": "Przypięcia we wszystkich widokach",
+  "notes.history.title": "Historia wersji",
+  "notes.history.loading": "Ładowanie wersji…",
+  "notes.history.empty": "Brak zapisanych wersji. Zapisz notatkę, aby rozpocząć historię.",
+  "notes.history.preview": "Porównaj z bieżącą",
+  "notes.history.restore": "Przywróć",
+  "notes.history.restoring": "Przywracanie…",
+  "notes.history.restoreConfirm": "Przywrócić tę wersję jako nowy zapis? Bieżący tekst pozostanie w historii.",
+  "notes.history.cancel": "Anuluj",
+  "notes.history.selectVersion": "Wybierz wersję do podglądu.",
+  "notes.history.unknownAuthor": "Nieznany autor",
+  "notes.history.localAuthor": "To urządzenie"
 }
