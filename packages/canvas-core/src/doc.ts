@@ -9,6 +9,7 @@
  */
 import * as Y from 'yjs'
 import { SCHEMA_VERSION, validateObject, type CanvasObject, type CanvasObjectInput } from './schema.ts'
+import { isValidAssetHash, MAX_ASSET_BYTES, normalizeAssetMime, sanitizeAssetName } from './asset-meta.ts'
 import { isValidIndexKey, keyBetween, keysBetween } from './fractional-index.ts'
 import { wellFormed } from './text.ts'
 
@@ -290,6 +291,32 @@ export class CanvasDoc {
   textOf(id: string): Y.Text | undefined {
     const t = (this.objects.get(id)?.get('props') as Y.Map<unknown> | undefined)?.get(TEXT_PROP)
     return t instanceof Y.Text ? t : undefined
+  }
+
+  /** Register / refresh asset metadata in the board CRDT (bytes live on disk). */
+  setAssetMeta(assetId: string, meta: { hash: string; mime: string; size: number; name: string }, origin: Origin): void {
+    if (!assetId || typeof assetId !== 'string' || !isValidAssetHash(assetId)) throw new CanvasValidationError(assetId || 'asset', ['bad asset id'])
+    if (!meta.hash || meta.hash !== assetId) throw new CanvasValidationError(assetId, ['asset id must equal content hash'])
+    const mime = normalizeAssetMime(meta.mime)
+    if (!mime) throw new CanvasValidationError(assetId, ['bad mime'])
+    if (!Number.isFinite(meta.size) || meta.size < 0 || meta.size > MAX_ASSET_BYTES) throw new CanvasValidationError(assetId, ['bad size'])
+    const name = sanitizeAssetName(meta.name)
+    this.doc.transact(() => {
+      this.assets.set(assetId, { hash: meta.hash, mime, size: meta.size, name })
+    }, origin)
+  }
+
+  getAssetMeta(assetId: string): { hash: string; mime: string; size: number; name: string } | undefined {
+    const v = this.assets.get(assetId)
+    if (!v || typeof v !== 'object') return undefined
+    const m = v as Record<string, unknown>
+    if (typeof m.hash !== 'string' || typeof m.mime !== 'string') return undefined
+    return {
+      hash: m.hash,
+      mime: m.mime,
+      size: typeof m.size === 'number' ? m.size : 0,
+      name: typeof m.name === 'string' ? m.name : 'image',
+    }
   }
 }
 

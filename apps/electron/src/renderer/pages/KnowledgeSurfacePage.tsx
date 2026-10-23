@@ -392,7 +392,7 @@ export default function KnowledgeSurfacePage({
       ref={containerRef}
       className="relative h-full w-full bg-background"
       // Arc Glass: the composited Rox Notes view is the reading/editing
-      // surface — dense fill + sheen, never blur (arc-glass-surfaces.css).
+      // surface — dense fill + sheen, never blur (GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed)).
       data-glass-slot="editor"
     >
       <NativeSurfacePlaceholder presentation={presentation} surfaceRef={containerRef} />
@@ -405,7 +405,7 @@ export default function KnowledgeSurfacePage({
         className="flex items-center gap-1 border-b border-border px-2 py-1"
         role="toolbar"
         // Arc Glass: mode switcher + copy menu = the surface toolbar slot
-        // (static blur + bottom hairline, arc-glass-surfaces.css).
+        // (static blur + bottom hairline, GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed)).
         data-glass-slot="toolbar"
         aria-label={t('knowledge.surface.toolbar.label')}
       >

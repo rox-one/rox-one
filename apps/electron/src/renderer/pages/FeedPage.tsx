@@ -709,7 +709,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
       {/* Arc Glass: the title row and the filter row below are the screen's
           sticky toolbar block (`toolbar` = blur + a bottom hairline); the list
           is the `table` container and every item is a `row`
-          (packages/ui/src/components/glass/arc-glass-surfaces.css). */}
+          (GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed)). */}
       <header data-glass-slot="toolbar" className="flex min-h-[44px] shrink-0 items-center gap-2 px-3 pt-2">
         <h2 className="min-w-0 truncate text-lg font-semibold" title={sourceFilter && sourceById.get(sourceFilter) ? sourceLabel(sourceById.get(sourceFilter)!) : t(`feed.tab.${tab}`)}>{sourceFilter && sourceById.get(sourceFilter) ? sourceLabel(sourceById.get(sourceFilter)!) : t(`feed.tab.${tab}`)}</h2>
         {data.generatedAt ? <span className="hidden shrink-0 text-xs text-text-muted min-[1600px]:inline">{t('feed.updatedAt', { time: timeFmt.format(data.generatedAt) })}</span> : null}

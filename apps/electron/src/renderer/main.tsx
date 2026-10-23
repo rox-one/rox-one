@@ -41,9 +41,10 @@ const rendererPerfHarness = installRendererPerfHarness()
 installErrorJournal(() => routeForJournal(getDefaultStore().get(focusedPanelRouteAtom)))
 seedLiteMode()
 seedDensity()
-// Glass tier + Arc Glass skin: a lazy chunk, off the startup closure.
-// installGlassSkin() itself fires an un-awaited import() of the skin CSS; until
-// it lands (or if either chunk fails) the app keeps the plain, non-glass look.
+// Glass tier + optional SE chrome accents: a lazy chunk, off the startup closure.
+// installGlassSkin() fires an un-awaited import() of accent CSS; until it lands
+// (or if the chunk fails) the app keeps the plain look. Accents activate only
+// under html[data-ui-profile=super-engineering][data-glass-accents].
 void import('@rox/ui/glass/install')
   .then((m) => m.installGlassSkin())
   .catch((error: unknown) => console.warn('[glass] skin unavailable, using the plain look', error))
