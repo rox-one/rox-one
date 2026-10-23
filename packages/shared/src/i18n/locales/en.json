@@ -6055,6 +6055,7 @@
   "notes.actionButton.defaultLabel": "Action",
   "notes.actionButton.failureHint": "Action failed.",
   "notes.actionButton.inertHint": "Imported action is inert until reviewed — not executed.",
+  "notes.actionButton.draftInertHint": "Draft action is inert until reviewed — not executed.",
   "notes.actionButton.offlineHint": "Offline — action unavailable.",
   "notes.actionButton.pendingHint": "Pending (no side effects in this editor).",
   "notes.actionButton.successHint": "Action completed.",
