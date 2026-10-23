@@ -62,8 +62,10 @@ describe('team chat store', () => {
     s.joinChannel(pub.id, bob)
     s.postMessage(pub.id, 'nice', alice)
     expect(s.listChannels(ORG, bob).find(c => c.id === pub.id)!.unreadCount).toBe(1)
-    s.markRead(pub.id, bob)
+    const marked = s.markRead(pub.id, bob)
+    expect(marked).toEqual({ orgId: ORG, advanced: true })
     expect(s.listChannels(ORG, bob).find(c => c.id === pub.id)!.unreadCount).toBe(0)
+    expect(s.markRead(pub.id, bob).advanced).toBe(false)
     expect(s.setSubscribed(pub.id, false, carol).viewerSubscribed).toBe(false)
   })
 
@@ -99,5 +101,108 @@ describe('team chat store', () => {
     expect(() => s.postMessage(pub.id, 'late', alice)).toThrow('Channel is archived')
     // Unfollowing an archived channel stays allowed.
     expect(s.setSubscribed(pub.id, false, carol).viewerSubscribed).toBe(false)
+  })
+})
+
+describe('sender-preserving ingest (PR3)', () => {
+  it('preserves remote senderId and is idempotent by id', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'ingest-ch' }, alice)
+    s.joinChannel(pub.id, bob)
+    const first = s.ingestRemoteMessage({
+      channelId: pub.id,
+      senderId: 'carol',
+      text: 'from carol via relay',
+      id: 'evt-carol-1',
+      createdAt: 1_700_000_000_000,
+    }, bob)
+    expect(first.senderId).toBe('carol')
+    expect(first.id).toBe('evt-carol-1')
+    expect(first.text).toBe('from carol via relay')
+    // Actor bob must not be stamped as author
+    expect(first.senderId).not.toBe('bob')
+    const again = s.ingestRemoteMessage({
+      channelId: pub.id,
+      senderId: 'carol',
+      text: 'from carol via relay',
+      id: 'evt-carol-1',
+    }, bob)
+    expect(again.id).toBe(first.id)
+    expect(s.listMessages({ channelId: pub.id }, bob).messages.filter(m => m.id === 'evt-carol-1')).toHaveLength(1)
+  })
+
+  it('rejects ingest from non-members and preserves reply/thread + attachments', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'thread-ch' }, alice)
+    expect(() => s.ingestRemoteMessage({
+      channelId: pub.id, senderId: 'alice', text: 'nope', id: 'x1',
+    }, carol)).toThrow('Join or follow the channel to ingest')
+    s.joinChannel(pub.id, bob)
+    const root = s.postMessage(pub.id, 'root', alice)
+    const reply = s.ingestRemoteMessage({
+      channelId: pub.id,
+      senderId: 'bob',
+      text: 'reply',
+      id: 'evt-reply-1',
+      replyToId: root.id,
+      attachments: [{ id: 'att-1', name: 'spec.pdf', status: 'unavailable' }],
+    }, alice)
+    expect(reply.replyToId).toBe(root.id)
+    expect(reply.threadId).toBe(root.id)
+    expect(reply.attachments?.[0]).toMatchObject({ name: 'spec.pdf', status: 'unavailable' })
+  })
+
+  it('own post accepts replyToId without changing sender', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'own-reply' }, alice)
+    const root = s.postMessage(pub.id, 'hello', alice)
+    const reply = s.postMessage(pub.id, 'thread reply', alice, { replyToId: root.id })
+    expect(reply.senderId).toBe('alice')
+    expect(reply.replyToId).toBe(root.id)
+    expect(reply.threadId).toBe(root.id)
+  })
+
+  it('rejects non-text ingest kinds and advances lastReadSeq on own dual-write', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'kind-ch' }, alice)
+    expect(() => s.ingestRemoteMessage({
+      channelId: pub.id, senderId: 'bob', text: 'nope', id: 'sys-1', kind: 'system',
+    } as never, alice)).toThrow('ingest kind must be text')
+    s.ingestRemoteMessage({
+      channelId: pub.id, senderId: 'alice', text: 'mine', id: 'own-1',
+    }, alice)
+    expect(s.listChannels(ORG, alice).find(c => c.id === pub.id)!.unreadCount).toBe(0)
+    s.ingestRemoteMessage({
+      channelId: pub.id, senderId: 'bob', text: 'theirs', id: 'other-1',
+    }, alice)
+    expect(s.listChannels(ORG, alice).find(c => c.id === pub.id)!.unreadCount).toBe(1)
+  })
+
+  it('allows ingest when viewerSubscribed without joining', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'follow-ch' }, alice)
+    s.setSubscribed(pub.id, true, carol)
+    expect(s.listChannels(ORG, carol).find(c => c.id === pub.id)?.viewerRole).toBeUndefined()
+    const msg = s.ingestRemoteMessage({
+      channelId: pub.id,
+      senderId: 'alice',
+      text: 'for followers',
+      id: 'evt-follow-1',
+    }, carol)
+    expect(msg.senderId).toBe('alice')
+    expect(msg.id).toBe('evt-follow-1')
+  })
+
+  it('defaults attachment status to ready when https url is set', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'att-ch' }, alice)
+    const msg = s.ingestRemoteMessage({
+      channelId: pub.id,
+      senderId: 'alice',
+      text: 'file',
+      id: 'att-msg-1',
+      attachments: [{ id: 'a1', name: 'a.pdf', url: 'https://cdn.example/a.pdf' }],
+    }, alice)
+    expect(msg.attachments?.[0]?.status).toBe('ready')
   })
 })

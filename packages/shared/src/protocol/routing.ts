@@ -629,6 +629,7 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.teamChat.ARCHIVE,
   RPC_CHANNELS.teamChat.LIST_MESSAGES,
   RPC_CHANNELS.teamChat.POST,
+  RPC_CHANNELS.teamChat.INGEST,
   RPC_CHANNELS.teamChat.MARK_READ,
   // Team calls (LiveKit join/leave/sync, transcripts, call list) and org-wide
   // message search read/write the same org-scoped local messenger store and go
@@ -648,6 +649,7 @@ export const LOCAL_ONLY_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.im.UNSUBSCRIBE_CHANNEL,
   RPC_CHANNELS.im.LIST_MESSAGES,
   RPC_CHANNELS.im.SEND_MESSAGE,
+  RPC_CHANNELS.im.SEARCH_MESSAGES,
   RPC_CHANNELS.im.MARK_READ,
   RPC_CHANNELS.im.PUBLISH_TYPING,
   RPC_CHANNELS.im.MESSAGE,

@@ -64,9 +64,30 @@ export function MessageBody({ message, nameOf }: { message: TeamChannelMessage; 
     )
   }
   const links = extractLinks(message.text)
+  const attachments = message.attachments ?? []
   return (
     <>
       <p className="whitespace-pre-wrap break-words text-body">{message.text}</p>
+      {attachments.length > 0 ? (
+        <ul className="mt-1.5 flex flex-col gap-1" data-testid="messenger-message-attachments">
+          {attachments.map((a) => (
+            <li key={a.id}>
+              {a.url && a.status === 'ready' ? (
+                <a href={a.url} target="_blank" rel="noreferrer noopener" className="flex max-w-md items-center gap-2 rounded-md border border-border/60 bg-surface-raised px-2.5 py-1.5 text-small hover:bg-surface-hover">
+                  <FileText className="icon-caption shrink-0 text-accent" aria-hidden />
+                  <span className="min-w-0 flex-1 truncate text-accent">{a.name}</span>
+                </a>
+              ) : (
+                <div className="flex max-w-md items-center gap-2 rounded-md border border-border/60 bg-surface-raised px-2.5 py-1.5 text-small text-text-muted" title={t('messenger.attachments.unavailableHint')}>
+                  <FileText className="icon-caption shrink-0" aria-hidden />
+                  <span className="min-w-0 flex-1 truncate">{a.name}</span>
+                  <span className="shrink-0 text-caption">{t('messenger.attachments.unavailable')}</span>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {links.map(url => <LinkCard key={url} url={url} />)}
     </>
   )

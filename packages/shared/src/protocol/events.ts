@@ -78,6 +78,10 @@ export interface ImMessageEvent {
   createdAt: number
   editedAt?: number
   deletedAt?: number
+  /** Parent message id when this is a thread reply. */
+  replyToId?: string
+  /** Root message id of the thread. */
+  threadId?: string
 }
 
 /** Payload of `im:presence` — one teammate's presence transition. */

@@ -18,12 +18,16 @@ import type { HandlerDeps } from '../handlers/handler-deps'
 import { getImService, type ImService } from './service'
 import type { ImListMessagesInput } from './types'
 
+/** Mirror team-chat list page cap for im search. */
+const SEARCH_MESSAGES_LIMIT_MAX = 200
+
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.im.STATUS,
   RPC_CHANNELS.im.SUBSCRIBE_CHANNEL,
   RPC_CHANNELS.im.UNSUBSCRIBE_CHANNEL,
   RPC_CHANNELS.im.LIST_MESSAGES,
   RPC_CHANNELS.im.SEND_MESSAGE,
+  RPC_CHANNELS.im.SEARCH_MESSAGES,
   RPC_CHANNELS.im.MARK_READ,
   RPC_CHANNELS.im.PUBLISH_TYPING,
 ] as const
@@ -79,6 +83,20 @@ export function registerImHandlers(server: RpcServer, _deps: HandlerDeps, servic
     if (!id || typeof text !== 'string') return { ok: false, reason: 'INVALID_INPUT' }
     return service.sendMessage(id, text)
   }, { nativeAction: 'write' })
+
+  handle(RPC_CHANNELS.im.SEARCH_MESSAGES, async (_ctx, query: unknown, opts: unknown) => {
+    if (typeof query !== 'string' || !query.trim()) return { ok: false, reason: 'INVALID_INPUT' }
+    let parsed: { channelId?: string; limit?: number } | undefined
+    if (opts && typeof opts === 'object' && !Array.isArray(opts)) {
+      const rec = opts as Record<string, unknown>
+      parsed = {}
+      if (typeof rec.channelId === 'string' && rec.channelId) parsed.channelId = rec.channelId
+      if (typeof rec.limit === 'number' && Number.isFinite(rec.limit)) {
+        parsed.limit = Math.min(Math.max(1, Math.round(rec.limit)), SEARCH_MESSAGES_LIMIT_MAX)
+      }
+    }
+    return service.searchMessages(query, parsed)
+  }, { nativeAction: 'read' })
 
   handle(RPC_CHANNELS.im.MARK_READ, async (_ctx, channelId: unknown) => {
     const id = readChannelId(channelId)
