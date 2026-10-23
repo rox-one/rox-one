@@ -13,7 +13,7 @@ import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/
 import { matchesNoteReceipt, notesReadCapability } from '@/features/product-tour/adapters/knowledge'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
-import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, LayoutTemplate, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useStore } from 'jotai'
 import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
@@ -43,7 +43,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { consumePendingCompose } from '@/platform/inspector-compose-events'
 import { captureWorkspaceToolOpen, openWorkspaceTool, type WorkspaceToolOpenIntent } from '@/lib/open-workspace-tool'
 import { cn } from '@/lib/utils'
-import { NotesQuickSections, useNotePins } from '@/screens/notes/NotesQuickSections'
+import { NotesQuickSections, useNotePins, useNoteRecents } from '@/screens/notes/NotesQuickSections'
 import { useNotesScreenSidebar } from '@/screens/notes/useNotesScreenSidebar'
 import { SlotPortal } from '@/screens/content-slot'
 import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
@@ -68,6 +68,10 @@ import { cacheWriteEpoch } from '@/lib/query/shared-read'
 import { NotesAIMenu } from './notes/NotesAIMenu'
 import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
+import { NoteCoverIconChrome, NoteFavoriteButton } from './notes/NoteLibraryChrome'
+import { NotesTemplatesDialog } from './notes/NotesTemplatesDialog'
+import { readNoteIcon, withNoteLibraryProperties } from './notes/note-library'
+import type { NoteTemplateSummary } from '../../shared/types'
 import {
   defaultNoteEntityCapabilities,
   useEntityView,
@@ -703,6 +707,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [newPropertyKey, setNewPropertyKey] = React.useState('')
   const [newPropertyValue, setNewPropertyValue] = React.useState('')
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
+  const [templatesDialogOpen, setTemplatesDialogOpen] = React.useState(false)
+  const [templatesDialogMode, setTemplatesDialogMode] = React.useState<'create' | 'save'>('create')
+  const [noteTemplates, setNoteTemplates] = React.useState<NoteTemplateSummary[]>([])
+  const [templatesBusy, setTemplatesBusy] = React.useState(false)
   const [createTitle, setCreateTitle] = React.useState('')
   const [createFolderDialogOpen, setCreateFolderDialogOpen] = React.useState(false)
   const [createFolderName, setCreateFolderName] = React.useState('')
@@ -891,6 +899,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     schemaVersion: 1,
   }), [])
   const dirtyRef = React.useRef(dirty)
+  const noteRecentsTouchRef = React.useRef<(noteId: string) => void>(() => {})
+  const noteRecentsRekeyRef = React.useRef<(from: string, to: string, folder?: boolean) => void>(() => {})
+  const noteRecentsDropRef = React.useRef<(target: string, folder?: boolean) => void>(() => {})
   const contentRef = React.useRef(content)
   const revisionsRef = React.useRef(new Map<string, string>())
   const pendingCommitsRef = React.useRef(new Map<string, MarkdownCommitCommand>())
@@ -1316,6 +1327,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       setSaveNeedsReload(false)
       setExternalChange(null)
       setTagDraft(note.tags.join(', '))
+      noteRecentsTouchRef.current(note.id)
     } catch (error) {
       if (!isCurrent()) return
       const code = capabilityErrorCode(error)
@@ -2006,6 +2018,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         )
         nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, noteId), renamed.note.nativeRevision ?? null)
         notePins.rekey(noteId, renamed.note.id)
+        noteRecentsRekeyRef.current(noteId, renamed.note.id)
         await refreshNotes()
         if (activeNote?.id === noteId) navigate(routes.view.notes(renamed.note.id))
         return
@@ -2096,6 +2109,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       )
       nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, moved.note.id), moved.note.nativeRevision ?? null)
       notePins.rekey(moveTargetNote.id, moved.note.id)
+      noteRecentsRekeyRef.current(moveTargetNote.id, moved.note.id)
       setMoveDialogOpen(false)
       setMoveTargetNote(null)
       setMoveFolderName('')
@@ -2120,6 +2134,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       )
       nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, moved.note.id), moved.note.nativeRevision ?? null)
       notePins.rekey(note.id, moved.note.id)
+      noteRecentsRekeyRef.current(note.id, moved.note.id)
       await refreshNotes()
       navigate(routes.view.notes(moved.note.id))
       toast.success(t('notes.toast.moved'))
@@ -2157,6 +2172,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     try {
       await window.electronAPI.renameFolderNote(activeWorkspaceId, renameFolderTarget, renameFolderName.trim())
       notePins.rekey(renameFolderTarget, target, true)
+      noteRecentsRekeyRef.current(renameFolderTarget, target, true)
       setRenameFolderDialogOpen(false)
       setRenameFolderTarget('')
       setRenameFolderName('')
@@ -2179,6 +2195,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     try {
       const result = await window.electronAPI.deleteFolderNote(activeWorkspaceId, deleteFolderTarget)
       notePins.drop(deleteFolderTarget, true)
+      noteRecentsDropRef.current(deleteFolderTarget, true)
       setDeleteFolderDialogOpen(false)
       setDeleteFolderTarget('')
       if (activeNote && result.deletedNotes.includes(activeNote.id)) {
@@ -2249,6 +2266,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     )
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, activeNote.id), result.note.nativeRevision ?? null)
     notePins.rekey(activeNote.id, result.note.id)
+    noteRecentsRekeyRef.current(activeNote.id, result.note.id)
     setRenameDialogOpen(false)
     await refreshNotes()
     navigate(routes.view.notes(result.note.id))
@@ -2273,6 +2291,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       mutationOptions(activeWorkspaceId, activeNote.id, activeNote.nativeRevision),
     )
     notePins.drop(activeNote.id)
+    noteRecentsDropRef.current(activeNote.id)
     setDeleteDialogOpen(false)
     await refreshNotes()
     navigate(routes.view.notes())
@@ -2460,10 +2479,17 @@ h1,h2,h3{margin-top:1.5em}
 
   // «Закреплённое» / «Недавнее» quick sections (shell SidebarSection markup above the tree).
   const notePins = useNotePins(activeWorkspaceId)
+  const noteRecents = useNoteRecents(activeWorkspaceId)
+  const handleOpenNoteRef = React.useRef<(noteId: string) => unknown>(() => {})
+  noteRecentsTouchRef.current = noteRecents.touch
+  noteRecentsRekeyRef.current = noteRecents.rekey
+  noteRecentsDropRef.current = noteRecents.drop
   const pinnedNoteSet = React.useMemo(() => new Set(notePins.pinned), [notePins.pinned])
   const isNotePinned = React.useCallback((id: string) => pinnedNoteSet.has(id), [pinnedNoteSet])
-  const quickNotes = scopedNotes
-  const handleOpenNoteRef = React.useRef<(noteId: string) => unknown>(() => {})
+  const quickNotes = React.useMemo(
+    () => scopedNotes.map((note) => ({ id: note.id, title: note.title, updatedAt: note.updatedAt, icon: readNoteIcon(note.properties) })),
+    [scopedNotes],
+  )
   const openNoteFromQuick = React.useCallback((noteId: string) => { void handleOpenNoteRef.current(noteId) }, [])
   const handleOpenNote = async (noteId: string) => {
     if (!await flushBeforeAction()) return
@@ -2912,6 +2938,67 @@ h1,h2,h3{margin-top:1.5em}
     </div>
   ) : null
 
+
+  const refreshNoteTemplates = React.useCallback(async () => {
+    if (!activeWorkspaceId || typeof window.electronAPI.listNoteTemplates !== 'function') {
+      setNoteTemplates([])
+      return
+    }
+    try {
+      setNoteTemplates(await window.electronAPI.listNoteTemplates(activeWorkspaceId))
+    } catch {
+      setNoteTemplates([])
+    }
+  }, [activeWorkspaceId])
+
+  const openTemplatesDialog = React.useCallback(async (mode: 'create' | 'save') => {
+    setTemplatesDialogMode(mode)
+    setTemplatesDialogOpen(true)
+    await refreshNoteTemplates()
+  }, [refreshNoteTemplates])
+
+  const handleCreateFromTemplate = React.useCallback(async (templateId: string, title: string) => {
+    if (!activeWorkspaceId || typeof window.electronAPI.createNoteFromTemplate !== 'function') return
+    setTemplatesBusy(true)
+    try {
+      const created = await window.electronAPI.createNoteFromTemplate(
+        activeWorkspaceId,
+        templateId,
+        title || undefined,
+        createInFolder,
+        mutationOptions(activeWorkspaceId, title || templateId, null),
+      )
+      setTemplatesDialogOpen(false)
+      await refreshNotes()
+      navigate(routes.view.notes(created.id))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
+    } finally {
+      setTemplatesBusy(false)
+    }
+  }, [activeWorkspaceId, createInFolder, mutationOptions, refreshNotes, t])
+
+  const handleSaveAsTemplate = React.useCallback(async (templateId: string, title: string) => {
+    if (!activeWorkspaceId || !activeNote || typeof window.electronAPI.saveNoteAsTemplate !== 'function') return
+    setTemplatesBusy(true)
+    try {
+      const { body } = splitFrontmatter(contentRef.current)
+      await window.electronAPI.saveNoteAsTemplate(activeWorkspaceId, {
+        templateId,
+        title: title || activeNote.title,
+        body,
+        properties: activeNote.properties,
+      })
+      setTemplatesDialogOpen(false)
+      toast.success(t('notes.library.templateSaved'))
+      await refreshNoteTemplates()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('notes.toast.updatePropertiesFailed'))
+    } finally {
+      setTemplatesBusy(false)
+    }
+  }, [activeWorkspaceId, activeNote, refreshNoteTemplates, t])
+
   const notesSidebarSlots = useNotesScreenSidebar({
     enabled: !!shellSidebarTarget && !!activeWorkspaceId && !readUnavailable,
     title: t(notesHeaderTitleKey),
@@ -2925,6 +3012,7 @@ h1,h2,h3{margin-top:1.5em}
     onTag: setSelectedTag,
     notes: quickNotes,
     pinned: notePins.pinned,
+    opened: noteRecents.opened,
     onTogglePin: notePins.toggle,
     onOpenNote: openNoteFromQuick,
     activeNoteId: activeNote?.id,
@@ -3083,7 +3171,7 @@ h1,h2,h3{margin-top:1.5em}
             </details>
           )}
         </div>
-        <NotesQuickSections notes={quickNotes} activeNoteId={activeNote?.id} pinned={notePins.pinned} onTogglePin={notePins.toggle} onOpenNote={openNoteFromQuick} />
+        <NotesQuickSections notes={quickNotes} activeNoteId={activeNote?.id} pinned={notePins.pinned} opened={noteRecents.opened} onTogglePin={notePins.toggle} onOpenNote={openNoteFromQuick} />
         {notesTree}
         {notesFooter}
       </ShellSidebarPortal>
@@ -3104,6 +3192,12 @@ h1,h2,h3{margin-top:1.5em}
             ) : (
               <div className="truncate text-sm font-medium">{t(notesHeaderTitleKey)}</div>
             )}
+            {activeNote ? (
+              <NoteFavoriteButton
+                pinned={isNotePinned(activeNote.id)}
+                onToggle={() => notePins.toggle(activeNote.id)}
+              />
+            ) : null}
             {activeNote && <div className="min-w-0 truncate text-xs text-muted-foreground/60">{activeNoteStats}</div>}
             {activeNote && <button type="button" data-testid="notes-content-authority" aria-haspopup="dialog" onClick={() => setSourceInfoOpen(true)} className="shrink-0 rounded bg-foreground/[0.04] px-2 py-0.5 text-xs text-muted-foreground hover:bg-foreground/[0.08]" title={t('notes.content.authorityHint')}>
               {contentResolution?.status === 'ok' ? t('notes.content.markdown') : t('notes.content.readOnly')}
@@ -3122,6 +3216,7 @@ h1,h2,h3{margin-top:1.5em}
           )}
           <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
           <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-sky-500" aria-hidden="true" /></button>
+          <button type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" data-testid="notes-templates-open" title={t('notes.library.templates')} aria-label={t('notes.library.templates')} onClick={() => { void openTemplatesDialog('create') }} onContextMenu={(event) => { event.preventDefault(); if (activeNote) void openTemplatesDialog('save') }}><LayoutTemplate className="h-4 w-4" aria-hidden="true" /></button>
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} disabled={openingAgent} />
           <button
@@ -3509,6 +3604,15 @@ h1,h2,h3{margin-top:1.5em}
                 }
               }}
             >
+              <NoteCoverIconChrome
+                properties={activeNote.properties}
+                disabled={!canEditContent}
+                onChange={(patch) => {
+                  const next = withNoteLibraryProperties(activeNote.properties, patch)
+                  if ('cover' in patch) void updateProperty('cover', next.cover)
+                  if ('icon' in patch) void updateProperty('icon', next.icon)
+                }}
+              />
               <TiptapMarkdownEditor
                 key={activeNote.id}
                 editable={canEditContent}
@@ -3839,6 +3943,16 @@ h1,h2,h3{margin-top:1.5em}
         </pre>
       </DialogContent>
     </Dialog>
+    <NotesTemplatesDialog
+      open={templatesDialogOpen}
+      mode={templatesDialogMode}
+      templates={noteTemplates}
+      busy={templatesBusy}
+      defaultTitle={templatesDialogMode === 'save' ? activeNote?.title : createTitle}
+      onOpenChange={setTemplatesDialogOpen}
+      onCreateFromTemplate={(templateId, title) => { void handleCreateFromTemplate(templateId, title) }}
+      onSaveAsTemplate={(templateId, title) => { void handleSaveAsTemplate(templateId, title) }}
+    />
     <NotesDialogs
       createDialogOpen={createDialogOpen}
       createTitle={createTitle}
