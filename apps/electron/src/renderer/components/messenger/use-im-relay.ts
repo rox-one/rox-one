@@ -70,33 +70,56 @@ export function useImChannelSubscription(channelId: string | null, live: boolean
 
 
 /**
+ * After `imSubscribeChannel` resolves: keep the native sub only if this hook
+ * still desires and claims the id (else unsubscribe to avoid orphan refs).
+ */
+export function keepSubscriptionAfterResolve(
+  id: string,
+  desired: ReadonlySet<string>,
+  active: ReadonlySet<string>,
+): boolean {
+  return desired.has(id) && active.has(id)
+}
+
+/**
  * Subscribe the native client to many channels (e.g. followed Лента channels).
  * Incremental sync: only subscribe newly added ids and unsubscribe removed ones.
- * Selection / open-channel churn must not tear down unchanged followed subs.
+ * Late-resolving subscribe is compensated if the id is no longer desired/owned
+ * (mirrors single-channel `useImChannelSubscription` cancelled handling).
  */
 export function useImChannelSubscriptions(channelIds: readonly string[], live: boolean): void {
   const desiredKey = [...new Set(channelIds.filter(Boolean))].sort().join('\0')
   const activeRef = React.useRef(new Set<string>())
+  const desiredRef = React.useRef(new Set<string>())
+
+  React.useEffect(() => {
+    desiredRef.current = new Set(desiredKey ? desiredKey.split('\0') : [])
+  }, [desiredKey])
 
   React.useEffect(() => {
     if (!live || !window.electronAPI?.imSubscribeChannel) {
-      // Going offline / unavailable: drop tracked set without wire churn if no API.
-      const prev = activeRef.current
-      activeRef.current = new Set()
-      if (window.electronAPI?.imUnsubscribeChannel) {
-        for (const id of prev) {
-          void window.electronAPI.imUnsubscribeChannel(id).catch(() => {})
-        }
+      const prev = [...activeRef.current]
+      activeRef.current.clear()
+      desiredRef.current = new Set()
+      for (const id of prev) {
+        void window.electronAPI?.imUnsubscribeChannel?.(id).catch(() => {})
       }
       return
     }
-    const desired = new Set(desiredKey ? desiredKey.split('\0') : [])
+
+    const desired = desiredRef.current
     const active = activeRef.current
+
     for (const id of desired) {
       if (active.has(id)) continue
       active.add(id)
-      void window.electronAPI.imSubscribeChannel(id).catch(() => {
-        active.delete(id)
+      void window.electronAPI.imSubscribeChannel(id).then(() => {
+        if (!keepSubscriptionAfterResolve(id, desiredRef.current, activeRef.current)) {
+          activeRef.current.delete(id)
+          void window.electronAPI.imUnsubscribeChannel?.(id).catch(() => {})
+        }
+      }).catch(() => {
+        activeRef.current.delete(id)
       })
     }
     for (const id of [...active]) {
@@ -106,12 +129,13 @@ export function useImChannelSubscriptions(channelIds: readonly string[], live: b
     }
   }, [desiredKey, live])
 
-  // Unmount: unsubscribe everything this hook still owns.
+  // Unmount: drop ownership so late resolves unsubscribe, then unsubscribe actives.
   React.useEffect(() => {
     return () => {
-      const active = activeRef.current
-      activeRef.current = new Set()
-      for (const id of active) {
+      const prev = [...activeRef.current]
+      activeRef.current.clear()
+      desiredRef.current = new Set()
+      for (const id of prev) {
         void window.electronAPI.imUnsubscribeChannel?.(id).catch(() => {})
       }
     }
