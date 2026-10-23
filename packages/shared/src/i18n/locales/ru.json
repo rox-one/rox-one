@@ -681,6 +681,8 @@
   "canvas.text.placeholder": "Введите текст…",
   "canvas.tool.ellipse": "Эллипс",
   "canvas.tool.entity": "Вставить объект",
+  "canvas.tool.ink": "Перо",
+  "canvas.tool.line": "Линия",
   "canvas.tool.rect": "Прямоугольник",
   "canvas.tool.select": "Выбор",
   "canvas.tool.sticky": "Стикер",

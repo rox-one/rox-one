@@ -1,5 +1,5 @@
 /**
- * LiveKit / Exa credentials resolution.
+ * LiveKit credentials resolution.
  *
  * Order: the user's override (CONFIG_DIR/team-calls.json, 0600, written by hand or a future Settings page) → the built-in defaults injected into the main-process bundle at
  *  build time (never committed, never sent to the renderer).
@@ -14,19 +14,17 @@ export interface CallCredentials {
   livekitUrl: string
   livekitApiKey: string
   livekitApiSecret: string
-  exaApiKey: string
 }
 
 export interface CallSettingsFile {
   livekitUrl?: string
   livekitApiKey?: string
   livekitApiSecret?: string
-  exaApiKey?: string
 }
 
 export type CallCredentialSource = 'override' | 'builtin' | 'none'
 
-let builtin: CallCredentials = { livekitUrl: '', livekitApiKey: '', livekitApiSecret: '', exaApiKey: '' }
+let builtin: CallCredentials = { livekitUrl: '', livekitApiKey: '', livekitApiSecret: '' }
 
 /** Called once by the Electron main process with its build-time defaults. */
 export function setBuiltinCallCredentials(creds: Partial<CallCredentials>): void {
@@ -34,7 +32,6 @@ export function setBuiltinCallCredentials(creds: Partial<CallCredentials>): void
     livekitUrl: creds.livekitUrl?.trim() ?? '',
     livekitApiKey: creds.livekitApiKey?.trim() ?? '',
     livekitApiSecret: creds.livekitApiSecret?.trim() ?? '',
-    exaApiKey: creds.exaApiKey?.trim() ?? '',
   }
 }
 
@@ -56,7 +53,6 @@ export function resolveCallCredentials(): CallCredentials & { source: CallCreden
   const lk = overrideLk
     ? { livekitUrl: o.livekitUrl!, livekitApiKey: o.livekitApiKey!, livekitApiSecret: o.livekitApiSecret! }
     : { livekitUrl: builtin.livekitUrl, livekitApiKey: builtin.livekitApiKey, livekitApiSecret: builtin.livekitApiSecret }
-  const exaApiKey = o.exaApiKey || builtin.exaApiKey
-  const source = overrideLk || o.exaApiKey ? 'override' : (lk.livekitApiKey || exaApiKey) ? 'builtin' : 'none'
-  return { ...lk, exaApiKey, source }
+  const source = overrideLk ? 'override' : lk.livekitApiKey ? 'builtin' : 'none'
+  return { ...lk, source }
 }

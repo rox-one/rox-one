@@ -69,7 +69,7 @@ export interface TeamCallTranscriptSegment {
   endMs: number
 }
 
-/** A LiveKit call bound to one channel or group chat (room = `rox-<channelId>`). */
+/** A LiveKit call bound to one channel or group chat (room = `rox-ch-<channelId>`, see teamCallRoomName). */
 export interface TeamChannelCall {
   id: string
   channelId: string
@@ -108,6 +108,8 @@ export interface TeamChannelView extends TeamChannel {
   unreadCount: number
   /** The live call in this channel, if any. */
   activeCall?: TeamChannelCall
+  /** Retained, non-deleted, non-system messages in the channel (visible to the viewer). */
+  messageCount?: number
   /** Latest visible message, for the channel list preview (text clipped to 140 chars). */
   lastMessage?: { senderId: string; text: string; kind?: TeamChannelMessageKind; event?: TeamChannelMessage['event']; createdAt: number }
 }
