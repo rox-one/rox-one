@@ -1594,7 +1594,8 @@ html[data-render-profile="performance"] :is(.animate-pulse, .motion-safe\:animat
   display: none;
 }
 
-@container panel (min-width: 640px) {
+/* P8.2: icon-only ModeBar through mid-band (~900 viewport → panel often <720). */
+@container panel (min-width: 720px) {
   .rox-view-switch-label {
     display: inline;
   }
@@ -1608,7 +1609,8 @@ html[data-render-profile="performance"] :is(.animate-pulse, .motion-safe\:animat
   display: inline-flex;
 }
 
-@container panel (min-width: 560px) {
+/* Fold secondary session actions until the detail pane is comfortably wide. */
+@container panel (min-width: 640px) {
   .rox-header-actions-full {
     display: flex;
   }
