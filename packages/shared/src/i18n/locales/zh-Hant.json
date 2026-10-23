@@ -6055,6 +6055,7 @@
   "notes.actionButton.defaultLabel": "操作",
   "notes.actionButton.failureHint": "操作失敗。",
   "notes.actionButton.inertHint": "匯入的操作在審核前保持無效 — 不會執行。",
+  "notes.actionButton.draftInertHint": "草稿操作在審核前保持無效 — 不會執行。",
   "notes.actionButton.offlineHint": "離線 — 操作無法使用。",
   "notes.actionButton.pendingHint": "等待中（此編輯器中無副作用）。",
   "notes.actionButton.successHint": "操作已完成。",

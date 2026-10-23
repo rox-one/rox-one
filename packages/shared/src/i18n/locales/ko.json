@@ -6055,6 +6055,7 @@
   "notes.actionButton.defaultLabel": "액션",
   "notes.actionButton.failureHint": "액션이 실패했습니다.",
   "notes.actionButton.inertHint": "가져온 액션은 검토 전까지 비활성 — 실행되지 않습니다.",
+  "notes.actionButton.draftInertHint": "초안 액션은 검토 전까지 비활성 — 실행되지 않습니다.",
   "notes.actionButton.offlineHint": "오프라인 — 액션을 사용할 수 없습니다.",
   "notes.actionButton.pendingHint": "대기 중(이 편집기에서는 부작용 없음).",
   "notes.actionButton.successHint": "액션이 완료되었습니다.",
