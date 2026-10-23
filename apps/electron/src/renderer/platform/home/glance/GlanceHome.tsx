@@ -193,7 +193,7 @@ function GlancePageViewStatic({
 }
 
 
-export function useNarrow(ref: React.RefObject<HTMLElement | null>, breakpoint: number): boolean {
+export function useNarrow(ref: React.RefObject<HTMLElement>, breakpoint: number): boolean {
   const [narrow, setNarrow] = useState(false)
   useEffect(() => {
     const el = ref.current
@@ -271,7 +271,7 @@ function lazyBody(def: GlanceWidgetDef) {
 }
 
 
-export function useWidth<T extends HTMLElement>(ref: React.RefObject<T | null>): number {
+export function useWidth<T extends HTMLElement>(ref: React.RefObject<T>): number {
   const [w, setW] = useState(320)
   useEffect(() => {
     const el = ref.current
@@ -378,7 +378,7 @@ export function ColumnResizeHandle({ size, onResize }: { size: 'small' | 'full';
 }
 
 /** Drag the bottom edge to set a fixed body height; double-click (or Delete) resets. */
-export function HeightResizeHandle({ bodyRef, onPreview, onCommit }: { bodyRef: React.RefObject<HTMLDivElement | null>; onPreview: (h: number | undefined) => void; onCommit: (h: number | null) => void }) {
+export function HeightResizeHandle({ bodyRef, onPreview, onCommit }: { bodyRef: React.RefObject<HTMLDivElement>; onPreview: (h: number | undefined) => void; onCommit: (h: number | null) => void }) {
   const { t } = useTranslation()
   const drag = useRef<{ y: number; h: number; last: number } | null>(null)
   const clampH = (h: number) => Math.round(Math.min(GLANCE_MAX_HEIGHT, Math.max(GLANCE_MIN_HEIGHT, h)))

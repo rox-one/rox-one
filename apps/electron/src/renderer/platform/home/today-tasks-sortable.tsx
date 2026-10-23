@@ -20,7 +20,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { setPersonalTaskDone, setPersonalTaskOrders } from './home-actions'
 import { reorderedSlots } from './home-data'
 
-type Task = { id: string; title: string; completedAt?: number; dueAt?: number }
+type Task = { id: string; title: string; createdAt: number; order?: number; completedAt?: number; dueAt?: number }
 
 function TodayTaskRow({ task, overdue, due, disabled }: { task: Task; overdue: boolean; due?: string; disabled: boolean }) {
   const { t } = useTranslation()

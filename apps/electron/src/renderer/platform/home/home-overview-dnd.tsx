@@ -86,7 +86,7 @@ function SortableWidget({
       ref={setNodeRef}
       data-home-cell={placement.id}
       data-home-size={placement.size}
-      className={cn('min-h-0 min-w-0', isDragging && 'relative z-10 opacity-80')}
+      className={cn('min-h-0 min-w-0', isDragging && 'relative z-raised opacity-80')}
       style={{ ...widgetAppearanceStyle(placement.appearance), gridColumn: `${cell.col + 1} / span ${span}`, gridRow: `${Math.round((cell.row * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP)) / trackPitch) + 1} / span ${Math.ceil((height + HOME_GRID_GAP) / trackPitch)}`, height, alignSelf: 'start', transform: CSS.Translate.toString(transform), transition }}
     >
       <WidgetBoundary
@@ -119,7 +119,7 @@ export default function HomeOverviewEditGrid({
   packed: { cells: Map<string, PackedCell> }
   width: number
   trackPitch: number
-  packedGridRef: React.RefObject<HTMLDivElement | null>
+  packedGridRef: React.RefObject<HTMLDivElement>
   pickerOpen: boolean
   onChange: (next: HomeDashboardLayout) => void
   onOpenPicker: () => void
@@ -164,7 +164,7 @@ export default function HomeOverviewEditGrid({
               className="rox-home-add-cell flex min-w-0 flex-col items-center justify-center gap-1 rounded-[var(--radius-control)] text-base font-bold text-muted-foreground hover:text-foreground"
               style={{ gridColumn: `span ${widgetSpan('S', width)} / span ${widgetSpan('S', width)}`, gridRow: `span ${Math.ceil(widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) / trackPitch)}`, height: widgetRowSpan('S') * (HOME_GRID_ROW_HEIGHT + HOME_GRID_GAP) - HOME_GRID_GAP, alignSelf: 'start' }}
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="icon-rail" />
               {t('workbench.home.edit.addWidget')}
             </button>
           ) : null}

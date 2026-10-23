@@ -23,8 +23,8 @@ function scheduleIdle(cb: () => void): () => void {
  * Returns `[ref, ready]`. Attach `ref` to the card body; render the real widget
  * only when `ready` is true (skeleton otherwise).
  */
-export function useNearViewport<T extends HTMLElement>(): [RefObject<T | null>, boolean] {
-  const ref = useRef<T | null>(null)
+export function useNearViewport<T extends HTMLElement>(): [RefObject<T>, boolean] {
+  const ref = useRef<T>(null)
   const [ready, setReady] = useState(typeof IntersectionObserver === 'undefined')
   useEffect(() => {
     if (ready) return
