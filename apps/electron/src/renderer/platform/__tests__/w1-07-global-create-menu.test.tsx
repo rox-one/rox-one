@@ -33,13 +33,15 @@ function renderMenu() {
 }
 
 beforeEach(() => {
-  // Мессенджер is default ON (its «new message» entry); these cases start from every flag OFF.
+  // Мессенджер + «Доска» are default ON; these cases start from every flag OFF.
   getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+  getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeCanvasV1), false)
 })
 
 afterEach(() => {
   getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeGoalsV1), RESET)
   getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), RESET)
+  getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeCanvasV1), RESET)
   __resetSlotRegistryForTests()
 })
 
