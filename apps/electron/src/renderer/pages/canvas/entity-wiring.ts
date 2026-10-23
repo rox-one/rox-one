@@ -159,8 +159,34 @@ function localTombstone(ref: EntityRef): EntityPreview {
  * kind's store answered and the id is gone → tombstone; `unknown` = no API /
  * error → do not cache as deleted.
  */
-export async function lookupLocalEntityPreview(workspaceId: string, ref: EntityRef): Promise<'unknown' | { hit: EntityPreview } | { missing: true }> {
+type TitleMap = Map<string, string>
+type LocalListCache = {
+  notes?: Promise<TitleMap | null>
+  pages?: Promise<TitleMap | null>
+  sessions?: Promise<TitleMap | null>
+  tasks?: Promise<TitleMap | null>
+}
+
+async function loadTitleMap(cache: LocalListCache, key: keyof LocalListCache, load: () => Promise<TitleMap>): Promise<TitleMap | null> {
+  if (!cache[key]) {
+    cache[key] = (async () => {
+      try { return await load() } catch { return null }
+    })()
+  }
+  return cache[key]!
+}
+
+export async function lookupLocalEntityPreview(
+  workspaceId: string,
+  ref: EntityRef,
+  listCache: LocalListCache = {},
+): Promise<'unknown' | { hit: EntityPreview } | { missing: true }> {
   const a = api()
+  const fromMap = (m: TitleMap | null) => {
+    if (!m) return 'unknown' as const
+    const title = m.get(ref.id)
+    return title !== undefined ? { hit: localOkPreview(ref, title || ref.id) } as const : { missing: true } as const
+  }
   try {
     switch (ref.kind) {
       case 'note': {
@@ -174,26 +200,25 @@ export async function lookupLocalEntityPreview(workspaceId: string, ref: EntityR
           }
         }
         if (!a.listNotes) return 'unknown'
-        const notes = await a.listNotes(workspaceId)
-        const n = notes.find(x => x.id === ref.id)
-        return n ? { hit: localOkPreview(ref, n.title || n.id) } : { missing: true }
+        return fromMap(await loadTitleMap(listCache, 'notes', async () =>
+          new Map((await a.listNotes!(workspaceId)).map(n => [n.id, n.title || n.id]))))
       }
       case 'page': {
         if (!a.getPages) return 'unknown'
-        const pages = await a.getPages(workspaceId)
-        const p = pages.find(x => x.config.slug === ref.id)
-        return p ? { hit: localOkPreview(ref, p.config.name || p.config.slug) } : { missing: true }
+        return fromMap(await loadTitleMap(listCache, 'pages', async () =>
+          new Map((await a.getPages!(workspaceId)).map(p => [p.config.slug, p.config.name || p.config.slug]))))
       }
       case 'session': {
         if (!a.getSessions) return 'unknown'
-        const sessions = await a.getSessions()
-        const s = sessions.find(x => x.id === ref.id && !x.isArchived && (!x.workspaceId || x.workspaceId === workspaceId))
-        return s ? { hit: localOkPreview(ref, s.name || s.id) } : { missing: true }
+        return fromMap(await loadTitleMap(listCache, 'sessions', async () =>
+          new Map((await a.getSessions!())
+            .filter(s => !s.isArchived && (!s.workspaceId || s.workspaceId === workspaceId))
+            .map(s => [s.id, s.name || s.id]))))
       }
       case 'task': {
         if (!a.personalTasksList) return 'unknown'
-        const t = (await a.personalTasksList()).tasks.find(x => x.id === ref.id)
-        return t ? { hit: localOkPreview(ref, t.title || t.id) } : { missing: true }
+        return fromMap(await loadTitleMap(listCache, 'tasks', async () =>
+          new Map((await a.personalTasksList!()).tasks.map(t => [t.id, t.title || t.id]))))
       }
       default:
         return 'unknown'
@@ -223,10 +248,13 @@ export function createPreviewBatcher(
     const r = api().entitiesResolve
     let previews: EntityPreview[] | null = null
     if (r) { try { previews = await r(workspaceId, { refs: batch.map(b => ({ kind: b.ref.kind as EntityKind, id: b.ref.id })) }) } catch { previews = null } }
+    // One listNotes / getPages / … per flush for refs that still need a local miss check.
+    const listCache: LocalListCache = {}
+    const lookup = async (ref: EntityRef) => lookupLocalEntityPreview(workspaceId, ref, listCache)
     await Promise.all(batch.map(async (b, i) => {
       let p: EntityPreview | null = previews?.[i] ?? null
       if (!previewUsable(p)) {
-        const local = await lookupLocalEntityPreview(workspaceId, b.ref)
+        const local = await lookup(b.ref)
         if (local !== 'unknown' && 'hit' in local) p = local.hit
         else if (local !== 'unknown' && 'missing' in local) p = localTombstone(b.ref)
         else p = null
@@ -267,7 +295,6 @@ export type PreviewBatcher = ReturnType<typeof createPreviewBatcher>
 export function seedCreatedCardPreview(batcher: PreviewBatcher, ref: EntityRef, title: string): void {
   batcher.seed(ref, localOkPreview(ref, title))
 }
-
 
 interface ChangeEvents {
   onNotesChanged?: (cb: (p: unknown) => void) => () => void
