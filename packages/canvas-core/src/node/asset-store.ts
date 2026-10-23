@@ -6,32 +6,14 @@
 import { createHash } from 'node:crypto'
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
+import {
+  ASSET_HASH_RE, isValidAssetHash, MAX_ASSET_BYTES, normalizeAssetMime, sanitizeAssetName,
+} from '../asset-meta.ts'
 import { atomicWrite } from './file-store.ts'
 
-export const ASSET_HASH_RE = /^[a-f0-9]{64}$/
-export const MAX_ASSET_BYTES = 25 * 1024 * 1024
-const ALLOWED_MIME = new Set([
-  'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'image/svg+xml',
-])
+export { ASSET_HASH_RE, isValidAssetHash, MAX_ASSET_BYTES, normalizeAssetMime, sanitizeAssetName }
 
 export type AssetMeta = { hash: string; mime: string; size: number; name: string }
-
-export function isValidAssetHash(h: string): boolean {
-  return ASSET_HASH_RE.test(h)
-}
-
-export function normalizeAssetMime(mime: unknown): string | null {
-  if (typeof mime !== 'string') return null
-  const m = mime.trim().toLowerCase()
-  if (!ALLOWED_MIME.has(m)) return null
-  return m === 'image/jpg' ? 'image/jpeg' : m
-}
-
-export function sanitizeAssetName(name: unknown): string {
-  if (typeof name !== 'string') return 'image'
-  const base = name.replace(/[/\\<>:"|?*\x00-\x1f]/g, '_').trim().slice(0, 200)
-  return base || 'image'
-}
 
 export function hashAssetBytes(bytes: Uint8Array): string {
   return createHash('sha256').update(bytes).digest('hex')

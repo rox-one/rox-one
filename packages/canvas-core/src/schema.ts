@@ -90,7 +90,7 @@ export const PROP_SCHEMAS: Partial<Record<ObjectType, z.ZodTypeAny>> = {
     label: z.string().optional(),
   }).passthrough(),
   image: z.object({
-    assetId: z.string().min(1),
+    assetId: z.string().regex(/^[a-f0-9]{64}$/, 'assetId must be sha256 hex'),
     fit: z.enum(['cover', 'contain', 'fill']).optional(),
   }).passthrough(),
   video: z.object({ assetId: z.string().min(1) }).passthrough(),

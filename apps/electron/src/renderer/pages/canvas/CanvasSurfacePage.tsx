@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next'
 import * as Y from 'yjs'
 import { ArrowLeft, Circle, Clock, Frame, Image as ImageIcon, LayoutGrid, Link2, Minus, MousePointer2, Pencil, Plus, RotateCcw, Search, Share2, Square, Star, StickyNote, Trash2, Type, ZoomIn } from 'lucide-react'
 import {
-  actorOrigin, CanvasDoc, createUndoManager, guardEntityCards, linkEntityCard, removeEntityCards, SpatialIndex, watchEntityLinks,
+  actorOrigin, CanvasDoc, createUndoManager, isValidAssetHash, MAX_ASSET_BYTES, normalizeAssetMime, guardEntityCards, linkEntityCard, removeEntityCards, SpatialIndex, watchEntityLinks,
   type CanvasObject, type EntityCardContext, type EntityRef, type ResolvedEntity,
 } from '@rox/canvas-core'
 import { ENTITY_KINDS, kindDescriptor, type EntityKind } from '@rox/core/entities'
@@ -292,7 +292,7 @@ function useBoard(workspaceId: string, boardId: string) {
 
 type Drag =
   | { kind: 'pan'; sx: number; sy: number; ox: number; oy: number }
-  | { kind: 'move'; id: string; sx: number; sy: number; ox: number; oy: number }
+  | { kind: 'move'; id: string; sx: number; sy: number; ox: number; oy: number; descendants: string[] }
   | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; rotation: number; o: { x: number; y: number; w: number; h: number }; points?: number[] }
   | { kind: 'rotate'; id: string; cx: number; cy: number }
   | { kind: 'draw-line'; id: string; x0: number; y0: number; undoLen: number }
@@ -316,6 +316,8 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const imageInputRef = useRef<HTMLInputElement>(null)
   const pendingImageAt = useRef<{ x: number; y: number } | null>(null)
   const assetUrlsRef = useRef<Map<string, string>>(new Map())
+  const assetInflightRef = useRef<Set<string>>(new Set())
+  const assetLoadGenRef = useRef(0)
   const [assetUrls, setAssetUrls] = useState<Record<string, string>>({})
   const drag = useRef<Drag | null>(null)
   const undo = useMemo(() => (board ? createUndoManager(board, LOCAL) : null), [board])
@@ -401,35 +403,21 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   useEffect(() => {
     const api = bridge()
     if (!api?.getAsset || !board) return
-    let alive = true
+    const gen = ++assetLoadGenRef.current
     const needed = new Set<string>()
     for (const o of all) {
       if (o.type !== 'image') continue
       const id = o.props.assetId
-      if (typeof id === 'string' && id) needed.add(id)
+      if (typeof id === 'string' && isValidAssetHash(id)) needed.add(id)
     }
     const cache = assetUrlsRef.current
+    const inflight = assetInflightRef.current
     for (const [hash, url] of [...cache.entries()]) {
       if (!needed.has(hash)) { URL.revokeObjectURL(url); cache.delete(hash) }
     }
-    const load = async () => {
-      let changed = false
-      for (const hash of needed) {
-        if (cache.has(hash)) continue
-        try {
-          const bytes = await api.getAsset(workspaceId, hash)
-          if (!alive) return
-          const meta = board.getAssetMeta(hash)
-          const mime = meta?.mime && meta.mime.startsWith('image/') ? meta.mime : 'application/octet-stream'
-          const url = URL.createObjectURL(new Blob([bytes], { type: mime }))
-          cache.set(hash, url)
-          changed = true
-        } catch (e) {
-          console.warn('[canvas] asset', hash, e)
-        }
-      }
-      if (alive && changed) setAssetUrls(Object.fromEntries(cache))
-      else if (alive) setAssetUrls(prev => {
+    const syncUrls = () => {
+      if (gen !== assetLoadGenRef.current) return
+      setAssetUrls(prev => {
         const next = Object.fromEntries(cache)
         const prevKeys = Object.keys(prev)
         const nextKeys = Object.keys(next)
@@ -437,10 +425,35 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         return next
       })
     }
+    syncUrls()
+    const load = async () => {
+      let changed = false
+      for (const hash of needed) {
+        if (cache.has(hash) || inflight.has(hash)) continue
+        inflight.add(hash)
+        try {
+          const bytes = await api.getAsset(workspaceId, hash)
+          if (gen !== assetLoadGenRef.current) continue
+          const meta = board.getAssetMeta(hash)
+          const mime = normalizeAssetMime(meta?.mime) ?? 'application/octet-stream'
+          const url = URL.createObjectURL(new Blob([bytes], { type: mime }))
+          if (gen !== assetLoadGenRef.current || cache.has(hash)) { URL.revokeObjectURL(url); continue }
+          cache.set(hash, url)
+          changed = true
+        } catch (e) {
+          console.warn('[canvas] asset', hash, e)
+        } finally {
+          inflight.delete(hash)
+        }
+      }
+      if (changed) syncUrls()
+    }
     void load()
-    return () => { alive = false }
+    return () => { /* gen bump / unmount cleanup revokes */ }
   }, [all, board, workspaceId, version])
   useEffect(() => () => {
+    assetLoadGenRef.current++
+    assetInflightRef.current.clear()
     for (const url of assetUrlsRef.current.values()) URL.revokeObjectURL(url)
     assetUrlsRef.current.clear()
   }, [])
@@ -530,9 +543,12 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     if (!board) return
     const api = bridge()
     if (!api?.putAsset) { setNotice(t('canvas.error.save')); return }
+    const mime = normalizeAssetMime(file.type)
+    if (!mime || file.size <= 0 || file.size > MAX_ASSET_BYTES) { setNotice(t('canvas.image.failed')); return }
     try {
       const buf = new Uint8Array(await file.arrayBuffer())
-      const meta = await api.putAsset(workspaceId, buf, file.type || 'image/png', file.name || 'image')
+      if (buf.byteLength === 0 || buf.byteLength > MAX_ASSET_BYTES) { setNotice(t('canvas.image.failed')); return }
+      const meta = await api.putAsset(workspaceId, buf, mime, file.name || 'image')
       board.setAssetMeta(meta.hash, meta, LOCAL)
       // Natural size when the browser can decode; else a square default box.
       const dims = await new Promise<{ w: number; h: number }>(resolve => {
@@ -615,7 +631,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     }
     setSelectedIds([o.id])
     if (o.locked) return
-    drag.current = { kind: 'move', id: o.id, sx: e.clientX, sy: e.clientY, ox: o.x, oy: o.y }
+    drag.current = { kind: 'move', id: o.id, sx: e.clientX, sy: e.clientY, ox: o.x, oy: o.y, descendants: collectDescendantIds(board?.list() ?? [], o.id) }
     svgRef.current?.setPointerCapture(e.pointerId)
   }
   const onHandleDown = (e: ReactPointerEvent, o: CanvasObject, h: 'nw' | 'ne' | 'sw' | 'se' | 'rotate') => {
@@ -641,12 +657,15 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       if (!cur) return
       const dx = nx - cur.x, dy = ny - cur.y
       if (dx === 0 && dy === 0) return
-      board.update(d.id, { x: nx, y: ny }, LOCAL)
-      // Absolute child coords: translate every descendant with the parent.
-      for (const id of collectDescendantIds(board.list(), d.id)) {
-        const o = board.get(id)
-        if (o && !o.locked) board.update(id, { x: o.x + dx, y: o.y + dy }, LOCAL)
-      }
+      // One Yjs transaction so a frame+children move is a single IPC update (not O(n) floods).
+      // Locked descendants still translate: lock blocks direct drag, not parent-driven nesting.
+      board.doc.transact(() => {
+        board.update(d.id, { x: nx, y: ny }, LOCAL)
+        for (const id of d.descendants) {
+          const o = board.get(id)
+          if (o) board.update(id, { x: o.x + dx, y: o.y + dy }, LOCAL)
+        }
+      }, LOCAL)
     }
     else if (d.kind === 'resize') {
       const minSize = d.points && d.points.length >= 2 ? 1 : undefined

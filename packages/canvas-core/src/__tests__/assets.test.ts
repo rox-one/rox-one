@@ -58,6 +58,11 @@ describe('schema frame/image', () => {
       id: 'bad', type: 'image', parentId: null, index: 'a0', x: 0, y: 0, w: 1, h: 1, props: {},
     })
     expect(bad.ok).toBe(false)
+    const shortId = validateObject({
+      id: 's1', type: 'image', parentId: null, index: 'a0', x: 0, y: 0, w: 1, h: 1, props: { assetId: 'abc' },
+    })
+    expect(shortId.ok).toBe(false)
+    expect(normalizeAssetMime('image/png; charset=utf-8')).toBe('image/png')
   })
 })
 
@@ -98,5 +103,16 @@ describe('board frame/image lifecycle', () => {
     expect(board.get(id!)!.props.fit).toBe('cover')
     undo.undo()
     expect(board.get(id!)!.props.fit).toBe('contain')
+  })
+
+  it('rejects bad asset meta (hash/mime/size)', () => {
+    const board = new CanvasDoc()
+    const hash = 'd'.repeat(64)
+    expect(() => board.setAssetMeta('nope', { hash: 'nope', mime: 'image/png', size: 1, name: 'x' }, me)).toThrow(/bad asset id/)
+    expect(() => board.setAssetMeta(hash, { hash, mime: 'text/plain', size: 1, name: 'x' }, me)).toThrow(/bad mime/)
+    expect(() => board.setAssetMeta(hash, { hash, mime: 'image/png', size: MAX_ASSET_BYTES + 1, name: 'x' }, me)).toThrow(/bad size/)
+    expect(() => board.setAssetMeta(hash, { hash: 'e'.repeat(64), mime: 'image/png', size: 1, name: 'x' }, me)).toThrow(/content hash/)
+    board.setAssetMeta(hash, { hash, mime: 'image/jpg', size: 3, name: '../a.png' }, me)
+    expect(board.getAssetMeta(hash)).toEqual({ hash, mime: 'image/jpeg', size: 3, name: '.._a.png' })
   })
 })

@@ -9,6 +9,7 @@
  */
 import * as Y from 'yjs'
 import { SCHEMA_VERSION, validateObject, type CanvasObject, type CanvasObjectInput } from './schema.ts'
+import { isValidAssetHash, MAX_ASSET_BYTES, normalizeAssetMime, sanitizeAssetName } from './asset-meta.ts'
 import { isValidIndexKey, keyBetween, keysBetween } from './fractional-index.ts'
 import { wellFormed } from './text.ts'
 
@@ -294,13 +295,14 @@ export class CanvasDoc {
 
   /** Register / refresh asset metadata in the board CRDT (bytes live on disk). */
   setAssetMeta(assetId: string, meta: { hash: string; mime: string; size: number; name: string }, origin: Origin): void {
-    if (!assetId || typeof assetId !== 'string') throw new CanvasValidationError(assetId || 'asset', ['bad asset id'])
+    if (!assetId || typeof assetId !== 'string' || !isValidAssetHash(assetId)) throw new CanvasValidationError(assetId || 'asset', ['bad asset id'])
     if (!meta.hash || meta.hash !== assetId) throw new CanvasValidationError(assetId, ['asset id must equal content hash'])
-    if (typeof meta.mime !== 'string' || !meta.mime) throw new CanvasValidationError(assetId, ['bad mime'])
-    if (!Number.isFinite(meta.size) || meta.size < 0) throw new CanvasValidationError(assetId, ['bad size'])
-    const name = typeof meta.name === 'string' ? meta.name : 'image'
+    const mime = normalizeAssetMime(meta.mime)
+    if (!mime) throw new CanvasValidationError(assetId, ['bad mime'])
+    if (!Number.isFinite(meta.size) || meta.size < 0 || meta.size > MAX_ASSET_BYTES) throw new CanvasValidationError(assetId, ['bad size'])
+    const name = sanitizeAssetName(meta.name)
     this.doc.transact(() => {
-      this.assets.set(assetId, { hash: meta.hash, mime: meta.mime, size: meta.size, name })
+      this.assets.set(assetId, { hash: meta.hash, mime, size: meta.size, name })
     }, origin)
   }
 
