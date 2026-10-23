@@ -2952,7 +2952,7 @@ h1,h2,h3{margin-top:1.5em}
   }, [activeWorkspaceId])
 
   const openTemplatesDialog = React.useCallback(async (mode: 'create' | 'save') => {
-    if (mode === 'create') setCreateInFolder(undefined)
+    // Keep createInFolder so template creates land in the active folder (blank-note parity).
     setTemplatesDialogMode(mode)
     setTemplatesDialogOpen(true)
     await refreshNoteTemplates()
@@ -3960,7 +3960,11 @@ h1,h2,h3{margin-top:1.5em}
       templates={noteTemplates}
       busy={templatesBusy}
       defaultTitle={templatesDialogMode === 'save' ? activeNote?.title : createTitle}
-      onOpenChange={setTemplatesDialogOpen}
+      onOpenChange={(open) => {
+        setTemplatesDialogOpen(open)
+        // Cancel / dismiss: clear folder target like blank-note create dialog.
+        if (!open && templatesDialogMode === 'create') setCreateInFolder(undefined)
+      }}
       onCreateFromTemplate={(templateId, title) => { void handleCreateFromTemplate(templateId, title) }}
       onSaveAsTemplate={(templateId, title, confirmReplace) => { void handleSaveAsTemplate(templateId, title, confirmReplace) }}
     />
