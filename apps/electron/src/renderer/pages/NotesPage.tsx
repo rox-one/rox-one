@@ -3521,6 +3521,7 @@ h1,h2,h3{margin-top:1.5em}
                   workspaceId={activeWorkspaceId}
                   noteId={activeNote.id}
                   noteText={content}
+                  getNoteText={() => contentRef.current}
                   draftQuote={commentDraftQuote}
                   width={railLayout.comments}
                   composerTop={commentComposerTop}

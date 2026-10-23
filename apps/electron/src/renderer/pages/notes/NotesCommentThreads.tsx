@@ -6,7 +6,7 @@
 import * as React from 'react'
 import { CheckCircle2, MessageSquarePlus, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { NoteCommentThread } from '@rox/shared/protocol'
+import type { NoteChangedPayload, NoteCommentThread } from '@rox/shared/protocol'
 import { CommentsThread, type CommentItem } from '@rox/ui/primitives'
 import { cn } from '@/lib/utils'
 import { NotesCommentComposer } from './NotesReadingChrome'
@@ -14,10 +14,13 @@ import {
   anchorFromQuote,
   isDocumentNoteComment,
   nestNoteCommentThreads,
+  removeNoteCommentFromList,
   resolveNoteCommentAnchors,
+  upsertNoteCommentInList,
 } from './note-comments'
 
 const LOCAL_AUTHOR = 'Вы'
+const CREATE_BUSY = '__create__'
 
 function toCommentItem(comment: NoteCommentThread, viewer = LOCAL_AUTHOR): CommentItem {
   return {
@@ -36,7 +39,6 @@ function toCommentItem(comment: NoteCommentThread, viewer = LOCAL_AUTHOR): Comme
   }
 }
 
-
 export function noteThreadsToHighlightComments(comments: readonly NoteCommentThread[]): Array<{
   id: string
   quote: string
@@ -53,10 +55,15 @@ export function noteThreadsToHighlightComments(comments: readonly NoteCommentThr
     }))
 }
 
+function normalizeChangedPayload(payload: NoteChangedPayload | string): NoteChangedPayload {
+  return typeof payload === 'string' ? { workspaceId: payload } : payload
+}
+
 export function NotesCommentThreads({
   workspaceId,
   noteId,
   noteText,
+  getNoteText,
   draftQuote,
   onClearDraft,
   width,
@@ -70,8 +77,10 @@ export function NotesCommentThreads({
 }: {
   workspaceId: string
   noteId: string
-  /** Current note body used to build/resolve selection anchors. */
+  /** Latest rendered note body (resolve/highlight). */
   noteText: string
+  /** Live source for selection anchors — same as overlay (contentRef.current). */
+  getNoteText: () => string
   draftQuote: string
   onClearDraft: () => void
   width?: number
@@ -90,30 +99,48 @@ export function NotesCommentThreads({
   const [busyId, setBusyId] = React.useState<string | null>(null)
   const [localBody, setLocalBody] = React.useState('')
   const [docCompose, setDocCompose] = React.useState(false)
+  const onThreadsChangeRef = React.useRef(onThreadsChange)
+  onThreadsChangeRef.current = onThreadsChange
   const body = draftBody ?? localBody
   const setBody = onDraftBodyChange ?? setLocalBody
 
-  const reload = React.useCallback(async () => {
-    setLoading(true)
-    setError(null)
+  const publish = React.useCallback((list: NoteCommentThread[]) => {
+    setComments(list)
+    onThreadsChangeRef.current?.(list)
+  }, [])
+
+  const reload = React.useCallback(async (opts?: { quiet?: boolean }) => {
+    if (!opts?.quiet) {
+      setLoading(true)
+      setError(null)
+    }
     try {
       const list = await window.electronAPI.listNoteComments(workspaceId, noteId)
-      setComments(list)
-      onThreadsChange?.(list)
+      publish(list)
     } catch {
       setError(t('notes.comments.errorUpdate'))
-      setComments([])
-      onThreadsChange?.([])
+      publish([])
     } finally {
-      setLoading(false)
+      if (!opts?.quiet) setLoading(false)
     }
-  }, [workspaceId, noteId, onThreadsChange, t])
+  }, [workspaceId, noteId, publish, t])
 
   React.useEffect(() => {
     setDocCompose(false)
     setLocalBody('')
     void reload()
   }, [workspaceId, noteId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  React.useEffect(() => {
+    const unsubscribe = window.electronAPI.onNotesChanged((raw) => {
+      const payload = normalizeChangedPayload(raw)
+      if (payload.workspaceId !== workspaceId) return
+      if (payload.reason !== 'comments') return
+      if (payload.noteId && payload.noteId !== noteId) return
+      void reload({ quiet: true })
+    })
+    return unsubscribe
+  }, [workspaceId, noteId, reload])
 
   const resolved = React.useMemo(
     () => resolveNoteCommentAnchors(noteText, comments.filter(c => !c.parentId)),
@@ -138,28 +165,32 @@ export function NotesCommentThreads({
 
   const createRoot = React.useCallback(async () => {
     const text = body.trim()
-    if (!text) return
+    if (!text || busyId === CREATE_BUSY) return
     const quote = draftQuote.trim()
-    let anchor = quote ? anchorFromQuote(noteText, quote) : null
+    // Match overlay: anchor against the live contentRef body, not React state.
+    const liveText = getNoteText()
+    const anchor = quote ? anchorFromQuote(liveText, quote) : null
     if (quote && !anchor) {
       setError(t('notes.comments.errorAttachSelection'))
       return
     }
     setError(null)
+    setBusyId(CREATE_BUSY)
     try {
       const created = await window.electronAPI.createNoteComment(workspaceId, {
         noteId,
         body: text,
         anchor,
       })
-      const next = [...comments, created]
-      setComments(next)
-      onThreadsChange?.(next)
+      setComments(prev => upsertNoteCommentInList(prev, created))
       clearComposer()
+      await reload({ quiet: true })
     } catch {
       setError(t('notes.comments.errorCreate'))
+    } finally {
+      setBusyId(null)
     }
-  }, [body, draftQuote, noteText, workspaceId, noteId, comments, clearComposer, onThreadsChange, t])
+  }, [body, draftQuote, getNoteText, workspaceId, noteId, busyId, clearComposer, reload, t])
 
   const onCreate = React.useCallback(async (text: string, parentId?: string) => {
     try {
@@ -169,13 +200,12 @@ export function NotesCommentThreads({
         parentId,
         anchor: null,
       })
-      const next = [...comments, created]
-      setComments(next)
-      onThreadsChange?.(next)
+      setComments(prev => upsertNoteCommentInList(prev, created))
+      await reload({ quiet: true })
     } catch {
       setError(t('notes.comments.errorCreate'))
     }
-  }, [workspaceId, noteId, comments, onThreadsChange, t])
+  }, [workspaceId, noteId, reload, t])
 
   const onEdit = React.useCallback(async (id: string, nextBody: string) => {
     try {
@@ -184,24 +214,22 @@ export function NotesCommentThreads({
         commentId: id,
         body: nextBody,
       })
-      const next = comments.map(c => c.id === id ? updated : c)
-      setComments(next)
-      onThreadsChange?.(next)
+      setComments(prev => upsertNoteCommentInList(prev, updated))
+      await reload({ quiet: true })
     } catch {
       setError(t('notes.comments.errorUpdate'))
     }
-  }, [workspaceId, noteId, comments, onThreadsChange, t])
+  }, [workspaceId, noteId, reload, t])
 
   const onDelete = React.useCallback(async (id: string) => {
     try {
       await window.electronAPI.deleteNoteComment(workspaceId, noteId, id)
-      const next = comments.filter(c => c.id !== id && c.parentId !== id)
-      setComments(next)
-      onThreadsChange?.(next)
+      setComments(prev => removeNoteCommentFromList(prev, id))
+      await reload({ quiet: true })
     } catch {
       setError(t('notes.comments.errorDelete'))
     }
-  }, [workspaceId, noteId, comments, onThreadsChange, t])
+  }, [workspaceId, noteId, reload, t])
 
   const onToggleReaction = React.useCallback(async (id: string, emoji: string) => {
     try {
@@ -210,13 +238,12 @@ export function NotesCommentThreads({
         commentId: id,
         reaction: { emoji },
       })
-      const next = comments.map(c => c.id === id ? updated : c)
-      setComments(next)
-      onThreadsChange?.(next)
+      setComments(prev => upsertNoteCommentInList(prev, updated))
+      await reload({ quiet: true })
     } catch {
       setError(t('notes.comments.errorUpdate'))
     }
-  }, [workspaceId, noteId, comments, onThreadsChange, t])
+  }, [workspaceId, noteId, reload, t])
 
   const setResolved = React.useCallback(async (id: string, resolvedFlag: boolean) => {
     setBusyId(id)
@@ -226,18 +253,18 @@ export function NotesCommentThreads({
         commentId: id,
         resolved: resolvedFlag,
       })
-      const next = comments.map(c => c.id === id ? updated : c)
-      setComments(next)
-      onThreadsChange?.(next)
+      setComments(prev => upsertNoteCommentInList(prev, updated))
+      await reload({ quiet: true })
     } catch {
       setError(t('notes.comments.errorStatus'))
     } finally {
       setBusyId(null)
     }
-  }, [workspaceId, noteId, comments, onThreadsChange, t])
+  }, [workspaceId, noteId, reload, t])
 
   const showSelectionComposer = Boolean(draftQuote)
   const showDocComposer = docCompose && !draftQuote
+  const creating = busyId === CREATE_BUSY
 
   return (
     <aside
@@ -291,6 +318,8 @@ export function NotesCommentThreads({
                     </button>
                   ) : isDocumentNoteComment(root) ? (
                     <p className="mb-1 text-xs text-muted-foreground">{t('notes.comments.documentScope')}</p>
+                  ) : root.orphan ? (
+                    <p className="mb-1 text-xs text-status-warning">{t('notes.comments.staleAnchor')}</p>
                   ) : null}
                   {stale ? (
                     <p className="mb-1 text-xs text-status-warning">{t('notes.comments.staleAnchor')}</p>
@@ -312,7 +341,7 @@ export function NotesCommentThreads({
                   <div className="mt-1 flex flex-wrap gap-1">
                     <button
                       type="button"
-                      disabled={busyId === root.id}
+                      disabled={busyId === root.id || creating}
                       className={cn(
                         'inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs text-muted-foreground',
                         'hover:bg-surface-hover hover:text-foreground disabled:opacity-40',
@@ -344,7 +373,7 @@ export function NotesCommentThreads({
                 <p className="text-xs text-foreground line-clamp-2">{root.body}</p>
                 <button
                   type="button"
-                  disabled={busyId === root.id}
+                  disabled={busyId === root.id || creating}
                   className="mt-1 inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs text-muted-foreground hover:bg-surface-hover hover:text-foreground disabled:opacity-40"
                   onClick={() => void setResolved(root.id, false)}
                   aria-label={t('notes.comments.reopen')}
@@ -362,7 +391,8 @@ export function NotesCommentThreads({
         <div className="shrink-0 border-t border-border-subtle p-2">
           <button
             type="button"
-            className="h-7 w-full rounded-[var(--radius-control)] bg-muted text-xs font-medium text-foreground hover:bg-surface-hover"
+            disabled={creating}
+            className="h-7 w-full rounded-[var(--radius-control)] bg-muted text-xs font-medium text-foreground hover:bg-surface-hover disabled:opacity-40"
             onClick={() => {
               setDocCompose(true)
               onClearDraft()
@@ -381,7 +411,7 @@ export function NotesCommentThreads({
           quote={draftQuote}
           body={body}
           onBodyChange={setBody}
-          onSubmit={() => { void createRoot() }}
+          onSubmit={() => { if (!creating) void createRoot() }}
           onCancel={clearComposer}
           focusRequested={focusRequested || showDocComposer}
           onFocusHandled={onFocusHandled}
