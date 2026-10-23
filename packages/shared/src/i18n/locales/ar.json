@@ -9456,6 +9456,7 @@
   "settings.appearance.layers.frameText": "نص الإطار",
   "settings.appearance.layers.glass": "الزجاج",
   "settings.appearance.layers.glassNeedsWallpaper": "يظهر الزجاج عند تعيين خلفية.",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "استيراد",
   "settings.appearance.layers.importError": "هذا الملف ليس ملف .rox-theme.json صالحًا.",
   "settings.appearance.layers.importSuccess": "تم استيراد «{{name}}».",
@@ -12815,6 +12816,5 @@
   "xfn.x23.title": "إجراءات عند إرسال النموذج",
   "xfn.x24.title": "بدء اجتماع من أي عنصر",
   "xfn.x25.title": "فتح لوحة الوكيل",
-  "xfn.x26.title": "التثبيت عبر الصفحات",
-  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off."
+  "xfn.x26.title": "التثبيت عبر الصفحات"
 }

@@ -9408,6 +9408,7 @@
   "settings.appearance.layers.frameText": "Rahmentext",
   "settings.appearance.layers.glass": "Glas",
   "settings.appearance.layers.glassNeedsWallpaper": "Glas ist sichtbar, wenn ein Hintergrund gesetzt ist.",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "Importieren",
   "settings.appearance.layers.importError": "Diese Datei ist keine gültige .rox-theme.json.",
   "settings.appearance.layers.importSuccess": "„{{name}}“ importiert.",
@@ -12751,6 +12752,5 @@
   "xfn.x23.title": "Aktionen beim Formularabsenden",
   "xfn.x24.title": "Besprechung aus einem Element starten",
   "xfn.x25.title": "Agentenbereich öffnen",
-  "xfn.x26.title": "Bereichsübergreifendes Anheften",
-  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off."
+  "xfn.x26.title": "Bereichsübergreifendes Anheften"
 }

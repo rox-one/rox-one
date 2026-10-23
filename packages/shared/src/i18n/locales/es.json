@@ -9418,6 +9418,7 @@
   "settings.appearance.layers.frameText": "Texto del marco",
   "settings.appearance.layers.glass": "Cristal",
   "settings.appearance.layers.glassNeedsWallpaper": "El cristal se ve cuando hay un fondo.",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "Importar",
   "settings.appearance.layers.importError": "Este archivo no es un .rox-theme.json válido.",
   "settings.appearance.layers.importSuccess": "Se importó «{{name}}».",
@@ -12765,6 +12766,5 @@
   "xfn.x23.title": "Acciones al enviar el formulario",
   "xfn.x24.title": "Iniciar una reunión desde cualquier entidad",
   "xfn.x25.title": "Abrir el panel de @rox",
-  "xfn.x26.title": "Fijados en todas las vistas",
-  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off."
+  "xfn.x26.title": "Fijados en todas las vistas"
 }

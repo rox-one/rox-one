@@ -9408,6 +9408,7 @@
   "settings.appearance.layers.frameText": "边框文字",
   "settings.appearance.layers.glass": "玻璃",
   "settings.appearance.layers.glassNeedsWallpaper": "设置壁纸后显示玻璃效果。",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "导入",
   "settings.appearance.layers.importError": "该文件不是有效的 .rox-theme.json。",
   "settings.appearance.layers.importSuccess": "已导入“{{name}}”。",
@@ -12751,6 +12752,5 @@
   "xfn.x23.title": "表单提交动作",
   "xfn.x24.title": "从任意实体发起会议",
   "xfn.x25.title": "打开 @rox 面板",
-  "xfn.x26.title": "跨界面固定",
-  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off."
+  "xfn.x26.title": "跨界面固定"
 }
