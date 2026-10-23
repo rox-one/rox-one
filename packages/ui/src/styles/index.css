@@ -1098,7 +1098,7 @@ html[data-ui-profile="super-engineering"] [data-slot="dialog-overlay"][data-stat
 }
 
 /* Rox Engineering: remaining shared overlays. Drawer overlay is modal-like
-   (--motion-spring ≈ SE_SPRING_MODAL). Dropdown / context menus and tooltips
+   (--motion-spring ≈ SE_SPRING_MODAL). Dropdown / context / select menus and tooltips
    use a lighter enter (--motion-disclosure / --motion-base + --ease-spring);
    exit stays --motion-spring-exit. Transform/opacity only; tokens zero under
    reduced-motion and html[data-resizing]. No blur. Vaul owns drawer-content
@@ -1115,7 +1115,8 @@ html[data-ui-profile="super-engineering"] :is(
   [data-slot="dropdown-menu-content"],
   [data-slot="dropdown-menu-sub-content"],
   [data-slot="context-menu-content"],
-  [data-slot="context-menu-sub-content"]
+  [data-slot="context-menu-sub-content"],
+  [data-slot="select-content"]
 )[data-state="open"] {
   animation: rox-overlay-in var(--motion-disclosure) var(--ease-spring) both;
 }
@@ -1124,7 +1125,8 @@ html[data-ui-profile="super-engineering"] :is(
   [data-slot="dropdown-menu-content"],
   [data-slot="dropdown-menu-sub-content"],
   [data-slot="context-menu-content"],
-  [data-slot="context-menu-sub-content"]
+  [data-slot="context-menu-sub-content"],
+  [data-slot="select-content"]
 )[data-state="closed"] {
   animation: rox-overlay-out var(--motion-spring-exit) var(--ease-exit) both;
 }

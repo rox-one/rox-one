@@ -313,7 +313,7 @@ html .popover-styled {
 }
 
 /* Select content */
-[data-radix-select-content] {
+[data-radix-select-content]:not([data-overlay-motion]) {
   animation: none !important;
 }
 
