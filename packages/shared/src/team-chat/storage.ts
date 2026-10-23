@@ -297,7 +297,8 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       if (typeof rec.size === 'number' && Number.isFinite(rec.size) && rec.size >= 0) att.size = Math.min(Math.round(rec.size), 5_000_000_000)
       if (typeof rec.url === 'string' && /^https?:\/\//i.test(rec.url)) att.url = rec.url.slice(0, 2000)
       if (rec.status === 'ready' || rec.status === 'pending' || rec.status === 'unavailable') att.status = rec.status
-      else if (!att.url) att.status = 'unavailable'
+      else if (att.url) att.status = 'ready'
+      else att.status = 'unavailable'
       out.push(att)
     }
     return out.length ? out : undefined
@@ -389,8 +390,12 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       text,
       createdAt,
     }
+    // Public ingest is text-only (system/transcript/summary stay host-internal appendMessage).
     const kind = (input as IngestTeamMessageInput).kind
-    if (kind === 'text' || kind === 'system' || kind === 'transcript' || kind === 'summary') message.kind = kind
+    if (kind !== undefined && kind !== 'text') {
+      throw new TeamChatError('INVALID', 'ingest kind must be text')
+    }
+    message.kind = 'text'
     const replyToId = (input as IngestTeamMessageInput).replyToId
     if (replyToId) {
       message.replyToId = requireId(replyToId, 'replyToId')
@@ -400,6 +405,11 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     const attachments = normalizeAttachments((input as IngestTeamMessageInput).attachments)
     if (attachments) message.attachments = attachments
     store.messages.push(message)
+    // Own dual-write: mirror postMessageWithOrg so viewing the channel does not grow unread.
+    const member = memberOf(store, channel.id, actor.userId)
+    if (member && senderId === actor.userId) {
+      member.lastReadSeq = channel.lastSeq
+    }
     trimChannelMessages(store, channel.id)
     save(store)
     return { message, orgId: channel.orgId, created: true }

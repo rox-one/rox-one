@@ -160,3 +160,33 @@ describe('sender-preserving ingest (PR3)', () => {
     expect(reply.threadId).toBe(root.id)
   })
 })
+
+  it('rejects non-text ingest kinds and advances lastReadSeq on own dual-write', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'kind-ch' }, alice)
+    expect(() => s.ingestRemoteMessage({
+      channelId: pub.id, senderId: 'bob', text: 'nope', id: 'sys-1', kind: 'system',
+    } as never, alice)).toThrow('ingest kind must be text')
+    s.ingestRemoteMessage({
+      channelId: pub.id, senderId: 'alice', text: 'mine', id: 'own-1',
+    }, alice)
+    expect(s.listChannels(ORG, alice).find(c => c.id === pub.id)!.unreadCount).toBe(0)
+    s.ingestRemoteMessage({
+      channelId: pub.id, senderId: 'bob', text: 'theirs', id: 'other-1',
+    }, alice)
+    expect(s.listChannels(ORG, alice).find(c => c.id === pub.id)!.unreadCount).toBe(1)
+  })
+
+  it('defaults attachment status to ready when https url is set', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'att-ch' }, alice)
+    const msg = s.ingestRemoteMessage({
+      channelId: pub.id,
+      senderId: 'alice',
+      text: 'file',
+      id: 'att-msg-1',
+      attachments: [{ id: 'a1', name: 'a.pdf', url: 'https://cdn.example/a.pdf' }],
+    }, alice)
+    expect(msg.attachments?.[0]?.status).toBe('ready')
+  })
+

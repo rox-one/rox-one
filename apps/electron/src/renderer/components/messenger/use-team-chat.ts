@@ -10,7 +10,7 @@
 import * as React from 'react'
 import type { IngestTeamMessageInput, PostTeamMessageOptions, TeamChannelMessage, TeamChannelView, TeamMessageAttachment } from '@rox/shared/team-chat'
 import type { ImMessageEvent } from '@rox/shared/protocol'
-import { imMessageToTeam, imMessagesToTeam } from './im-message-map'
+import { imMessageToTeam, imMessagesToTeam, mergeLocalEnrichments } from './im-message-map'
 import { useImChannelSubscription, useImMessageListener, useImRelay } from './use-im-relay'
 import { recordMessengerFeedItem } from '@/platform/messenger-feed-items'
 import { listMessengerFeedChannels } from '@/platform/messenger-feed-channels'
@@ -76,9 +76,19 @@ export function useTeamMessages(channelId: string | null) {
           const result = await window.electronAPI.imListMessages({ channelId, limit: 200 })
           if (v !== version.current) return
           if (result.ok) {
-            const messages = imMessagesToTeam(result.messages)
+            let messages = imMessagesToTeam(result.messages)
+            // Overlay local dual-write enrichments (reply/thread/attachments) by id.
+            try {
+              const local = await window.electronAPI.teamChatListMessages({ channelId, limit: 200 })
+              if (v !== version.current) return
+              messages = mergeLocalEnrichments(messages, local.messages)
+            } catch {
+              // Local store optional — show pure im list if team-chat read fails.
+            }
             setState({ loading: false, messages, error: null })
             void window.electronAPI.imMarkRead?.(channelId).catch(() => {})
+            // Keep team-chat unread badges in sync while viewing live (ingest bumps lastSeq).
+            void window.electronAPI.teamChatMarkRead?.(channelId).catch(() => {})
             return
           }
           // ok:false → fall through to team-chat store

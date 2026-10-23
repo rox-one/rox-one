@@ -87,7 +87,8 @@ export interface IngestTeamMessageInput {
   /** Remote/relay id — used for idempotency when present. */
   id?: string
   createdAt?: number
-  kind?: TeamChannelMessageKind
+  /** Public ingest accepts `text` only (omit → text). Call kinds are host-internal. */
+  kind?: 'text'
   replyToId?: string
   threadId?: string
   attachments?: TeamMessageAttachment[]

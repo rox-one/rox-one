@@ -18,6 +18,9 @@ import type { HandlerDeps } from '../handlers/handler-deps'
 import { getImService, type ImService } from './service'
 import type { ImListMessagesInput } from './types'
 
+/** Mirror team-chat list page cap for im search. */
+const SEARCH_MESSAGES_LIMIT_MAX = 200
+
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.im.STATUS,
   RPC_CHANNELS.im.SUBSCRIBE_CHANNEL,
@@ -88,7 +91,9 @@ export function registerImHandlers(server: RpcServer, _deps: HandlerDeps, servic
       const rec = opts as Record<string, unknown>
       parsed = {}
       if (typeof rec.channelId === 'string' && rec.channelId) parsed.channelId = rec.channelId
-      if (typeof rec.limit === 'number') parsed.limit = rec.limit
+      if (typeof rec.limit === 'number' && Number.isFinite(rec.limit)) {
+        parsed.limit = Math.min(Math.max(1, Math.round(rec.limit)), SEARCH_MESSAGES_LIMIT_MAX)
+      }
     }
     return service.searchMessages(query, parsed)
   }, { nativeAction: 'read' })

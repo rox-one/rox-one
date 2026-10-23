@@ -548,19 +548,21 @@ function MessageThread({
                   <div className="flex items-baseline gap-2">
                     <span className="text-small font-semibold">{m.senderId === 'system' ? t('messenger.calls.botName') : nameOf(m.senderId)}</span>
                     <time className="text-caption text-text-muted" dateTime={new Date(m.createdAt).toISOString()}>{time.format(m.createdAt)}</time>
-                    {canPost && m.kind !== 'system' ? (
-                      <button
-                        type="button"
-                        className="text-caption text-text-muted hover:text-text-primary"
-                        onClick={() => setReplyTo(m)}
-                        data-testid="messenger-reply-btn"
-                      >
-                        {t('messenger.threads.reply')}
-                      </button>
-                    ) : null}
                   </div>
                 ) : null}
-                <MessageBody message={m} nameOf={nameOf} />
+                <div className="group/msg relative">
+                  <MessageBody message={m} nameOf={nameOf} />
+                  {canPost && m.kind !== 'system' ? (
+                    <button
+                      type="button"
+                      className="absolute end-0 top-0 text-caption text-text-muted opacity-0 transition-opacity hover:text-text-primary group-hover/msg:opacity-100 focus-visible:opacity-100"
+                      onClick={() => setReplyTo(m)}
+                      data-testid="messenger-reply-btn"
+                    >
+                      {t('messenger.threads.reply')}
+                    </button>
+                  ) : null}
+                </div>
               </li>
             )
           })}
