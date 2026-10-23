@@ -6363,6 +6363,7 @@
   "notes.layout.resizeVault": "Notizenbreite ändern",
   "notes.layout.tools": "Dokumentbereiche",
   "notes.library.apply": "Apply",
+  "notes.library.chromeReviewPending": "Schließen Sie die Überprüfung der Eigenschaftenformatierung ab, bevor Sie Cover oder Symbol ändern.",
   "notes.library.clear": "Clear",
   "notes.library.cover": "Cover",
   "notes.library.coverEmpty": "Add a cover",

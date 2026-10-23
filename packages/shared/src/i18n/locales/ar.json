@@ -6399,6 +6399,7 @@
   "notes.layout.resizeVault": "تغيير عرض الملاحظات",
   "notes.layout.tools": "لوحات المستند",
   "notes.library.apply": "Apply",
+  "notes.library.chromeReviewPending": "أكمل مراجعة تنسيق الخصائص قبل تغيير الغلاف أو الأيقونة.",
   "notes.library.clear": "Clear",
   "notes.library.cover": "Cover",
   "notes.library.coverEmpty": "Add a cover",

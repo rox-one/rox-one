@@ -6363,6 +6363,7 @@
   "notes.layout.resizeVault": "調整筆記寬度",
   "notes.layout.tools": "文件面板",
   "notes.library.apply": "Apply",
+  "notes.library.chromeReviewPending": "請先完成屬性格式審閱，然後再變更封面或圖示。",
   "notes.library.clear": "Clear",
   "notes.library.cover": "Cover",
   "notes.library.coverEmpty": "Add a cover",

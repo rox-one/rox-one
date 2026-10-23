@@ -6363,6 +6363,7 @@
   "notes.layout.resizeVault": "Resize notes",
   "notes.layout.tools": "Document panels",
   "notes.library.apply": "Apply",
+  "notes.library.chromeReviewPending": "Finish reviewing property formatting before changing cover or icon.",
   "notes.library.clear": "Clear",
   "notes.library.cover": "Cover",
   "notes.library.coverEmpty": "Add a cover",

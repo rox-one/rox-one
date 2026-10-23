@@ -6403,6 +6403,7 @@
   "notes.layout.resizeVault": "Изменить ширину заметок",
   "notes.layout.tools": "Панели документа",
   "notes.library.apply": "Применить",
+  "notes.library.chromeReviewPending": "Завершите проверку форматирования свойств, прежде чем менять обложку или иконку.",
   "notes.library.clear": "Очистить",
   "notes.library.cover": "Обложка",
   "notes.library.coverEmpty": "Добавить обложку",

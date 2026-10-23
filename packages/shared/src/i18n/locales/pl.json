@@ -6385,6 +6385,7 @@
   "notes.layout.resizeVault": "Zmień szerokość notatek",
   "notes.layout.tools": "Panele dokumentu",
   "notes.library.apply": "Apply",
+  "notes.library.chromeReviewPending": "Zakończ przegląd formatowania właściwości, zanim zmienisz okładkę lub ikonę.",
   "notes.library.clear": "Clear",
   "notes.library.cover": "Cover",
   "notes.library.coverEmpty": "Add a cover",

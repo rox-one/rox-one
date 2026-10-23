@@ -6372,6 +6372,7 @@
   "notes.layout.resizeVault": "Redimensionner les notes",
   "notes.layout.tools": "Panneaux du document",
   "notes.library.apply": "Apply",
+  "notes.library.chromeReviewPending": "Terminez la revue du formatage des propriétés avant de modifier la couverture ou l’icône.",
   "notes.library.clear": "Clear",
   "notes.library.cover": "Cover",
   "notes.library.coverEmpty": "Add a cover",

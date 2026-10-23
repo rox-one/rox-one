@@ -6363,6 +6363,7 @@
   "notes.layout.resizeVault": "노트 크기 조절",
   "notes.layout.tools": "문서 패널",
   "notes.library.apply": "Apply",
+  "notes.library.chromeReviewPending": "커버나 아이콘을 변경하기 전에 속성 서식 검토를 완료하세요.",
   "notes.library.clear": "Clear",
   "notes.library.cover": "Cover",
   "notes.library.coverEmpty": "Add a cover",

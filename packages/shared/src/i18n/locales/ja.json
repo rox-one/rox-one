@@ -6363,6 +6363,7 @@
   "notes.layout.resizeVault": "ノートの幅を変更",
   "notes.layout.tools": "ドキュメントパネル",
   "notes.library.apply": "Apply",
+  "notes.library.chromeReviewPending": "カバーまたはアイコンを変更する前に、プロパティ形式の確認を完了してください。",
   "notes.library.clear": "Clear",
   "notes.library.cover": "Cover",
   "notes.library.coverEmpty": "Add a cover",

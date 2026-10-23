@@ -119,6 +119,27 @@ describe('note-library', () => {
       '',
     ].join('\n')
     expect(patchNoteLibraryChromeContent(dup, { cover: '#112233' })).toBeNull()
+    // Quoted key forms — refuse (do not insert a second unquoted key).
+    const quoted = [
+      '---',
+      '"cover": "#111111"',
+      'title: A',
+      '---',
+      '',
+      'body',
+      '',
+    ].join('\n')
+    expect(patchNoteLibraryChromeContent(quoted, { cover: '#112233' })).toBeNull()
+    const quotedSingle = [
+      '---',
+      "'icon': '📝'",
+      'title: A',
+      '---',
+      '',
+      'x',
+      '',
+    ].join('\n')
+    expect(patchNoteLibraryChromeContent(quotedSingle, { icon: '⭐' })).toBeNull()
   })
 
   it('sanitizes template ids', () => {

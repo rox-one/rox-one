@@ -71,7 +71,7 @@ import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
 import { NoteCoverIconChrome, NoteFavoriteButton } from './notes/NoteLibraryChrome'
 import { NotesTemplatesDialog } from './notes/NotesTemplatesDialog'
-import { patchNoteLibraryChromeContent, readNoteIcon } from './notes/note-library'
+import { patchNoteLibraryChromeContent, readNoteCover, readNoteIcon } from './notes/note-library'
 import type { NoteTemplateSummary } from '../../shared/types'
 import {
   defaultNoteEntityCapabilities,
@@ -2385,13 +2385,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   /** Per-note queue so rapid cover/icon patches cannot race on stale properties. */
   const libraryChromeWriteChainRef = React.useRef(new Map<string, Promise<unknown>>())
 
-  // Drop settled chains for notes that are no longer open.
-  React.useEffect(() => {
-    const keep = activeWorkspaceId && activeNote?.id ? `${activeWorkspaceId}:${activeNote.id}` : null
-    for (const key of [...libraryChromeWriteChainRef.current.keys()]) {
-      if (key !== keep) libraryChromeWriteChainRef.current.delete(key)
-    }
-  }, [activeWorkspaceId, activeNote?.id])
+  // In-flight chrome queues are dropped only in bridge.finally — never evict on note switch.
 
   /** Queued cover/icon chrome writes — surgical key patch; no full YAML dictionary rewrite. */
   const updateLibraryChromeProperties = React.useCallback((patch: { cover?: string | null; icon?: string | null }) => {
@@ -2403,6 +2397,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     // Freeze while a requiresReview preview is open for this note — don't overwrite the first patch.
     const openPreview = propertyPreviewRef.current
     if (openPreview && openPreview.workspaceId === workspaceId && openPreview.noteId === noteId) {
+      toast.error(t('notes.library.chromeReviewPending'))
       return Promise.resolve(false)
     }
     const previous = libraryChromeWriteChainRef.current.get(noteKey) ?? Promise.resolve()
@@ -2412,19 +2407,27 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       if (workspaceIdRef.current !== workspaceId || activeNoteIdRef.current !== noteId) return false
       const pendingPreview = propertyPreviewRef.current
       if (pendingPreview && pendingPreview.workspaceId === workspaceId && pendingPreview.noteId === noteId) {
+        toast.error(t('notes.library.chromeReviewPending'))
         return false
       }
       // Surgical cover/icon key edit only — preserve comments/siblings/order; never
       // stringify the full property dictionary (avoids requiresReview conversion).
+      // Draft validation toasts coverInvalid/iconInvalid; form refuse (block/fold/dup/quoted) uses updatePropertiesFailed.
+      if ('cover' in patch && patch.cover != null && String(patch.cover).trim() !== '') {
+        if (!readNoteCover({ cover: String(patch.cover) })) {
+          toast.error(t('notes.library.coverInvalid'))
+          return false
+        }
+      }
+      if ('icon' in patch && patch.icon != null && String(patch.icon).trim() !== '') {
+        if (!readNoteIcon({ icon: String(patch.icon) })) {
+          toast.error(t('notes.library.iconInvalid'))
+          return false
+        }
+      }
       const patched = patchNoteLibraryChromeContent(contentRef.current, patch)
       if (patched == null) {
-        if ('cover' in patch && patch.cover != null && String(patch.cover).trim() !== '') {
-          toast.error(t('notes.library.coverInvalid'))
-        } else if ('icon' in patch && patch.icon != null && String(patch.icon).trim() !== '') {
-          toast.error(t('notes.library.iconInvalid'))
-        } else {
-          toast.error(t('notes.toast.updatePropertiesFailed'))
-        }
+        toast.error(t('notes.toast.updatePropertiesFailed'))
         return false
       }
       if (patched === contentRef.current) return true

@@ -124,6 +124,8 @@ export function patchNoteLibraryChromeContent(
     const matches: number[] = []
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]!
+      // Quoted key forms (`"cover":` / `'icon':`) — refuse rather than insert a second unquoted key.
+      if (new RegExp(`^["']${key}["']\\s*:`).test(line)) return null
       // Exact top-level key (`cover:` / `cover: …`); never `coverExtra:`.
       if (!line.startsWith(keyPrefix)) continue
       const rawValue = line.slice(keyPrefix.length).trim()

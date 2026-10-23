@@ -6363,6 +6363,7 @@
   "notes.layout.resizeVault": "Jegyzetek átméretezése",
   "notes.layout.tools": "Dokumentumpanelek",
   "notes.library.apply": "Apply",
+  "notes.library.chromeReviewPending": "Fejezd be a tulajdonságformázás áttekintését, mielőtt megváltoztatnád a borítót vagy az ikont.",
   "notes.library.clear": "Clear",
   "notes.library.cover": "Cover",
   "notes.library.coverEmpty": "Add a cover",
