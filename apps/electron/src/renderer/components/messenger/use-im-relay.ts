@@ -82,10 +82,40 @@ export function keepSubscriptionAfterResolve(
 }
 
 /**
+ * Pure followed-channel sync step. `live=false` clears active (unsubscribe all)
+ * but does **not** imply desired is empty — caller keeps desired ids so a later
+ * `live=true` without desiredKey change still subscribes.
+ */
+export function nextSubscriptionActions(
+  desiredIds: readonly string[],
+  activeIds: ReadonlySet<string>,
+  live: boolean,
+): { subscribe: string[]; unsubscribe: string[]; nextActive: Set<string> } {
+  const desired = new Set(desiredIds.filter(Boolean))
+  if (!live) {
+    return { subscribe: [], unsubscribe: [...activeIds], nextActive: new Set() }
+  }
+  const nextActive = new Set(activeIds)
+  const subscribe: string[] = []
+  const unsubscribe: string[] = []
+  for (const id of desired) {
+    if (nextActive.has(id)) continue
+    nextActive.add(id)
+    subscribe.push(id)
+  }
+  for (const id of [...nextActive]) {
+    if (desired.has(id)) continue
+    nextActive.delete(id)
+    unsubscribe.push(id)
+  }
+  return { subscribe, unsubscribe, nextActive }
+}
+
+/**
  * Subscribe the native client to many channels (e.g. followed Лента channels).
  * Incremental sync: only subscribe newly added ids and unsubscribe removed ones.
- * Late-resolving subscribe is compensated if the id is no longer desired/owned
- * (mirrors single-channel `useImChannelSubscription` cancelled handling).
+ * desiredRef tracks roster intent even while offline; live only gates wire I/O.
+ * Late-resolving subscribe is compensated if the id is no longer desired/owned.
  */
 export function useImChannelSubscriptions(channelIds: readonly string[], live: boolean): void {
   const desiredKey = [...new Set(channelIds.filter(Boolean))].sort().join('\0')
@@ -93,26 +123,24 @@ export function useImChannelSubscriptions(channelIds: readonly string[], live: b
   const desiredRef = React.useRef(new Set<string>())
 
   React.useEffect(() => {
-    desiredRef.current = new Set(desiredKey ? desiredKey.split('\0') : [])
-  }, [desiredKey])
+    const desiredIds = desiredKey ? desiredKey.split('\0') : []
+    // Always keep desired in sync with the roster key (including while !live).
+    desiredRef.current = new Set(desiredIds)
 
-  React.useEffect(() => {
-    if (!live || !window.electronAPI?.imSubscribeChannel) {
-      const prev = [...activeRef.current]
-      activeRef.current.clear()
-      desiredRef.current = new Set()
-      for (const id of prev) {
-        void window.electronAPI?.imUnsubscribeChannel?.(id).catch(() => {})
-      }
-      return
+    const canWire = live && Boolean(window.electronAPI?.imSubscribeChannel)
+    const { subscribe, unsubscribe, nextActive } = nextSubscriptionActions(
+      desiredIds,
+      activeRef.current,
+      canWire,
+    )
+    activeRef.current = nextActive
+
+    for (const id of unsubscribe) {
+      void window.electronAPI?.imUnsubscribeChannel?.(id).catch(() => {})
     }
+    if (!canWire) return
 
-    const desired = desiredRef.current
-    const active = activeRef.current
-
-    for (const id of desired) {
-      if (active.has(id)) continue
-      active.add(id)
+    for (const id of subscribe) {
       void window.electronAPI.imSubscribeChannel(id).then(() => {
         if (!keepSubscriptionAfterResolve(id, desiredRef.current, activeRef.current)) {
           activeRef.current.delete(id)
@@ -121,11 +149,6 @@ export function useImChannelSubscriptions(channelIds: readonly string[], live: b
       }).catch(() => {
         activeRef.current.delete(id)
       })
-    }
-    for (const id of [...active]) {
-      if (desired.has(id)) continue
-      active.delete(id)
-      void window.electronAPI.imUnsubscribeChannel?.(id).catch(() => {})
     }
   }, [desiredKey, live])
 
