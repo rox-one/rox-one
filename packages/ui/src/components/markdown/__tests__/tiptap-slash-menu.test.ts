@@ -65,7 +65,13 @@ function createMockEditor() {
       applySplitBlock()
       return chainApi
     },
-    command: (fn: (props: { state: unknown; commands: { splitBlock: () => boolean } }) => boolean) => {
+    command: (fn: (props: {
+      state: unknown
+      commands: {
+        splitBlock: () => boolean
+        setTextSelection: (selection: number | { from: number; to: number }) => boolean
+      }
+    }) => boolean) => {
       calls.push('command')
       fn({
         state: {
@@ -74,6 +80,7 @@ function createMockEditor() {
             $from: {
               parentOffset,
               parent: { content: { size: parentContentSize } },
+              before: () => Math.max(0, selectionFrom - parentOffset - 1),
             },
           },
         },
@@ -81,6 +88,17 @@ function createMockEditor() {
           splitBlock: () => {
             calls.push('splitBlock')
             applySplitBlock()
+            return true
+          },
+          setTextSelection: (selection: number | { from: number; to: number }) => {
+            calls.push(`setTextSelection:${JSON.stringify(selection)}`)
+            selectionFrom = typeof selection === 'number' ? selection : selection.from
+            // Move into empty sibling created by start-split (real PM leaves caret in content).
+            if (pendingEmptyPos !== null && selectionFrom === pendingEmptyPos) {
+              parentContentSize = 0
+              parentOffset = 0
+              pendingEmptyPos = null
+            }
             return true
           },
         },
@@ -96,8 +114,15 @@ function createMockEditor() {
   let selectionFrom = 5
   let parentOffset = 0
   let parentContentSize = 0
+  /** Position of empty sibling after a start-split; selection stays in content until moved. */
+  let pendingEmptyPos: number | null = null
 
-  /** Mirror ProseMirror splitBlock enough for embed isolation: mid → suffix stays; end → empty; start → push content after. */
+  /**
+   * Mirror ProseMirror splitBlock for embed isolation:
+   * - mid/end (offset > 0): caret moves to start of remaining textblock (suffix or empty).
+   * - start of non-empty: empty sibling is created BEFORE, but selection stays in the
+   *   content half (parentContentSize unchanged) until setTextSelection(emptyPos).
+   */
   function applySplitBlock() {
     if (parentOffset > 0) {
       parentContentSize = Math.max(0, parentContentSize - parentOffset)
@@ -105,7 +130,8 @@ function createMockEditor() {
       return
     }
     if (parentContentSize > 0) {
-      parentContentSize = 0
+      // Real PM: do NOT clear content — caret remains in the content half.
+      pendingEmptyPos = selectionFrom - parentOffset // === before() + 1
     }
   }
 
@@ -272,7 +298,11 @@ describe('tiptap slash menu', () => {
     embed?.run(editor, 9)
     const splits = calls.filter((c) => c === 'splitBlock')
     expect(splits).toHaveLength(2)
-    expect(calls).toContain('insertContent:"![["')
+    // After start-split, caret must move into the empty middle block before insert.
+    const lastSplit = calls.lastIndexOf('splitBlock')
+    const moveIntoEmpty = calls.indexOf('setTextSelection:9', lastSplit)
+    expect(moveIntoEmpty).toBeGreaterThan(lastSplit)
+    expect(calls.indexOf('insertContent:"![["')).toBeGreaterThan(moveIntoEmpty)
     expect(editor.state.selection.$from.parentOffset).toBe(0)
     expect(editor.state.selection.$from.parent.content.size).toBe(0)
   })
@@ -285,7 +315,11 @@ describe('tiptap slash menu', () => {
     embed?.run(editor, 1)
     const splits = calls.filter((c) => c === 'splitBlock')
     expect(splits).toHaveLength(1)
-    expect(calls).toContain('insertContent:"![["')
+    // splitBlock-at-start leaves caret in content; must setTextSelection into empty before insert.
+    const lastSplit = calls.lastIndexOf('splitBlock')
+    const moveIntoEmpty = calls.indexOf('setTextSelection:1', lastSplit)
+    expect(moveIntoEmpty).toBeGreaterThan(lastSplit)
+    expect(calls.indexOf('insertContent:"![["')).toBeGreaterThan(moveIntoEmpty)
     expect(editor.state.selection.$from.parentOffset).toBe(0)
     expect(editor.state.selection.$from.parent.content.size).toBe(0)
   })

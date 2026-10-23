@@ -189,9 +189,13 @@ function insertEmbedTrigger(editor: Editor, insertPos?: number) {
     .command(({ state, commands }) => {
       // Caret at start of a non-empty paragraph → push existing content into a following
       // paragraph so `![[` sits alone (covers prepend-at-start and mid-paragraph suffix).
+      // Empirically splitBlock-at-start creates the empty sibling BEFORE but leaves the
+      // selection in the content half — move into the empty block before inserting.
       const $from = state.selection.$from
       if ($from.parentOffset === 0 && $from.parent.content.size > 0) {
-        return commands.splitBlock()
+        const emptyPos = $from.before() + 1
+        if (!commands.splitBlock()) return false
+        return commands.setTextSelection(emptyPos)
       }
       return true
     })
