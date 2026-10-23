@@ -11,7 +11,7 @@ import type { IpcMain, IpcMainInvokeEvent, WebContents } from 'electron'
 import * as Y from 'yjs'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { CanvasFileStore, isValidBoardId, type BoardSummary } from '@rox/canvas-core/node'
+import { CanvasAssetStore, CanvasFileStore, isValidAssetHash, isValidBoardId, MAX_ASSET_BYTES, normalizeAssetMime, sanitizeAssetName, type AssetMeta, type BoardSummary } from '@rox/canvas-core/node'
 
 export const CANVAS_IPC = {
   list: 'canvas:list',
@@ -24,6 +24,8 @@ export const CANVAS_IPC = {
   setEnabled: 'canvas:setEnabled',
   listTrash: 'canvas:listTrash',
   restore: 'canvas:restore',
+  putAsset: 'canvas:putAsset',
+  getAsset: 'canvas:getAsset',
   update: 'canvas:update', // main → renderer event
 } as const
 
@@ -279,6 +281,21 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     const origin: RendererOrigin = { kind: 'remote', senderId: event.sender.id }
     Y.applyUpdate(board.doc, update, origin)
     return { ok: true as const }
+  })
+  // Content-addressed blobs under <ws>/canvas/assets/<sha256>. Metadata is written
+  // into the board Y.Doc by the renderer (assets map); main only stores bytes.
+  const assetStoreFor = (ws: unknown) => new CanvasAssetStore(registry.rootOf(ws))
+  ipcMain.handle(CANVAS_IPC.putAsset, async (event, ws: unknown, bytes: unknown, mime: unknown, name: unknown): Promise<AssetMeta> => {
+    guard(event)
+    if (!(bytes instanceof Uint8Array)) throw new Error('CANVAS_BAD_ASSET')
+    if (bytes.byteLength === 0 || bytes.byteLength > MAX_ASSET_BYTES) throw new Error('CANVAS_BAD_ASSET')
+    if (!normalizeAssetMime(mime)) throw new Error('CANVAS_BAD_ASSET_MIME')
+    return assetStoreFor(ws).put(bytes, String(mime), sanitizeAssetName(name))
+  })
+  ipcMain.handle(CANVAS_IPC.getAsset, async (event, ws: unknown, hash: unknown): Promise<Uint8Array> => {
+    guard(event)
+    if (typeof hash !== 'string' || !isValidAssetHash(hash)) throw new Error('CANVAS_BAD_ASSET_HASH')
+    return assetStoreFor(ws).get(hash)
   })
   return registry
 }
