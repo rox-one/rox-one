@@ -1542,7 +1542,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         nativeRevisionByNoteRef.current.set(revisionKey, saved.nativeRevision ?? null)
         expectedRevisionByNoteRef.current.set(revisionKey, contentHash(saved.content))
         if (saved.revision) revisionsRef.current.set(revisionKey, saved.revision)
-        // Rebuild content resolution after restore so a prior error does not leave canEditContent false.
+        // Prefer a fresh resolve after restore; on throw/error keep prior OK so the editor stays writable.
         let restoredResolution: ContentResolution | ContentFailure | null = null
         if (window.electronAPI.isChannelAvailable(RPC_CHANNELS.content.RESOLVE)) {
           try {
@@ -1551,7 +1551,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
               entityId: `note:${saved.nativeId ?? saved.id}`,
             })
           } catch {
-            restoredResolution = { status: 'error', code: 'denied' }
+            restoredResolution = null
           }
         }
         if (isCurrentDocument()) {
@@ -1578,9 +1578,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
                 revisionId: saved.revision ?? restoredResolution.canonicalRef.revisionId,
               },
             })
-          } else if (restoredResolution) {
-            setContentResolution(restoredResolution)
           } else {
+            // Resolve unavailable/failed after a successful restore: patch previous OK, never install error.
             setContentResolution(previous => previous && previous.status !== 'error' ? {
               ...previous, content: saved.content, revision: saved.revision!, contentHash: contentHash(saved.content),
               canonicalRef: { ...previous.canonicalRef, revisionId: saved.revision },
