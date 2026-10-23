@@ -149,7 +149,7 @@ describe('tiptap slash menu', () => {
     expect(calls).toContain('insertContentAt:5:{"type":"latexBlock","attrs":{"code":"E = mc^2"}}')
   })
 
-  it('includes footnote, table, columns, tabs, spoiler and embed commands', () => {
+  it('includes footnote, table, columns, tabs, callout kinds, spoiler and embed commands', () => {
     const { editor, calls } = createMockEditor()
     const items = createSlashCommandItems(editor)
     expect(items.map((item) => item.id)).toEqual(expect.arrayContaining([
@@ -158,7 +158,14 @@ describe('tiptap slash menu', () => {
       'columns-2',
       'columns-3',
       'tabs',
+      'callout-note',
+      'callout-info',
+      'callout-warning',
+      'callout-tip',
+      'callout-success',
+      'callout-question',
       'spoiler',
+      'callout-details',
       'embed',
     ]))
     items.find((item) => item.id === 'footnote')?.run(editor)
