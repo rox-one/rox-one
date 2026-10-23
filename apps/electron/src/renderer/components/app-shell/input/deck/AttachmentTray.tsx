@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { FileText, Image as ImageIcon, RotateCw, X } from 'lucide-react'
-import { Spinner, getFileTypeLabel } from '@rox/ui'
+import { Skeleton, getFileTypeLabel } from '@rox/ui'
 import { cn } from '@/lib/utils'
 import type { FileAttachment } from '../../../../../shared/types'
 
@@ -47,6 +47,7 @@ export function AttachmentTray({
   return (
     <div
       data-g05-tray
+      aria-busy={loadingCount > 0 || undefined}
       className={cn(
         'flex items-center gap-2 overflow-x-auto border-b border-border-subtle px-3 py-2',
         'motion-safe:transition-colors motion-safe:duration-[var(--motion-fast)] motion-reduce:transition-none',
@@ -66,11 +67,12 @@ export function AttachmentTray({
       {Array.from({ length: loadingCount }).map((_, index) => (
         <span
           key={`loading-${index}`}
-          aria-hidden
-          className="inline-flex h-9 w-40 shrink-0 items-center gap-2 rounded-[var(--radius-control)] border border-border-subtle bg-surface-elevated px-2 motion-safe:animate-pulse motion-reduce:animate-none"
+          role="status"
+          aria-busy="true"
+          className="inline-flex h-9 w-40 shrink-0 items-center gap-2 rounded-[var(--radius-control)] border border-border-subtle bg-surface-elevated px-2 text-muted-foreground"
         >
-          <Spinner className="size-4 text-text-muted" />
-          <span className="block h-2 w-20 rounded-[var(--radius-xs)] bg-foreground-5" />
+          <Skeleton circle className="size-4 shrink-0" />
+          <Skeleton className="h-2 w-20" />
         </span>
       ))}
     </div>
