@@ -108,3 +108,34 @@ export function noteShareUrl(state: NoteShareState): string | null {
   const id = state.noteId.split('/').map(encodeURIComponent).join('/')
   return `rox://notes/note/${id}?share=${state.link.token}&role=${state.link.role}`
 }
+
+export type NoteShareAccess =
+  | { ok: true; noteId: string; role: NoteShareRole }
+  | { ok: false; noteId: string; reason: 'invalid' | 'disabled' | 'revoked' }
+
+/** Length-independent-time string compare (no early exit on first mismatch). */
+export function constantTimeEqual(a: string, b: string): boolean {
+  const len = Math.max(a.length, b.length)
+  let diff = a.length ^ b.length
+  for (let i = 0; i < len; i++) diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0)
+  return diff === 0
+}
+
+/**
+ * Validate a share-link token against the STORED share record. The role is
+ * always the stored one — a role carried in the URL is untrusted and ignored.
+ */
+export function resolveNoteShareAccess(state: NoteShareState, token: unknown): NoteShareAccess {
+  const noteId = state.noteId
+  if (!isNoteShareToken(token)) return { ok: false, noteId, reason: 'invalid' }
+  if (!state.link.token) return { ok: false, noteId, reason: 'invalid' }
+  if (!constantTimeEqual(state.link.token, token)) return { ok: false, noteId, reason: 'revoked' }
+  if (!state.link.enabled) return { ok: false, noteId, reason: 'disabled' }
+  return { ok: true, noteId, role: state.link.role }
+}
+
+/** True when an active share-link session forbids writing this note (view role). */
+export function noteShareBlocksWrite(access: NoteShareAccess | null | undefined, noteId: string): boolean {
+  if (!access || access.noteId !== noteId) return false
+  return !access.ok || access.role !== 'edit'
+}

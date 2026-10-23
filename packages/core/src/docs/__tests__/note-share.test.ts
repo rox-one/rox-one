@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { applyNoteShareUpdate, defaultNoteShare, normalizeNoteShare, noteShareUrl } from '@rox/core/docs'
+import { applyNoteShareUpdate, constantTimeEqual, defaultNoteShare, normalizeNoteShare, noteShareBlocksWrite, noteShareUrl, resolveNoteShareAccess } from '@rox/core/docs'
 
 const TOKEN_A = 'aaaaaaaaaaaaaaaaaaaaaa'
 const TOKEN_B = 'bbbbbbbbbbbbbbbbbbbbbb'
@@ -41,5 +41,54 @@ describe('note share model', () => {
     expect(normalizeNoteShare({ noteId: 'other', link: { enabled: true, token: TOKEN_A, role: 'edit', createdAt: 5 }, updatedAt: 6 }, 'x')).toEqual({
       schemaVersion: 1, noteId: 'x', link: { enabled: true, role: 'edit', token: TOKEN_A, createdAt: 5 }, updatedAt: 6,
     })
+  })
+})
+
+describe('note share link access', () => {
+  const mint = () => TOKEN_A
+  const view = applyNoteShareUpdate(defaultNoteShare('Daily'), { enabled: true }, mint, 1)
+  const edit = applyNoteShareUpdate(view, { role: 'edit' }, mint, 2)
+
+  it('valid edit link opens editable', () => {
+    const access = resolveNoteShareAccess(edit, TOKEN_A)
+    expect(access).toEqual({ ok: true, noteId: 'Daily', role: 'edit' })
+    expect(noteShareBlocksWrite(access, 'Daily')).toBe(false)
+  })
+
+  it('valid view link opens read-only and blocks writes', () => {
+    const access = resolveNoteShareAccess(view, TOKEN_A)
+    expect(access).toEqual({ ok: true, noteId: 'Daily', role: 'view' })
+    expect(noteShareBlocksWrite(access, 'Daily')).toBe(true)
+    expect(noteShareBlocksWrite(access, 'Other')).toBe(false)
+  })
+
+  it('URL role is ignored: stored view wins over a claimed edit', () => {
+    // The resolver takes no role input at all; only the stored record decides.
+    expect(resolveNoteShareAccess(view, TOKEN_A)).toMatchObject({ role: 'view' })
+  })
+
+  it('stale token after reset is revoked', () => {
+    const reset = applyNoteShareUpdate(edit, { regenerate: true }, () => TOKEN_B, 3)
+    expect(resolveNoteShareAccess(reset, TOKEN_A)).toMatchObject({ ok: false, reason: 'revoked' })
+    expect(resolveNoteShareAccess(reset, TOKEN_B)).toMatchObject({ ok: true })
+  })
+
+  it('disabled, missing, and malformed links are rejected', () => {
+    const off = applyNoteShareUpdate(edit, { enabled: false }, mint, 4)
+    expect(resolveNoteShareAccess(off, TOKEN_A)).toMatchObject({ ok: false, reason: 'disabled' })
+    expect(resolveNoteShareAccess(defaultNoteShare('Daily'), TOKEN_A)).toMatchObject({ ok: false, reason: 'invalid' })
+    expect(resolveNoteShareAccess(edit, 'short')).toMatchObject({ ok: false, reason: 'invalid' })
+    expect(resolveNoteShareAccess(edit, undefined)).toMatchObject({ ok: false, reason: 'invalid' })
+  })
+
+  it('rejected access blocks writes for that note', () => {
+    expect(noteShareBlocksWrite({ ok: false, noteId: 'Daily', reason: 'revoked' }, 'Daily')).toBe(true)
+    expect(noteShareBlocksWrite(null, 'Daily')).toBe(false)
+  })
+
+  it('constantTimeEqual', () => {
+    expect(constantTimeEqual(TOKEN_A, TOKEN_A)).toBe(true)
+    expect(constantTimeEqual(TOKEN_A, TOKEN_B)).toBe(false)
+    expect(constantTimeEqual(TOKEN_A, TOKEN_A + 'x')).toBe(false)
   })
 })

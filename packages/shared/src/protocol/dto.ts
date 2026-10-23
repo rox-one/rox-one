@@ -798,7 +798,7 @@ export interface UpdateNoteCommentInput {
   reaction?: { emoji: string }
 }
 
-export type { NoteShareLink, NoteShareRole, NoteShareState, NoteShareUpdate } from '@rox/core/docs'
+export type { NoteShareAccess, NoteShareLink, NoteShareRole, NoteShareState, NoteShareUpdate } from '@rox/core/docs'
 
 /** One note version in history (list row; no body). */
 export interface NoteHistoryEntry {

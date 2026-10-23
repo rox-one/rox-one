@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { getNoteShareForRoot, updateNoteShareForRoot } from './notes'
+import { noteShareBlocksWrite } from '@rox/core/docs'
+import { getNoteShareForRoot, resolveNoteShareLinkForRoot, updateNoteShareForRoot } from './notes'
 
 let notesRoot: string
 let extra: string[]
@@ -57,5 +58,40 @@ describe('local note share sidecars', () => {
     mkdirSync(join(notesRoot, '.rox', 'shares'), { recursive: true })
     writeFileSync(sidecar(), '{not json', 'utf-8')
     expect((await getNoteShareForRoot(notesRoot, 'Daily')).link.enabled).toBe(false)
+  })
+})
+
+describe('share link resolution', () => {
+  it('valid edit link resolves to the stored edit role', async () => {
+    const on = await updateNoteShareForRoot(notesRoot, 'Daily', { enabled: true, role: 'edit' })
+    expect(await resolveNoteShareLinkForRoot(notesRoot, 'Daily', on.link.token)).toEqual({ ok: true, noteId: 'Daily', role: 'edit' })
+  })
+
+  it('valid view link resolves to view (read-only), ignoring any URL role', async () => {
+    const on = await updateNoteShareForRoot(notesRoot, 'Daily', { enabled: true, role: 'view' })
+    const access = await resolveNoteShareLinkForRoot(notesRoot, 'Daily', on.link.token)
+    expect(access).toEqual({ ok: true, noteId: 'Daily', role: 'view' })
+    expect(noteShareBlocksWrite(access, 'Daily')).toBe(true)
+  })
+
+  it('stale token after reset is rejected', async () => {
+    const on = await updateNoteShareForRoot(notesRoot, 'Daily', { enabled: true })
+    await updateNoteShareForRoot(notesRoot, 'Daily', { regenerate: true })
+    expect(await resolveNoteShareLinkForRoot(notesRoot, 'Daily', on.link.token)).toMatchObject({ ok: false, reason: 'revoked' })
+  })
+
+  it('disabled link is rejected', async () => {
+    const on = await updateNoteShareForRoot(notesRoot, 'Daily', { enabled: true })
+    await updateNoteShareForRoot(notesRoot, 'Daily', { enabled: false })
+    expect(await resolveNoteShareLinkForRoot(notesRoot, 'Daily', on.link.token)).toMatchObject({ ok: false, reason: 'disabled' })
+  })
+
+  it('bad note id, missing note, and corrupt sidecar are rejected', async () => {
+    const on = await updateNoteShareForRoot(notesRoot, 'Daily', { enabled: true })
+    expect(await resolveNoteShareLinkForRoot(notesRoot, '../escape', on.link.token)).toMatchObject({ ok: false, reason: 'invalid' })
+    expect(await resolveNoteShareLinkForRoot(notesRoot, 'Missing', on.link.token)).toMatchObject({ ok: false, reason: 'invalid' })
+    expect(await resolveNoteShareLinkForRoot(notesRoot, 42, on.link.token)).toMatchObject({ ok: false, reason: 'invalid' })
+    writeFileSync(sidecar(), '{corrupt', 'utf-8')
+    expect(await resolveNoteShareLinkForRoot(notesRoot, 'Daily', on.link.token)).toMatchObject({ ok: false })
   })
 })

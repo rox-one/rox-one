@@ -685,6 +685,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'notes:rename',
   'notes:renameAsset',
   'notes:renameFolder',
+  'notes:resolveShareLink',
   'notes:restoreRevision',
   'notes:save',
   'notes:saveAsTemplate',
@@ -1154,4 +1155,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1150
+export const EXPECTED_CHANNEL_COUNT = 1151

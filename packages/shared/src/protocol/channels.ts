@@ -253,6 +253,7 @@ export const RPC_CHANNELS = {
     DELETE_COMMENT: 'notes:deleteComment',
     GET_SHARE: 'notes:getShare',
     UPDATE_SHARE: 'notes:updateShare',
+    RESOLVE_SHARE_LINK: 'notes:resolveShareLink',
     LIST_REVISIONS: 'notes:listRevisions',
     GET_REVISION: 'notes:getRevision',
     RESTORE_REVISION: 'notes:restoreRevision',

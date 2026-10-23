@@ -32,3 +32,22 @@ describe('Docs step 6 — note share wiring', () => {
     expect(dialog).not.toMatch(/yjs|y-prosemirror|fetch\(/i)
   })
 })
+
+describe('Docs step 6 — share link enforcement in NotesPage', () => {
+  it('validates the token before opening and opens nothing on rejection', () => {
+    const start = page.indexOf('resolveNoteShareLink(')
+    expect(start).toBeGreaterThan(-1)
+    const block = page.slice(start, start + 700)
+    expect(block).toContain("toast.error(t('notes.share.linkRejected')")
+    expect(block.indexOf('return')).toBeLessThan(block.indexOf('openNote(noteId)'))
+  })
+  it('view role makes the editor non-editable and short-circuits every write path', () => {
+    expect(page).toContain('&& !shareReadOnly')
+    expect(page).toContain('editable={canEditContent}')
+    expect(page.match(/noteShareBlocksWrite\(shareAccessRef\.current/g)?.length).toBeGreaterThanOrEqual(3)
+    expect(page).toContain('data-testid="notes-share-view-only"')
+  })
+  it('dialog states the link only works on devices with this vault', () => {
+    expect(dialog).toContain("t('notes.share.deviceOnlyHint')")
+  })
+})

@@ -22,7 +22,7 @@ import { listNoteRevisions, getNoteRevision, recordNoteRevision } from '../../do
 type NativeNoteWriter = (reason: MarkdownChangedEvent['reason'], changes: NativeMarkdownChange[]) => Promise<unknown>
 type NativeFolderReader = (folder: string) => Promise<NativeFolderSnapshot | null>
 import { CodedError, extractNoteTaskLines, NOTE_TASKS_MAX_IDS, type NoteTasksEntry } from '@rox/shared/protocol'
-import { applyNoteShareUpdate, defaultNoteShare, normalizeNoteShare, previewPropertyDictionary, type NoteShareState, type NoteShareUpdate } from '@rox/core/docs'
+import { applyNoteShareUpdate, defaultNoteShare, normalizeNoteShare, previewPropertyDictionary, resolveNoteShareAccess, type NoteShareAccess, type NoteShareState, type NoteShareUpdate } from '@rox/core/docs'
 import { parseRox2EntityId } from '@rox/core/rox2'
 import { createDescriptorResolver, FileDescriptorStore, type ContentOwner, type ContentPolicy } from '../../docs/descriptor-resolver.ts'
 import { awardXpSafe } from '@rox/shared/gamification'
@@ -97,6 +97,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.DELETE_COMMENT,
   RPC_CHANNELS.notes.GET_SHARE,
   RPC_CHANNELS.notes.UPDATE_SHARE,
+  RPC_CHANNELS.notes.RESOLVE_SHARE_LINK,
   RPC_CHANNELS.notes.LIST_TEMPLATES,
   RPC_CHANNELS.notes.CREATE_FROM_TEMPLATE,
   RPC_CHANNELS.notes.SAVE_AS_TEMPLATE,
@@ -791,6 +792,26 @@ export async function updateNoteShareForRoot(notesRoot: string, noteId: string, 
     await writeAtomicFileNoFollow(notesRoot, filePath, `${JSON.stringify(next, null, 2)}\n`)
     return next
   })
+}
+
+/**
+ * Validate a share-link token for a local note. Any failure (bad id, missing
+ * note, unreadable sidecar) is a rejection; the role is the stored one.
+ */
+export async function resolveNoteShareLinkForRoot(notesRoot: string, noteId: unknown, token: unknown): Promise<NoteShareAccess> {
+  const rawId = typeof noteId === 'string' ? noteId : ''
+  let safeId: string
+  try {
+    safeId = assertSafeNoteId(rawId)
+  } catch {
+    return { ok: false, noteId: rawId, reason: 'invalid' }
+  }
+  try {
+    if (!existsSync(notePathFromId(notesRoot, safeId))) return { ok: false, noteId: safeId, reason: 'invalid' }
+    return resolveNoteShareAccess(await getNoteShareForRoot(notesRoot, safeId), token)
+  } catch {
+    return { ok: false, noteId: safeId, reason: 'invalid' }
+  }
 }
 
 async function deleteNoteShareForRoot(notesRoot: string, noteId: string): Promise<void> {
@@ -2678,6 +2699,10 @@ function uniquifyNativeNoteRelativeId(notesRoot: string, title: string, folder?:
     const share = await updateNoteShareForRoot(getWorkspaceNotesRoot(workspaceId), noteId, update)
     changed({ workspaceId, reason: 'share', noteId: share.noteId })
     return share
+  })
+
+  server.handle(RPC_CHANNELS.notes.RESOLVE_SHARE_LINK, async (_ctx, workspaceId: string, noteId: string, token: string) => {
+    return resolveNoteShareLinkForRoot(getWorkspaceNotesRoot(workspaceId), noteId, token)
   })
 
   server.handle(RPC_CHANNELS.notes.LIST_REVISIONS, async (ctx, workspaceId: string, noteId: string): Promise<NoteHistoryEntry[]> => {

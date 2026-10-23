@@ -153,6 +153,7 @@ export function NoteShareDialog({
           )}
 
           {url && <p id="notes-share-regenerate-hint" className="text-xs text-muted-foreground">{t('notes.share.regenerateHint')}</p>}
+          <p className="text-xs text-muted-foreground" data-testid="notes-share-device-only">{t('notes.share.deviceOnlyHint')}</p>
           <p className="text-xs text-muted-foreground">{t('notes.share.localHint')}</p>
           {error && <p role="alert" className="text-xs text-destructive" data-testid="notes-share-error">{t('notes.share.error')}</p>}
         </div>

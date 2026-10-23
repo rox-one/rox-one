@@ -22,6 +22,7 @@ import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } f
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
 import type { Node as PMNode } from 'prosemirror-model'
 import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
+import { noteShareBlocksWrite, type NoteShareAccess } from '@rox/core/docs'
 import { applyPropertyPatch, previewPropertyPatch, previewPropertyDictionary, projectFrontmatter, retainSource, retainedSourceHash, type MarkdownCommitCommand, type PropertyDictionaryPreview, type PropertyValue } from '@rox/core/docs'
 import { parseDocument } from 'yaml'
 import type { ContentFailure, ContentResolution } from '@rox/server-core/docs/descriptor-resolver'
@@ -146,6 +147,8 @@ import { toErrorMessage } from '@/lib/errors'
 
 interface NotesPageProps {
   selectedNoteId: string | null
+  /** Untrusted `?share=` token from a share deep link (validated before open). */
+  shareToken?: string
 }
 
 
@@ -588,7 +591,7 @@ function SelectedNoteRecovery({ failure, address, onRetry }: {
   )
 }
 
-function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
+function NativeNotesPage({ selectedNoteId, shareToken }: NotesPageProps) {
   const shellSidebarTarget = useSidebarHandledOutside()
   const { t } = useTranslation()
   // Panel-layout mode drives which side rails this surface may render.
@@ -951,6 +954,10 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [contentResolution, setContentResolution] = React.useState<ContentResolution | ContentFailure | null>(null)
   const [sourceInfoOpen, setSourceInfoOpen] = React.useState(false)
   const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
+  // Docs step 6: active share-link session (stored role wins; URL role ignored).
+  const [shareAccess, setShareAccess] = React.useState<NoteShareAccess | null>(null)
+  const shareAccessRef = React.useRef<NoteShareAccess | null>(null)
+  shareAccessRef.current = shareAccess
   const [committedBlockTree, setCommittedBlockTree] = React.useState<BlockTreeResult | null>(null)
   const [markerPreview, setMarkerPreview] = React.useState<{ preview: NativeMarkerMappingPreview; operationId: string } | null>(null)
   const [markerBusy, setMarkerBusy] = React.useState(false)
@@ -1074,7 +1081,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       ))}
     </div>
   )
-  const canEditContent = !readUnavailable && contentResolution?.status === 'ok' && contentResolution.capabilities.write && !saveNeedsReload
+  const shareReadOnly = activeNote ? noteShareBlocksWrite(shareAccess, activeNote.id) : false
+  const canEditContent = !readUnavailable && contentResolution?.status === 'ok' && contentResolution.capabilities.write && !saveNeedsReload && !shareReadOnly
   React.useEffect(() => { workspaceIdRef.current = activeWorkspaceId }, [activeWorkspaceId])
   const noteViewCapabilities = React.useMemo(() => defaultNoteEntityCapabilities(), [])
   const [noteView, setNoteView] = useEntityView(
@@ -1495,6 +1503,26 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, selectedNoteId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, nativeNotesSync, t])
 
   React.useEffect(() => {
+    if (selectedNoteId && shareToken !== undefined) {
+      // Share deep link: validate against the local share file BEFORE opening.
+      const noteId = parseNoteBlockAddress(selectedNoteId).noteId
+      const workspaceId = activeWorkspaceId
+      if (!workspaceId) return
+      let cancelled = false
+      void window.electronAPI.resolveNoteShareLink(workspaceId, noteId, shareToken)
+        .catch((): NoteShareAccess => ({ ok: false, noteId, reason: 'invalid' }))
+        .then((access) => {
+          if (cancelled) return
+          if (!access.ok) {
+            toast.error(t('notes.share.linkRejected'), { description: t(`notes.share.linkRejectedReason.${access.reason}`) })
+            return
+          }
+          setShareAccess(access)
+          void openNote(noteId)
+        })
+      return () => { cancelled = true }
+    }
+    setShareAccess(null)
     if (selectedNoteId) {
       const noteId = parseNoteBlockAddress(selectedNoteId).noteId
       const openedDailyDate = parseDailyNoteDate(noteId)
@@ -1525,7 +1553,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     setSaveError(null)
     setContentResolution(null)
     ++openNoteRequestRef.current
-  }, [selectedNoteId, openNote, activeWorkspaceId])
+  }, [selectedNoteId, shareToken, openNote, activeWorkspaceId, t])
 
   const noteIds = React.useMemo(
     () => `${activeWorkspaceId ?? ''}:${notes.map(n => `${n.id}:${n.updatedAt}`).join(',')}`,
@@ -1558,6 +1586,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [nativeNotesSync, knowledgeSignals])
   const saveCurrentNote = React.useCallback(async (): Promise<boolean> => {
     if (!activeWorkspaceId || !activeNote) return true
+    // View-role share session: never call the save path.
+    if (noteShareBlocksWrite(shareAccessRef.current, activeNote.id)) return true
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current)
       saveTimerRef.current = null
@@ -2047,6 +2077,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     value: string,
   ) => {
     if (!activeWorkspaceId) return
+    if (noteShareBlocksWrite(shareAccessRef.current, noteId)) return
     if (activeNote?.id === noteId && !await flushBeforeAction()) return
     const act = soupDocumentActResult({ source: 'native', action: 'write', nativeId: noteId })
     if (!isClaimableLive(act)) return
@@ -2889,6 +2920,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
 
   const toggleTask = async (task: NoteTask) => {
     if (!activeWorkspaceId) return
+    if (noteShareBlocksWrite(shareAccessRef.current, task.noteId)) return
     const workspaceId = activeWorkspaceId
     const opening = openNoteRequestRef.current
     const cacheEpoch = cacheWriteEpoch()
@@ -3348,6 +3380,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
               />
             ) : null}
             {activeNote && <div className="min-w-0 truncate text-xs text-muted-foreground/60">{activeNoteStats}</div>}
+            {shareReadOnly && <span role="status" data-testid="notes-share-view-only" className="shrink-0 rounded bg-surface-hover px-2 py-0.5 text-xs text-muted-foreground">{t('notes.share.viewOnlyBadge')}</span>}
             {activeNote && <button type="button" data-testid="notes-content-authority" aria-haspopup="dialog" onClick={() => setSourceInfoOpen(true)} className="shrink-0 rounded bg-surface-hover px-2 py-0.5 text-xs text-muted-foreground hover:bg-surface-selected" title={t('notes.content.authorityHint')}>
               {contentResolution?.status === 'ok' ? t('notes.content.markdown') : t('notes.content.readOnly')}
             </button>}
@@ -3377,19 +3410,19 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
           >
             <SquarePen className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote || Boolean(assetsUnavailable)} title={t('notes.toolbar.attachAsset')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote || Boolean(assetsUnavailable) || shareReadOnly} title={t('notes.toolbar.attachAsset')}>
             <Paperclip className="h-4 w-4" />
           </button>
-          <button type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" data-testid="notes-share-open" aria-haspopup="dialog" onClick={() => setShareDialogOpen(true)} disabled={!activeNote || !activeWorkspaceId} aria-label={t('notes.toolbar.share')}>
+          <button type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" data-testid="notes-share-open" aria-haspopup="dialog" onClick={() => setShareDialogOpen(true)} disabled={!activeNote || !activeWorkspaceId || shareReadOnly} aria-label={t('notes.toolbar.share')}>
             <Share2 className="icon-toolbar" aria-hidden="true" />
           </button>
           <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
             <FileDown className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={openRenameDialog} disabled={!activeNote || shareReadOnly} title={t('notes.toolbar.rename')}>
             <Pencil className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote || shareReadOnly} title={t('notes.toolbar.delete')}>
             <Trash2 className="h-4 w-4" />
           </button>
           <span className={cn('w-20 text-right text-xs', saveError ? 'text-destructive' : 'text-muted-foreground')} title={t('notes.save.autosaveHint')}>
