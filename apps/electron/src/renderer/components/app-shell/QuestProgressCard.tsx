@@ -7,6 +7,7 @@ import { BookOpen, Link2, CheckSquare, GitBranch, Globe, ShieldCheck, Trophy, Za
 import { QUEST_CLOUD_REQUIRED, QUEST_IDS, QUEST_XP_EVENT, XP_EVENT_REWARDS, getWeeklyXp } from '@rox/shared/gamification/client'
 import type { QuestId, QuestRecord } from '@rox/shared/gamification'
 import { cn } from '@/lib/utils'
+import { Skeleton } from '@rox/ui'
 
 const QUEST_ICONS = { first_note: BookOpen, first_link: Link2, first_task: CheckSquare, first_workflow: GitBranch, first_browser: Globe, privacy_review: ShieldCheck }
 const QUEST_COLORS: Record<QuestId, string> = {
@@ -126,7 +127,18 @@ export function QuestProgressCard({ cloudFeaturesEnabled = true, className, scop
     }
   }
 
-  if (!ready) return <div className={cn('flex items-center gap-2 rounded-lg border border-border p-4 text-sm text-muted-foreground', className)} role="status"><Loader2 className="size-4 animate-spin motion-reduce:animate-none" />{t('quests.loading')}</div>
+  if (!ready) return (
+    <div
+      className={cn('flex flex-col gap-2 rounded-lg border border-border p-4 text-muted-foreground', className)}
+      role="status"
+      aria-busy="true"
+      aria-label={t('quests.loading')}
+      data-testid="quest-progress-card-loading"
+    >
+      <Skeleton className="h-4 w-2/5" />
+      <Skeleton lines={3} className="w-full" />
+    </div>
+  )
 
   const now = Date.now()
   const records = profile?.questRecords ?? profile?.quests ?? []
