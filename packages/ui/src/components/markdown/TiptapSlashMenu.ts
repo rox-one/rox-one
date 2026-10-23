@@ -170,6 +170,39 @@ function insertRichBlockAndOpenEditor(
   queueMicrotask(() => (editor as any).emit(RICH_BLOCK_EDIT_EVENT))
 }
 
+/** Obsidian-style embed trigger: block-level `![[` with caret ready to type a target.
+ * Isolates into an empty textblock so `entityEmbedInputRule` can promote `![[…]]`
+ * (whole paragraph must match; nothing after the cursor).
+ */
+function insertEmbedTrigger(editor: Editor, insertPos?: number) {
+  const targetPos = insertPos ?? editor.state.selection.from
+
+  editor
+    .chain()
+    .focus()
+    .setTextSelection(targetPos)
+    .command(({ state, commands }) => {
+      // Mid/end of paragraph → split so caret is at the start of the (remaining) textblock.
+      if (state.selection.$from.parentOffset > 0) return commands.splitBlock()
+      return true
+    })
+    .command(({ state, commands }) => {
+      // Caret at start of a non-empty paragraph → push existing content into a following
+      // paragraph so `![[` sits alone (covers prepend-at-start and mid-paragraph suffix).
+      // Empirically splitBlock-at-start creates the empty sibling BEFORE but leaves the
+      // selection in the content half — move into the empty block before inserting.
+      const $from = state.selection.$from
+      if ($from.parentOffset === 0 && $from.parent.content.size > 0) {
+        const emptyPos = $from.before() + 1
+        if (!commands.splitBlock()) return false
+        return commands.setTextSelection(emptyPos)
+      }
+      return true
+    })
+    .insertContent('![[')
+    .run()
+}
+
 const VISUAL_LANGUAGES = new Set(['mermaid', 'latex', 'math', 'tex', 'katex'])
 const lastCodeLanguageByEditor = new WeakMap<Editor, string>()
 
@@ -523,12 +556,12 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     {
       id: 'embed',
       title: slashTitle('notes.slash.embed', 'Embed'),
-      description: 'Insert a note embed',
+      description: slashTitle('notes.slash.embedDescription', 'Insert a note embed (![[…]])'),
       icon: 'workflow',
       group: 'Blocks',
-      aliases: ['embed', 'transclude', 'wikilink'],
-      run: (e) => {
-        e.chain().focus().insertContent('![[').run()
+      aliases: ['embed', 'transclude', 'wikilink', 'include'],
+      run: (e, insertPos) => {
+        insertEmbedTrigger(e, insertPos)
       },
     },
     {
@@ -555,11 +588,11 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'latex-code-block',
-      title: slashTitle('notes.slash.latex', 'LaTeX Block'),
-      description: slashTitle('notes.slash.latexDescription', 'Insert a latex math block'),
+      title: slashTitle('notes.slash.equation', 'Equation'),
+      description: slashTitle('notes.slash.equationDescription', 'Insert a display equation (LaTeX)'),
       icon: 'sigma',
       group: 'Blocks',
-      aliases: ['latex', 'math', 'tex', 'katex'],
+      aliases: ['equation', 'latex', 'math', 'tex', 'katex', 'формула'],
       run: (e, insertPos) => {
         insertRichBlockAndOpenEditor(e, 'latexBlock', 'E = mc^2', insertPos)
       },

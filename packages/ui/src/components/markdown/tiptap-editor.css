@@ -315,11 +315,19 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   overflow: hidden;
 }
 
-/* ── LaTeX blocks ── */
+/* ── LaTeX / equation blocks (SE surface) ── */
 .tiptap-editor .tiptap-latex-block {
   margin: 0.5rem 0;
-  padding: 0.5rem 0;
-  border-radius: var(--radius-control, 4px);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-input, var(--background));
+  color: var(--text-primary, var(--foreground));
+}
+
+.tiptap-editor .tiptap-latex-block .katex,
+.tiptap-editor .tiptap-latex-block .katex-display {
+  color: inherit;
 }
 
 /* ── Bubble menu toolbar ── */
