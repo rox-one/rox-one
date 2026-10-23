@@ -1,0 +1,369 @@
+/**
+ * CogneeGraphProvider: GraphMemoryProvider over the cognee sidecar process.
+ *
+ * - Lazy: nothing spawns until the first ingest/search; a cold search returns
+ *   [] immediately and kicks off warm-up in the background (never blocks a turn).
+ * - Idle-killed after `idleMs` without requests; restarts on next use.
+ * - The LLM key is passed only through the child env; it is never logged and
+ *   never included in errors or status.
+ */
+import { spawn, type ChildProcess } from 'child_process'
+import { createInterface } from 'readline'
+import type {
+  GraphMemoryDocument,
+  GraphMemoryHit,
+  GraphMemoryProvider,
+  GraphMemoryState,
+  GraphMemoryStatus,
+  GraphSearchMode,
+} from '@rox/shared/memory/graph-provider'
+
+export const DEFAULT_IDLE_MS = 10 * 60_000
+export const DEFAULT_REQUEST_TIMEOUT_MS = 120_000
+const MAX_PENDING = 64
+
+export interface SidecarLaunch {
+  python: string
+  env: Record<string, string>
+}
+
+export interface CogneeProviderDeps {
+  workspaceId: string
+  /** Storage root, `~/rox/memory/cognee/<workspaceId>`. */
+  storageDir: string
+  /**
+   * Ensure the runtime is installed. Resolves `{ python }` when ready, or
+   * `{ python: null, reason }` where reason distinguishes unsupported/failed/
+   * installing so status() is not collapsed to a forever-retrying not_installed.
+   */
+  ensureRuntime: () => Promise<{ python: string | null; reason?: 'unsupported' | 'failed' | 'installing' | 'not_installed'; detail?: string }>
+  /** Resolve the LLM key (build-time shared key / credential store). Never logged. */
+  resolveLlmKey: () => Promise<string | null>
+  llmEndpoint?: string
+  llmModel?: string
+  llmFallbackModel?: string
+  idleMs?: number
+  requestTimeoutMs?: number
+  /** Test seam. */
+  spawnFn?: (cmd: string, args: string[], env: Record<string, string>) => ChildProcess
+  logger?: { warn: (m: string, e?: unknown) => void }
+  /** Master toggle (Settings → Память); checked on every call. */
+  isEnabled?: () => boolean
+}
+
+type Pending = { resolve: (v: unknown) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }
+
+export class CogneeGraphProvider implements GraphMemoryProvider {
+  readonly id = 'cognee'
+  private child: ChildProcess | null = null
+  private starting: Promise<boolean> | null = null
+  private state: GraphMemoryState = 'cold'
+  private safeError: string | undefined
+  private documents: number | undefined
+  private nextId = 1
+  private pending = new Map<number, Pending>()
+  private idleTimer: ReturnType<typeof setTimeout> | null = null
+  /** Earliest time a failed start may be retried (ms since epoch). */
+  private failCooldownUntil = 0
+
+  constructor(private readonly deps: CogneeProviderDeps) {}
+
+  status(): GraphMemoryStatus {
+    if (this.deps.isEnabled && !this.deps.isEnabled()) return { state: 'disabled', provider: this.id }
+    return {
+      state: this.state,
+      provider: this.id,
+      ...(this.documents !== undefined ? { documents: this.documents } : {}),
+      ...(this.safeError ? { safeError: this.safeError } : {}),
+    }
+  }
+
+  private enabled(): boolean {
+    return !this.deps.isEnabled || this.deps.isEnabled()
+  }
+
+  /** Start (or join) the sidecar; resolves true when ready. */
+  warm(): Promise<boolean> {
+    if (this.child && this.state === 'ready') return Promise.resolve(true)
+    this.starting ??= this.start().finally(() => {
+      this.starting = null
+    })
+    return this.starting
+  }
+
+  private async start(): Promise<boolean> {
+    if (Date.now() < this.failCooldownUntil) {
+      return false
+    }
+    this.state = 'warming'
+    try {
+      const runtime = await this.deps.ensureRuntime()
+      const python = runtime.python
+      if (!python) {
+        if (runtime.reason === 'unsupported') {
+          this.state = 'failed'
+          this.safeError = `unsupported platform${runtime.detail ? `: ${runtime.detail}` : ''}`
+          // Permanent: do not retry for a long time.
+          this.failCooldownUntil = Date.now() + 24 * 60 * 60_000
+        } else if (runtime.reason === 'failed') {
+          this.state = 'failed'
+          this.safeError = runtime.detail?.slice(0, 200) || 'runtime install failed'
+          this.failCooldownUntil = Date.now() + 60_000
+        } else if (runtime.reason === 'installing') {
+          this.state = 'warming'
+          return false
+        } else {
+          this.state = 'not_installed'
+          this.failCooldownUntil = Date.now() + 60_000
+        }
+        return false
+      }
+      const key = (await this.deps.resolveLlmKey()) ?? ''
+      const env: Record<string, string> = {
+        PATH: process.env.PATH ?? '',
+        HOME: process.env.HOME ?? '',
+        PYTHONUNBUFFERED: '1',
+        PYTHONDONTWRITEBYTECODE: '1',
+        PYTHONUTF8: '1',
+        ROX_COGNEE_ROOT: this.deps.storageDir,
+        ROX_COGNEE_LLM_ENDPOINT: this.deps.llmEndpoint ?? 'https://api.rox.one/v1',
+        ROX_COGNEE_LLM_MODEL: this.deps.llmModel ?? 'rox/r1-max',
+        ROX_COGNEE_LLM_FALLBACK_MODEL: this.deps.llmFallbackModel ?? 'rox/fast',
+        ROX_COGNEE_LLM_API_KEY: key,
+        // Also expose under the build-injected name (never logged).
+        ROX_SHARED_API_KEY: key,
+      }
+      for (const k of ['TMPDIR', 'TEMP', 'TMP', 'LANG', 'LC_ALL']) {
+        if (process.env[k]) env[k] = process.env[k]!
+      }
+      if (process.platform === 'win32') {
+        for (const k of ['SYSTEMROOT', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA']) {
+          if (process.env[k]) env[k] = process.env[k]!
+        }
+      }
+      const spawnFn =
+        this.deps.spawnFn ??
+        ((cmd, args, e) => spawn(cmd, args, { env: e, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true }))
+      const child = spawnFn(python, ['-m', 'rox_cognee_sidecar'], env)
+      this.child = child
+      child.on('exit', () => this.onExit(child))
+      child.on('error', err => {
+        this.deps.logger?.warn('cognee sidecar spawn error', err)
+        this.onExit(child)
+      })
+      // Avoid unhandled 'error' on pipes when the child dies mid I/O (would crash Electron main).
+      const ignorePipeErr = () => {}
+      child.stdin?.on('error', ignorePipeErr)
+      child.stdout?.on('error', ignorePipeErr)
+      // stderr is drained but not forwarded verbatim (could echo document text).
+      child.stderr?.on('data', () => {})
+      child.stderr?.on('error', ignorePipeErr)
+      createInterface({ input: child.stdout! }).on('line', line => this.onLine(line))
+      const hello = (await this.request('hello', {}, 30_000)) as { protocol?: number } | null
+      if (!hello || hello.protocol !== 1) throw new Error('sidecar protocol mismatch')
+      this.state = 'ready'
+      this.safeError = undefined
+      this.failCooldownUntil = 0
+      this.touch()
+      void this.refreshStatus()
+      return true
+    } catch (err) {
+      this.deps.logger?.warn('cognee sidecar start failed', err)
+      this.state = 'failed'
+      this.safeError = 'sidecar unavailable'
+      this.failCooldownUntil = Date.now() + 60_000
+      this.kill()
+      return false
+    }
+  }
+
+  private async refreshStatus(): Promise<void> {
+    try {
+      const s = (await this.request('status', {})) as { documents?: number }
+      if (typeof s?.documents === 'number') this.documents = s.documents
+    } catch {
+      /* status is best-effort */
+    }
+  }
+
+  private onLine(line: string): void {
+    let frame: { id?: unknown; result?: unknown; error?: { code?: string; message?: string } }
+    try {
+      frame = JSON.parse(line)
+    } catch {
+      return
+    }
+    if (typeof frame.id !== 'number') return
+    const p = this.pending.get(frame.id)
+    if (!p) return
+    // resolve/reject wrappers (see request) clear the pending entry + timer.
+    if (frame.error) p.reject(new Error(`sidecar ${String(frame.error.code ?? 'error')}`))
+    else p.resolve(frame.result)
+  }
+
+  private onExit(child: ChildProcess): void {
+    if (this.child !== child) return
+    this.child = null
+    if (this.state === 'ready' || this.state === 'warming') this.state = 'cold'
+    for (const [, p] of this.pending) {
+      clearTimeout(p.timer)
+      p.reject(new Error('sidecar exited'))
+    }
+    this.pending.clear()
+    if (this.idleTimer) clearTimeout(this.idleTimer)
+    this.idleTimer = null
+  }
+
+  private request(
+    method: string,
+    params: Record<string, unknown>,
+    timeoutMs?: number,
+    signal?: AbortSignal,
+  ): Promise<unknown> {
+    const child = this.child
+    if (!child?.stdin || child.stdin.destroyed) return Promise.reject(new Error('sidecar not running'))
+    if (this.pending.size >= MAX_PENDING) return Promise.reject(new Error('sidecar busy'))
+    if (signal?.aborted) return Promise.reject(new Error('sidecar aborted'))
+    const id = this.nextId++
+    return new Promise((resolve, reject) => {
+      const settle = (fn: () => void) => {
+        if (!this.pending.has(id)) return
+        clearTimeout(timer)
+        signal?.removeEventListener('abort', onAbort)
+        this.pending.delete(id)
+        fn()
+      }
+      const onAbort = () => settle(() => reject(new Error('sidecar aborted')))
+      const timer = setTimeout(
+        () => settle(() => reject(new Error('sidecar timeout'))),
+        timeoutMs ?? this.deps.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
+      )
+      this.pending.set(id, {
+        resolve: v => settle(() => resolve(v)),
+        reject: e => settle(() => reject(e)),
+        timer,
+      })
+      signal?.addEventListener('abort', onAbort, { once: true })
+      child.stdin!.write(`${JSON.stringify({ id, method, params })}` + '\n', err => {
+        if (err) settle(() => reject(new Error('sidecar write failed')))
+      })
+    })
+  }
+
+  private touch(): void {
+    if (this.idleTimer) clearTimeout(this.idleTimer)
+    this.idleTimer = setTimeout(() => {
+      // Never idle-kill while RPCs (e.g. cognify up to 30 min) are in flight.
+      if (this.pending.size > 0) {
+        this.touch()
+        return
+      }
+      this.shutdown()
+    }, this.deps.idleMs ?? DEFAULT_IDLE_MS)
+    this.idleTimer.unref?.()
+  }
+
+  async ingest(docs: readonly GraphMemoryDocument[]): Promise<void> {
+    if (!this.enabled() || docs.length === 0) return
+    if (!(await this.warm())) return
+    this.touch()
+    const payload = docs
+      .filter(d => d.provenance?.originClass === 'owner' || d.provenance?.originClass === 'agent')
+      .map(d => ({ id: d.id, source: d.source, text: d.text, provenance: d.provenance }))
+    try {
+      for (let i = 0; i < payload.length; i += 100) {
+        await this.request('add', { docs: payload.slice(i, i + 100) })
+      }
+    } catch (err) {
+      this.deps.logger?.warn('cognee ingest failed', err)
+    }
+  }
+
+  /** Run graph extraction (LLM-heavy). Callers gate this with the daily cost cap. */
+  async cognify(sources?: string[]): Promise<void> {
+    if (!this.enabled() || !(await this.warm())) return
+    this.touch()
+    try {
+      await this.request('cognify', sources ? { sources } : {}, 30 * 60_000)
+      void this.refreshStatus()
+    } catch (err) {
+      this.deps.logger?.warn('cognee cognify failed', err)
+    }
+  }
+
+  async search(
+    query: string,
+    opts?: { mode?: GraphSearchMode; limit?: number; signal?: AbortSignal },
+  ): Promise<GraphMemoryHit[]> {
+    if (!this.enabled()) return []
+    if (this.state !== 'ready' || !this.child) {
+      // Never block a turn on cold start: warm in background, answer empty now.
+      void this.warm()
+      return []
+    }
+    this.touch()
+    let raw: unknown
+    try {
+      raw = await this.request(
+        'search',
+        {
+          query,
+          mode: opts?.mode ?? 'chunks',
+          limit: Math.min(50, Math.max(1, opts?.limit ?? 8)),
+        },
+        undefined,
+        opts?.signal,
+      )
+    } catch (err) {
+      this.deps.logger?.warn('cognee search failed', err)
+      return []
+    }
+    if (opts?.signal?.aborted || !Array.isArray(raw)) return []
+    const observedAt = new Date().toISOString()
+    return raw
+      .filter((h): h is { id: string; source: string; text: string; score?: number; known?: boolean } =>
+        !!h && typeof h.id === 'string' && typeof h.text === 'string')
+      .map(h => ({
+        id: h.id,
+        source: (h.source as GraphMemoryHit['source']) ?? 'notes',
+        text: h.text,
+        score: typeof h.score === 'number' ? h.score : 0,
+        // Graph-derived facts are agent-synthesised from gated inputs.
+        provenance: { originClass: 'agent', sessionKind: 'subagent', observedAt },
+      }))
+  }
+
+  async forget(ids: readonly string[]): Promise<void> {
+    if (!this.enabled() || ids.length === 0 || !(await this.warm())) return
+    this.touch()
+    try {
+      await this.request('delete', { ids: [...ids] })
+    } catch (err) {
+      this.deps.logger?.warn('cognee forget failed', err)
+    }
+  }
+
+  shutdown(): void {
+    const child = this.child
+    if (!child) return
+    try {
+      child.stdin?.write(`${JSON.stringify({ id: 0, method: 'shutdown', params: {} })}\n`)
+      child.stdin?.end()
+    } catch {
+      /* ignore */
+    }
+    const t = setTimeout(() => this.kill(), 5_000)
+    t.unref?.()
+  }
+
+  private kill(): void {
+    const child = this.child
+    if (!child) return
+    try {
+      child.kill()
+    } catch {
+      /* ignore */
+    }
+    this.onExit(child)
+  }
+}
