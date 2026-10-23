@@ -1,6 +1,6 @@
 {
   "name": "Rox Engineering",
-  "description": "Dark glass agent IDE profile (opt-in; does not change Rox default).",
+  "description": "Dark glass agent IDE profile. Default for new installs.",
   "author": "Rox One",
   "license": "MIT",
   "mode": "blurred",

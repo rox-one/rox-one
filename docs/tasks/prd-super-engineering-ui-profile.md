@@ -25,7 +25,7 @@ Optional dark glass agent-IDE shell for users who want super.engineering-like UX
 **Acceptance:**
 - [x] `super-engineering.json` appears in theme picker
 - [x] Selecting it sets `data-ui-profile="super-engineering"` on `<html>`
-- [x] Default new profile still uses Rox light theme
+- [x] Default new profile used Rox light theme at ship (superseded 2026-10-23: Rox Engineering is now the new-install default)
 - [x] Typecheck passes
 
 ### US-SE-002: Workspace navigator skeleton
@@ -77,7 +77,7 @@ Optional dark glass agent-IDE shell for users who want super.engineering-like UX
 
 ## Functional requirements
 
-- FR-1: `uiProfile` derived from theme JSON field `uiProfile` when present.
+- FR-1: `uiProfile` derived from theme JSON field `uiProfile` when present. (2026-10-23: `ROX_THEME_ID` is `super-engineering`, so new installs get the SE profile by default.)
 - FR-2: `ShellLayoutMode` enum: `rox-default` | `se-workspace`.
 - FR-3: Parallel agents obey `se-wave1-contract.json` / `se-wave2-contract.json` allowlists.
 - FR-4: INTEGRATOR merges shell after W1-A–D complete.
