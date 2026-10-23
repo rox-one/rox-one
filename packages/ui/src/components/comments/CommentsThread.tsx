@@ -199,10 +199,11 @@ function CommentRow({ comment, depth, allowReplies, thread }: { comment: Comment
             onCancel={() => { setReplying(false); setReplyDraft('') }}
             onSubmit={() => {
               const body = replyDraft.trim()
-              if (!body || !thread.onCreate) return
+              const create = thread.onCreate
+              if (!body || !create) return
               void (async () => {
                 try {
-                  await thread.onCreate(body, comment.id)
+                  await create(body, comment.id)
                   setReplying(false)
                   setReplyDraft('')
                 } catch {

@@ -35,7 +35,8 @@ describe('notes comments threads wiring', () => {
   })
 
   it('CommentsThread awaits onCreate before clearing the reply draft', () => {
-    expect(commentsThread).toContain('await thread.onCreate(body, comment.id)')
+    expect(commentsThread).toContain('await create(body, comment.id)')
+    expect(commentsThread).toContain('const create = thread.onCreate')
     expect(commentsThread).toContain('void | Promise<void>')
   })
 
