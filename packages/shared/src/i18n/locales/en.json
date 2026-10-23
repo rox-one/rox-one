@@ -679,6 +679,8 @@
   "canvas.text.placeholder": "Type something…",
   "canvas.tool.ellipse": "Ellipse",
   "canvas.tool.entity": "Insert entity",
+  "canvas.tool.ink": "Ink",
+  "canvas.tool.line": "Line",
   "canvas.tool.rect": "Rectangle",
   "canvas.tool.select": "Select",
   "canvas.tool.sticky": "Sticky note",

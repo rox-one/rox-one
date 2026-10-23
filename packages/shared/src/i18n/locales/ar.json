@@ -679,6 +679,8 @@
   "canvas.text.placeholder": "اكتب شيئًا…",
   "canvas.tool.ellipse": "قطع ناقص",
   "canvas.tool.entity": "إدراج عنصر",
+  "canvas.tool.ink": "حبر",
+  "canvas.tool.line": "خط",
   "canvas.tool.rect": "مستطيل",
   "canvas.tool.select": "تحديد",
   "canvas.tool.sticky": "ملاحظة لاصقة",

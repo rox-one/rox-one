@@ -679,6 +679,8 @@
   "canvas.text.placeholder": "輸入文字…",
   "canvas.tool.ellipse": "橢圓",
   "canvas.tool.entity": "插入實體",
+  "canvas.tool.ink": "手繪",
+  "canvas.tool.line": "直線",
   "canvas.tool.rect": "矩形",
   "canvas.tool.select": "選取",
   "canvas.tool.sticky": "便利貼",
