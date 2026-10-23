@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import {
   isReservedTemplateId,
   mergeRecentsByOpened,
+  patchNoteLibraryChromeContent,
   readNoteCover,
   readNoteIcon,
   sanitizeTemplateId,
@@ -46,6 +47,43 @@ describe('note-library', () => {
     const cleared = withNoteLibraryProperties(next, { cover: null, icon: '' })
     expect(cleared.cover).toBeUndefined()
     expect(cleared.icon).toBeUndefined()
+  })
+
+
+  it('surgically patches cover/icon keys without rewriting the rest of the header', () => {
+    const source = [
+      '---',
+      '# keep me',
+      'title: Hello',
+      'tags:',
+      '  - a',
+      'createdAt: 1700000000000',
+      '---',
+      '',
+      'Body with --- fence',
+      '',
+    ].join('\n')
+    const withCover = patchNoteLibraryChromeContent(source, { cover: '#112233' })
+    expect(withCover).toContain('# keep me')
+    expect(withCover).toContain('title: Hello')
+    expect(withCover).toContain('tags:')
+    expect(withCover).toContain('  - a')
+    expect(withCover).toContain('createdAt: 1700000000000')
+    expect(withCover).toContain('cover: "#112233"')
+    expect(withCover).toContain('Body with --- fence')
+    const withIcon = patchNoteLibraryChromeContent(withCover!, { icon: '⭐' })
+    expect(withIcon).toContain('cover: "#112233"')
+    expect(withIcon).toContain('icon: "⭐"')
+    expect(withIcon).toContain('# keep me')
+    const cleared = patchNoteLibraryChromeContent(withIcon!, { cover: null, icon: '' })
+    expect(cleared).not.toContain('cover:')
+    expect(cleared).not.toContain('icon:')
+    expect(cleared).toContain('# keep me')
+    expect(cleared).toContain('title: Hello')
+    expect(patchNoteLibraryChromeContent(source, { cover: 'javascript:alert(1)' })).toBeNull()
+    // No frontmatter — create a minimal header with only the chrome key.
+    const bare = patchNoteLibraryChromeContent('Just prose\n', { icon: '📝' })
+    expect(bare).toBe('---\nicon: "📝"\n---\nJust prose\n')
   })
 
   it('sanitizes template ids', () => {

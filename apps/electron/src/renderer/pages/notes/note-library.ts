@@ -70,6 +70,83 @@ export function withNoteLibraryProperties(
   return next
 }
 
+/** Double-quoted YAML scalar — safe for cover URLs/gradients and emoji icons. */
+function yamlDoubleQuoted(value: string): string {
+  return JSON.stringify(value)
+}
+
+/**
+ * Surgical cover/icon frontmatter edit: only those top-level keys change.
+ * Comments, sibling keys, order, and body bytes are preserved — never a full
+ * property-dictionary stringify. Returns null when sanitization fails or an
+ * existing cover/icon value is not a one-line scalar we can rewrite in place.
+ */
+export function patchNoteLibraryChromeContent(
+  content: string,
+  patch: { cover?: string | null; icon?: string | null },
+): string | null {
+  const ops: Array<{ key: typeof NOTES_COVER_PROPERTY | typeof NOTES_ICON_PROPERTY; value: string | null }> = []
+  if ('cover' in patch) {
+    if (patch.cover == null || patch.cover.trim() === '') ops.push({ key: NOTES_COVER_PROPERTY, value: null })
+    else {
+      const safe = readNoteCover({ cover: patch.cover })
+      if (!safe) return null
+      ops.push({ key: NOTES_COVER_PROPERTY, value: safe })
+    }
+  }
+  if ('icon' in patch) {
+    if (patch.icon == null || patch.icon.trim() === '') ops.push({ key: NOTES_ICON_PROPERTY, value: null })
+    else {
+      const safe = readNoteIcon({ icon: patch.icon })
+      if (!safe) return null
+      ops.push({ key: NOTES_ICON_PROPERTY, value: safe })
+    }
+  }
+  if (ops.length === 0) return content
+
+  const bom = content.startsWith('\uFEFF') ? '\uFEFF' : ''
+  const text = bom ? content.slice(1) : content
+  const match = text.match(/^---(\r?\n)([\s\S]*?)(\r?\n)---(\r?\n)?/)
+  if (!match) {
+    const eol = '\n'
+    const lines = ops.filter((op) => op.value != null).map((op) => `${op.key}: ${yamlDoubleQuoted(op.value!)}`)
+    if (lines.length === 0) return content
+    return `${bom}---${eol}${lines.join(eol)}${eol}---${eol}${text}`
+  }
+
+  const openEol = match[1]!
+  const closeEol = match[4] ?? openEol
+  const body = text.slice(match[0].length)
+  const lines = match[2]!.split(/\r?\n/)
+
+  for (const { key, value } of ops) {
+    const keyPrefix = `${key}:`
+    let foundAt = -1
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]!
+      // Exact top-level key (`cover:` / `cover: …`); never `coverExtra:`.
+      if (!line.startsWith(keyPrefix)) continue
+      // Block/folded/flow continuations are indented on the next line — refuse.
+      const next = lines[i + 1]
+      if (next != null && /^[ \t]+\S/.test(next)) return null
+      foundAt = i
+      break
+    }
+    if (foundAt >= 0) {
+      if (value === null) lines.splice(foundAt, 1)
+      else lines[foundAt] = `${key}: ${yamlDoubleQuoted(value)}`
+      continue
+    }
+    if (value === null) continue
+    let insertAt = lines.length
+    while (insertAt > 0 && lines[insertAt - 1] === '') insertAt--
+    lines.splice(insertAt, 0, `${key}: ${yamlDoubleQuoted(value)}`)
+  }
+
+  const header = lines.join(openEol)
+  return `${bom}---${openEol}${header}${openEol}---${closeEol}${body}`
+}
+
 export function sanitizeTemplateId(raw: string): string {
   const id = raw
     .trim()

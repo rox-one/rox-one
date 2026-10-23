@@ -2401,14 +2401,28 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     }
   }, { nativeAction: 'write' })
 
+
+/** Title.md → Title-2.md… under notesRoot so expectedRevision:null creates never collide. */
+function uniquifyNativeNoteRelativeId(notesRoot: string, title: string, folder?: string | null): string {
+  const safeFolder = assertSafeCreateFolder(folder)
+  const baseTitle = title || 'Untitled'
+  let relativeId = safeFolder
+    ? `${safeFolder}/${stripMdExtension(safeNoteFilename(baseTitle))}`
+    : stripMdExtension(safeNoteFilename(baseTitle))
+  let suffix = 2
+  while (existsSync(join(notesRoot, `${relativeId}.md`))) {
+    const uniquified = `${sanitizeFilename(baseTitle)}-${suffix++}`
+    relativeId = safeFolder ? `${safeFolder}/${uniquified}` : uniquified
+  }
+  return relativeId
+}
+
   // Planning uses the same canonical filename/frontmatter authority as CREATE; it never commits.
   server.handle(RPC_CHANNELS.notes.PREPARE_CREATE, (ctx, workspaceId: string, title: string, folder?: string): NativeReplicaCreatePlan | null => {
     if (!ctx.principal) return null // Explicit legacy response; authorization failures never fall back.
     const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
     if (typeof title !== 'string' || (folder != null && typeof folder !== 'string')) throw new Error('invalid native note creation intent')
-    const safeFolder = assertSafeCreateFolder(folder)
-    const filename = safeNoteFilename(title || 'Untitled')
-    const nativeId = safeFolder ? `${safeFolder}/${stripMdExtension(filename)}` : stripMdExtension(filename)
+    const nativeId = uniquifyNativeNoteRelativeId(context.notesRoot, title || 'Untitled', folder)
     const path = `${NOTES_DIR}/${nativeId}.md`
     assertSafeNoteId(nativeId)
     const permissionFence = context.authorizationFences.find(item => item.action === 'read')!.fence
@@ -2425,9 +2439,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (!isClaimableLive(act)) throw new Error('note create is not live')
     if (ctx.principal) {
       const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
-      const safeFolder = assertSafeCreateFolder(folder)
-      const filename = safeNoteFilename(title || 'Untitled')
-      const relativeId = safeFolder ? `${safeFolder}/${stripMdExtension(filename)}` : stripMdExtension(filename)
+      const relativeId = uniquifyNativeNoteRelativeId(context.notesRoot, title || 'Untitled', folder)
       const path = `${NOTES_DIR}/${relativeId}.md`
       const metadata = nativeOperation(operation)
       if (metadata.expectedRevision !== null) throw new Error('native note create requires expectedRevision:null')
@@ -2840,17 +2852,8 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (ctx.principal) {
       const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
       const { noteTitle, initialContent } = await materializeTemplateNoteContent(context.notesRoot, templateId, title)
-      const safeFolder = assertSafeCreateFolder(folder)
       // Uniquify like legacy CREATE_FROM (Title.md → Title-2.md…) so expectedRevision:null never collides.
-      const baseTitle = noteTitle || 'Untitled'
-      let relativeId = safeFolder
-        ? `${safeFolder}/${stripMdExtension(safeNoteFilename(baseTitle))}`
-        : stripMdExtension(safeNoteFilename(baseTitle))
-      let suffix = 2
-      while (existsSync(join(context.notesRoot, `${relativeId}.md`))) {
-        const uniquified = `${sanitizeFilename(baseTitle)}-${suffix++}`
-        relativeId = safeFolder ? `${safeFolder}/${uniquified}` : uniquified
-      }
+      const relativeId = uniquifyNativeNoteRelativeId(context.notesRoot, noteTitle || 'Untitled', folder)
       const path = `${NOTES_DIR}/${relativeId}.md`
       const metadata = nativeOperation(operation)
       if (metadata.expectedRevision !== null) throw new Error('native note create requires expectedRevision:null')

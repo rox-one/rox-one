@@ -71,7 +71,7 @@ import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
 import { NoteCoverIconChrome, NoteFavoriteButton } from './notes/NoteLibraryChrome'
 import { NotesTemplatesDialog } from './notes/NotesTemplatesDialog'
-import { readNoteIcon, withNoteLibraryProperties } from './notes/note-library'
+import { patchNoteLibraryChromeContent, readNoteIcon } from './notes/note-library'
 import type { NoteTemplateSummary } from '../../shared/types'
 import {
   defaultNoteEntityCapabilities,
@@ -2393,7 +2393,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     }
   }, [activeWorkspaceId, activeNote?.id])
 
-  /** One dictionary write for cover/icon so rapid patches cannot race on stale activeNote.properties. */
+  /** Queued cover/icon chrome writes — surgical key patch; no full YAML dictionary rewrite. */
   const updateLibraryChromeProperties = React.useCallback((patch: { cover?: string | null; icon?: string | null }) => {
     if (!activeWorkspaceId || !activeNote) return Promise.resolve(false)
     if (!canEditContent) { toast.error(t('notes.content.readOnly')); return Promise.resolve(false) }
@@ -2414,32 +2414,33 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       if (pendingPreview && pendingPreview.workspaceId === workspaceId && pendingPreview.noteId === noteId) {
         return false
       }
-      // Prefer live editor frontmatter after prior writes in this chain.
-      let base: Record<string, unknown> = activeNote.properties
-      try {
-        // Successful parse wins even when empty — do not keep stale cover/icon from note props.
-        base = propertiesFromNoteContent(contentRef.current)
-      } catch {
-        /* keep note properties when frontmatter is temporarily invalid */
-      }
-      // Coerce Dates/etc to JSON-safe values (ISO strings) so previewPropertyDictionary's
-      // isJsonValue does not reject cover/icon Apply when frontmatter has timestamps.
-      try {
-        base = JSON.parse(JSON.stringify(base)) as Record<string, unknown>
-      } catch {
-        toast.error(t('notes.toast.updatePropertiesFailed'))
+      // Surgical cover/icon key edit only — preserve comments/siblings/order; never
+      // stringify the full property dictionary (avoids requiresReview conversion).
+      const patched = patchNoteLibraryChromeContent(contentRef.current, patch)
+      if (patched == null) {
+        if ('cover' in patch && patch.cover != null && String(patch.cover).trim() !== '') {
+          toast.error(t('notes.library.coverInvalid'))
+        } else if ('icon' in patch && patch.icon != null && String(patch.icon).trim() !== '') {
+          toast.error(t('notes.library.iconInvalid'))
+        } else {
+          toast.error(t('notes.toast.updatePropertiesFailed'))
+        }
         return false
       }
-      const next = withNoteLibraryProperties(base, patch)
-      try {
-        // Cover/icon are trusted one-click: still sanitize via withNoteLibraryProperties /
-        // readNoteCover upstream, but never open the YAML conversion Apply dialog.
-        const preview = previewPropertyDictionary(contentRef.current, base, next)
-        return await applyPropertyPreview({ workspaceId, noteId, preview })
-      } catch {
-        toast.error(t('notes.toast.updatePropertiesFailed'))
-        return false
-      }
+      if (patched === contentRef.current) return true
+      const source = retainSource(contentRef.current)
+      return await applyPropertyPreview({
+        workspaceId,
+        noteId,
+        preview: {
+          expectedRevision: source.sourceHash,
+          content: patched,
+          requiresReview: false,
+          before: '',
+          after: '',
+          digest: retainedSourceHash(JSON.stringify({ expectedRevision: source.sourceHash, content: patched })),
+        },
+      })
     })
     const bridge = run.then(() => undefined, () => undefined)
     libraryChromeWriteChainRef.current.set(noteKey, bridge)
