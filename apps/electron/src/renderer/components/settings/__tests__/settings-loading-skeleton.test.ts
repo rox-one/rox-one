@@ -65,3 +65,42 @@ describe('settings loading skeleton cluster', () => {
     expect(server).toMatch(/isSaving \? <Spinner/)
   })
 })
+
+describe('settings loading skeleton cluster 2 (section loads)', () => {
+  const pages: Array<{ file: string; mustNot: RegExp; busyKeep?: RegExp }> = [
+    {
+      file: 'ContextSettingsPage.tsx',
+      mustNot: /loadingDocs \?[\s\S]{0,160}<Spinner|lessons === null \?[\s\S]{0,160}<Spinner|!currentDoc \?[\s\S]{0,160}<Spinner/,
+      busyKeep: /adding \? <Spinner|saving \? <Spinner/,
+    },
+    {
+      file: 'RuntimeSettingsPage.tsx',
+      mustNot: /permissionMode === null[\s\S]{0,220}<Spinner|isLoading \?[\s\S]{0,160}<Spinner|envEntries === null \?[\s\S]{0,160}<Spinner/,
+      busyKeep: /isUpdating \? <Spinner|envSaving \? <Spinner/,
+    },
+    {
+      file: 'ExtensionsSettingsPage.tsx',
+      mustNot: /loading \?[\s\S]{0,200}<Spinner className="w-4 h-4"/,
+      busyKeep: /busy \? <Spinner/,
+    },
+    {
+      file: 'ImportSettingsPage.tsx',
+      mustNot: /loading \?[\s\S]{0,200}<Spinner className="w-4 h-4"/,
+      busyKeep: /autoBusy \? <Spinner/,
+    },
+    {
+      file: 'SecretRefsSection.tsx',
+      mustNot: /drafts === null \?[\s\S]{0,160}<Spinner/,
+      busyKeep: /saving \? <Spinner/,
+    },
+  ]
+
+  for (const site of pages) {
+    it(`wires SettingsLoadingSkeleton into ${site.file}`, () => {
+      const body = read(site.file, pagesRoot)
+      expect(body).toContain('SettingsLoadingSkeleton')
+      expect(body).not.toMatch(site.mustNot)
+      if (site.busyKeep) expect(body).toMatch(site.busyKeep)
+    })
+  }
+})

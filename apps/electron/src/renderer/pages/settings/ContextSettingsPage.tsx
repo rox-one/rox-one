@@ -19,7 +19,12 @@ import { Input } from '@/components/ui/input'
 import { navigate, routes } from '@/lib/navigate'
 import { useAppShellContext, useActiveWorkspace } from '@/context/AppShellContext'
 import { Spinner } from '@rox/ui'
-import { SettingsSection, SettingsCard, SettingsRow } from '@/components/settings'
+import {
+  SettingsSection,
+  SettingsCard,
+  SettingsRow,
+  SettingsLoadingSkeleton,
+} from '@/components/settings'
 import { KnowledgeMapPanel } from '@/components/knowledge-map/KnowledgeMapPanel'
 import { PreferencesForm } from './PreferencesPage'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
@@ -368,9 +373,7 @@ export default function ContextSettingsPage() {
               description={t('settings.context.docsDesc')}
             >
               {loadingDocs ? (
-                <div className="flex justify-center py-8">
-                  <Spinner className="w-4 h-4" />
-                </div>
+                <SettingsLoadingSkeleton className="py-8" />
               ) : (
                 <>
                   {docs.length === 0 ? (
@@ -460,9 +463,7 @@ export default function ContextSettingsPage() {
               {selectedFilename && (
                 <div className="space-y-3 pt-4">
                   {!currentDoc ? (
-                    <div className="flex justify-center py-4">
-                      <Spinner className="w-4 h-4" />
-                    </div>
+                    <SettingsLoadingSkeleton className="py-4" />
                   ) : (
                     <>
                       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -581,9 +582,7 @@ export default function ContextSettingsPage() {
               description={t('settings.context.memoryDesc')}
             >
               {lessons === null ? (
-                <div className="flex justify-center py-4">
-                  <Spinner className="w-4 h-4" />
-                </div>
+                <SettingsLoadingSkeleton className="py-4" />
               ) : (
                 <SettingsCard>
                   {lessons.length === 0 ? (
