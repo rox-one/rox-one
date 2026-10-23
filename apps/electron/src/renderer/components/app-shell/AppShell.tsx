@@ -108,7 +108,7 @@ import { usePromoInsights } from "@/hooks/usePromoInsights"
 import { useRoxCloudAccount } from "@/hooks/useRoxCloudAccount"
 import { useShellAppearance } from "@/hooks/useShellAppearance"
 import { resolvePromoSlot } from "@/platform/promo-slot"
-import { viewportBand } from "@/platform/viewport-band"
+import { shellBand, shellEdgeInset, viewportBand } from "@/platform/viewport-band"
 import { CHROME_DENSITY } from "@/platform/chrome-density"
 import { clampShellColumns } from "./shell-width-clamp"
 import {
@@ -160,7 +160,7 @@ import { type SessionStatusId, type SessionStatus, statusConfigsToSessionStatuse
 import { useStatuses } from "@/hooks/useStatuses"
 import { useLabels } from "@/hooks/useLabels"
 import { useViews } from "@/hooks/useViews"
-import { useContainerWidth } from "@/hooks/useContainerWidth"
+import { useContainerBorderWidth, useContainerWidth } from "@/hooks/useContainerWidth"
 import { LabelIcon, LabelValueTypeIcon } from "@/components/ui/label-icon"
 import { buildLabelTree, getDescendantIds, getLabelDisplayName, flattenLabels, extractLabelId, findLabelById, sortLabelsForDisplay, matchesLabelFilter } from "@rox/shared/labels"
 import type { LabelConfig, LabelTreeNode } from "@rox/shared/labels"
@@ -466,6 +466,9 @@ function AppShellContent({
     return selected?.render
   }, [compactHeaderEntries])
   const shellWidth = useContainerWidth(shellRef)
+  // Band from border box so SE edge padding cannot flip wide/ultra thresholds.
+  const shellBorderWidth = useContainerBorderWidth(shellRef)
+  const activeShellBand = shellBorderWidth > 0 ? shellBand(shellBorderWidth) : undefined
   const MOBILE_THRESHOLD = 768
   const isAutoCompact = shellWidth > 0 && shellWidth < MOBILE_THRESHOLD
   // top50 #3: between the mobile layout and NARROW_SHELL_THRESHOLD the second
@@ -3267,9 +3270,12 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
         ref={shellRef}
         className="relative flex min-h-0 flex-1 items-stretch"
         data-viewport={shellWidth > 0 ? viewportBand(shellWidth) : undefined}
+        data-shell-band={activeShellBand}
         style={{
-          paddingRight: isAutoCompact ? 0 : PANEL_EDGE_INSET,
-          paddingBottom: isAutoCompact && !isSidebarAndNavigatorHidden ? 48 : (showStatusBar || showCompactStatusBar) ? 0 : PANEL_EDGE_INSET,
+          // SE wide/ultra grow the frame; contentBoxSize shrinks with padding so
+          // clampShellColumns / sashes keep the same budget (see shellEdgeInset).
+          paddingRight: isAutoCompact ? 0 : (seProfile && activeShellBand ? shellEdgeInset(activeShellBand) : PANEL_EDGE_INSET),
+          paddingBottom: isAutoCompact && !isSidebarAndNavigatorHidden ? 48 : (showStatusBar || showCompactStatusBar) ? 0 : (seProfile && activeShellBand ? shellEdgeInset(activeShellBand) : PANEL_EDGE_INSET),
           paddingLeft: 0,
           gap: PANEL_GAP,
         }}

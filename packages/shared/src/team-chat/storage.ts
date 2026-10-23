@@ -42,18 +42,38 @@ export function teamCallRoomName(channelId: string): string {
 }
 
 /**
- * Messenger contract v1 call event (`content` of a kind-9 message tagged ["rox","call"]),
- * for the relay bridge. Returns null for non-call messages.
+ * Messenger contract v1 call event (`content` of a kind-9 message tagged ["rox","call"]).
+ * Consumed by Rox Messenger's relay bridge / service-event endpoint (their PRs); tested here
+ * so the payload shape stays in lockstep with /workspace contract v1. Null for non-call messages.
  */
 export function toMessengerCallEvent(message: TeamChannelMessage, call: TeamChannelCall, opts: { transcriptUrl?: string; summary?: string } = {}):
-  | { type: 'call.started'; roomName: string; startedBy: string; ts: number }
-  | { type: 'call.ended'; roomName: string; durationSec: number; participants: string[] }
-  | { type: 'call.transcript'; roomName: string; transcriptUrl?: string; summary?: string }
+  | { type: 'call.started'; roomName: string; callId: string; startedBy: string; ts: number }
+  | { type: 'call.ended'; roomName: string; callId: string; durationSec: number; participants: string[] }
+  | { type: 'call.transcript'; roomName: string; callId: string; transcriptUrl?: string; summary?: string }
   | null {
   if (message.callId !== call.id) return null
-  if (message.kind === 'system' && message.event === 'call.started') return { type: 'call.started', roomName: call.roomName, startedBy: call.startedBy, ts: Math.floor(call.startedAt / 1000) }
-  if (message.kind === 'system' && message.event === 'call.ended') return { type: 'call.ended', roomName: call.roomName, durationSec: Math.max(0, Math.round(((call.endedAt ?? message.createdAt) - call.startedAt) / 1000)), participants: [...call.everParticipantIds] }
-  if (message.kind === 'transcript' || message.kind === 'summary') return { type: 'call.transcript', roomName: call.roomName, ...(opts.transcriptUrl ? { transcriptUrl: opts.transcriptUrl } : {}), ...(opts.summary ? { summary: opts.summary } : {}) }
+  // Contract v1.1: ts is epoch milliseconds; callId is required on every call.* event.
+  if (message.kind === 'system' && message.event === 'call.started') {
+    return { type: 'call.started', roomName: call.roomName, callId: call.id, startedBy: call.startedBy, ts: call.startedAt }
+  }
+  if (message.kind === 'system' && message.event === 'call.ended') {
+    return {
+      type: 'call.ended',
+      roomName: call.roomName,
+      callId: call.id,
+      durationSec: Math.max(0, Math.round(((call.endedAt ?? message.createdAt) - call.startedAt) / 1000)),
+      participants: [...call.everParticipantIds],
+    }
+  }
+  if (message.kind === 'transcript' || message.kind === 'summary') {
+    return {
+      type: 'call.transcript',
+      roomName: call.roomName,
+      callId: call.id,
+      ...(opts.transcriptUrl ? { transcriptUrl: opts.transcriptUrl } : {}),
+      ...(opts.summary ? { summary: opts.summary } : {}),
+    }
+  }
   return null
 }
 
@@ -167,6 +187,14 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     return (store.calls ?? []).find(c => c.channelId === channelId && !c.endedAt)
   }
 
+  function activeCallByRoomName(store: TeamChatStoreFile, roomName: string): { channel: TeamChannel; call: TeamChannelCall } | undefined {
+    const call = (store.calls ?? []).find(c => c.roomName === roomName && !c.endedAt)
+    if (!call) return undefined
+    const channel = store.channels.find(c => c.id === call.channelId)
+    if (!channel || channel.archivedAt) return undefined
+    return { channel, call }
+  }
+
   /** Append a message of any kind; trims the channel to the retention cap. */
   function appendMessage(store: TeamChatStoreFile, channel: TeamChannel, message: Omit<TeamChannelMessage, 'id' | 'seq' | 'channelId' | 'createdAt'>): TeamChannelMessage {
     channel.lastSeq += 1
@@ -223,14 +251,18 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     return { ...call, participantIds: [...call.participantIds], everParticipantIds: [...call.everParticipantIds], transcript: [], transcriptSegments: call.transcript.length }
   }
 
-  function lastMessageOf(store: TeamChatStoreFile, channelId: string, canSee: boolean): Pick<TeamChannelView, 'lastMessage'> {
+  function lastMessageOf(store: TeamChatStoreFile, channelId: string, canSee: boolean): Pick<TeamChannelView, 'lastMessage' | 'messageCount'> {
     if (!canSee) return {}
-    for (let i = store.messages.length - 1; i >= 0; i--) {
-      const m = store.messages[i]!
+    let last: TeamChannelMessage | undefined
+    let count = 0
+    for (const m of store.messages) {
       if (m.channelId !== channelId || m.deletedAt) continue
-      return { lastMessage: { senderId: m.senderId, text: m.text.slice(0, 140), ...(m.kind ? { kind: m.kind } : {}), ...(m.event ? { event: m.event } : {}), createdAt: m.createdAt } }
+      last = m
+      if (m.kind !== 'system') count++
     }
-    return {}
+    if (!last) return { messageCount: 0 }
+    const m = last
+    return { messageCount: count, lastMessage: { senderId: m.senderId, text: m.text.slice(0, 140), ...(m.kind ? { kind: m.kind } : {}), ...(m.event ? { event: m.event } : {}), createdAt: m.createdAt } }
   }
 
   function toView(store: TeamChatStoreFile, channel: TeamChannel, userId: string): TeamChannelView {
@@ -450,11 +482,13 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       const channel = callChannel(store, channelIdInput, actor)
       const call = activeCallOf(store, channel.id)
       if (!call || !Array.isArray(participantIds)) return { orgId: channel.orgId, call: call ?? null }
-      // Only channel members can be in the call (room access = channel membership).
-      const ids = [...new Set(participantIds.filter((id): id is string => typeof id === 'string' && !!memberOf(store, channel.id, id)))].slice(0, 200)
-      if (!ids.includes(actor.userId)) ids.push(actor.userId)
+      // Client must only call this after ParticipantDisconnected with the remaining room ids.
+      // Sync never adds anyone (joinCall is the only admission); a partial roster would
+      // otherwise drop peers who joinCall'd but are not yet visible to this client.
+      const seen = new Set(participantIds.filter((id): id is string => typeof id === 'string'))
+      if (!call.participantIds.includes(actor.userId)) return { orgId: channel.orgId, call }
+      const ids = call.participantIds.filter(id => id === actor.userId || seen.has(id))
       call.participantIds = ids
-      for (const id of ids) if (!call.everParticipantIds.includes(id)) call.everParticipantIds.push(id)
       save(store)
       return { orgId: channel.orgId, call }
     },
@@ -467,10 +501,15 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       const call = (store.calls ?? []).find(c => c.id === callId && c.channelId === channel.id)
       if (!call) throw new TeamChatError('NOT_FOUND', 'Call not found')
       if (call.endedAt) throw new TeamChatError('INVALID', 'Call has ended')
+      // Only people who joined this call may add to its transcript (late chunks after leaving are fine).
+      if (!call.everParticipantIds.includes(actor.userId)) throw new TeamChatError('FORBIDDEN', 'Not in this call')
+      const maxMs = Math.max(0, now() - call.startedAt) + 60_000
       const segments = (Array.isArray(segmentsInput) ? segmentsInput : []).slice(0, 500)
         .map(v => cleanSegment(v, actor.userId)).filter((v): v is TeamCallTranscriptSegment => !!v)
         // Each participant transcribes only their own microphone: no speaking for others.
         .map(v => ({ ...v, speakerId: actor.userId }))
+        .filter(v => v.startMs <= maxMs)
+        .map(v => ({ ...v, endMs: Math.min(v.endMs, maxMs) }))
       // Idempotent: the same segment can arrive from several windows.
       const key = (s: TeamCallTranscriptSegment) => `${s.speakerId}|${s.startMs}|${s.text}`
       const seen = new Set(call.transcript.map(key))
@@ -482,20 +521,6 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       }
       if (added) save(store)
       return { orgId: channel.orgId, added }
-    },
-
-    /** Post the AI summary of an ended call (once). */
-    postCallSummary(channelIdInput: unknown, callIdInput: unknown, summaryInput: unknown, actor: TeamChatActor): { orgId: string; message: TeamChannelMessage | null } {
-      const store = load()
-      const channel = callChannel(store, channelIdInput, actor)
-      const call = (store.calls ?? []).find(c => c.id === requireId(callIdInput, 'callId') && c.channelId === channel.id)
-      if (!call) throw new TeamChatError('NOT_FOUND', 'Call not found')
-      if (!call.endedAt || call.summaryMessageId) return { orgId: channel.orgId, message: null }
-      const text = cleanText(summaryInput, TEAM_SUMMARY_MAX, 'summary')
-      const message = appendMessage(store, channel, { senderId: 'system', kind: 'summary', callId: call.id, text })
-      call.summaryMessageId = message.id
-      save(store)
-      return { orgId: channel.orgId, message }
     },
 
     /** Host-internal: post the AI summary for an ended call (no actor; once). Returns false if already posted. */
@@ -510,6 +535,53 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       call.summaryMessageId = appendMessage(store, channel, { senderId: 'system', kind: 'summary', callId: call.id, text }).id
       save(store)
       return true
+    },
+
+    /**
+     * Authoritative end from LiveKit `room_finished` (last leave RPC lost / empty timeout).
+     * Idempotent: a second call for an already-ended room is a no-op.
+     * No actor — LiveKit is the authority after JWT verification upstream.
+     */
+    endCallByRoomName(roomNameInput: unknown): { orgId: string; channelId: string; call: TeamChannelCall | null; ended: boolean } {
+      const roomName = cleanText(roomNameInput, 200, 'roomName')
+      const store = load()
+      const hit = activeCallByRoomName(store, roomName)
+      if (!hit) {
+        // Already ended (or unknown room): surface the latest matching call if any.
+        const ended = (store.calls ?? []).filter(c => c.roomName === roomName && c.endedAt).sort((a, b) => (b.endedAt ?? 0) - (a.endedAt ?? 0))[0]
+        const channel = ended ? store.channels.find(c => c.id === ended.channelId) : undefined
+        return { orgId: channel?.orgId ?? '', channelId: channel?.id ?? '', call: ended ?? null, ended: false }
+      }
+      endCall(store, hit.channel, hit.call)
+      save(store)
+      return { orgId: hit.channel.orgId, channelId: hit.channel.id, call: hit.call, ended: true }
+    },
+
+    /**
+     * LiveKit `participant_left`: drop that identity from the live roster.
+     * When the roster is empty, end the call (faster than waiting for room_finished).
+     * Idempotent for unknown rooms / already-left identities.
+     */
+    applyLiveKitParticipantLeft(roomNameInput: unknown, identityInput: unknown): { orgId: string; channelId: string; call: TeamChannelCall | null; ended: boolean } {
+      const roomName = cleanText(roomNameInput, 200, 'roomName')
+      const identity = requireId(identityInput, 'identity')
+      const store = load()
+      const hit = activeCallByRoomName(store, roomName)
+      if (!hit) {
+        const ended = (store.calls ?? []).filter(c => c.roomName === roomName && c.endedAt).sort((a, b) => (b.endedAt ?? 0) - (a.endedAt ?? 0))[0]
+        const channel = ended ? store.channels.find(c => c.id === ended.channelId) : undefined
+        return { orgId: channel?.orgId ?? '', channelId: channel?.id ?? '', call: ended ?? null, ended: false }
+      }
+      const before = hit.call.participantIds.length
+      hit.call.participantIds = hit.call.participantIds.filter(id => id !== identity)
+      if (hit.call.participantIds.length === before) {
+        // Identity was not on our roster (never joinCall'd, or already left via RPC) — leave state as-is.
+        return { orgId: hit.channel.orgId, channelId: hit.channel.id, call: hit.call, ended: false }
+      }
+      const ended = hit.call.participantIds.length === 0
+      if (ended) endCall(store, hit.channel, hit.call)
+      save(store)
+      return { orgId: hit.channel.orgId, channelId: hit.channel.id, call: hit.call, ended }
     },
 
     /** Calls of a channel, newest first (visible channels only). */

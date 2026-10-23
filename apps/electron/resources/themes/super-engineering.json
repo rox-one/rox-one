@@ -1,10 +1,12 @@
 {
   "name": "Rox Engineering",
-  "description": "Dark glass agent IDE profile (opt-in; does not change Rox default).",
+  "description": "Dark glass agent IDE profile. Default for new installs. Optional chrome glass accents via theme-layer intensity (default off).",
   "author": "Rox One",
   "license": "MIT",
   "mode": "blurred",
-  "supportedModes": ["dark"],
+  "supportedModes": [
+    "dark"
+  ],
   "uiProfile": "super-engineering",
   "shikiTheme": {
     "light": "one-dark-pro",
@@ -45,5 +47,9 @@
     "terminalForeground": "#e8eaed",
     "terminalCursor": "#7aa2f7",
     "terminalSelection": "#3d59a133"
+  },
+  "layers": {
+    "glass": 0,
+    "accent": "#7aa2f7"
   }
 }

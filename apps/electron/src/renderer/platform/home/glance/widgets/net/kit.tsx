@@ -9,6 +9,7 @@ import { MessageSquare, RotateCw } from 'lucide-react'
 import type { HomeFetchErrorReason } from '../../../../../../shared/home-fetch'
 import { openExternalSafe } from '../../open-external'
 import type { FeedItem } from './parsers'
+import { useEffectiveVisible } from '@/lib/surface-keepalive'
 
 /**
  * True while the element is laid out and intersects the viewport. A Home
@@ -17,18 +18,20 @@ import type { FeedItem } from './parsers'
  */
 export function useOnScreen<T extends Element>(): [React.RefObject<T>, boolean] {
   const ref = React.useRef<T>(null)
-  const [visible, setVisible] = React.useState(false)
+  const [onScreen, setOnScreen] = React.useState(false)
+  const surfaceVisible = useEffectiveVisible()
   React.useEffect(() => {
     const el = ref.current
     if (!el || typeof IntersectionObserver === 'undefined') {
-      setVisible(true)
+      setOnScreen(true)
       return
     }
-    const io = new IntersectionObserver((entries) => setVisible(entries.some((e) => e.isIntersecting)), { rootMargin: '200px' })
+    const io = new IntersectionObserver((entries) => setOnScreen(entries.some((e) => e.isIntersecting)), { rootMargin: '200px' })
     io.observe(el)
     return () => io.disconnect()
   }, [])
-  return [ref, visible]
+  // Surface keep-alive + viewport: polling must stop when Home is retired or scrolled away.
+  return [ref, onScreen && surfaceVisible]
 }
 
 export function NetStatus({ error, hasData, onRetry }: { error: HomeFetchErrorReason | null; hasData: boolean; onRetry: () => void }) {
@@ -121,4 +124,30 @@ export function FeedList({ items, collapseAfter = 0 }: { items: readonly FeedIte
 export function clampInt(value: unknown, min: number, max: number, fallback: number): number {
   const n = typeof value === 'number' ? value : Number(value)
   return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : fallback
+}
+
+/** Poll an async source while `active` and the window is visible. */
+export function usePoll<T>(fn: () => Promise<T>, ms: number, active: boolean): { data: T | null; failed: boolean; refresh: () => void } {
+  const [data, setData] = React.useState<T | null>(null)
+  const [failed, setFailed] = React.useState(false)
+  const fnRef = React.useRef(fn)
+  fnRef.current = fn
+  const tick = React.useCallback(() => {
+    fnRef.current().then((d) => { setData(d); setFailed(false) }, () => setFailed(true))
+  }, [])
+  React.useEffect(() => {
+    if (!active) return
+    let timer: ReturnType<typeof setInterval> | null = null
+    const start = () => { if (timer || document.visibilityState === 'hidden') return; tick(); timer = setInterval(tick, ms) }
+    const stop = () => { if (timer) clearInterval(timer); timer = null }
+    const onVis = () => (document.visibilityState === 'hidden' ? stop() : start())
+    start()
+    document.addEventListener('visibilitychange', onVis)
+    return () => { stop(); document.removeEventListener('visibilitychange', onVis) }
+  }, [active, ms, tick])
+  return { data, failed, refresh: tick }
+}
+
+export function StatusDot({ ok, title }: { ok: boolean | null; title?: string }) {
+  return <span title={title} aria-hidden className={ok === null ? 'size-2 shrink-0 rounded-full bg-muted-foreground/40' : ok ? 'size-2 shrink-0 rounded-full bg-success' : 'size-2 shrink-0 rounded-full bg-destructive'} />
 }

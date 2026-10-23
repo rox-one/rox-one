@@ -1,0 +1,25 @@
+[project]
+name = "rox-cognee-sidecar"
+version = "0.1.0"
+description = "Rox graph-memory sidecar: JSON-RPC over stdio around cognee (Apache-2.0)"
+requires-python = ">=3.10,<3.14"
+license = { text = "Apache-2.0" }
+dependencies = [
+  # Core cognee only: no GLiNER / torch extras. Default local stores
+  # (ladybug graph + LanceDB vectors + SQLite) are embedded.
+  "cognee==1.6.4",
+  # Small local multilingual embedder (384-d), no network after model download.
+  "fastembed>=0.6,<1",
+]
+
+[project.scripts]
+rox-cognee-sidecar = "rox_cognee_sidecar.__main__:main"
+
+[build-system]
+# setuptools is already hash-pinned in requirements.lock so the sidecar
+# install can run with --no-build-isolation (no unpinned PyPI fetch).
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["rox_cognee_sidecar*"]

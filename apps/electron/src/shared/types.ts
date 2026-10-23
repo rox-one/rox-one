@@ -2960,7 +2960,8 @@ export interface ElectronAPI {
   teamChatCallLeave(channelId: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall | null; ended: boolean }>
   teamChatCallSync(channelId: string, participantIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelCall | null>
   teamChatCallTranscript(channelId: string, callId: string, segments: import('@rox/shared/team-chat').TeamCallTranscriptSegment[]): Promise<{ added: number }>
-  teamChatCallList(channelId: string): Promise<import('@rox/shared/team-chat').TeamChannelCall[]>
+  /** Real presence via /v1/im/presence when Messenger is up; else in-call + self. */
+  teamChatPresence(userIds: string[]): Promise<Array<{ userId: string; status: 'online' | 'away' | 'offline' | 'call'; source: 'im' | 'local' }>>
   teamChatSearch(orgId: string, query: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage[]>
   onTeamChatChanged(callback: (change: { orgId: string; channelId?: string }) => void): () => void
 
@@ -4630,5 +4631,9 @@ export interface CanvasBridge {
   setEnabled(enabled: boolean): Promise<{ ok: true; enabled: boolean }>
   listTrash(workspaceId: string): Promise<CanvasTrashedBoard[]>
   restore(workspaceId: string, boardId: string, stamp: number): Promise<CanvasBoardSummary>
+  /** Write image bytes under <ws>/canvas/assets/<sha256>; returns content-addressed meta. */
+  putAsset(workspaceId: string, bytes: Uint8Array, mime: string, name: string): Promise<{ hash: string; mime: string; size: number; name: string }>
+  /** Read asset bytes by sha256 hash. */
+  getAsset(workspaceId: string, hash: string): Promise<Uint8Array>
   onUpdate(callback: (workspaceId: string, boardId: string, update: Uint8Array) => void): () => void
 }

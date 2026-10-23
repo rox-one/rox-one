@@ -1066,7 +1066,8 @@ export const RPC_CHANNELS = {
     CALL_LEAVE: 'teamChat:callLeave',
     CALL_SYNC: 'teamChat:callSync',
     CALL_TRANSCRIPT: 'teamChat:callTranscript',
-    CALL_LIST: 'teamChat:callList',
+    /** Messenger contract v1.1 presence (GET /v1/im/presence) with local fallback. */
+    PRESENCE: 'teamChat:presence',
     SEARCH: 'teamChat:search',
     CHANGED: 'teamChat:changed',
   },

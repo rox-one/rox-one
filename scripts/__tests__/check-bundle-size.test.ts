@@ -545,7 +545,7 @@ describe('CLI exit codes', () => {
     expect(result.err).toContain("js prefix 'main' total is 2500000 B, budget 1500000 B")
     expect(result.err).toContain('assets/main-aaaaaaaa.js')
     expect(result.err).toContain('is 1300000 B')
-    expect(result.err).toContain('bun scripts/check-bundle-size.ts --update')
+    expect(result.err).toContain('bun run perf:gate:regen')
   })
 
   it('exits 1 when an unbudgeted prefix TOTAL exceeds the 2.5 MB ceiling', () => {

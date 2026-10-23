@@ -43,7 +43,7 @@ const fakeMode = {
 
 afterEach(() => {
   const store = getDefaultStore()
-  for (const flag of [...UNIFIED_FLAGS, WIKI_FLAG]) store.set(workbenchFlagAtom(flag), RESET)
+  for (const flag of [...UNIFIED_FLAGS, WIKI_FLAG, WORKBENCH_FLAG.modeCanvasV1]) store.set(workbenchFlagAtom(flag), RESET)
   __resetModeRegistryForTests()
 })
 
@@ -103,7 +103,9 @@ const BASELINE_RAIL_IDS = ['home', 'inbox', 'sessions', 'feed', 'docs', 'tasks',
 
 describe('ActivityRail render', () => {
   it('all mode flags off: exactly the registry primary group, no modes group, «Ещё» closed', () => {
+    // Мессенджер + «Доска» are default ON — turn both off for the baseline rail.
     getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeMessengerV1), false)
+    getDefaultStore().set(workbenchFlagAtom(WORKBENCH_FLAG.modeCanvasV1), false)
     const html = renderRail()
     expect(railIds(html)).toEqual(BASELINE_RAIL_IDS)
     expect(html).not.toContain('data-testid="rail-modes"')
@@ -120,8 +122,9 @@ describe('ActivityRail render', () => {
     expect(railModeEntries(pill([...UNIFIED_FLAGS, WIKI_FLAG])).map((mode) => mode.id)).toEqual(['messenger', 'calendar', 'goals', 'wiki'])
     // Projects gives its primary slot to «Цели и проекты» (goals) and moves to «Ещё».
     expect(railIds(html)).toEqual([
-      // Sidebar v2: core order; pill surfaces (Мессенджер, Документы…) keep their rail row.
-      ...['home', 'inbox', 'messenger', 'sessions', 'feed', 'docs', 'tasks', 'goals', 'calendar'].map((id) => `rail-item-${id}`),
+      // Sidebar v2: core order; pill surfaces (Мессенджер, Документы, «Доска»…) keep their rail row.
+      // «Доска» is default-ON, so it stays in the primary group alongside the explicitly enabled modes.
+      ...['home', 'inbox', 'messenger', 'sessions', 'feed', 'docs', 'tasks', 'goals', 'calendar', 'canvas'].map((id) => `rail-item-${id}`),
       'rail-mode-wiki',
     ])
   })
