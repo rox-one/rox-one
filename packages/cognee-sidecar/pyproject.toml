@@ -16,8 +16,10 @@ dependencies = [
 rox-cognee-sidecar = "rox_cognee_sidecar.__main__:main"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+# setuptools is already hash-pinned in requirements.lock so the sidecar
+# install can run with --no-build-isolation (no unpinned PyPI fetch).
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
 
-[tool.hatch.build.targets.wheel]
-packages = ["rox_cognee_sidecar"]
+[tool.setuptools.packages.find]
+include = ["rox_cognee_sidecar*"]

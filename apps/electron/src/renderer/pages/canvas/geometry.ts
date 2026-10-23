@@ -3,13 +3,13 @@ export type Corner = 'nw' | 'ne' | 'sw' | 'se'
 export interface Box { x: number; y: number; w: number; h: number }
 export const MIN_SIZE = 20
 
-/** New box for a corner drag by (dx, dy) in the box's own (unrotated) frame, clamped to MIN_SIZE. */
-export function resizeBox(o: Box, corner: Corner, dx: number, dy: number): Box {
+/** New box for a corner drag by (dx, dy) in the box's own (unrotated) frame, clamped to `minSize`. */
+export function resizeBox(o: Box, corner: Corner, dx: number, dy: number, minSize = MIN_SIZE): Box {
   let { x, y, w, h } = o
-  if (corner.includes('e')) w = Math.max(MIN_SIZE, o.w + dx)
-  if (corner.includes('s')) h = Math.max(MIN_SIZE, o.h + dy)
-  if (corner.includes('w')) { w = Math.max(MIN_SIZE, o.w - dx); x = o.x + o.w - w }
-  if (corner.includes('n')) { h = Math.max(MIN_SIZE, o.h - dy); y = o.y + o.h - h }
+  if (corner.includes('e')) w = Math.max(minSize, o.w + dx)
+  if (corner.includes('s')) h = Math.max(minSize, o.h + dy)
+  if (corner.includes('w')) { w = Math.max(minSize, o.w - dx); x = o.x + o.w - w }
+  if (corner.includes('n')) { h = Math.max(minSize, o.h - dy); y = o.y + o.h - h }
   return { x, y, w, h }
 }
 
@@ -28,11 +28,11 @@ export function oppositeCornerWorld(b: Box, deg: number, corner: Corner) {
  * is rotated by -rotation into the box frame, and the opposite corner stays fixed
  * in world space (the stored x/y is the unrotated top-left, so it shifts).
  */
-export function resizeRotated(o: Box, deg: number, corner: Corner, dxWorld: number, dyWorld: number): Box {
-  if (!deg) return resizeBox(o, corner, dxWorld, dyWorld)
+export function resizeRotated(o: Box, deg: number, corner: Corner, dxWorld: number, dyWorld: number, minSize = MIN_SIZE): Box {
+  if (!deg) return resizeBox(o, corner, dxWorld, dyWorld, minSize)
   const rad = (deg * Math.PI) / 180
   const d = rot(dxWorld, dyWorld, -rad)
-  const sized = resizeBox(o, corner, d.x, d.y)
+  const sized = resizeBox(o, corner, d.x, d.y, minSize)
   const anchor = oppositeCornerWorld(o, deg, corner)
   const rel = rot(oppositeRel(sized, corner).x, oppositeRel(sized, corner).y, rad)
   const cx = anchor.x - rel.x, cy = anchor.y - rel.y
