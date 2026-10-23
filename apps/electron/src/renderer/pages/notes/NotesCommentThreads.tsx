@@ -106,57 +106,80 @@ export function NotesCommentThreads({
   onThreadsChangeRef.current = onThreadsChange
   const createInFlightRef = React.useRef(false)
   const reloadGenerationRef = React.useRef(0)
+  /** Latest mounted note key — compared after awaits so stale work cannot publish. */
+  const activeKeyRef = React.useRef({ workspaceId, noteId })
+  activeKeyRef.current = { workspaceId, noteId }
   const body = draftBody ?? localBody
   const setBody = onDraftBodyChange ?? setLocalBody
 
-  const publish = React.useCallback((list: NoteCommentThread[]) => {
+  const isActiveKey = React.useCallback((key: { workspaceId: string; noteId: string }) => (
+    activeKeyRef.current.workspaceId === key.workspaceId
+    && activeKeyRef.current.noteId === key.noteId
+  ), [])
+
+  const publish = React.useCallback((list: NoteCommentThread[], key: { workspaceId: string; noteId: string }) => {
+    if (!isActiveKey(key)) return
     setComments(list)
     onThreadsChangeRef.current?.(list)
-  }, [])
+  }, [isActiveKey])
 
   /** Functional local commit that also notifies the parent (highlights) immediately. */
   const publishUpdate = React.useCallback((
+    key: { workspaceId: string; noteId: string },
     updater: (prev: readonly NoteCommentThread[]) => NoteCommentThread[],
   ) => {
+    if (!isActiveKey(key)) return
     setComments(prev => {
+      if (!isActiveKey(key)) return prev
       const next = updater(prev)
       onThreadsChangeRef.current?.(next)
       return next
     })
-  }, [])
+  }, [isActiveKey])
 
   const reload = React.useCallback(async (opts?: { quiet?: boolean }) => {
     const quiet = Boolean(opts?.quiet)
+    const requestKey = { workspaceId, noteId }
     const generation = ++reloadGenerationRef.current
     if (!quiet) {
       setLoading(true)
       setError(null)
     }
     try {
-      const list = await window.electronAPI.listNoteComments(workspaceId, noteId)
+      const list = await window.electronAPI.listNoteComments(requestKey.workspaceId, requestKey.noteId)
       // Drop stale responses after note/workspace switch or overlapping reloads.
       if (generation !== reloadGenerationRef.current) return
-      publish(list)
+      if (!isActiveKey(requestKey)) return
+      publish(list, requestKey)
     } catch {
       if (generation !== reloadGenerationRef.current) return
+      if (!isActiveKey(requestKey)) return
       setError(t('notes.comments.errorUpdate'))
       // Quiet reloads must not wipe the rail / highlights on a transient failure.
-      if (!quiet) publish([])
+      if (!quiet) publish([], requestKey)
     } finally {
-      if (!quiet && generation === reloadGenerationRef.current) setLoading(false)
+      if (!quiet && generation === reloadGenerationRef.current && isActiveKey(requestKey)) {
+        setLoading(false)
+      }
     }
-  }, [workspaceId, noteId, publish, t])
+  }, [workspaceId, noteId, publish, isActiveKey, t])
 
   React.useEffect(() => {
     // Invalidate in-flight lists and clear prior note's threads/highlights immediately.
     reloadGenerationRef.current += 1
-    publish([])
+    const key = { workspaceId, noteId }
+    publish([], key)
     setError(null)
     setDocCompose(false)
     setLocalBody('')
     setBusyId(null)
     createInFlightRef.current = false
     void reload()
+    return () => {
+      // Collapsed rail unmounts this panel — still clear parent highlights.
+      reloadGenerationRef.current += 1
+      onThreadsChangeRef.current?.([])
+    }
   }, [workspaceId, noteId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
@@ -198,95 +221,108 @@ export function NotesCommentThreads({
       return
     }
     setError(null)
+    const requestKey = { workspaceId, noteId }
     createInFlightRef.current = true
     setBusyId(CREATE_BUSY)
     try {
-      const created = await window.electronAPI.createNoteComment(workspaceId, {
-        noteId,
+      const created = await window.electronAPI.createNoteComment(requestKey.workspaceId, {
+        noteId: requestKey.noteId,
         body: text,
         anchor,
       })
-      publishUpdate(prev => upsertNoteCommentInList(prev, created))
+      if (!isActiveKey(requestKey)) return
+      publishUpdate(requestKey, prev => upsertNoteCommentInList(prev, created))
       clearComposer()
       await reload({ quiet: true })
     } catch {
-      setError(t('notes.comments.errorCreate'))
+      if (isActiveKey(requestKey)) setError(t('notes.comments.errorCreate'))
     } finally {
       createInFlightRef.current = false
-      setBusyId(null)
+      if (isActiveKey(requestKey)) setBusyId(null)
     }
-  }, [body, draftQuote, draftAnchor, getNoteText, workspaceId, noteId, clearComposer, publishUpdate, reload, t])
+  }, [body, draftQuote, draftAnchor, getNoteText, workspaceId, noteId, clearComposer, publishUpdate, reload, isActiveKey, t])
 
   const onCreate = React.useCallback(async (text: string, parentId?: string) => {
+    const requestKey = { workspaceId, noteId }
     try {
-      const created = await window.electronAPI.createNoteComment(workspaceId, {
-        noteId,
+      const created = await window.electronAPI.createNoteComment(requestKey.workspaceId, {
+        noteId: requestKey.noteId,
         body: text,
         parentId,
         anchor: null,
       })
-      publishUpdate(prev => upsertNoteCommentInList(prev, created))
+      if (!isActiveKey(requestKey)) return
+      publishUpdate(requestKey, prev => upsertNoteCommentInList(prev, created))
       await reload({ quiet: true })
     } catch (err) {
-      setError(t('notes.comments.errorCreate'))
+      if (isActiveKey(requestKey)) setError(t('notes.comments.errorCreate'))
       throw err
     }
-  }, [workspaceId, noteId, publishUpdate, reload, t])
+  }, [workspaceId, noteId, publishUpdate, reload, isActiveKey, t])
 
   const onEdit = React.useCallback(async (id: string, nextBody: string) => {
+    const requestKey = { workspaceId, noteId }
     try {
-      const updated = await window.electronAPI.updateNoteComment(workspaceId, {
-        noteId,
+      const updated = await window.electronAPI.updateNoteComment(requestKey.workspaceId, {
+        noteId: requestKey.noteId,
         commentId: id,
         body: nextBody,
       })
-      publishUpdate(prev => upsertNoteCommentInList(prev, updated))
+      if (!isActiveKey(requestKey)) return
+      publishUpdate(requestKey, prev => upsertNoteCommentInList(prev, updated))
       await reload({ quiet: true })
-    } catch {
-      setError(t('notes.comments.errorUpdate'))
+    } catch (err) {
+      if (isActiveKey(requestKey)) setError(t('notes.comments.errorUpdate'))
+      throw err
     }
-  }, [workspaceId, noteId, publishUpdate, reload, t])
+  }, [workspaceId, noteId, publishUpdate, reload, isActiveKey, t])
 
   const onDelete = React.useCallback(async (id: string) => {
+    const requestKey = { workspaceId, noteId }
     try {
-      await window.electronAPI.deleteNoteComment(workspaceId, noteId, id)
-      publishUpdate(prev => removeNoteCommentFromList(prev, id))
+      await window.electronAPI.deleteNoteComment(requestKey.workspaceId, requestKey.noteId, id)
+      if (!isActiveKey(requestKey)) return
+      publishUpdate(requestKey, prev => removeNoteCommentFromList(prev, id))
       await reload({ quiet: true })
     } catch {
-      setError(t('notes.comments.errorDelete'))
+      if (isActiveKey(requestKey)) setError(t('notes.comments.errorDelete'))
     }
-  }, [workspaceId, noteId, publishUpdate, reload, t])
+  }, [workspaceId, noteId, publishUpdate, reload, isActiveKey, t])
 
   const onToggleReaction = React.useCallback(async (id: string, emoji: string) => {
+    const requestKey = { workspaceId, noteId }
     try {
-      const updated = await window.electronAPI.updateNoteComment(workspaceId, {
-        noteId,
+      const updated = await window.electronAPI.updateNoteComment(requestKey.workspaceId, {
+        noteId: requestKey.noteId,
         commentId: id,
         reaction: { emoji },
       })
-      publishUpdate(prev => upsertNoteCommentInList(prev, updated))
+      if (!isActiveKey(requestKey)) return
+      publishUpdate(requestKey, prev => upsertNoteCommentInList(prev, updated))
       await reload({ quiet: true })
     } catch {
-      setError(t('notes.comments.errorUpdate'))
+      if (isActiveKey(requestKey)) setError(t('notes.comments.errorUpdate'))
     }
-  }, [workspaceId, noteId, publishUpdate, reload, t])
+  }, [workspaceId, noteId, publishUpdate, reload, isActiveKey, t])
 
   const setResolved = React.useCallback(async (id: string, resolvedFlag: boolean) => {
+    const requestKey = { workspaceId, noteId }
     setBusyId(id)
     try {
-      const updated = await window.electronAPI.updateNoteComment(workspaceId, {
-        noteId,
+      const updated = await window.electronAPI.updateNoteComment(requestKey.workspaceId, {
+        noteId: requestKey.noteId,
         commentId: id,
         resolved: resolvedFlag,
       })
-      publishUpdate(prev => upsertNoteCommentInList(prev, updated))
+      if (!isActiveKey(requestKey)) return
+      publishUpdate(requestKey, prev => upsertNoteCommentInList(prev, updated))
       await reload({ quiet: true })
     } catch {
-      setError(t('notes.comments.errorStatus'))
+      if (isActiveKey(requestKey)) setError(t('notes.comments.errorStatus'))
     } finally {
-      setBusyId(null)
+      if (isActiveKey(requestKey)) setBusyId(null)
     }
-  }, [workspaceId, noteId, publishUpdate, reload, t])
+  }, [workspaceId, noteId, publishUpdate, reload, isActiveKey, t])
 
   const showSelectionComposer = Boolean(draftQuote)
   const showDocComposer = docCompose && !draftQuote
@@ -359,7 +395,7 @@ export function NotesCommentThreads({
                     onEdit={onEdit}
                     onDelete={onDelete}
                     onToggleReaction={onToggleReaction}
-                    allowReplies
+                    allowReplies={!root.orphan}
                     // Suppress the per-card root composer (replies still work). Empty fragment or null both suppress.
                     renderComposer={() => <></>}
                     className="gap-2"
