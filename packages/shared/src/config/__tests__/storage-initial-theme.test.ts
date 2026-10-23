@@ -34,7 +34,7 @@ function isolated<T>(initialContents: string | undefined, operation: string, set
 }
 
 describe('new-install theme selection', () => {
-  it('seeds Arc Glass for a physically missing config and retains it after reload', () => {
+  it('seeds Rox Engineering for a physically missing config and retains it after reload', () => {
     const result = isolated<{ before: string; after: string; stored: string }>(undefined, `
       const before = storage.getColorTheme();
       await storage.seedDefaultLlmConnection();

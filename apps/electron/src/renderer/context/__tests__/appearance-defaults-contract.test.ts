@@ -4,10 +4,11 @@ import { join } from 'node:path'
 
 /**
  * Appearance defaults contract (2026-10-23): Rox Engineering (`super-engineering`)
- * is the out-of-the-box theme for new installs. Arc Glass Design was retired.
- * Rox Ink (`rox-ink`) stays the migration target for existing installs on older
- * defaults. The app does not pin a theme; Settings → Внешний вид offers the
- * color-theme picker; legacy seeds migrate once via `appearance-defaults-v2-ink`.
+ * is the out-of-the-box theme for new installs; Rox Ink (`rox-ink`) stays the
+ * migration target for legacy product defaults. Arc Glass remains a selectable
+ * preset. The app does not pin a theme, Settings → Внешний вид offers the
+ * color-theme picker, and installs on the old defaults (including the v1 Rox
+ * Engineering + deep-glass seed) migrate once via `appearance-defaults-v2-ink`.
  */
 const repo = join(import.meta.dir, '..', '..', '..', '..', '..', '..')
 const themeConfig = readFileSync(join(repo, 'packages/shared/src/config/theme.ts'), 'utf8')

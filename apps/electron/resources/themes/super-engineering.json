@@ -1,6 +1,6 @@
 {
   "name": "Rox Engineering",
-  "description": "Rox Engineering (super-engineering): dark agent IDE profile. Default for new installs. Optional chrome glass accents via theme-layer intensity (default off).",
+  "description": "Dark glass agent IDE profile. Default for new installs. Optional chrome glass accents via theme-layer intensity (default off).",
   "author": "Rox One",
   "license": "MIT",
   "mode": "blurred",
