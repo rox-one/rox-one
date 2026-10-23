@@ -12,16 +12,16 @@
  * Animation rules:
  * - GPU-only properties: transform + opacity (per apps/electron/CLAUDE.md).
  * - Forward (navigator → detail): navigator parallaxes left to -30%; detail
- *   slides in from 100%. Same snappy spring as the mobile menu sub-page slide.
+ *   slides in from 100%. Uses SE_SPRING_PANEL (shared Rox Engineering spring).
  * - Back (detail → navigator): symmetric reverse.
  * - prefers-reduced-motion: applies slot changes immediately without animation.
  */
 
 import * as React from 'react'
 import { motion } from '@/lib/deferred-motion'
+import { SE_SPRING_PANEL } from '@/lib/motion/super-engineering-springs'
 import { usePrefersReducedMotion } from '@/lib/render-profile-motion'
 
-const SNAPPY_SPRING = { type: 'spring' as const, stiffness: 400, damping: 36, mass: 0.8 }
 const NO_MOTION = { duration: 0 }
 
 export type CompactPanelRole = 'navigator' | 'detail'
@@ -46,7 +46,7 @@ export function CompactPanelTransition({
   children,
 }: CompactPanelTransitionProps) {
   const reduceMotion = usePrefersReducedMotion()
-  const transition = reduceMotion ? NO_MOTION : SNAPPY_SPRING
+  const transition = reduceMotion ? NO_MOTION : SE_SPRING_PANEL
 
   const isOffscreen = role === 'navigator' ? isDetailActive : !isDetailActive
   const slotRef = React.useRef<HTMLDivElement>(null)

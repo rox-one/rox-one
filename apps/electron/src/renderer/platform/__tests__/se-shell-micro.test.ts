@@ -5,6 +5,8 @@ import {
   SE_SPRING_MODAL,
   SE_SPRING_PANEL,
   SE_SPRING_TAGLINE,
+  SE_SPRING_LIST,
+  SE_MOTION_SEC,
 } from '../../lib/motion/super-engineering-springs'
 
 const root = join(import.meta.dir, '../../../../../..')
@@ -82,5 +84,8 @@ describe('SE shell micro-interactions', () => {
     expect(SE_SPRING_PANEL.stiffness).toBe(380)
     expect(SE_SPRING_MODAL.stiffness).toBe(520)
     expect(SE_SPRING_TAGLINE.damping).toBe(40)
+    expect(SE_SPRING_LIST).toBe(SE_SPRING_PANEL)
+    expect(SE_MOTION_SEC.fast).toBe(0.12)
+    expect(SE_MOTION_SEC.disclosure).toBe(0.18)
   })
 })
