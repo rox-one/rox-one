@@ -29,7 +29,9 @@ import { stopAllSourceIndexWatches } from '../sources/source-index-watch.ts'
 import { resolveConfigDir } from "@rox/shared/config/paths"
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import { projectNativeRegisteredWorkspaceEvent } from '../handlers/rpc/native-session-scope'
-import { composeHooksNodeHandler, createHooksHttpIngress, HostScheduler, type HooksIngressSnapshot, type HooksWakePayload } from '../scheduler/index.ts'
+import { composeFetchIngressNodeHandler, composeHooksNodeHandler, createHooksHttpIngress, HostScheduler, type HooksIngressSnapshot, type HooksWakePayload } from '../scheduler/index.ts'
+import { createTeamChatLiveKitWebhookIngress } from '../handlers/rpc/team-chat.ts'
+import { pushTyped } from '../transport/push.ts'
 import { configureVisitorAccess } from '../visitors/index.ts'
 import { projectNativeNotesChanged } from '../handlers/rpc/native-notes-events'
 import { projectNativeFeedChanged } from '../handlers/rpc/native-feed'
@@ -617,7 +619,16 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
         logger: { warn: (message) => platform.logger.warn(message) },
       })
     : null
-  const composedHttpHandler = composeHooksNodeHandler(hooksIngress, options.httpHandler)
+  // LiveKit webhooks on the RPC HTTP port (POST /livekit/webhook). Notify is
+  // wired after WsRpcServer is constructed (changedSink filled below).
+  const liveKitChangedSink: { current: ((orgId: string, channelId: string) => void) | null } = { current: null }
+  const liveKitWebhookIngress = createTeamChatLiveKitWebhookIngress((orgId, channelId) => {
+    liveKitChangedSink.current?.(orgId, channelId)
+  })
+  const composedHttpHandler = composeFetchIngressNodeHandler(
+    liveKitWebhookIngress,
+    composeHooksNodeHandler(hooksIngress, options.httpHandler),
+  )
 
   const rpcHost = options.rpcHost ?? process.env.CRAFT_RPC_HOST ?? '127.0.0.1'
   const rpcPortRaw = options.rpcPort ?? parseInt(process.env.CRAFT_RPC_PORT ?? '9100', 10)
@@ -697,6 +708,9 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
   })
 
   const oauthFlowStore = new OAuthFlowStore()
+  liveKitChangedSink.current = (orgId, channelId) => {
+    pushTyped(wsServer, RPC_CHANNELS.teamChat.CHANGED, { to: 'all' }, { orgId, channelId })
+  }
   try {
     await wsServer.listen()
 

@@ -20,6 +20,7 @@ import {
   type TeamChatActor,
   type TeamChatOrgDirectory,
 } from '@rox/shared/team-chat'
+import { createLiveKitWebhookHttpIngress, type LiveKitWebhookHttpIngress } from '../../team-chat/livekit-webhook-http.ts'
 import { pushTyped, type RpcServer } from '@rox/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { getCredentialManager } from '@rox/shared/credentials'
@@ -184,4 +185,32 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
 
   handle(RPC_CHANNELS.teamChat.SEARCH, async (ctx, orgId: string, query: string) =>
     store().searchMessages(orgId, query, actorOf(ctx)), { nativeAction: 'read' })
+}
+
+
+/**
+ * LiveKit webhook ingress for the local RPC HTTP port.
+ * Installed only when LiveKit API key+secret resolve (builtin or CONFIG_DIR override).
+ * Ends calls on room_finished / emptying participant_left and posts the AI summary
+ * the same way CALL_LEAVE does when the last client leave RPC is lost.
+ */
+export function createTeamChatLiveKitWebhookIngress(
+  notifyChanged: (orgId: string, channelId: string) => void,
+): LiveKitWebhookHttpIngress | null {
+  const creds = resolveCallCredentials()
+  if (!creds.livekitApiKey || !creds.livekitApiSecret) return null
+  return createLiveKitWebhookHttpIngress({
+    getStore: () => getTeamChatStore(orgsTeamChatDirectory),
+    onChanged: notifyChanged,
+    onCallEnded: ({ orgId, channelId, call }) => {
+      void summarizeEndedCall(call).then((summary) => {
+        if (!summary) return
+        try {
+          if (getTeamChatStore(orgsTeamChatDirectory).postCallSummaryAsSystem(channelId, call.id, summary)) {
+            notifyChanged(orgId, channelId)
+          }
+        } catch { /* channel archived meanwhile */ }
+      })
+    },
+  })
 }
