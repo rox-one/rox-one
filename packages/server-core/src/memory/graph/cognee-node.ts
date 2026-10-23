@@ -13,6 +13,9 @@ import type { GraphMemoryProvider } from '@rox/shared/memory/graph-provider'
 import { CogneeGraphProvider } from './cognee-provider'
 import { CogneeRuntimeManager, cogneeWorkspaceDir, type RuntimeExec, type RuntimeIo } from './cognee-runtime'
 
+const INSTALL_STEP_TIMEOUT_MS = 15 * 60_000
+const DOWNLOAD_TIMEOUT_MS = 10 * 60_000
+
 export const nodeRuntimeExec: RuntimeExec = {
   run(cmd, args, opts) {
     return new Promise(resolve => {
@@ -24,22 +27,41 @@ export const nodeRuntimeExec: RuntimeExec = {
         shell: false,
       })
       let stderr = ''
+      let settled = false
+      const finish = (code: number, errText: string) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timer)
+        resolve({ code, stderr: errText })
+      }
+      const timer = setTimeout(() => {
+        try { child.kill() } catch { /* ignore */ }
+        finish(-1, 'timeout')
+      }, INSTALL_STEP_TIMEOUT_MS)
+      timer.unref?.()
       child.stderr?.on('data', d => {
         if (stderr.length < 4000) stderr += String(d)
       })
-      child.on('error', () => resolve({ code: -1, stderr: 'spawn failed' }))
-      child.on('exit', code => resolve({ code: code ?? -1, stderr }))
+      child.on('error', () => finish(-1, 'spawn failed'))
+      child.on('exit', code => finish(code ?? -1, stderr))
     })
   },
 }
 
 export const nodeRuntimeIo: RuntimeIo = {
   async download(url, dest) {
-    const res = await fetch(url, { redirect: 'follow' })
-    if (!res.ok || !res.body) throw new Error(`download failed (${res.status})`)
-    const tmp = `${dest}.part`
-    await pipeline(Readable.fromWeb(res.body as never), createWriteStream(tmp))
-    renameSync(tmp, dest)
+    const ac = new AbortController()
+    const timer = setTimeout(() => ac.abort(), DOWNLOAD_TIMEOUT_MS)
+    timer.unref?.()
+    try {
+      const res = await fetch(url, { redirect: 'follow', signal: ac.signal })
+      if (!res.ok || !res.body) throw new Error(`download failed (${res.status})`)
+      const tmp = `${dest}.part`
+      await pipeline(Readable.fromWeb(res.body as never), createWriteStream(tmp))
+      renameSync(tmp, dest)
+    } finally {
+      clearTimeout(timer)
+    }
   },
   async extractUv(archive, destDir) {
     // uv archives: <triple>/uv in a .tar.gz (unix) or uv.exe at the zip root (windows).

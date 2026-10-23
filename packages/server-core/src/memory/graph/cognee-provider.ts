@@ -99,16 +99,20 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
         HOME: process.env.HOME ?? '',
         PYTHONUNBUFFERED: '1',
         PYTHONDONTWRITEBYTECODE: '1',
+        PYTHONUTF8: '1',
         ROX_COGNEE_ROOT: this.deps.storageDir,
         ROX_COGNEE_LLM_ENDPOINT: this.deps.llmEndpoint ?? 'https://api.rox.one/v1',
         ROX_COGNEE_LLM_MODEL: this.deps.llmModel ?? 'rox/r1-max',
         ROX_COGNEE_LLM_FALLBACK_MODEL: this.deps.llmFallbackModel ?? 'rox/fast',
         ROX_COGNEE_LLM_API_KEY: key,
-        // Also expose under the build-injected name for diagnostics (never logged).
+        // Also expose under the build-injected name (never logged).
         ROX_SHARED_API_KEY: key,
       }
+      for (const k of ['TMPDIR', 'TEMP', 'TMP', 'LANG', 'LC_ALL']) {
+        if (process.env[k]) env[k] = process.env[k]!
+      }
       if (process.platform === 'win32') {
-        for (const k of ['SYSTEMROOT', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'TEMP', 'TMP']) {
+        for (const k of ['SYSTEMROOT', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA']) {
           if (process.env[k]) env[k] = process.env[k]!
         }
       }
@@ -122,8 +126,13 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
         this.deps.logger?.warn('cognee sidecar spawn error', err)
         this.onExit(child)
       })
+      // Avoid unhandled 'error' on pipes when the child dies mid I/O (would crash Electron main).
+      const ignorePipeErr = () => {}
+      child.stdin?.on('error', ignorePipeErr)
+      child.stdout?.on('error', ignorePipeErr)
       // stderr is drained but not forwarded verbatim (could echo document text).
       child.stderr?.on('data', () => {})
+      child.stderr?.on('error', ignorePipeErr)
       createInterface({ input: child.stdout! }).on('line', line => this.onLine(line))
       const hello = (await this.request('hello', {}, 30_000)) as { protocol?: number } | null
       if (!hello || hello.protocol !== 1) throw new Error('sidecar protocol mismatch')
@@ -213,8 +222,12 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
     const payload = docs
       .filter(d => d.provenance?.originClass === 'owner' || d.provenance?.originClass === 'agent')
       .map(d => ({ id: d.id, source: d.source, text: d.text, provenance: d.provenance }))
-    for (let i = 0; i < payload.length; i += 100) {
-      await this.request('add', { docs: payload.slice(i, i + 100) })
+    try {
+      for (let i = 0; i < payload.length; i += 100) {
+        await this.request('add', { docs: payload.slice(i, i + 100) })
+      }
+    } catch (err) {
+      this.deps.logger?.warn('cognee ingest failed', err)
     }
   }
 
@@ -222,8 +235,12 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
   async cognify(sources?: string[]): Promise<void> {
     if (!this.enabled() || !(await this.warm())) return
     this.touch()
-    await this.request('cognify', sources ? { sources } : {}, 30 * 60_000)
-    void this.refreshStatus()
+    try {
+      await this.request('cognify', sources ? { sources } : {}, 30 * 60_000)
+      void this.refreshStatus()
+    } catch (err) {
+      this.deps.logger?.warn('cognee cognify failed', err)
+    }
   }
 
   async search(
@@ -258,9 +275,13 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
   }
 
   async forget(ids: readonly string[]): Promise<void> {
-    if (ids.length === 0 || !(await this.warm())) return
+    if (!this.enabled() || ids.length === 0 || !(await this.warm())) return
     this.touch()
-    await this.request('delete', { ids: [...ids] })
+    try {
+      await this.request('delete', { ids: [...ids] })
+    } catch (err) {
+      this.deps.logger?.warn('cognee forget failed', err)
+    }
   }
 
   shutdown(): void {
