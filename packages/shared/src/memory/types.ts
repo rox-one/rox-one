@@ -193,6 +193,11 @@ export interface MemoryConfig {
    */
   semantic: boolean
   /**
+   * Graph-memory (cognee) layer. Default true; Settings → Память can toggle
+   * later (PR6). When false, the resolver returns null and FTS/semantic stay.
+   */
+  graph: boolean
+  /**
    * Dream (spec §9): hours between background memory-dream runs, default 4.
    * One DreamScheduler per process ticks banks (main + active workspaces) and
    * runs at most once per bank per interval window.
@@ -224,6 +229,7 @@ export const DEFAULT_MEMORY_CONFIG: MemoryConfig = {
   redactExtraPatterns: [],
   ftsLimit: 20,
   semantic: true,
+  graph: true,
   dreamIntervalHours: 4,
   dreamNotes: true,
 }

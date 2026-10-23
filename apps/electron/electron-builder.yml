@@ -48,6 +48,10 @@ files:
   # Cookbooks Lab sidecar snapshot (Python package + catalog + scripts); also
   # copied to dist/resources/ by build:copy and resolved via getBundledAssetsDir('cookbooks').
   - resources/cookbooks/**/*
+  # Cognee graph-memory Python sidecar (lazy-installed at runtime).
+  - resources/cognee-sidecar/**/*
+  - "!resources/cognee-sidecar/**/__pycache__/**"
+  - "!resources/cognee-sidecar/**/.venv/**"
   # Include CLI tool shell wrappers (platform-independent, both Unix and Windows)
   - resources/bin/markitdown
   - resources/bin/markitdown.cmd

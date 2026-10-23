@@ -200,6 +200,7 @@ export interface StoredConfig {
     redactExtraPatterns?: string[]; // extra literal strings masked by redactSecrets (project names, paths, …), case-insensitive (default: [])
     ftsLimit?: number;           // top-K results from memory FTS queries (default: 20)
     semantic?: boolean;          // M2: semantic (episodic) memory via local embeddings model, lazy-downloaded to {configDir}/models (default: true; set false to opt out)
+    graph?: boolean;             // Graph-memory (cognee) layer (default: true; set false to opt out)
     dreamIntervalHours?: number; // dream §9: hours between background dream runs (default: 4)
     dreamModel?: string;         // dream: distillation mini-model id (absent → default mini-model)
     dreamNotes?: boolean;        // dream: run the notes→proposals step (default: true)
@@ -1638,6 +1639,7 @@ export function getMemoryConfig(): MemoryConfig {
         ? Math.floor(raw.ftsLimit)
         : DEFAULT_MEMORY_CONFIG.ftsLimit,
     semantic: typeof raw.semantic === 'boolean' ? raw.semantic : DEFAULT_MEMORY_CONFIG.semantic,
+    graph: typeof raw.graph === 'boolean' ? raw.graph : DEFAULT_MEMORY_CONFIG.graph,
     dreamIntervalHours:
       typeof raw.dreamIntervalHours === 'number' && Number.isFinite(raw.dreamIntervalHours) && raw.dreamIntervalHours > 0
         ? raw.dreamIntervalHours

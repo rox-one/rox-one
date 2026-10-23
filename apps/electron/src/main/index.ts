@@ -105,6 +105,8 @@ import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
 }
 
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@rox/server-core/sessions'
+import { installCogneeGraphMemory } from '@rox/server-core/memory/graph/install'
+import { getMemoryConfig } from '@rox/shared/config/storage'
 import { PageThumbnailer } from './page-thumbnailer'
 import { registerAllRpcHandlers, startClipboardMonitor } from './handlers/index'
 import { createDriveService } from './drive/register'
@@ -1376,6 +1378,10 @@ app.whenReady().then(async () => {
       // standalone headless server so `nodes:*` is live instead of
       // CHANNEL_NOT_FOUND on the real WS RPC server.
       const nodeRegistry = new NodeRegistry()
+      installCogneeGraphMemory({
+        isEnabled: () => { const c = getMemoryConfig(); return c.enabled && c.graph },
+        logger: { warn: (m, e) => mainLog.warn(m, e), info: (m) => mainLog.info(m) },
+      })
       const instance = await bootstrapServer<SessionManager, HandlerDeps>({
         serverToken,
         rpcHost,
