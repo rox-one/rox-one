@@ -6064,6 +6064,7 @@
   "notes.actionButton.defaultLabel": "Acción",
   "notes.actionButton.failureHint": "La acción falló.",
   "notes.actionButton.inertHint": "La acción importada permanece inerte hasta revisión — no se ejecuta.",
+  "notes.actionButton.draftInertHint": "La acción en borrador permanece inerte hasta revisión — no se ejecuta.",
   "notes.actionButton.offlineHint": "Sin conexión — acción no disponible.",
   "notes.actionButton.pendingHint": "Pendiente (sin efectos secundarios en este editor).",
   "notes.actionButton.successHint": "Acción completada.",
