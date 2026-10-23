@@ -38,7 +38,8 @@
  * Usage:
  *   bun scripts/check-bundle-size.ts              # --check (default): fail on any budget overrun
  *   bun scripts/check-bundle-size.ts --check      # same, explicit
- *   bun scripts/check-bundle-size.ts --update     # re-record perf-baselines/bundle-size.json
+ *   bun run perf:gate:regen                       # build renderer + rewrite boot-manifest + --update
+ *   bun scripts/check-bundle-size.ts --update     # re-record perf-baselines/bundle-size.json alone
  *   bun scripts/check-bundle-size.ts --update --prefix=index,main   # re-record only those prefixes
  *   bun scripts/check-bundle-size.ts --print <out.json>   # write current budgets, compare nothing
  *
@@ -76,6 +77,7 @@ import { spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join, relative, resolve } from 'node:path'
 import { gzipSync } from 'node:zlib'
+import { PERF_GATE_REGEN_CMD } from './perf-gate-regen'
 
 /** Default repo root, overridden in tests (and CI sandboxes) by ROX_BUNDLE_SIZE_ROOT. */
 const DEFAULT_ROOT = resolve(import.meta.dir, '..')
@@ -850,7 +852,7 @@ export function formatFailure(failure: BudgetFailure): string {
     `bundle-size: ${scope} is ${failure.rawBytes} B, budget ${failure.budget} B (+${diff} B); largest chunk ` +
     `assets/${failure.file} is ${failure.fileRawBytes} B. Shrink it (move the payload behind a lazy import - ` +
     `see vite.config.ts VENDOR_CHUNKS / SIDE_EFFECT_FREE_MODULES) or re-record: ` +
-    `bun scripts/check-bundle-size.ts --update`
+    `${PERF_GATE_REGEN_CMD}`
   )
 }
 
@@ -1308,7 +1310,7 @@ export function main(argv: string[] = process.argv.slice(2), env: Record<string,
     }
     console.error(
       `bundle-size: ${failures.length + startupFailures.length} budget(s) over limit. If the growth is ` +
-        `intended, owner-approve it and re-record with \`bun scripts/check-bundle-size.ts --update\`.`,
+        `intended, owner-approve it and re-record with \`${PERF_GATE_REGEN_CMD}\`.`,
     )
     return 1
   }
