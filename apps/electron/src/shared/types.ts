@@ -2978,8 +2978,9 @@ export interface ElectronAPI {
     channel: import('@rox/shared/team-chat').TeamChannelView
     messages: import('@rox/shared/team-chat').TeamChannelMessage[]
   }>
-  teamChatPost(channelId: string, text: string): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
-  teamChatMarkRead(channelId: string): Promise<{ ok: true }>
+  teamChatPost(channelId: string, text: string, opts?: import('@rox/shared/team-chat').PostTeamMessageOptions): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
+  teamChatIngest(input: import('@rox/shared/team-chat').IngestTeamMessageInput): Promise<import('@rox/shared/team-chat').TeamChannelMessage>
+  teamChatMarkRead(channelId: string): Promise<{ ok: true; advanced: boolean }>
   teamChatCallJoin(channelId: string, displayName?: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall; url: string; token: string }>
   teamChatCallLeave(channelId: string): Promise<{ call: import('@rox/shared/team-chat').TeamChannelCall | null; ended: boolean }>
   teamChatCallSync(channelId: string, participantIds: string[]): Promise<import('@rox/shared/team-chat').TeamChannelCall | null>
@@ -2998,6 +2999,7 @@ export interface ElectronAPI {
   imUnsubscribeChannel(channelId: string): Promise<ImRpcResult>
   imListMessages(input: { channelId: string; beforeSeq?: number; limit?: number }): Promise<ImRpcResult<{ messages: ImMessageEvent[] }>>
   imSendMessage(channelId: string, text: string): Promise<ImRpcResult<{ message: ImMessageEvent }>>
+  imSearchMessages(query: string, opts?: { channelId?: string; limit?: number }): Promise<ImRpcResult<{ messages: ImMessageEvent[] }>>
   imMarkRead(channelId: string): Promise<ImRpcResult>
   imPublishTyping(channelId: string, isTyping: boolean): Promise<ImRpcResult>
   onImMessage(callback: (message: ImMessageEvent) => void): () => void

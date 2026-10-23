@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test'
-import { ImService, normalizeImStatus, type ImPushSink } from '../service'
+import { ImService, normalizeImMessage, normalizeImStatus, type ImPushSink } from '../service'
 import type {
   ImChatCoreClient,
   ImChatCoreOptions,
@@ -139,6 +139,45 @@ describe('ImService — native available', () => {
     expect(client.calls.typing).toEqual([['c1', true]])
     expect(client.calls.reads).toEqual(['c1'])
   })
+
+  it('refcounts subscribe/unsubscribe so overlapping hooks keep the native sub', async () => {
+    await service.ensureStarted()
+    client.calls.subscribe = []
+    client.calls.unsubscribe = []
+    expect(await service.subscribeChannel('c1')).toEqual({ ok: true })
+    expect(await service.subscribeChannel('c1')).toEqual({ ok: true })
+    expect(client.calls.subscribe).toEqual(['c1'])
+    expect(await service.unsubscribeChannel('c1')).toEqual({ ok: true })
+    expect(client.calls.unsubscribe).toEqual([])
+    expect(await service.unsubscribeChannel('c1')).toEqual({ ok: true })
+    expect(client.calls.unsubscribe).toEqual(['c1'])
+    // Extra unsubscribe is a no-op at the wire
+    expect(await service.unsubscribeChannel('c1')).toEqual({ ok: true })
+    expect(client.calls.unsubscribe).toEqual(['c1'])
+  })
+
+  it('serializes concurrent subscribe so refcount cannot undercount under await', async () => {
+    await service.ensureStarted()
+    client.calls.subscribe = []
+    client.calls.unsubscribe = []
+    let inFlight = 0
+    let maxConcurrent = 0
+    const baseSubscribe = client.subscribe.bind(client)
+    client.subscribe = async (channelId: string) => {
+      inFlight += 1
+      maxConcurrent = Math.max(maxConcurrent, inFlight)
+      await new Promise((r) => setTimeout(r, 30))
+      inFlight -= 1
+      return baseSubscribe(channelId)
+    }
+    await Promise.all([service.subscribeChannel('c1'), service.subscribeChannel('c1')])
+    expect(client.calls.subscribe).toEqual(['c1'])
+    expect(maxConcurrent).toBe(1)
+    expect(await service.unsubscribeChannel('c1')).toEqual({ ok: true })
+    expect(client.calls.unsubscribe).toEqual([])
+    expect(await service.unsubscribeChannel('c1')).toEqual({ ok: true })
+    expect(client.calls.unsubscribe).toEqual(['c1'])
+  })
 })
 
 describe('ImService — native unavailable (fallback)', () => {
@@ -206,5 +245,41 @@ describe('normalizeImStatus', () => {
       mode: 'fallback',
       reason: 'offline',
     })
+  })
+})
+
+describe('normalizeImMessage e-tags', () => {
+  it('prefers reply-marked e tag over earlier root e', () => {
+    const msg = normalizeImMessage({
+      id: 'm1',
+      channelId: 'c1',
+      senderId: 'u1',
+      text: 'hi',
+      createdAt: 1000,
+      tags: [
+        ['e', 'root-id'],
+        ['e', 'parent-id', '', 'reply'],
+        ['e', 'edit-target', '', 'edit'],
+      ],
+    })
+    expect(msg?.replyToId).toBe('parent-id')
+    expect(msg?.threadId).toBe('parent-id')
+  })
+
+  it('falls back to the last non-edit e when unmarked', () => {
+    const msg = normalizeImMessage({
+      id: 'm2',
+      channel_id: 'c1',
+      pubkey: 'pk',
+      content: 'x',
+      created_at: 1_700_000_000,
+      tags: [
+        ['e', 'root-id'],
+        ['e', 'leaf-id'],
+      ],
+    })
+    expect(msg?.replyToId).toBe('leaf-id')
+    expect(msg?.channelId).toBe('c1')
+    expect(msg?.senderId).toBe('pk')
   })
 })

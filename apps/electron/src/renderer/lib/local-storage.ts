@@ -29,6 +29,8 @@ export const KEYS = {
   shellPills: 'shell-pills-v1',
   /** Followed messenger channels → Лента per-channel filter (PR2). */
   messengerFeedChannels: 'messenger-feed-channels-v1',
+  /** Messenger message fan-out into Лента team tab (PR3). */
+  messengerFeedItems: 'messenger-feed-items-v1',
   shellPanels: 'shell-panels-v1',
   errorJournal: 'error-journal-v1',
   liteMode: 'lite-mode-v1',

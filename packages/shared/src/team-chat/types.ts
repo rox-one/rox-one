@@ -42,6 +42,17 @@ export interface TeamChannelSubscription {
 /** `text` = user message; `system` = call started/ended; `transcript` / `summary` = call outputs. */
 export type TeamChannelMessageKind = 'text' | 'system' | 'transcript' | 'summary'
 
+/** Local or media attachment on a messenger message (MinIO may be down). */
+export interface TeamMessageAttachment {
+  id: string
+  name: string
+  mimeType?: string
+  size?: number
+  /** Present when media upload succeeded; absent when pending/unavailable. */
+  url?: string
+  status?: 'ready' | 'pending' | 'unavailable'
+}
+
 export interface TeamChannelMessage {
   id: string
   channelId: string
@@ -57,6 +68,37 @@ export interface TeamChannelMessage {
   callId?: string
   /** `system` messages: machine-readable event; the UI localizes it. */
   event?: 'call.started' | 'call.ended'
+  /** Parent message id when this is a thread reply (Slack-like). */
+  replyToId?: string
+  /** Root message id of the thread (equals replyToId for first-level replies). */
+  threadId?: string
+  /** File/media attachments; empty when none. */
+  attachments?: TeamMessageAttachment[]
+}
+
+/**
+ * Ingest a remote (or own-send dual-write) message while preserving `senderId`.
+ * Unlike postMessage, never stamps the local actor as the author.
+ */
+export interface IngestTeamMessageInput {
+  channelId: string
+  senderId: string
+  text: string
+  /** Remote/relay id — used for idempotency when present. */
+  id?: string
+  createdAt?: number
+  /** Public ingest accepts `text` only (omit → text). Call kinds are host-internal. */
+  kind?: 'text'
+  replyToId?: string
+  threadId?: string
+  attachments?: TeamMessageAttachment[]
+}
+
+/** Optional fields for a local actor post (own send). */
+export interface PostTeamMessageOptions {
+  replyToId?: string
+  threadId?: string
+  attachments?: TeamMessageAttachment[]
 }
 
 export interface TeamCallTranscriptSegment {

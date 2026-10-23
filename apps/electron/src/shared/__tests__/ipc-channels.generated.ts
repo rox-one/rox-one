@@ -377,6 +377,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'im:message',
   'im:presence',
   'im:publishTyping',
+  'im:searchMessages',
   'im:sendMessage',
   'im:status',
   'im:statusChanged',
@@ -979,6 +980,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'teamChat:callTranscript',
   'teamChat:changed',
   'teamChat:createChannel',
+  'teamChat:ingest',
   'teamChat:join',
   'teamChat:leave',
   'teamChat:listChannels',
@@ -1147,4 +1149,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1143
+export const EXPECTED_CHANNEL_COUNT = 1145

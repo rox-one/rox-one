@@ -89,6 +89,7 @@ import { ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEdito
 import { SourceEditor, SourcesView } from './feed/FeedSources'
 import { FeedSidebar, type FeedView } from './feed/FeedSidebar'
 import { listMessengerFeedChannels, subscribeMessengerFeedChannels } from '@/platform/messenger-feed-channels'
+import { buildMessengerFeedItems, listMessengerFeedItems, subscribeMessengerFeedItems } from '@/platform/messenger-feed-items'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
 import { useFeedReaderTour } from '@/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour'
@@ -263,6 +264,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const [channelFilter, setChannelFilter] = useState<string | null>(null)
   const [messengerChannelsAll, setMessengerChannelsAll] = useState(() => [...listMessengerFeedChannels()])
   useEffect(() => subscribeMessengerFeedChannels(() => setMessengerChannelsAll([...listMessengerFeedChannels()])), [])
+  const [messengerFeedItems, setMessengerFeedItems] = useState(() => [...listMessengerFeedItems()])
+  useEffect(() => subscribeMessengerFeedItems(() => setMessengerFeedItems([...listMessengerFeedItems()])), [])
 
   const [query, setQuery] = useState(initialPrefs.query)
   const [colors, setColors] = useState<ReadonlySet<FeedColor>>(() => new Set(initialPrefs.colors))
@@ -389,11 +392,20 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     () => caller.native ? [] : buildTeamItems(team.activity ?? [], (e) => activityText(e, roster.members, roster.selfUserId, t)),
     [caller.native, team.activity, roster.members, roster.selfUserId, t],
   )
+  const messengerItems = useMemo(
+    () => buildMessengerFeedItems(messengerFeedItems, (row) => {
+      const name = roster.members.find((m) => m.userId === row.senderId)?.displayName
+      const who = row.senderId === roster.selfUserId ? t('teamCollab.you') : (name ?? row.senderId.slice(0, 8))
+      const where = row.channelName ? ` · #${row.channelName}` : ''
+      return `${who}${where}: ${row.text.slice(0, 120)}`
+    }),
+    [messengerFeedItems, roster.members, roster.selfUserId, t],
+  )
   const sourceById = useMemo(() => new Map(data.sources.map((s) => [s.id, s])), [data.sources])
   const annotations = data.annotations
   const allItems = useMemo(
-    () => applyAnnotations([...data.items, ...teamItems], annotations ?? {}, sourceById),
-    [data.items, teamItems, annotations, sourceById],
+    () => applyAnnotations([...data.items, ...teamItems, ...messengerItems], annotations ?? {}, sourceById),
+    [data.items, teamItems, messengerItems, annotations, sourceById],
   )
 
   const automations = useAutomations(workspaceId)

@@ -3,9 +3,10 @@
  *
  * When the user follows a public channel («Следить в Ленте»), the channel id
  * is recorded here so Лента can filter team/messenger items by `channelId`
- * (same shape as `feedItem.channelId` in the messenger contract). Fan-out of
- * live messenger events into FeedItem rows is PR3; this module only keeps the
+ * (same shape as `feedItem.channelId` in the messenger contract). This module
+ * keeps the
  * subscribed-channel set the filter infra already needs.
+ * Live message fan-out into FeedItem rows lives in messenger-feed-items.ts.
  */
 import * as storage from '@/lib/local-storage'
 
