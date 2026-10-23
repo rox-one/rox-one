@@ -5,10 +5,10 @@ import type { AppNavDestinationId } from '@/components/app-shell/nav-destination
 export const SE_RAIL_ICON_CLASS = 'h-3.5 w-3.5 shrink-0 [&_svg]:stroke-[1.5]'
 
 export const SE_RAIL_ACTIVE_BUTTON_CLASS =
-  'bg-foreground/[0.06] data-[state=open]:bg-foreground/[0.06]'
+  'bg-surface-selected data-[state=open]:bg-surface-selected'
 
 export const SE_RAIL_INACTIVE_BUTTON_CLASS =
-  'hover:bg-foreground/[0.04] data-[state=open]:bg-foreground/[0.04]'
+  'hover:bg-surface-hover data-[state=open]:bg-surface-hover'
 
 /** Nav ids that use accent tint in default Rox; SE profile keeps monochrome rail. */
 export const SE_MONOCHROME_NAV_IDS: Record<AppNavDestinationId, true> = {

@@ -11,7 +11,7 @@ describe('se-icon-map', () => {
   })
 
   it('exposes SE active rail class token', () => {
-    expect(SE_RAIL_ACTIVE_BUTTON_CLASS).toContain('bg-white/6')
+    expect(SE_RAIL_ACTIVE_BUTTON_CLASS).toContain('bg-surface-selected')
   })
 
   it('returns non-colorable lucide icon props', () => {
