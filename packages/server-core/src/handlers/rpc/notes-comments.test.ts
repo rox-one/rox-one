@@ -232,8 +232,31 @@ describe('note comment threads, document scope, and reactions', () => {
     const cleared = await updateNoteCommentForRoot(notesRoot, {
       noteId: 'Daily',
       commentId: created.id,
-      reaction: { emoji: '👍', author: 'Вы' },
+      reaction: { emoji: '👍' },
     })
     expect(cleared.reactions).toEqual([])
+  })
+
+  it('ignores client-supplied reaction.author and forces reply anchors to null', async () => {
+    const root = await createNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      body: 'Корень',
+      anchor,
+    })
+    const reply = await createNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      body: 'Ответ с якорем',
+      parentId: root.id,
+      anchor,
+    })
+    expect(reply.anchor).toBeNull()
+
+    const spoofed = await updateNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      commentId: root.id,
+      // Runtime payload may still carry author; server must ignore it.
+      reaction: { emoji: '🎉', author: 'attacker' } as { emoji: string },
+    })
+    expect(spoofed.reactions).toEqual([{ emoji: '🎉', authors: ['Вы'] }])
   })
 })

@@ -627,9 +627,9 @@ export async function createNoteCommentForRoot(notesRoot: string, input: CreateN
       noteId: safeNoteId,
       author: typeof input.author === 'string' && input.author.trim() ? input.author.trim().slice(0, 80) : 'Вы',
       body: cleanCommentText(input.body, 'comment body', 20_000),
-      // Replies inherit selection context from the parent in the UI; whole-document
-      // roots omit the anchor entirely.
-      anchor: sanitizeOptionalCommentAnchor(input.anchor),
+      // Replies always inherit context from the parent in the UI — never store a
+      // selection anchor on a reply, even if the client sent one.
+      anchor: parentId ? null : sanitizeOptionalCommentAnchor(input.anchor),
       parentId,
       reactions: [],
       createdAt: now,
@@ -653,10 +653,8 @@ export async function updateNoteCommentForRoot(notesRoot: string, input: UpdateN
     let reactions = previous.reactions ?? []
     if (input.reaction) {
       const emoji = sanitizeCommentReactionEmoji(input.reaction.emoji)
-      const author = typeof input.reaction.author === 'string' && input.reaction.author.trim()
-        ? input.reaction.author.trim().slice(0, 80)
-        : 'Вы'
-      reactions = toggleCommentReaction(reactions, emoji, author)
+      // Bind toggles to the local principal only — ignore any client-supplied author.
+      reactions = toggleCommentReaction(reactions, emoji, 'Вы')
     }
     const next: NoteCommentThread = {
       ...previous,

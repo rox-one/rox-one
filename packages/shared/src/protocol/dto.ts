@@ -794,8 +794,8 @@ export interface UpdateNoteCommentInput {
   commentId: string
   body?: string
   resolved?: boolean
-  /** Toggle this emoji for the given author (default local "Вы"). */
-  reaction?: { emoji: string; author?: string }
+  /** Toggle this emoji for the fixed local identity (server binds author; client cannot spoof). */
+  reaction?: { emoji: string }
 }
 
 /** One note version in history (list row; no body). */
