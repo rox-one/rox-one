@@ -51,6 +51,12 @@ export function applicableFields(o: CanvasObject): ReadonlySet<StyleField> {
     case 'connector':
       set.add('stroke'); set.add('strokeWidth')
       break
+    case 'frame':
+      set.add('fill'); set.add('stroke'); set.add('strokeWidth'); set.add('cornerRadius')
+      break
+    case 'image':
+      set.add('stroke'); set.add('strokeWidth')
+      break
     default:
       // entity / unknown: opacity only
       break

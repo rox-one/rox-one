@@ -291,6 +291,31 @@ export class CanvasDoc {
     const t = (this.objects.get(id)?.get('props') as Y.Map<unknown> | undefined)?.get(TEXT_PROP)
     return t instanceof Y.Text ? t : undefined
   }
+
+  /** Register / refresh asset metadata in the board CRDT (bytes live on disk). */
+  setAssetMeta(assetId: string, meta: { hash: string; mime: string; size: number; name: string }, origin: Origin): void {
+    if (!assetId || typeof assetId !== 'string') throw new CanvasValidationError(assetId || 'asset', ['bad asset id'])
+    if (!meta.hash || meta.hash !== assetId) throw new CanvasValidationError(assetId, ['asset id must equal content hash'])
+    if (typeof meta.mime !== 'string' || !meta.mime) throw new CanvasValidationError(assetId, ['bad mime'])
+    if (!Number.isFinite(meta.size) || meta.size < 0) throw new CanvasValidationError(assetId, ['bad size'])
+    const name = typeof meta.name === 'string' ? meta.name : 'image'
+    this.doc.transact(() => {
+      this.assets.set(assetId, { hash: meta.hash, mime: meta.mime, size: meta.size, name })
+    }, origin)
+  }
+
+  getAssetMeta(assetId: string): { hash: string; mime: string; size: number; name: string } | undefined {
+    const v = this.assets.get(assetId)
+    if (!v || typeof v !== 'object') return undefined
+    const m = v as Record<string, unknown>
+    if (typeof m.hash !== 'string' || typeof m.mime !== 'string') return undefined
+    return {
+      hash: m.hash,
+      mime: m.mime,
+      size: typeof m.size === 'number' ? m.size : 0,
+      name: typeof m.name === 'string' ? m.name : 'image',
+    }
+  }
 }
 
 /** Nested Y.Map at `key` (upgrades a legacy plain-object value in place). */

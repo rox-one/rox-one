@@ -85,7 +85,14 @@ export const PROP_SCHEMAS: Partial<Record<ObjectType, z.ZodTypeAny>> = {
   path: z.object({ d: z.string().min(1) }).passthrough(),
   line: z.object({ points: pointList }).passthrough(),
   connector: z.object({ from: endpoint, to: endpoint, routing: z.enum(['straight', 'elbow', 'curved']).default('elbow'), startHead: z.string().optional(), endHead: z.string().optional() }).passthrough(),
-  image: z.object({ assetId: z.string().min(1) }).passthrough(),
+  frame: z.object({
+    clip: z.boolean().optional(),
+    label: z.string().optional(),
+  }).passthrough(),
+  image: z.object({
+    assetId: z.string().min(1),
+    fit: z.enum(['cover', 'contain', 'fill']).optional(),
+  }).passthrough(),
   video: z.object({ assetId: z.string().min(1) }).passthrough(),
   audio: z.object({ assetId: z.string().min(1) }).passthrough(),
   embed: z.object({ url: z.string().url() }).passthrough(),

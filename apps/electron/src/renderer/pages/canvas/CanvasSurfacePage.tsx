@@ -6,10 +6,10 @@
  * go back as Yjs updates, main forwards every change (incl. its own, e.g.
  * rename) to the other renderers that have the board open.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactElement, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import * as Y from 'yjs'
-import { ArrowLeft, Circle, Clock, LayoutGrid, Link2, Minus, MousePointer2, Pencil, Plus, RotateCcw, Search, Share2, Square, Star, StickyNote, Trash2, Type, ZoomIn } from 'lucide-react'
+import { ArrowLeft, Circle, Clock, Frame, Image as ImageIcon, LayoutGrid, Link2, Minus, MousePointer2, Pencil, Plus, RotateCcw, Search, Share2, Square, Star, StickyNote, Trash2, Type, ZoomIn } from 'lucide-react'
 import {
   actorOrigin, CanvasDoc, createUndoManager, guardEntityCards, linkEntityCard, removeEntityCards, SpatialIndex, watchEntityLinks,
   type CanvasObject, type EntityCardContext, type EntityRef, type ResolvedEntity,
@@ -27,6 +27,10 @@ import {
 import { bindTextArea } from './live-text'
 import { StyleInspector } from './StyleInspector'
 import { applyStyleField, FIELD_MAX, normalizeColorInput, type FieldValue, type StyleField } from './style-model'
+import {
+  childrenByParent, collectDescendantIds, DEFAULT_FRAME, defaultImageBox, frameClips, imagePreserveAspectRatio, nestParentId,
+  readFrameLabel, readImageFit,
+} from './image-frame'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
@@ -141,7 +145,7 @@ function CanvasSidebar({ boards, trashed, favs, recent, openId, onOpen, onRestor
       <span className="truncate">{b.title}</span>
     </button>
   )
-  const section = (icon: React.ReactNode, label: string, body: React.ReactNode, testid: string) => (
+  const section = (icon: ReactNode, label: string, body: ReactNode, testid: string) => (
     <div className="mt-2" data-testid={testid}>
       <div className="flex items-center gap-1.5 px-2 pb-1 text-xs font-medium uppercase tracking-wide text-text-muted">{icon}{label}</div>
       {body}
@@ -226,7 +230,7 @@ function BoardList({ workspaceId, boards, error, setError, favs, onToggleFav, on
   )
 }
 
-type Tool = 'select' | 'sticky' | 'rect' | 'ellipse' | 'text' | 'line' | 'ink'
+type Tool = 'select' | 'sticky' | 'rect' | 'ellipse' | 'text' | 'line' | 'ink' | 'frame' | 'image'
 
 function useBoard(workspaceId: string, boardId: string) {
   const [board, setBoard] = useState<CanvasDoc | null>(null)
@@ -309,6 +313,10 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const [cardDeleteAllowed, setCardDeleteAllowed] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const pendingImageAt = useRef<{ x: number; y: number } | null>(null)
+  const assetUrlsRef = useRef<Map<string, string>>(new Map())
+  const [assetUrls, setAssetUrls] = useState<Record<string, string>>({})
   const drag = useRef<Drag | null>(null)
   const undo = useMemo(() => (board ? createUndoManager(board, LOCAL) : null), [board])
   useEffect(() => () => { if (undo) undo.captureTimeout = 400 }, [undo])
@@ -389,6 +397,53 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     return all.filter(o => !o.hidden && (visible.has(o.id) || sel.has(o.id) || o.id === editing))
   }, [all, index, view, size, selectedIds, editing])
   const title = board?.getMeta().title ?? ''
+  // Resolve image asset bytes → blob URLs (revoked when the board unmounts / hash drops).
+  useEffect(() => {
+    const api = bridge()
+    if (!api?.getAsset || !board) return
+    let alive = true
+    const needed = new Set<string>()
+    for (const o of all) {
+      if (o.type !== 'image') continue
+      const id = o.props.assetId
+      if (typeof id === 'string' && id) needed.add(id)
+    }
+    const cache = assetUrlsRef.current
+    for (const [hash, url] of [...cache.entries()]) {
+      if (!needed.has(hash)) { URL.revokeObjectURL(url); cache.delete(hash) }
+    }
+    const load = async () => {
+      let changed = false
+      for (const hash of needed) {
+        if (cache.has(hash)) continue
+        try {
+          const bytes = await api.getAsset(workspaceId, hash)
+          if (!alive) return
+          const meta = board.getAssetMeta(hash)
+          const mime = meta?.mime && meta.mime.startsWith('image/') ? meta.mime : 'application/octet-stream'
+          const url = URL.createObjectURL(new Blob([bytes], { type: mime }))
+          cache.set(hash, url)
+          changed = true
+        } catch (e) {
+          console.warn('[canvas] asset', hash, e)
+        }
+      }
+      if (alive && changed) setAssetUrls(Object.fromEntries(cache))
+      else if (alive) setAssetUrls(prev => {
+        const next = Object.fromEntries(cache)
+        const prevKeys = Object.keys(prev)
+        const nextKeys = Object.keys(next)
+        if (prevKeys.length === nextKeys.length && prevKeys.every(k => prev[k] === next[k])) return prev
+        return next
+      })
+    }
+    void load()
+    return () => { alive = false }
+  }, [all, board, workspaceId, version])
+  useEffect(() => () => {
+    for (const url of assetUrlsRef.current.values()) URL.revokeObjectURL(url)
+    assetUrlsRef.current.clear()
+  }, [])
   useEffect(() => {
     for (const o of objects) if (o.type === 'entity') {
       const ref = { kind: String(o.props.kind), id: String(o.props.entityId) }
@@ -470,6 +525,37 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     return () => window.removeEventListener('keydown', onKey)
   })
 
+
+  const placeImageFromFile = async (file: File, at: { x: number; y: number }) => {
+    if (!board) return
+    const api = bridge()
+    if (!api?.putAsset) { setNotice(t('canvas.error.save')); return }
+    try {
+      const buf = new Uint8Array(await file.arrayBuffer())
+      const meta = await api.putAsset(workspaceId, buf, file.type || 'image/png', file.name || 'image')
+      board.setAssetMeta(meta.hash, meta, LOCAL)
+      // Natural size when the browser can decode; else a square default box.
+      const dims = await new Promise<{ w: number; h: number }>(resolve => {
+        const url = URL.createObjectURL(file)
+        const img = new window.Image()
+        img.onload = () => { resolve(defaultImageBox(img.naturalWidth, img.naturalHeight)); URL.revokeObjectURL(url) }
+        img.onerror = () => { resolve(defaultImageBox(480, 480)); URL.revokeObjectURL(url) }
+        img.src = url
+      })
+      const parentId = nestParentId(selectedIds.map(id => board.get(id)).filter((o): o is CanvasObject => !!o))
+      const [id] = board.add([{
+        type: 'image', x: at.x, y: at.y, w: dims.w, h: dims.h, rotation: 0,
+        parentId,
+        props: { assetId: meta.hash, fit: 'contain' },
+      }], LOCAL)
+      setSelectedIds([id!])
+      setTool('select')
+    } catch (e) {
+      console.warn('[canvas] putAsset', e)
+      setNotice(t('canvas.image.failed'))
+    }
+  }
+
   const onCanvasDown = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (!board) return
     if (tool === 'line' || tool === 'ink') {
@@ -495,12 +581,19 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       e.currentTarget.setPointerCapture(e.pointerId)
       return
     }
+    if (tool === 'image') {
+      pendingImageAt.current = toWorld(e.clientX, e.clientY)
+      imageInputRef.current?.click()
+      return
+    }
     if (tool !== 'select') {
       const p = toWorld(e.clientX, e.clientY)
-      const base = { x: p.x, y: p.y, rotation: 0 }
+      const parentId = nestParentId(selectedIds.map(id => board.get(id)).filter((o): o is CanvasObject => !!o))
+      const base = { x: p.x, y: p.y, rotation: 0, parentId }
       const input =
         tool === 'sticky' ? { ...base, type: 'sticky', w: 180, h: 140, props: { text: '' } } :
         tool === 'text' ? { ...base, type: 'text', w: 220, h: 40, props: { text: '' } } :
+        tool === 'frame' ? { ...base, type: 'frame', w: DEFAULT_FRAME.w, h: DEFAULT_FRAME.h, name: t('canvas.frame.defaultName'), props: { clip: true }, style: { fill: { type: 'solid', color: 'transparent' }, stroke: { color: 'currentColor', width: 1.5 } } } :
         { ...base, type: 'shape', w: 160, h: 100, props: { kind: tool === 'rect' ? 'rect' : 'ellipse' } }
       const [id] = board.add([input], LOCAL)
       setSelectedIds([id!])
@@ -541,7 +634,20 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     const d = drag.current
     if (!d || !board) return
     if (d.kind === 'pan') setView(v => ({ ...v, x: d.ox + e.clientX - d.sx, y: d.oy + e.clientY - d.sy }))
-    else if (d.kind === 'move') board.update(d.id, { x: d.ox + (e.clientX - d.sx) / view.zoom, y: d.oy + (e.clientY - d.sy) / view.zoom }, LOCAL)
+    else if (d.kind === 'move') {
+      const nx = d.ox + (e.clientX - d.sx) / view.zoom
+      const ny = d.oy + (e.clientY - d.sy) / view.zoom
+      const cur = board.get(d.id)
+      if (!cur) return
+      const dx = nx - cur.x, dy = ny - cur.y
+      if (dx === 0 && dy === 0) return
+      board.update(d.id, { x: nx, y: ny }, LOCAL)
+      // Absolute child coords: translate every descendant with the parent.
+      for (const id of collectDescendantIds(board.list(), d.id)) {
+        const o = board.get(id)
+        if (o && !o.locked) board.update(id, { x: o.x + dx, y: o.y + dy }, LOCAL)
+      }
+    }
     else if (d.kind === 'resize') {
       const minSize = d.points && d.points.length >= 2 ? 1 : undefined
       const box = resizeRotated(d.o, d.rotation, d.corner, (e.clientX - d.sx) / view.zoom, (e.clientY - d.sy) / view.zoom, minSize)
@@ -613,7 +719,14 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     { id: 'text', icon: Type, label: t('canvas.tool.text') },
     { id: 'line', icon: Minus, label: t('canvas.tool.line') },
     { id: 'ink', icon: Pencil, label: t('canvas.tool.ink') },
+    { id: 'frame', icon: Frame, label: t('canvas.tool.frame') },
+    { id: 'image', icon: ImageIcon, label: t('canvas.tool.image') },
   ]
+  const onImageTool = () => {
+    pendingImageAt.current = center()
+    setTool('image')
+    imageInputRef.current?.click()
+  }
   const editingObj = editing ? all.find(o => o.id === editing) : undefined
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
   const selectedObjects = useMemo(() => all.filter(o => selectedSet.has(o.id)), [all, selectedSet])
@@ -637,10 +750,20 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         <div data-glass-slot="toolbar" className="absolute left-3 top-1/2 z-sticky flex -translate-y-1/2 flex-col gap-1 rounded-lg border border-border bg-background p-1 shadow-sm" role="toolbar">
           {tools.map(({ id, icon: Icon, label }) => (
             <button key={id} title={label} aria-label={label} aria-pressed={tool === id} data-testid={`canvas-tool-${id}`}
-              className={`rounded-md p-2 ${tool === id ? 'bg-accent/15 text-accent' : 'text-text-muted hover:bg-surface-hover'}`} onClick={() => setTool(id)}>
+              className={`rounded-md p-2 ${tool === id ? 'bg-accent/15 text-accent' : 'text-text-muted hover:bg-surface-hover'}`}
+              onClick={() => id === 'image' ? onImageTool() : setTool(id)}>
               <Icon className="icon-toolbar" />
             </button>
           ))}
+          <input ref={imageInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" className="hidden" data-testid="canvas-image-input"
+            onChange={e => {
+              const f = e.target.files?.[0]
+              e.target.value = ''
+              if (!f) { setTool('select'); return }
+              const at = pendingImageAt.current ?? center()
+              pendingImageAt.current = null
+              void placeImageFromFile(f, at)
+            }} />
           <Tip label={t('canvas.tool.entity')}><button aria-label={t('canvas.tool.entity')} aria-pressed={picker} data-testid="canvas-tool-entity"
             className={`rounded-md p-2 ${picker ? 'bg-accent/15 text-accent' : 'text-text-muted hover:bg-surface-hover'}`} onClick={() => setPicker(p => !p)}>
             <Link2 className="icon-toolbar" />
@@ -667,11 +790,19 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
           </defs>
           <rect width="100%" height="100%" fill="url(#canvas-grid)" />
           <g transform={`translate(${view.x} ${view.y}) scale(${view.zoom})`}>
-            {objects.map(o => o.type === 'entity'
-              ? <EntityCardView key={o.id} o={o} selected={selectedSet.has(o.id)} r={resolved[`${String(o.props.kind)}:${String(o.props.entityId)}`]}
-                  onDown={e => onObjectDown(e, o)} onOpen={() => registry.get(String(o.props.kind))?.open({ kind: String(o.props.kind), id: String(o.props.entityId) })} />
-              : <ObjectView key={o.id} o={o} selected={selectedSet.has(o.id)} editing={o.id === editing} placeholder={t('canvas.text.placeholder')}
-                  onDown={e => onObjectDown(e, o)} onEdit={() => (o.type === 'sticky' || o.type === 'text') && setEditing(o.id)} />)}
+            <BoardTree
+              objects={objects}
+              selectedSet={selectedSet}
+              editing={editing}
+              resolved={resolved}
+              assetUrls={assetUrls}
+              frameLabel={t('canvas.frame.defaultName')}
+              placeholder={t('canvas.text.placeholder')}
+              imageMissing={t('canvas.image.missing')}
+              onObjectDown={onObjectDown}
+              onEdit={id => setEditing(id)}
+              onOpenEntity={o => registry.get(String(o.props.kind))?.open({ kind: String(o.props.kind), id: String(o.props.entityId) })}
+            />
             {selectedObj && !editing && <SelectionHandles o={selectedObj} zoom={view.zoom} onDown={(e, h) => onHandleDown(e, selectedObj, h)} />}
           </g>
         </svg>
@@ -844,7 +975,73 @@ function cornerRadiusOf(o: CanvasObject, fallback: number): number {
   return Math.min(FIELD_MAX.cornerRadius, r)
 }
 
-function ObjectView({ o, selected, editing, placeholder, onDown, onEdit }: { o: CanvasObject; selected: boolean; editing: boolean; placeholder: string; onDown: (e: ReactPointerEvent) => void; onEdit: () => void }) {
+function BoardTree({
+  objects, selectedSet, editing, resolved, assetUrls, frameLabel, placeholder, imageMissing, onObjectDown, onEdit, onOpenEntity,
+}: {
+  objects: CanvasObject[]
+  selectedSet: Set<string>
+  editing: string | null
+  resolved: Record<string, ResolvedEntity>
+  assetUrls: Record<string, string>
+  frameLabel: string
+  placeholder: string
+  imageMissing: string
+  onObjectDown: (e: ReactPointerEvent, o: CanvasObject) => void
+  onEdit: (id: string) => void
+  onOpenEntity: (o: CanvasObject) => void
+}) {
+  const byParent = useMemo(() => childrenByParent(objects), [objects])
+  const renderNode = (o: CanvasObject): ReactNode => {
+    const kids = byParent.get(o.id) ?? []
+    if (o.type === 'entity') {
+      return (
+        <g key={o.id}>
+          <EntityCardView o={o} selected={selectedSet.has(o.id)} r={resolved[`${String(o.props.kind)}:${String(o.props.entityId)}`]}
+            onDown={e => onObjectDown(e, o)} onOpen={() => onOpenEntity(o)} />
+          {kids.map(renderNode)}
+        </g>
+      )
+    }
+    if (o.type === 'frame') {
+      const clip = frameClips(o)
+      const clipId = `canvas-frame-clip-${o.id}`
+      return (
+        <g key={o.id} data-object-id={o.id} data-object-type="frame">
+          <ObjectView o={o} selected={selectedSet.has(o.id)} editing={false} placeholder={placeholder}
+            assetUrl={undefined} frameLabel={frameLabel} imageMissing={imageMissing}
+            onDown={e => onObjectDown(e, o)} onEdit={() => {}} />
+          {clip && (
+            <defs>
+              <clipPath id={clipId}>
+                <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={cornerRadiusOf(o, 8)} />
+              </clipPath>
+            </defs>
+          )}
+          <g clipPath={clip ? `url(#${clipId})` : undefined} data-testid={clip ? 'canvas-frame-clip' : undefined}>
+            {kids.map(renderNode)}
+          </g>
+        </g>
+      )
+    }
+    return (
+      <g key={o.id}>
+        <ObjectView o={o} selected={selectedSet.has(o.id)} editing={o.id === editing} placeholder={placeholder}
+          assetUrl={o.type === 'image' && typeof o.props.assetId === 'string' ? assetUrls[o.props.assetId] : undefined}
+          frameLabel={frameLabel} imageMissing={imageMissing}
+          onDown={e => onObjectDown(e, o)} onEdit={() => (o.type === 'sticky' || o.type === 'text') && onEdit(o.id)} />
+        {kids.map(renderNode)}
+      </g>
+    )
+  }
+  return <>{(byParent.get(null) ?? []).map(renderNode)}</>
+}
+
+function ObjectView({ o, selected, editing, placeholder, assetUrl, frameLabel, imageMissing, onDown, onEdit }: {
+  o: CanvasObject; selected: boolean; editing: boolean; placeholder: string
+  assetUrl?: string; frameLabel: string; imageMissing: string
+  onDown: (e: ReactPointerEvent) => void; onEdit: () => void
+}) {
+
   const text = typeof o.props.text === 'string' ? o.props.text : ''
   const sel = selected ? 'stroke-accent' : 'stroke-border'
   const common = { onPointerDown: onDown, onDoubleClick: onEdit, opacity: o.opacity, 'data-object-id': o.id, 'data-object-type': o.type }
@@ -911,6 +1108,36 @@ function ObjectView({ o, selected, editing, placeholder, onDown, onEdit }: { o: 
       </g>
     )
   }
+
+  if (o.type === 'frame') {
+    const sw = strokeWidthOf(o, 1.5)
+    const strokeCls = selected ? 'stroke-accent' : stroke ? '' : 'stroke-border-strong'
+    const fillCls = fill ? '' : 'fill-accent/5'
+    const label = readFrameLabel(o, frameLabel)
+    const rx = cornerRadiusOf(o, 8)
+    return (
+      <g {...common} transform={transform} data-testid="canvas-frame">
+        <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={rx}
+          fill={fill ?? undefined} className={`${fillCls} ${strokeCls}`} stroke={selected ? undefined : stroke}
+          strokeWidth={selected ? 2 : sw} />
+        <text x={o.x + 8} y={o.y - 6} className="fill-text-muted text-xs" style={{ fontSize: 12 }}>{label}</text>
+      </g>
+    )
+  }
+  if (o.type === 'image') {
+    const sw = strokeWidthOf(o, 1)
+    const strokeCls = selected ? 'stroke-accent' : stroke ? '' : 'stroke-border'
+    const fit = readImageFit(o.props)
+    return (
+      <g {...common} transform={transform} data-testid="canvas-image" data-asset-id={typeof o.props.assetId === 'string' ? o.props.assetId : undefined}>
+        <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={4}
+          className={`fill-surface-hover ${strokeCls}`} stroke={selected ? undefined : stroke} strokeWidth={selected ? 2 : sw} />
+        {assetUrl
+          ? <image href={assetUrl} x={o.x} y={o.y} width={o.w} height={o.h} preserveAspectRatio={imagePreserveAspectRatio(fit)} style={{ pointerEvents: 'none' }} />
+          : <text x={o.x + 8} y={o.y + 20} className="fill-text-muted text-xs">{imageMissing}</text>}
+      </g>
+    )
+  }
   // Types without a renderer yet (later phases) still show and stay movable.
   return (
     <g {...common} transform={transform}>
@@ -920,10 +1147,11 @@ function ObjectView({ o, selected, editing, placeholder, onDown, onEdit }: { o: 
   )
 }
 
+
 export default CanvasSurfacePage
 
 /** Tooltip primitive around an icon button (native titles are slow and invisible to keyboard users). */
-function Tip({ label, children }: { label: string; children: React.ReactElement }) {
+function Tip({ label, children }: { label: string; children: ReactElement }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
