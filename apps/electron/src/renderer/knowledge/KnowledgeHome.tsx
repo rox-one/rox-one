@@ -525,9 +525,8 @@ export function KnowledgeHome() {
               <div key={group.key || '__all'}>
                 {group.key ? (
                   <div
-                    className="sticky top-0 z-[1] bg-background/95 px-3 py-1.5 text-xs font-medium uppercase caps-label text-muted-foreground backdrop-blur"
-                    // Arc Glass: sticky group header — the recipe supplies the
-                    // blur + bottom hairline, so the utility blur is overridden.
+                    className="sticky top-0 z-[1] bg-background px-3 py-1.5 text-xs font-medium uppercase caps-label text-muted-foreground"
+                    // SE sticky group header — solid surface (P9.1 / P10b); no Arc-Glass blur tint.
                     data-glass-slot="toolbar"
                   >
                     {group.key === 'ungrouped'
