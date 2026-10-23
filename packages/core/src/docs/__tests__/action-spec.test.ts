@@ -205,6 +205,55 @@ describe('LSX-WP-033 ActionSpec helpers', () => {
     expect(ok.spec.rejectedUnsafe).toBe(false)
   })
 
+
+  test('unreviewed missing-target slash draft is ok and not rejectedUnsafe', () => {
+    const result = normalizeActionSpec({
+      kind: 'command',
+      label: 'Action',
+      reviewState: 'unreviewed',
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) throw new Error('expected ok')
+    expect(result.spec.rejectedUnsafe).toBe(false)
+    expect(result.spec.commandId).toBeUndefined()
+    expect(presentationStateForSpec(result.spec)).toBe('inert')
+
+    const md = renderActionFenceMarkdown(result.spec)
+    expect(md).toContain('```rox-action')
+    expect(md).toContain('"reviewState": "unreviewed"')
+    expect(md).not.toContain('rejectedUnsafe')
+    expect(md).not.toContain('notes.noop')
+
+    expect(renderActionBasicExport(result.spec)).toContain('unreviewed draft')
+    expect(renderActionBasicExport(result.spec)).not.toContain('unreviewed import')
+  })
+
+  test('imported sourceLanguage keeps import copy; rejectedUnsafe only for unsafe payload', () => {
+    const cleanImport = normalizeActionSpec(
+      {
+        kind: 'command',
+        label: 'Sync',
+        commandId: 'notes.sync',
+        reviewState: 'unreviewed',
+      },
+      { imported: true, sourceLanguage: 'button' },
+    )
+    expect(cleanImport.ok).toBe(true)
+    if (!cleanImport.ok) throw new Error('expected ok')
+    expect(cleanImport.spec.rejectedUnsafe).toBe(false)
+    expect(cleanImport.spec.sourceLanguage).toBe('button')
+    expect(presentationStateForSpec(cleanImport.spec)).toBe('inert')
+    expect(renderActionBasicExport(cleanImport.spec)).toContain('unreviewed import')
+
+    const missingTargetImport = normalizeActionSpec(
+      { kind: 'command', label: 'Draft', reviewState: 'unreviewed' },
+      { imported: true, sourceLanguage: 'button' },
+    )
+    expect(missingTargetImport.ok).toBe(true)
+    if (!missingTargetImport.ok) throw new Error('expected ok')
+    expect(missingTargetImport.spec.rejectedUnsafe).toBe(false)
+  })
+
   test('sanitizeActionLabel strips HTML and rejects javascript URLs', () => {
     expect(sanitizeActionLabel('<b>Hi</b> there')).toBe('Hi there')
     expect(sanitizeActionLabel('javascript:alert(1)')).toBe('')

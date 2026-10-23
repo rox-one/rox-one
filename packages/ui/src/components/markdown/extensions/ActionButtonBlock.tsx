@@ -17,6 +17,7 @@ import {
   renderActionBasicExport,
   renderActionFenceMarkdown,
   sanitizeActionLabel,
+  serializeActionSpec,
   settleClientActionAttempt,
   type ActionSpec,
   type ClientActionUiState,
@@ -32,23 +33,47 @@ function translate(key: string, fallback: string): string {
 }
 
 
+/**
+ * On ingest: always store language `rox-action`. Keep inbound lang only as
+ * `sourceLanguage` inside the serialized spec/JSON (never force imported just
+ * because attrs.language !== rox-action after canonicalize).
+ */
+function ingestActionAttrs(code: string, inboundLang: string): { code: string; language: string } {
+  const lang = (inboundLang || 'rox-action').trim().toLowerCase() || 'rox-action'
+  const result = parseActionFenceBody(code, {
+    language: lang,
+    imported: lang !== 'rox-action',
+  })
+  const spec = result.ok ? result.spec : result.inertSpec
+  const withSource: ActionSpec =
+    lang !== 'rox-action' && !spec.sourceLanguage
+      ? { ...spec, sourceLanguage: lang }
+      : spec
+  return {
+    code: serializeActionSpec(withSource).replace(/\n$/, ''),
+    language: 'rox-action',
+  }
+}
+
 function promoteActionFencedBlocks(element: HTMLElement): void {
   for (const pre of Array.from(element.querySelectorAll('pre'))) {
     const codeEl = pre.querySelector('code')
     const lang = (codeEl?.className.match(/language-([\w+-]+)/i)?.[1] ?? '').toLowerCase()
     if (!ACTION_LANGUAGES.has(lang)) continue
+    const ingested = ingestActionAttrs(codeEl?.textContent ?? '', lang || 'rox-action')
     const block = element.ownerDocument.createElement('div')
     block.setAttribute('data-type', 'action-button')
-    block.setAttribute('data-code', codeEl?.textContent ?? '')
-    block.setAttribute('data-language', lang || 'rox-action')
+    block.setAttribute('data-code', ingested.code)
+    block.setAttribute('data-language', ingested.language)
     pre.replaceWith(block)
   }
 }
 
 function parseSpecFromCode(code: string, language?: string): ActionSpec {
+  // After ingest, attrs.language is always rox-action; imported/sourceLanguage
+  // live in the JSON body — do not re-derive imported from language.
   const result = parseActionFenceBody(code, {
     language: language || 'rox-action',
-    imported: language !== undefined && language !== 'rox-action',
   })
   return result.ok ? result.spec : result.inertSpec
 }
@@ -119,13 +144,24 @@ export function insertActionButtonContent(
   editor.chain().focus().insertContentAt(targetPos, createActionButtonContent(spec)).run()
 }
 
-function statusCopy(presentation: ClientActionUiState['presentation']): string {
+function isImportedAction(spec: ActionSpec): boolean {
+  if (spec.rejectedUnsafe) return true
+  const source = typeof spec.sourceLanguage === 'string' ? spec.sourceLanguage.trim().toLowerCase() : ''
+  return Boolean(source && source !== 'rox-action')
+}
+
+function statusCopy(presentation: ClientActionUiState['presentation'], spec: ActionSpec): string {
   switch (presentation) {
     case 'inert':
-      return translate(
-        'notes.actionButton.inertHint',
-        'Imported action is inert until reviewed — not executed.',
-      )
+      return isImportedAction(spec)
+        ? translate(
+            'notes.actionButton.inertHint',
+            'Imported action is inert until reviewed — not executed.',
+          )
+        : translate(
+            'notes.actionButton.draftInertHint',
+            'Draft action is inert until reviewed — not executed.',
+          )
     case 'pending':
       return translate('notes.actionButton.pendingHint', 'Pending (no side effects in this editor).')
     case 'offline':
@@ -223,7 +259,7 @@ function ActionButtonNodeView({
           data-presentation={presentation}
           aria-disabled={!activateAllowed ? true : undefined}
           disabled={!activateAllowed}
-          title={statusCopy(presentation)}
+          title={statusCopy(presentation, spec)}
           aria-label={label}
           onClick={(event) => {
             event.preventDefault()
@@ -238,7 +274,7 @@ function ActionButtonNodeView({
           </span>
         </button>
         <p className="tiptap-action-button-status" data-presentation={presentation}>
-          {statusCopy(presentation)}
+          {statusCopy(presentation, spec)}
         </p>
       </div>
     </NodeViewWrapper>
@@ -298,10 +334,15 @@ export const ActionButtonBlock = Node.create({
     return [
       {
         tag: 'div[data-type="action-button"]',
-        getAttrs: (el: HTMLElement) => ({
-          code: el.getAttribute('data-code') ?? '',
-          language: el.getAttribute('data-language') ?? 'rox-action',
-        }),
+        getAttrs: (el: HTMLElement) => {
+          const inboundLang = el.getAttribute('data-language') ?? 'rox-action'
+          const inboundCode = el.getAttribute('data-code') ?? ''
+          // Legacy HTML may still carry inbound fence langs — canonicalize on parse.
+          if (inboundLang.trim().toLowerCase() === 'rox-action') {
+            return { code: inboundCode, language: 'rox-action' }
+          }
+          return ingestActionAttrs(inboundCode, inboundLang)
+        },
       },
     ]
   },
@@ -321,9 +362,10 @@ export const ActionButtonBlock = Node.create({
   parseMarkdown: (token: any, helpers: any) => {
     const lang = String(token.lang ?? '').toLowerCase()
     if (!ACTION_LANGUAGES.has(lang)) return []
+    const ingested = ingestActionAttrs(String(token.text ?? ''), lang || 'rox-action')
     return helpers.createNode('actionButton', {
-      code: token.text ?? '',
-      language: lang || 'rox-action',
+      code: ingested.code,
+      language: ingested.language,
     })
   },
 

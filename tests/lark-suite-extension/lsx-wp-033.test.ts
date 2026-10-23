@@ -50,7 +50,11 @@ describe('LSX-WP-033 action buttons typed registry + inert imports', () => {
     const hit = filterSlashCommandItems(items, 'action').find((item) => item.id === 'action-button')
     expect(hit).toBeTruthy()
     hit!.run(editor as any)
-    expect(JSON.stringify(editor.getJSON())).toContain('actionButton')
+    const flat = JSON.stringify(editor.getJSON())
+    expect(flat).toContain('actionButton')
+    expect(flat).toContain('unreviewed')
+    expect(flat).not.toContain('rejectedUnsafe')
+    expect(flat).not.toContain('notes.noop')
     editor.destroy()
   })
 

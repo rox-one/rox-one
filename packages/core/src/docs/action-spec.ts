@@ -265,17 +265,25 @@ export function normalizeActionSpec(
   options?: { imported?: boolean; sourceLanguage?: string },
 ): ActionSpecParseResult {
   const imported = options?.imported === true
-  const sourceLanguage = options?.sourceLanguage
 
   if (!isPlainObject(raw)) {
     const inertSpec = defaultInertSpec({
       label: 'Action',
-      sourceLanguage,
+      sourceLanguage: options?.sourceLanguage,
     })
     return { ok: false, issues: ['invalid-shape'], inertSpec }
   }
 
+  const rawSource =
+    typeof raw.sourceLanguage === 'string' ? raw.sourceLanguage.replace(CONTROL_CHARS_RE, '').trim() : ''
+  const sourceLanguage =
+    options?.sourceLanguage ??
+    (rawSource ? rawSource.toLowerCase() : undefined)
+
   const issues: ActionSpecValidationIssue[] = []
+  // Preserve previously-flagged unsafe imports across serialize → re-parse
+  // (serialize strips raw script keys but keeps rejectedUnsafe:true).
+  if (raw.rejectedUnsafe === true) issues.push('unsafe-payload')
   const unsafeKeys = objectHasUnsafeKeys(raw)
   if (unsafeKeys) issues.push('unsafe-payload')
 
@@ -342,20 +350,42 @@ export function normalizeActionSpec(
 
   if (kind && !requiredTarget(kind, candidate)) issues.push('missing-target')
 
-  const rejectedUnsafe = issues.includes('unsafe-payload') || issues.includes('unsafe-label') || issues.includes('invalid-inputs')
-  if (rejectedUnsafe || !kind || issues.includes('unknown-kind') || issues.includes('missing-target')) {
+  // rejectedUnsafe is ONLY for unsafe-payload / unsafe-label / invalid-inputs.
+  // missing-target alone (slash unreviewed drafts omit commandId) is a clean draft.
+  const rejectedUnsafe =
+    issues.includes('unsafe-payload') ||
+    issues.includes('unsafe-label') ||
+    issues.includes('invalid-inputs')
+
+  if (rejectedUnsafe) {
     const inertSpec: ActionSpec = {
       ...candidate,
       reviewState: 'unreviewed',
       rejectedUnsafe: true,
     }
-    return { ok: false, issues: issues.length ? issues : ['invalid-shape'], inertSpec }
+    return { ok: false, issues, inertSpec }
   }
 
-  // Reviewed only when inbound said so AND payload is clean AND not imported.
-  if (rejectedUnsafe) {
-    candidate.reviewState = 'unreviewed'
-    candidate.rejectedUnsafe = true
+  if (!kind || issues.includes('unknown-kind')) {
+    const inertSpec: ActionSpec = {
+      ...candidate,
+      reviewState: 'unreviewed',
+      rejectedUnsafe: false,
+    }
+    return { ok: false, issues: issues.length ? issues : ['unknown-kind'], inertSpec }
+  }
+
+  if (issues.includes('missing-target')) {
+    // Unreviewed + missing-target = clean draft; inert via reviewState, not rejectedUnsafe.
+    if (candidate.reviewState === 'unreviewed') {
+      return { ok: true, spec: { ...candidate, rejectedUnsafe: false } }
+    }
+    const inertSpec: ActionSpec = {
+      ...candidate,
+      reviewState: 'unreviewed',
+      rejectedUnsafe: false,
+    }
+    return { ok: false, issues, inertSpec }
   }
 
   return { ok: true, spec: candidate }
@@ -406,7 +436,10 @@ export function parseActionFenceBody(
   if (trimmed.startsWith('{')) {
     try {
       const parsed = JSON.parse(trimmed) as unknown
-      return normalizeActionSpec(parsed, { imported, sourceLanguage: language })
+      return normalizeActionSpec(parsed, {
+        imported,
+        sourceLanguage: language && language !== 'rox-action' ? language : undefined,
+      })
     } catch {
       return {
         ok: false,
@@ -466,6 +499,9 @@ export function serializeActionSpec(spec: ActionSpec): string {
   if (spec.workflowRef) payload.workflowRef = spec.workflowRef
   if (spec.inputs && Object.keys(spec.inputs).length > 0) payload.inputs = spec.inputs
   if (spec.rejectedUnsafe) payload.rejectedUnsafe = true
+  if (spec.sourceLanguage && spec.sourceLanguage !== 'rox-action') {
+    payload.sourceLanguage = spec.sourceLanguage
+  }
   return `${JSON.stringify(payload, null, 2)}\n`
 }
 
@@ -481,9 +517,15 @@ export function renderActionFenceMarkdown(spec: ActionSpec, _language = 'rox-act
 export function renderActionBasicExport(spec: ActionSpec): string {
   const label = sanitizeActionLabel(spec.label) || defaultLabelForKind(spec.kind)
   const state = presentationStateForSpec(spec)
+  const imported =
+    spec.rejectedUnsafe ||
+    (typeof spec.sourceLanguage === 'string' &&
+      spec.sourceLanguage.trim().toLowerCase() !== 'rox-action')
   const note =
     state === 'inert'
-      ? 'inert (unreviewed import — not executed)'
+      ? imported
+        ? 'inert (unreviewed import — not executed)'
+        : 'inert (unreviewed draft — not executed)'
       : 'declarative action (client export — not executed)'
   return `[Action: ${label} · ${spec.kind} · ${note}]`
 }
