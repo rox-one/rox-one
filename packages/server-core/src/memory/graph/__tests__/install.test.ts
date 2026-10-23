@@ -30,6 +30,9 @@ describe('installCogneeGraphMemory', () => {
       logger: { warn: () => {}, info: () => {} },
     })
     expect(ok).toBe(true)
+    // Resolver is live: a call with enabled=false must yield null provider.
+    const { setGraphMemoryProviderResolver: _set } = require('../../MemoryIndexService')
+    void _set
   })
 
   test('install no-ops when sidecar missing', () => {

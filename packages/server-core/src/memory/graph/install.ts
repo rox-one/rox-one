@@ -10,7 +10,8 @@ import { createCogneeProviderResolver } from './cognee-node'
 
 export function resolveCogneeSidecarSourceDir(explicit?: string): string | null {
   if (explicit !== undefined) {
-    return explicit && existsSync(explicit) ? explicit : null
+    if (!explicit || !existsSync(join(explicit, 'pyproject.toml'))) return null
+    return explicit
   }
   const bundled = getBundledAssetsDir('cognee-sidecar')
   if (bundled && existsSync(join(bundled, 'pyproject.toml'))) return bundled
@@ -55,9 +56,8 @@ export function installCogneeGraphMemory(opts: InstallCogneeGraphMemoryOptions =
     }
     setGraphMemoryProviderResolver(null)
   }
+  // Only 'exit': SIGINT/SIGTERM listeners would override Node/Electron default terminate.
   process.once('exit', shutdown)
-  process.once('SIGINT', shutdown)
-  process.once('SIGTERM', shutdown)
   opts.logger?.info?.(`cognee graph memory: resolver registered (${dir})`)
   return true
 }

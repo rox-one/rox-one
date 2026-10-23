@@ -195,8 +195,9 @@ export interface MemoryConfig {
   /**
    * Graph-memory (cognee) layer. Default true; Settings → Память can toggle
    * later (PR6). When false, the resolver returns null and FTS/semantic stay.
+   * Optional on the type so older fixtures stay valid; getMemoryConfig always returns a boolean.
    */
-  graph: boolean
+  graph?: boolean
   /**
    * Dream (spec §9): hours between background memory-dream runs, default 4.
    * One DreamScheduler per process ticks banks (main + active workspaces) and

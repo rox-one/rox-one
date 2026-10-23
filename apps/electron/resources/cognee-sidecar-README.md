@@ -1,0 +1,1 @@
+Cognee sidecar is packaged from `packages/cognee-sidecar` via electron-builder `extraResources` (see electron-builder.yml). In monorepo/dev, `resolveCogneeSidecarSourceDir()` finds `packages/cognee-sidecar` on disk.
