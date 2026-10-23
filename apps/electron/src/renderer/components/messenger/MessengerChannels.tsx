@@ -72,9 +72,52 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
     return (userId: string) => (userId === selfUserId ? t('teamCollab.you') : map.get(userId) ?? userId.slice(0, 8))
   }, [members, selfUserId, t])
 
-  // Presence: in a live call (any channel) → «call»; this device → online; else offline.
+  // Presence: prefer teamChat:presence (/v1/im when Messenger is up); overlay in-call; fallback self/offline.
+  // After #2196, optional onImPresence push keeps the map warm without waiting for the next poll.
   const inCallIds = React.useMemo(() => new Set(channels.channels.flatMap(c => c.activeCall?.participantIds ?? [])), [channels.channels])
-  const presenceOf = React.useCallback((userId: string): Presence => inCallIds.has(userId) ? 'call' : userId === selfUserId ? 'online' : 'offline', [inCallIds, selfUserId])
+  const [imPresence, setImPresence] = React.useState<Map<string, Presence>>(() => new Map())
+  const memberIdsKey = selected?.memberIds?.join(',') ?? ''
+  React.useEffect(() => {
+    if (!selected?.memberIds?.length || !window.electronAPI.teamChatPresence) {
+      setImPresence(new Map())
+      return
+    }
+    let cancelled = false
+    const load = () => {
+      void window.electronAPI.teamChatPresence(selected.memberIds).then((rows) => {
+        if (cancelled) return
+        const next = new Map<string, Presence>()
+        for (const row of rows) {
+          if (row.status === 'call' || row.status === 'online' || row.status === 'offline') next.set(row.userId, row.status)
+        }
+        setImPresence(next)
+      }).catch(() => { if (!cancelled) setImPresence(new Map()) })
+    }
+    load()
+    const timer = window.setInterval(load, 30_000)
+    return () => { cancelled = true; window.clearInterval(timer) }
+  }, [selected?.id, memberIdsKey])
+  React.useEffect(() => {
+    const api = window.electronAPI as typeof window.electronAPI & {
+      onImPresence?: (cb: (ev: { userId: string; status: string }) => void) => () => void
+    }
+    if (!api.onImPresence) return
+    return api.onImPresence((ev) => {
+      if (!ev?.userId) return
+      const status: Presence = ev.status === 'offline' ? 'offline' : 'online'
+      setImPresence((prev) => {
+        const next = new Map(prev)
+        next.set(ev.userId, status)
+        return next
+      })
+    })
+  }, [])
+  const presenceOf = React.useCallback((userId: string): Presence => {
+    if (inCallIds.has(userId)) return 'call'
+    const remote = imPresence.get(userId)
+    if (remote) return remote
+    return userId === selfUserId ? 'online' : 'offline'
+  }, [inCallIds, imPresence, selfUserId])
   const onlineCount = selected ? selected.memberIds.filter(id => presenceOf(id) !== 'offline').length : 0
   const inThisCall = call.status === 'connected' && call.channelId === selected?.id
   const joining = call.status === 'connecting'

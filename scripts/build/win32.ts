@@ -141,7 +141,7 @@ export async function buildElectronAppWindows(config: BuildConfig): Promise<void
   // Build preload - invoke esbuild directly via node
   console.log('  Building preload...');
   run(
-    'node ./node_modules/esbuild/bin/esbuild apps/electron/src/preload/bootstrap.ts --bundle --platform=node --format=cjs --outfile=apps/electron/dist/bootstrap-preload.cjs --external:electron --alias:@anthropic-ai/claude-agent-sdk=apps/electron/src/renderer/shims/claude-agent-sdk-stub.ts',
+    'node ./node_modules/esbuild/bin/esbuild apps/electron/src/preload/bootstrap.ts --bundle --platform=node --format=cjs --outfile=apps/electron/dist/bootstrap-preload.cjs --external:electron --alias:@anthropic-ai/claude-agent-sdk=apps/electron/src/renderer/shims/claude-agent-sdk-stub.ts --alias:@earendil-works/pi-ai=apps/electron/src/renderer/shims/preload-heavy-dep-stub.ts --alias:@google/genai=apps/electron/src/renderer/shims/preload-heavy-dep-stub.ts --alias:beautiful-mermaid=apps/electron/src/renderer/shims/preload-heavy-dep-stub.ts --alias:elkjs=apps/electron/src/renderer/shims/preload-heavy-dep-stub.ts',
     rootDir
   );
 
