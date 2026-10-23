@@ -103,6 +103,14 @@ asar: false
 # OEM pin metadata + G2 record. Kernel binary is staged into resources/oem-kernel
 # (gitignored except keepers); Windows production beforePack rejects empty/README-only staging.
 extraResources:
+  # Cognee graph-memory Python sidecar (lazy runtime install).
+  - from: ../../packages/cognee-sidecar
+    to: app/dist/resources/cognee-sidecar
+    filter:
+      - "**/*"
+      - "!**/__pycache__/**"
+      - "!**/.venv/**"
+      - "!**/tests/**"
   - from: resources/oem-kernel-pin.json
     to: oem-kernel-pin.json
   - from: resources/oem-kernel
