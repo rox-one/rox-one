@@ -6,7 +6,7 @@ import { useAtomValue, useSetAtom } from "jotai"
 import { isToday, isYesterday, format, startOfDay } from "date-fns"
 import { getDateLocale } from "@rox/shared/i18n/date-locale"
 import { useAction } from "@/actions"
-import { Inbox, Archive, ChevronRight, FolderPlus, GripVertical, ListFilter } from "lucide-react"
+import { Inbox, Archive, ChevronRight, FolderPlus, GripVertical, ListFilter, Search } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -1758,18 +1758,20 @@ export function SessionList({
         }
         emptyState={
           isSearchMode && !isSearchingContent ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4">
-              <p className="text-sm text-muted-foreground">{t("session.noSessionsFound")}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("session.noSessionsFoundDesc")}
-              </p>
+            <EntityListEmptyScreen
+              icon={<Search />}
+              title={t("session.noSessionsFound")}
+              description={t("session.noSessionsFoundDesc")}
+              className="h-full"
+            >
               <button
+                type="button"
                 onClick={() => onSearchChange?.('')}
-                className="inline-flex items-center min-h-[var(--control-hit-min)] text-xs text-foreground hover:underline mt-2"
+                className="inline-flex items-center min-h-[var(--control-hit-min)] px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors duration-[var(--motion-fast)]"
               >
                 {t("session.clearSearch")}
               </button>
-            </div>
+            </EntityListEmptyScreen>
           ) : undefined
         }
         viewportRef={scrollViewportRef}
