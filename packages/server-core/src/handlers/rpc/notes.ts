@@ -1996,6 +1996,8 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
       const id = templateIdFromRelativePath(rel).toLowerCase()
       // Full relative path must already match normalized `${id}.md` (nested case too).
       if (rel !== `${id}.md`) continue
+      // System Daily template is not a library catalog entry (save/create-id still hard-reserved).
+      if (id === 'daily') continue
       let content: string
       try {
         content = await readFileNoFollow(abs)

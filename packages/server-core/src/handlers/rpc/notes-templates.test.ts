@@ -34,10 +34,10 @@ afterEach(() => {
 describe('note templates library', () => {
   it('lists templates sorted by title with safe ids', async () => {
     const listed = await listNoteTemplatesForRoot(notesRoot)
-    expect(listed.map((item) => item.id)).toEqual(['daily', 'meeting'])
-    expect(listed[0]?.title).toBe('Daily')
-    expect(listed[1]?.title).toBe('Meeting notes')
-    expect(listed[1]?.relativePath).toBe('templates/meeting.md')
+    expect(listed.map((item) => item.id)).toEqual(['meeting'])
+    expect(listed[0]?.title).toBe('Meeting notes')
+    expect(listed[0]?.relativePath).toBe('templates/meeting.md')
+    expect(listed.some((item) => item.id === 'daily')).toBe(false)
   })
 
   it('reads template body and properties without title', async () => {
@@ -113,7 +113,7 @@ describe('note templates library', () => {
   it('skips templates whose basename casing does not match normalized id', async () => {
     writeFileSync(join(notesRoot, 'templates', 'Weekly.MD'), '---\ntitle: Weekly\n---\n\nbody\n', 'utf-8')
     const listed = await listNoteTemplatesForRoot(notesRoot)
-    expect(listed.map((item) => item.id)).toEqual(['daily', 'meeting'])
+    expect(listed.map((item) => item.id)).toEqual(['meeting'])
   })
 
   it('materializes a note without inheriting cover/icon/createdAt from the template', async () => {
@@ -137,7 +137,7 @@ describe('note templates library', () => {
     mkdirSync(join(notesRoot, 'templates', 'Foo'), { recursive: true })
     writeFileSync(join(notesRoot, 'templates', 'Foo', 'daily.md'), '---\ntitle: Nested\n---\n\nbody\n', 'utf-8')
     const listed = await listNoteTemplatesForRoot(notesRoot)
-    expect(listed.map((item) => item.id)).toEqual(['daily', 'meeting'])
+    expect(listed.map((item) => item.id)).toEqual(['meeting'])
   })
 
   it('lists nested templates when the full relative path matches normalized id', async () => {
@@ -250,6 +250,19 @@ describe('note templates library', () => {
         unlinkSync(ghost)
       } catch { /* ignore */ }
     }
+  })
+
+
+  it('excludes system daily template from library catalog', async () => {
+    const listed = await listNoteTemplatesForRoot(notesRoot)
+    expect(listed.some((item) => item.id === 'daily')).toBe(false)
+    // Save still hard-rejects daily even though file may exist on disk.
+    await expect(saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'daily',
+      title: 'Daily',
+      body: 'x',
+      confirmReplace: true,
+    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
   })
 
 })
