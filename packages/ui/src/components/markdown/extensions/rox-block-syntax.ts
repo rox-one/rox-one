@@ -369,7 +369,6 @@ export function buildRoxBlockDecorations(
         class: `tiptap-rox-block tiptap-rox-block--${target.marker.kind}`,
         'data-rox-block-collapsed': String(collapsed),
         'data-rox-block-kind': target.marker.kind,
-        'data-rox-kind': target.marker.kind,
       }),
       Decoration.widget(
         target.markerTextFrom,

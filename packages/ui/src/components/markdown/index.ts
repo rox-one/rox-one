@@ -75,3 +75,13 @@ export {
   serializeEntityMention,
   type EntityMentionMatch,
 } from './entity-markdown'
+
+export {
+  ROX_BLOCK_KINDS,
+  ROX_BLOCK_KIND_ALIASES,
+  canonicalizeRoxBlockKind,
+  createRoxBlockContent,
+  type RoxBlockKind,
+  type RoxBlockMarker,
+  type RoxBlockToggle,
+} from './extensions/rox-block-syntax'

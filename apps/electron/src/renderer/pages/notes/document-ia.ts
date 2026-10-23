@@ -5,6 +5,11 @@
 
 import i18n from 'i18next'
 import { toBasicMarkdownExport } from '@rox/core/docs'
+import {
+  ROX_BLOCK_KINDS,
+  ROX_BLOCK_KIND_ALIASES,
+  canonicalizeRoxBlockKind,
+} from '@rox/ui/markdown'
 
 function authoringLabel(key: string): string {
   const value = i18n.t(key)
@@ -142,7 +147,7 @@ const FOOTNOTE_REF_RE = /\[\^([^\]]+)\]/g
 const BLOCK_ID_RE = /(?:^|\s)\^([A-Za-z0-9_-]{3,})\s*$/gm
 const COMMENT_RE = /<!--\s*rox:comment\s+id="([^"]+)"\s+quote="([^"]*)"\s+created="(\d+)"\s*-->\n?([\s\S]*?)<!--\s*\/rox:comment\s*-->/g
 const FOLD_RE = /<details\s+data-rox-fold="([^"]+)">\s*<summary>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/gi
-const CALLOUT_KIND_RE = 'note|info|warning|tip|success|question|spoiler|details|hint|important|check|done|help|faq|caution|attention'
+const CALLOUT_KIND_RE = [...ROX_BLOCK_KINDS, ...Object.keys(ROX_BLOCK_KIND_ALIASES)].join('|')
 const SPOILER_RE = new RegExp(`^>\\s*\\[!(${CALLOUT_KIND_RE})\\]([+-])?(?:[ \\t].*)?\\s*$`, 'gim')
 const TABLE_RE = /^\|.+\|\s*$/gm
 const HR_RE = /^(?:-{3,}|\*{3,}|_{3,})\s*$/gm
@@ -789,13 +794,7 @@ export function parseNoteDocument(markdown: string): NoteDocumentStructure {
     folds: extractFolds(markdown),
     spoilers: [...markdown.matchAll(SPOILER_RE)].map(match => {
       const raw = (match[1] ?? 'spoiler').toLowerCase()
-      const aliases: Record<string, string> = {
-        hint: 'tip', important: 'tip',
-        check: 'success', done: 'success',
-        help: 'question', faq: 'question',
-        caution: 'warning', attention: 'warning',
-      }
-      return aliases[raw] ?? raw
+      return canonicalizeRoxBlockKind(raw) ?? raw
     }),
     embeds,
     tables: countMarkdownTables(markdown),

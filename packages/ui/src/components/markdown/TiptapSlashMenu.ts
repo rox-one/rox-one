@@ -7,7 +7,7 @@ import { InlineMenuSurface } from '../ui/InlineMenuSurface'
 import { RICH_BLOCK_EDIT_EVENT } from './rich-block-events'
 import { insertRoxColumnsContent } from './extensions/ColumnsBlock'
 import { insertRoxTabsContent } from './extensions/TabsBlock'
-import { createRoxBlockContent } from './extensions/rox-block-syntax'
+import { createRoxBlockContent, type RoxBlockKind } from './extensions/rox-block-syntax'
 
 export interface SlashCommandItem {
   id: string
@@ -237,7 +237,109 @@ function slashGroupLabel(group: SlashCommandItem['group']): string {
   }
 }
 
+
+type CalloutSlashSpec = {
+  kind: Exclude<RoxBlockKind, 'spoiler'>
+  id: string
+  titleKey: string
+  titleFallback: string
+  descriptionKey: string
+  descriptionFallback: string
+  aliases: string[]
+}
+
+/** Semantic callouts (expanded `+` via createRoxBlockContent). Spoiler stays special-cased. */
+const CALLOUT_SLASH_SPECS: CalloutSlashSpec[] = [
+  {
+    kind: 'note',
+    id: 'callout-note',
+    titleKey: 'notes.slash.note',
+    titleFallback: 'Note',
+    descriptionKey: 'notes.slash.noteDescription',
+    descriptionFallback: 'Insert a note callout',
+    aliases: ['note', 'callout', 'annotation'],
+  },
+  {
+    kind: 'info',
+    id: 'callout-info',
+    titleKey: 'notes.slash.info',
+    titleFallback: 'Info',
+    descriptionKey: 'notes.slash.infoDescription',
+    descriptionFallback: 'Insert an info callout',
+    aliases: ['info', 'information'],
+  },
+  {
+    kind: 'warning',
+    id: 'callout-warning',
+    titleKey: 'notes.slash.warning',
+    titleFallback: 'Warning',
+    descriptionKey: 'notes.slash.warningDescription',
+    descriptionFallback: 'Insert a warning callout',
+    aliases: ['warning', 'caution', 'attention'],
+  },
+  {
+    kind: 'tip',
+    id: 'callout-tip',
+    titleKey: 'notes.slash.tip',
+    titleFallback: 'Tip',
+    descriptionKey: 'notes.slash.tipDescription',
+    descriptionFallback: 'Insert a tip callout',
+    aliases: ['tip', 'hint', 'important'],
+  },
+  {
+    kind: 'success',
+    id: 'callout-success',
+    titleKey: 'notes.slash.success',
+    titleFallback: 'Success',
+    descriptionKey: 'notes.slash.successDescription',
+    descriptionFallback: 'Insert a success callout',
+    aliases: ['success', 'check', 'done'],
+  },
+  {
+    kind: 'question',
+    id: 'callout-question',
+    titleKey: 'notes.slash.question',
+    titleFallback: 'Question',
+    descriptionKey: 'notes.slash.questionDescription',
+    descriptionFallback: 'Insert a question callout',
+    aliases: ['question', 'help', 'faq'],
+  },
+  {
+    kind: 'details',
+    id: 'callout-details',
+    titleKey: 'notes.blocks.details',
+    titleFallback: 'Details',
+    descriptionKey: 'notes.slash.detailsDescription',
+    descriptionFallback: 'Insert a foldable details callout',
+    aliases: ['details', 'expand', 'more'],
+  },
+]
+
+function createCalloutSlashItems(): SlashCommandItem[] {
+  return CALLOUT_SLASH_SPECS.map(spec => {
+    const title = slashTitle(spec.titleKey, spec.titleFallback)
+    return {
+      id: spec.id,
+      title,
+      description: slashTitle(spec.descriptionKey, spec.descriptionFallback),
+      icon: 'quote' as const,
+      group: 'Blocks' as const,
+      aliases: spec.aliases,
+      run: (e, insertPos) => {
+        e.chain().focus().insertContentAt(
+          insertPos ?? e.state.selection.from,
+          createRoxBlockContent(spec.kind, title),
+        ).run()
+      },
+    }
+  })
+}
+
 export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
+  const calloutItems = createCalloutSlashItems()
+  const calloutDetails = calloutItems.find(item => item.id === 'callout-details')!
+  const calloutSemantic = calloutItems.filter(item => item.id !== 'callout-details')
+  const spoilerTitle = slashTitle('notes.slash.spoiler', 'Spoiler')
   return [
     {
       id: 'paragraph',
@@ -322,7 +424,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
       description: slashTitle('notes.slash.quoteDescription', 'Insert a block quote'),
       icon: 'text-quote',
       group: 'Blocks',
-      aliases: ['blockquote', 'quote', 'callout'],
+      aliases: ['blockquote', 'quote'],
       run: (e, insertPos) => {
         const chain = e.chain().focus()
         if (typeof insertPos === 'number') chain.setTextSelection(insertPos)
@@ -401,94 +503,22 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
       aliases: ['tabs', 'tab', 'panes', 'sections'],
       run: (e, insertPos) => insertRoxTabsContent(e, 2, insertPos),
     },
-    {
-      id: 'callout-note',
-      title: slashTitle('notes.slash.note', 'Note'),
-      description: slashTitle('notes.slash.noteDescription', 'Insert a note callout'),
-      icon: 'quote',
-      group: 'Blocks',
-      aliases: ['note', 'callout', 'annotation'],
-      run: (e, insertPos) => {
-        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('note', slashTitle('notes.slash.note', 'Note'))).run()
-      },
-    },
-    {
-      id: 'callout-info',
-      title: slashTitle('notes.slash.info', 'Info'),
-      description: slashTitle('notes.slash.infoDescription', 'Insert an info callout'),
-      icon: 'quote',
-      group: 'Blocks',
-      aliases: ['info', 'information'],
-      run: (e, insertPos) => {
-        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('info', slashTitle('notes.slash.info', 'Info'))).run()
-      },
-    },
-    {
-      id: 'callout-warning',
-      title: slashTitle('notes.slash.warning', 'Warning'),
-      description: slashTitle('notes.slash.warningDescription', 'Insert a warning callout'),
-      icon: 'quote',
-      group: 'Blocks',
-      aliases: ['warning', 'caution', 'attention'],
-      run: (e, insertPos) => {
-        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('warning', slashTitle('notes.slash.warning', 'Warning'))).run()
-      },
-    },
-    {
-      id: 'callout-tip',
-      title: slashTitle('notes.slash.tip', 'Tip'),
-      description: slashTitle('notes.slash.tipDescription', 'Insert a tip callout'),
-      icon: 'quote',
-      group: 'Blocks',
-      aliases: ['tip', 'hint', 'important'],
-      run: (e, insertPos) => {
-        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('tip', slashTitle('notes.slash.tip', 'Tip'))).run()
-      },
-    },
-    {
-      id: 'callout-success',
-      title: slashTitle('notes.slash.success', 'Success'),
-      description: slashTitle('notes.slash.successDescription', 'Insert a success callout'),
-      icon: 'quote',
-      group: 'Blocks',
-      aliases: ['success', 'check', 'done'],
-      run: (e, insertPos) => {
-        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('success', slashTitle('notes.slash.success', 'Success'))).run()
-      },
-    },
-    {
-      id: 'callout-question',
-      title: slashTitle('notes.slash.question', 'Question'),
-      description: slashTitle('notes.slash.questionDescription', 'Insert a question callout'),
-      icon: 'quote',
-      group: 'Blocks',
-      aliases: ['question', 'help', 'faq'],
-      run: (e, insertPos) => {
-        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('question', slashTitle('notes.slash.question', 'Question'))).run()
-      },
-    },
+    ...calloutSemantic,
     {
       id: 'spoiler',
-      title: slashTitle('notes.slash.spoiler', 'Spoiler'),
+      title: spoilerTitle,
       description: slashTitle('notes.slash.spoilerDescription', 'Insert a foldable spoiler callout'),
       icon: 'quote',
       group: 'Blocks',
       aliases: ['spoiler', 'hidden', 'fold'],
       run: (e, insertPos) => {
-        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('spoiler', slashTitle('notes.slash.spoiler', 'Spoiler'))).run()
+        e.chain().focus().insertContentAt(
+          insertPos ?? e.state.selection.from,
+          createRoxBlockContent('spoiler', spoilerTitle),
+        ).run()
       },
     },
-    {
-      id: 'callout-details',
-      title: slashTitle('notes.slash.details', 'Details'),
-      description: slashTitle('notes.slash.detailsDescription', 'Insert a foldable details callout'),
-      icon: 'quote',
-      group: 'Blocks',
-      aliases: ['details', 'expand', 'more'],
-      run: (e, insertPos) => {
-        e.chain().focus().insertContentAt(insertPos ?? e.state.selection.from, createRoxBlockContent('details', slashTitle('notes.blocks.details', 'Details'))).run()
-      },
-    },
+    calloutDetails,
     {
       id: 'embed',
       title: slashTitle('notes.slash.embed', 'Embed'),
