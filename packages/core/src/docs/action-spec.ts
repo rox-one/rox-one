@@ -109,7 +109,18 @@ const UNSAFE_TYPE_RE = /^(js|javascript|shell|bash|powershell|eval|templater|raw
 const HTML_TAG_RE = /<\/?[a-z][^>]*>/gi
 const EVENT_HANDLER_RE = /\bon[a-z]+\s*=/i
 const UNSAFE_URL_RE = /^\s*(javascript|data|vbscript):/i
-const CONTROL_CHARS_RE = new RegExp('[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]', 'g')
+/** Drop C0 controls (except TAB/LF/CR) and DEL without a control-char regex. */
+function stripControlChars(s: string): string {
+  let out = ''
+  for (let i = 0; i < s.length; i++) {
+    const code = s.charCodeAt(i)
+    if (code <= 8 || code === 11 || code === 12 || (code >= 14 && code <= 31) || code === 127) {
+      continue
+    }
+    out += s[i]!
+  }
+  return out
+}
 
 const MAX_LABEL = 200
 const MAX_ID = 256
@@ -136,10 +147,11 @@ export function isActionFenceLanguage(lang: unknown): boolean {
 /** Strip HTML/tags/control chars; plain text only. */
 export function sanitizeActionLabel(raw: unknown): string {
   if (typeof raw !== 'string') return ''
-  const stripped = raw
-    .replace(HTML_TAG_RE, '')
-    .replace(/\bon[a-z]+\s*=/gi, '')
-    .replace(CONTROL_CHARS_RE, '')
+  const stripped = stripControlChars(
+    raw
+      .replace(HTML_TAG_RE, '')
+      .replace(/\bon[a-z]+\s*=/gi, ''),
+  )
     .replace(/\s+/g, ' ')
     .trim()
   if (/^\s*(javascript|data|vbscript):/i.test(stripped)) return ''
@@ -155,7 +167,7 @@ export function labelLooksUnsafe(raw: unknown): boolean {
 
 function clampId(raw: unknown): string | undefined {
   if (typeof raw !== 'string') return undefined
-  const value = raw.replace(CONTROL_CHARS_RE, '').trim()
+  const value = stripControlChars(raw).trim()
   if (!value || value.length > MAX_ID) return undefined
   if (UNSAFE_URL_RE.test(value)) return undefined
   return value
@@ -193,7 +205,7 @@ function normalizeInputs(
       ) {
         return { unsafe: true }
       }
-      inputs[key] = value.replace(CONTROL_CHARS_RE, '')
+      inputs[key] = stripControlChars(value)
       continue
     }
     // Nested objects/arrays/functions are rejected (no eval surface).
@@ -278,7 +290,7 @@ export function normalizeActionSpec(
   }
 
   const rawSource =
-    typeof raw.sourceLanguage === 'string' ? raw.sourceLanguage.replace(CONTROL_CHARS_RE, '').trim() : ''
+    typeof raw.sourceLanguage === 'string' ? stripControlChars(raw.sourceLanguage).trim() : ''
   const sourceLanguage =
     options?.sourceLanguage ??
     (rawSource ? rawSource.toLowerCase() : undefined)
@@ -316,7 +328,7 @@ export function normalizeActionSpec(
   const entityRef = clampId(raw.entityRef ?? raw.ref ?? raw.target)
   const templateId = clampId(raw.templateId ?? raw.template)
   const blockKind = clampId(raw.blockKind ?? raw.block)
-  let formula = typeof raw.formula === 'string' ? raw.formula.replace(CONTROL_CHARS_RE, '').trim() : undefined
+  let formula = typeof raw.formula === 'string' ? stripControlChars(raw.formula).trim() : undefined
   // Mirror normalizeInputs oversize: reject (clear + invalid-inputs), never silently slice.
   if (formula && formula.length > MAX_FORMULA) {
     issues.push('invalid-inputs')

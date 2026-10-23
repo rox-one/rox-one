@@ -4,7 +4,7 @@
  * Declarative typed ActionSpec only. Imported fences render inert until
  * reviewed. This client slice never executes JS/shell/network side effects.
  */
-import { Node, mergeAttributes } from '@tiptap/core'
+import { Node, mergeAttributes, type JSONContent } from '@tiptap/core'
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 import * as React from 'react'
 import i18n from 'i18next'
@@ -22,7 +22,7 @@ import {
   settleClientActionAttempt,
   type ActionSpec,
   type ClientActionUiState,
-} from '../../../../../core/src/docs/action-spec' // worktree-safe; same module as @rox/core/docs
+} from '@rox/core/docs'
 import { fenceCodeAttribute, serializeLegacyFence } from './legacy-fence'
 
 const ACTION_LANGUAGES = ACTION_FENCE_LANGUAGES
@@ -90,10 +90,7 @@ function defaultSlashSpec(): ActionSpec {
   }
 }
 
-export function createActionButtonContent(spec?: Partial<ActionSpec>): {
-  type: 'actionButton'
-  attrs: { code: string; language: string }
-} {
+export function createActionButtonContent(spec?: Partial<ActionSpec>): JSONContent {
   const base = defaultSlashSpec()
   // Route Partial through normalize → serialize so insert/slash match fence ingest
   // (rejectedUnsafe/sourceLanguage + validated formula/inputs).
@@ -119,7 +116,7 @@ export function insertActionButtonContent(
   editor: {
     chain: () => {
       focus: () => any
-      insertContentAt: (pos: number, payload: unknown) => any
+      insertContentAt: (pos: number, payload: JSONContent) => any
       run: () => any
     }
     state: { selection: { from: number } }
