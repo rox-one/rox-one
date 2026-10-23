@@ -367,13 +367,13 @@ export default function AccountSettingsPage() {
               label={t('settings.accounts.displayName')}
               description={t('settings.accounts.displayNameHint')}
             >
-              <div className="flex items-center gap-2 min-w-[240px]">
+              <div className="flex w-full min-w-0 max-w-[240px] items-center gap-2">
                 <Input
                   value={displayName}
                   maxLength={80}
                   disabled={saving || !profile}
                   onChange={(event) => setDisplayName(event.target.value)}
-                  className="h-8"
+                  className="h-8 min-w-0 flex-1"
                   aria-label={t('settings.accounts.displayName')}
                 />
               </div>
@@ -391,7 +391,7 @@ export default function AccountSettingsPage() {
                   {mailAddress}
                 </span>
               ) : (
-                <span className="min-w-[240px] text-sm text-muted-foreground" data-testid="settings-mail-pending">
+                <span className="w-full min-w-0 max-w-[240px] text-sm text-muted-foreground" data-testid="settings-mail-pending">
                   {t('settings.account.mailboxPending')}
                 </span>
               )}
@@ -444,7 +444,7 @@ export default function AccountSettingsPage() {
               label={t('settings.account.xp')}
               description={t('settings.account.xpHint')}
             >
-              <div className="min-w-[220px] space-y-1.5">
+              <div className="w-full min-w-0 max-w-[220px] space-y-1.5">
                 <div className="flex justify-between text-xs text-muted-foreground numeric">
                   <span>
                     {nextThreshold == null
@@ -479,7 +479,7 @@ export default function AccountSettingsPage() {
               {recent.length === 0 ? (
                 <span className="text-sm text-muted-foreground">{t('settings.account.recentXpEmpty')}</span>
               ) : (
-                <ul className="grid min-w-[240px] grid-cols-1 gap-x-6 text-xs sm:grid-cols-2">
+                <ul className="grid w-full min-w-0 max-w-[240px] grid-cols-1 gap-x-6 text-xs sm:grid-cols-2">
                   {recent.slice(0, 8).map((event, index) => (
                     <li
                       key={`${event.at}-${index}`}

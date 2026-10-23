@@ -24,7 +24,7 @@ export const settingsUI = {
   row: 'flex min-h-[var(--row-h-2line)] w-full items-center justify-between gap-3 text-left',
   rowPadding: 'px-[var(--settings-row-x)] py-[var(--settings-row-y)]',
   rowPaddingStandalone: 'py-[var(--settings-row-y)]',
-  control: 'flex shrink-0 items-center gap-2',
+  control: 'flex min-w-0 shrink-0 items-center gap-2',
   section: 'space-y-[var(--settings-section-gap)]',
   sectionHeader: 'flex min-w-0 items-start justify-between gap-3 px-[var(--settings-row-x)]',
   sectionTitle: 'text-base font-semibold text-text-primary',
