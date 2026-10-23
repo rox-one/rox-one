@@ -79,6 +79,7 @@ class CogneeBackend:
         self.cognee = cognee
         self.cognee.config.system_root_directory(os.path.join(cfg.root, "system"))
         self.cognee.config.data_root_directory(os.path.join(cfg.root, "data"))
+        self.last_error: str | None = None
         self._ids: dict[str, dict[str, str]] = self._load_map()
         # Configured primary model for status(); never mutated mid-request.
         self._model = cfg.llm_model
@@ -87,21 +88,32 @@ class CogneeBackend:
         # search stays unlocked: it may observe a partially-indexed view;
         # the host applies a 300ms budget and falls back to FTS.
         self._write_lock = asyncio.Lock()
-        self.last_error: str | None = None
 
     def _load_map(self) -> dict[str, dict[str, str]]:
         try:
             with open(self.map_path, encoding="utf-8") as f:
                 data = json.load(f)
-                if isinstance(data, dict):
-                    return data
-                print("[rox-cognee] ids.json is not an object; starting with empty map", file=sys.stderr)
-                return {}
         except FileNotFoundError:
             return {}
         except (OSError, ValueError) as err:
             print(f"[rox-cognee] ids.json unreadable ({type(err).__name__}); starting with empty map", file=sys.stderr)
+            self.last_error = "ids_map_unreadable"
             return {}
+        if not isinstance(data, dict):
+            print("[rox-cognee] ids.json is not an object; starting with empty map", file=sys.stderr)
+            self.last_error = "ids_map_invalid"
+            return {}
+        out: dict[str, dict[str, str]] = {}
+        for name, meta in data.items():
+            if not isinstance(name, str) or not isinstance(meta, dict):
+                continue
+            doc_id, source = meta.get("id"), meta.get("source")
+            if isinstance(doc_id, str) and isinstance(source, str) and source:
+                out[name] = {"id": doc_id, "source": source}
+        if len(out) != len(data):
+            print("[rox-cognee] ids.json had invalid entries; kept well-formed ones only", file=sys.stderr)
+            self.last_error = "ids_map_partial"
+        return out
 
     def _save_map(self) -> None:
         tmp = self.map_path + ".tmp"

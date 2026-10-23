@@ -42,7 +42,7 @@ def main() -> None:
     except KeyboardInterrupt:
         sys.exit(0)
     except Exception as e:  # noqa: BLE001
-        print(f"[rox-cognee] fatal: {type(e).__name__}: {e}", file=sys.stderr)
+        print(f"[rox-cognee] fatal: {type(e).__name__}", file=sys.stderr)
         sys.exit(1)
 
 
