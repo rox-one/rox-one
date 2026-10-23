@@ -1379,7 +1379,7 @@ app.whenReady().then(async () => {
       // CHANNEL_NOT_FOUND on the real WS RPC server.
       const nodeRegistry = new NodeRegistry()
       installCogneeGraphMemory({
-        isEnabled: () => { const c = getMemoryConfig(); return c.enabled && c.graph },
+        isEnabled: () => { const c = getMemoryConfig(); return Boolean(c.enabled && (c.graph ?? true)) },
         logger: { warn: (m, e) => mainLog.warn(m, e), info: (m) => mainLog.info(m) },
       })
       const instance = await bootstrapServer<SessionManager, HandlerDeps>({

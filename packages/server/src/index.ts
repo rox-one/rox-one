@@ -238,7 +238,7 @@ const instance = await (async () => {
   try {
     // Graph-memory (cognee): register resolver before RPC handlers use MemoryIndexService.
     installCogneeGraphMemory({
-      isEnabled: () => { const c = getMemoryConfig(); return c.enabled && c.graph },
+      isEnabled: () => { const c = getMemoryConfig(); return Boolean(c.enabled && (c.graph ?? true)) },
       logger: { warn: (m, e) => console.warn(m, e), info: (m) => console.info(m) },
     })
     return await bootstrapServer<SessionManager, HandlerDeps>({
