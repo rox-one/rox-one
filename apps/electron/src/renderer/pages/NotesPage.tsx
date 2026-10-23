@@ -3357,6 +3357,7 @@ h1,h2,h3{margin-top:1.5em}
           )}
           <NotesInspectorToggle inline={inlineAuxiliary} open={inspectorSheetOpen} onToggle={toggleInspector} />
           <button ref={noteCreateTarget} type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><FilePlus2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" /></button>
+          <button type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" data-testid="notes-templates-open" aria-label={t('notes.library.templates')} onClick={() => { void openTemplatesDialog('create') }} onContextMenu={(event) => { event.preventDefault(); if (activeNote) void openTemplatesDialog('save') }}><LayoutTemplate className="icon-toolbar" aria-hidden="true" /></button>
           {assetsUnavailable && <span role="status" data-testid="notes-assets-unavailable" data-error-code={assetsUnavailable.code} className="text-xs text-muted-foreground">{t('notes.toolbar.attachAsset')}: {t('common.unavailable')}</span>}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} disabled={openingAgent} />
           <button
