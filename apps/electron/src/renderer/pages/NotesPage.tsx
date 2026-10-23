@@ -2393,11 +2393,13 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const previous = libraryChromeWriteChainRef.current.get(noteKey) ?? Promise.resolve()
     const run = previous.catch(() => undefined).then(async () => {
       if (!await flushBeforeAction()) return false
+      // Drop quietly if the user switched note/workspace while we waited.
+      if (workspaceIdRef.current !== workspaceId || activeNoteIdRef.current !== noteId) return false
       // Prefer live editor frontmatter after prior writes in this chain.
       let base: Record<string, unknown> = activeNote.properties
       try {
-        const fromContent = propertiesFromNoteContent(contentRef.current)
-        if (Object.keys(fromContent).length > 0) base = fromContent
+        // Successful parse wins even when empty — do not keep stale cover/icon from note props.
+        base = propertiesFromNoteContent(contentRef.current)
       } catch {
         /* keep note properties when frontmatter is temporarily invalid */
       }
