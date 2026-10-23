@@ -4,10 +4,22 @@ import { NodeViewWrapper, NodeViewContent, ReactNodeViewRenderer } from '@tiptap
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import CodeBlockShiki from 'tiptap-extension-code-block-shiki'
 import { bundledLanguages } from 'shiki'
-import { Check, ChevronDown, Copy } from 'lucide-react'
+import { Check, ChevronDown, ChevronsDownUp, Copy, ListOrdered, WrapText } from 'lucide-react'
 import { SimpleDropdown, SimpleDropdownItem } from '../ui/SimpleDropdown'
 import { TiptapHoverActions, TiptapHoverActionButton } from './TiptapHoverActions'
 import { cn } from '../../lib/utils'
+import {
+  codeBytesForCopy,
+  countCodeLines,
+  countHiddenLines,
+  cycleFoldMode,
+  foldModeDatasetValue,
+  lineNumberLabels,
+  normalizeCodePresentation,
+  parseHideLines,
+  renderCodeFenceMarkdown,
+  type CodeFoldMode,
+} from './code-presentation'
 
 interface TiptapCodeBlockViewProps {
   node: ProseMirrorNode
@@ -93,12 +105,25 @@ function getLanguageLabel(language: string | null | undefined): string {
   return normalized ?? 'Plain text'
 }
 
+function readPresentation(node: ProseMirrorNode) {
+  return normalizeCodePresentation({
+    wrap: node.attrs.wrap,
+    fold: node.attrs.fold,
+    lineNumbers: node.attrs.lineNumbers,
+    lineStart: node.attrs.lineStart,
+    hideLines: node.attrs.hideLines,
+  })
+}
+
 /**
  * React NodeView for regular code blocks only.
  *
  * Mermaid/LaTeX use dedicated rich block node types:
  * - mermaidBlock
  * - latexBlock
+ *
+ * Presentation controls (wrap / fold / line numbers) are view chrome only —
+ * they never redact or rewrite node textContent.
  */
 function TiptapCodeBlockView({ node, updateAttributes }: TiptapCodeBlockViewProps) {
   const { t } = useTranslation()
@@ -112,6 +137,14 @@ function TiptapCodeBlockView({ node, updateAttributes }: TiptapCodeBlockViewProp
 
   const currentLanguage = normalizeLanguage((node.attrs.language as string | undefined) ?? null)
   const languageLabel = getLanguageLabel(currentLanguage)
+  const presentation = readPresentation(node)
+  const codeText = node.textContent
+  const lineCount = countCodeLines(codeText)
+  const hideRanges = parseHideLines(presentation.hideLines)
+  const hiddenCount = countHiddenLines(hideRanges, lineCount)
+  const gutterLabels = presentation.lineNumbers
+    ? lineNumberLabels(lineCount, presentation.lineStart)
+    : []
 
   const filteredLanguageOptions = React.useMemo(() => {
     const query = languageFilter.trim().toLowerCase()
@@ -174,7 +207,8 @@ function TiptapCodeBlockView({ node, updateAttributes }: TiptapCodeBlockViewProp
 
   const handleCopy = React.useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(node.textContent)
+      // Exact full code bytes — fold/hide presentation must not alter the payload.
+      await navigator.clipboard.writeText(codeBytesForCopy(node.textContent))
       setCopied(true)
       if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current)
       copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000)
@@ -182,6 +216,18 @@ function TiptapCodeBlockView({ node, updateAttributes }: TiptapCodeBlockViewProp
       setCopied(false)
     }
   }, [node.textContent])
+
+  const toggleWrap = React.useCallback(() => {
+    updateAttributes({ wrap: !presentation.wrap })
+  }, [presentation.wrap, updateAttributes])
+
+  const cycleFold = React.useCallback(() => {
+    updateAttributes({ fold: cycleFoldMode(presentation.fold) })
+  }, [presentation.fold, updateAttributes])
+
+  const toggleLineNumbers = React.useCallback(() => {
+    updateAttributes({ lineNumbers: !presentation.lineNumbers })
+  }, [presentation.lineNumbers, updateAttributes])
 
   React.useEffect(() => {
     return () => {
@@ -203,8 +249,31 @@ function TiptapCodeBlockView({ node, updateAttributes }: TiptapCodeBlockViewProp
     setLanguageFilter('')
   }, [languageDropdownOpen])
 
+  const foldTitle =
+    presentation.fold === 'none'
+      ? t('editor.codeFold')
+      : presentation.fold === 'semi'
+        ? t('editor.codeSemiFold')
+        : t('editor.codeUnfold')
+  const lineNumbersTitle = t('editor.codeLineNumbers')
+
+  const actionsOpen = languageDropdownOpen
+
   return (
-    <NodeViewWrapper className="tiptap-code-block-node tiptap-hover-actions-host" data-actions-open={languageDropdownOpen ? 'true' : 'false'}>
+    <NodeViewWrapper
+      className={cn(
+        'tiptap-code-block-node tiptap-hover-actions-host',
+        presentation.wrap && 'is-wrap',
+        presentation.lineNumbers && 'has-line-numbers',
+        presentation.fold !== 'none' && 'is-folded',
+      )}
+      data-actions-open={actionsOpen ? 'true' : 'false'}
+      data-wrap={presentation.wrap ? 'true' : 'false'}
+      data-fold={foldModeDatasetValue(presentation.fold)}
+      data-line-numbers={presentation.lineNumbers ? 'true' : 'false'}
+      data-line-start={String(presentation.lineStart)}
+      data-hide-lines={presentation.hideLines ?? undefined}
+    >
       <TiptapHoverActions>
         <SimpleDropdown
           align="end"
@@ -264,27 +333,129 @@ function TiptapCodeBlockView({ node, updateAttributes }: TiptapCodeBlockViewProp
         </SimpleDropdown>
 
         <TiptapHoverActionButton
-          title={t("common.copyCode")}
-          aria-label={t("common.copyCode")}
+          active={presentation.wrap}
+          title={presentation.wrap ? t('editor.codeWrapOff') : t('editor.codeWrap')}
+          aria-label={presentation.wrap ? t('editor.codeWrapOff') : t('editor.codeWrap')}
+          aria-pressed={presentation.wrap}
+          onClick={toggleWrap}
+        >
+          <WrapText className="icon-caption" />
+        </TiptapHoverActionButton>
+
+        <TiptapHoverActionButton
+          active={presentation.fold !== 'none'}
+          title={`${foldTitle}. ${t('editor.codePresentationHint')}`}
+          aria-label={foldTitle}
+          aria-pressed={presentation.fold !== 'none'}
+          data-fold-mode={presentation.fold}
+          onClick={cycleFold}
+        >
+          <ChevronsDownUp className="icon-caption" />
+        </TiptapHoverActionButton>
+
+        <TiptapHoverActionButton
+          active={presentation.lineNumbers}
+          title={lineNumbersTitle}
+          aria-label={lineNumbersTitle}
+          aria-pressed={presentation.lineNumbers}
+          onClick={toggleLineNumbers}
+        >
+          <ListOrdered className="icon-caption" />
+        </TiptapHoverActionButton>
+
+        <TiptapHoverActionButton
+          title={t('common.copyCode')}
+          aria-label={t('common.copyCode')}
           onClick={handleCopy}
         >
           {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
         </TiptapHoverActionButton>
       </TiptapHoverActions>
 
-      <pre>
-        <NodeViewContent<'code'> as="code" />
-      </pre>
+      {hiddenCount > 0 ? (
+        <div
+          className="tiptap-code-block-presentation-banner"
+          contentEditable={false}
+          data-presentation="hide-lines"
+        >
+          {t('editor.codeHiddenLinesPresentation', { count: hiddenCount })}
+        </div>
+      ) : null}
+
+      <div className="tiptap-code-block-body">
+        {presentation.lineNumbers ? (
+          <div className="tiptap-code-block-gutter" contentEditable={false} aria-hidden="true">
+            {gutterLabels.map((label) => (
+              <span key={label} className="tiptap-code-block-gutter-line">
+                {label}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <pre>
+          <NodeViewContent<'code'> as="code" />
+        </pre>
+      </div>
     </NodeViewWrapper>
   )
 }
 
 /**
  * Extended CodeBlockShiki with React NodeView for regular code blocks.
+ * Presentation attrs are TipTap-only chrome; markdown export keeps full bytes.
  */
 export const tiptapCodeBlock = CodeBlockShiki.extend({
   // Official @tiptap/markdown integration for fenced code blocks.
   markdownTokenName: 'code',
+
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      wrap: {
+        default: false,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-wrap') === 'true',
+        renderHTML: (attributes: { wrap?: boolean }) => (attributes.wrap ? { 'data-wrap': 'true' } : {}),
+      },
+      fold: {
+        default: 'none' satisfies CodeFoldMode,
+        parseHTML: (element: HTMLElement) => {
+          const raw = element.getAttribute('data-fold')
+          if (raw === 'semi' || raw === 'fold' || raw === 'none') return raw
+          return 'none'
+        },
+        renderHTML: (attributes: { fold?: CodeFoldMode }) => {
+          const fold = attributes.fold ?? 'none'
+          return fold === 'none' ? {} : { 'data-fold': fold }
+        },
+      },
+      lineNumbers: {
+        default: false,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-line-numbers') === 'true',
+        renderHTML: (attributes: { lineNumbers?: boolean }) => (
+          attributes.lineNumbers ? { 'data-line-numbers': 'true' } : {}
+        ),
+      },
+      lineStart: {
+        default: 1,
+        parseHTML: (element: HTMLElement) => {
+          const raw = element.getAttribute('data-line-start')
+          const n = raw ? Number.parseInt(raw, 10) : 1
+          return Number.isFinite(n) && n >= 1 ? n : 1
+        },
+        renderHTML: (attributes: { lineStart?: number }) => {
+          const start = attributes.lineStart ?? 1
+          return start === 1 ? {} : { 'data-line-start': String(start) }
+        },
+      },
+      hideLines: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-hide-lines'),
+        renderHTML: (attributes: { hideLines?: string | null }) => (
+          attributes.hideLines ? { 'data-hide-lines': attributes.hideLines } : {}
+        ),
+      },
+    }
+  },
 
   parseMarkdown: (token: any, helpers: any) => {
     const lang = (token.lang ?? '').toLowerCase()
@@ -309,14 +480,24 @@ export const tiptapCodeBlock = CodeBlockShiki.extend({
   },
 
   renderMarkdown: (
-    node: { attrs?: { language?: string | null }; content?: unknown[]; textContent?: string },
-    helpers: { renderChildren: (content: unknown[]) => string }
+    node: {
+      attrs?: {
+        language?: string | null
+        wrap?: boolean
+        fold?: CodeFoldMode
+        lineNumbers?: boolean
+        lineStart?: number
+        hideLines?: string | null
+      }
+      content?: unknown[]
+      textContent?: string
+    },
+    helpers: { renderChildren: (content: unknown[]) => string },
   ) => {
+    // Presentation attrs are intentionally ignored — export always keeps full bytes.
     const language = node.attrs?.language ?? ''
     const code = node.textContent ?? helpers.renderChildren(node.content ?? [])
-    const langPart = language ? String(language) : ''
-
-    return `\`\`\`${langPart}\n${code}\n\`\`\``
+    return renderCodeFenceMarkdown(language, code)
   },
 
   addNodeView() {

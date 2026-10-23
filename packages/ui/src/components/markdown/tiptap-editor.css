@@ -197,14 +197,6 @@
   outline-offset: 2px;
 }
 
-.tiptap-editor .tiptap-code-block-node {
-  margin: 0.5rem 0;
-}
-
-.tiptap-editor .tiptap-code-block-node pre {
-  margin: 0;
-}
-
 .tiptap-hover-action-btn.tiptap-code-block-language-trigger {
   padding-left: 0.5rem;
   gap: 3px;
@@ -217,6 +209,96 @@
   white-space: nowrap;
   font-size: 11px;
   font-weight: 500;
+}
+
+/* Code presentation chrome (LSX-WP-032) — SE surface tokens; fold/hide is view-only */
+.tiptap-editor .tiptap-code-block-node {
+  position: relative;
+  margin: 0.5rem 0;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border-subtle, color-mix(in oklch, var(--foreground) 10%, transparent));
+  background: var(--surface-input, color-mix(in oklch, var(--foreground) 3%, transparent));
+  color: var(--text-primary, var(--foreground));
+  overflow: hidden;
+}
+
+.tiptap-editor .tiptap-code-block-presentation-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
+  background: color-mix(in oklch, var(--info) 8%, transparent);
+  color: color-mix(in oklch, var(--foreground) 72%, var(--info));
+  font-size: var(--text-caption);
+  font-weight: 500;
+  line-height: 1.35;
+  user-select: none;
+}
+
+.tiptap-editor .tiptap-code-block-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.tiptap-editor .tiptap-code-block-node:not(.has-line-numbers) .tiptap-code-block-body {
+  grid-template-columns: 1fr;
+}
+
+.tiptap-editor .tiptap-code-block-gutter {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 0.5rem 0.75rem 0.75rem;
+  border-right: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
+  background: color-mix(in oklch, var(--foreground) 2.5%, transparent);
+  color: color-mix(in oklch, var(--foreground) 42%, transparent);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  text-align: right;
+  user-select: none;
+  pointer-events: none;
+}
+
+.tiptap-editor .tiptap-code-block-gutter-line {
+  display: block;
+  min-width: 1.5ch;
+}
+
+.tiptap-editor .tiptap-code-block-node pre {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  background: transparent !important;
+  min-width: 0;
+}
+
+.tiptap-editor .tiptap-code-block-node[data-wrap='true'] pre,
+.tiptap-editor .tiptap-code-block-node[data-wrap='true'] pre code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.tiptap-editor .tiptap-code-block-node[data-fold='semi'] .tiptap-code-block-body {
+  max-height: 6.2rem;
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, black 55%, transparent 100%);
+}
+
+.tiptap-editor .tiptap-code-block-node[data-fold='fold'] .tiptap-code-block-body {
+  max-height: 2.6rem;
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, black 35%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tiptap-editor .tiptap-code-block-node[data-fold='semi'] .tiptap-code-block-body,
+  .tiptap-editor .tiptap-code-block-node[data-fold='fold'] .tiptap-code-block-body {
+    mask-image: none;
+  }
 }
 
 /* Horizontal rule */
