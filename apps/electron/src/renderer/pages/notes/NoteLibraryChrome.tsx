@@ -197,7 +197,21 @@ export function NoteCoverIconChrome({
                 <X className="icon-caption" aria-hidden />
                 {t('notes.library.clear')}
               </Button>
-              <Button type="button" size="sm" onClick={() => onChange({ icon: iconDraft.trim() || null })}>{t('notes.library.apply')}</Button>
+              <Button
+                type="button"
+                size="sm"
+                data-testid="notes-icon-apply"
+                onClick={() => {
+                  const trimmed = iconDraft.trim()
+                  if (!trimmed) {
+                    onChange({ icon: null })
+                    return
+                  }
+                  onChange({ icon: readNoteIcon({ icon: trimmed }) })
+                }}
+              >
+                {t('notes.library.apply')}
+              </Button>
             </div>
           </PopoverContent>
         </Popover>

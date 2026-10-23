@@ -34,6 +34,8 @@ describe('note-library', () => {
     expect(sanitizeTemplateId(' My Standup!!.md ')).toBe('my-standup')
     expect(sanitizeTemplateId('../evil')).toBe('evil')
     expect(sanitizeTemplateId('team/weekly')).toBe('team/weekly')
+    expect(sanitizeTemplateId('templates/evil')).toBe('')
+    expect(sanitizeTemplateId('foo/templates/bar')).toBe('')
   })
 
   it('tracks opened recents and merges with updatedAt fallback', () => {

@@ -53,7 +53,7 @@ export function withNoteLibraryProperties(
 }
 
 export function sanitizeTemplateId(raw: string): string {
-  return raw
+  const id = raw
     .trim()
     .toLowerCase()
     .replace(/\.md$/i, '')
@@ -62,6 +62,9 @@ export function sanitizeTemplateId(raw: string): string {
     .replace(/\/{2,}/g, '/')
     .replace(/^[/\-]+|[/\-]+$/g, '')
     .slice(0, 80)
+  // Match server assertSafeTemplateId — never allow a templates/ path segment.
+  if (!id || id.split('/').some((part) => part === 'templates' || part === '')) return ''
+  return id
 }
 
 /** Most-recently-opened first; keep unique ids; cap length. */

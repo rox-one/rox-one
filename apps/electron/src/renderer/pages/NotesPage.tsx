@@ -708,6 +708,9 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [newPropertyValue, setNewPropertyValue] = React.useState('')
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
   const [templatesDialogOpen, setTemplatesDialogOpen] = React.useState(false)
+  const templatesDialogOpenRef = React.useRef(false)
+  templatesDialogOpenRef.current = templatesDialogOpen
+  const refreshNoteTemplatesRef = React.useRef<() => Promise<void>>(async () => {})
   const [templatesDialogMode, setTemplatesDialogMode] = React.useState<'create' | 'save'>('create')
   const [noteTemplates, setNoteTemplates] = React.useState<NoteTemplateSummary[]>([])
   const [templatesBusy, setTemplatesBusy] = React.useState(false)
@@ -1407,6 +1410,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
         return
       }
 
+      if (payload.reason === 'templates') {
+        if (templatesDialogOpenRef.current) void refreshNoteTemplatesRef.current()
+        return
+      }
+
       if (payload.reason === 'descriptor' && payload.noteId === activeNoteIdRef.current) {
         const noteId = payload.noteId
         const nativeId = activeNoteRef.current?.nativeId ?? noteId
@@ -1888,12 +1896,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const destination = noteCreationFolder(noteScope, createInFolder)
     if (!destination.allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     if (!await flushBeforeAction()) return
-    const note = await createNoteWithEvidence(
+    const note = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNote(
       activeWorkspaceId,
       createTitle.trim(),
       destination.folder,
       mutationOptions(activeWorkspaceId, createTitle.trim(), null),
-    )
+    ))
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, note.id), note.nativeRevision ?? null)
     setCreateDialogOpen(false)
     setCreateTitle('')
@@ -1922,12 +1930,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     if (!destination.allowed) { toast.error(t('navigation.notes.scopeCreateUnavailable')); return }
     const folder = destination.folder!
     if (!await flushBeforeAction()) return
-    const note = await createNoteWithEvidence(
+    const note = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNote(
       activeWorkspaceId,
       t('notes.untitled'),
       folder,
       mutationOptions(activeWorkspaceId, `${folder}/${t('notes.untitled')}`, null),
-    )
+    ))
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, note.id), note.nativeRevision ?? null)
     setCreateFolderDialogOpen(false)
     setCreateFolderName('')
@@ -2062,12 +2070,12 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     if (!await flushBeforeAction()) return
     const document = await window.electronAPI.readNote(activeWorkspaceId, note.id)
     const title = `${document.title} copy`
-    const created = await createNoteWithEvidence(
+    const created = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNote(
       activeWorkspaceId,
       title,
       noteFolder(note) || undefined,
       mutationOptions(activeWorkspaceId, title, null),
-    )
+    ))
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
     const duplicateContent = updateMarkdownTitle(document.content, title)
     const saved = isNativeNoteDocument(created)
@@ -2526,12 +2534,12 @@ h1,h2,h3{margin-top:1.5em}
     const { title, folder } = parseWikiCreateTarget(raw)
     if (!title) return
     try {
-      const created = await createNoteWithEvidence(
+      const created = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNote(
         activeWorkspaceId,
         title,
         folder,
         mutationOptions(activeWorkspaceId, `${folder ?? ''}/${title}`, null),
-      )
+      ))
       nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
       completeWikiText(created.title)
       await refreshNotes()
@@ -2545,12 +2553,12 @@ h1,h2,h3{margin-top:1.5em}
     const cleanTarget = stripMdExtension(missingLinkTarget)
     const parts = cleanTarget.split('/').filter(Boolean)
     const title = parts.pop() || cleanTarget
-    const created = await createNoteWithEvidence(
+    const created = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNote(
       activeWorkspaceId,
       title,
       parts.length > 0 ? parts.join('/') : undefined,
       mutationOptions(activeWorkspaceId, `${parts.join('/')}/${title}`, null),
-    )
+    ))
     nativeRevisionByNoteRef.current.set(noteRevisionKey(activeWorkspaceId, created.id), created.nativeRevision ?? null)
     setMissingLinkTarget(null)
     await refreshNotes()
@@ -2951,6 +2959,7 @@ h1,h2,h3{margin-top:1.5em}
       setNoteTemplates([])
     }
   }, [activeWorkspaceId])
+  refreshNoteTemplatesRef.current = refreshNoteTemplates
 
   const openTemplatesDialog = React.useCallback(async (mode: 'create' | 'save') => {
     // Keep createInFolder so template creates land in the active folder (blank-note parity).
@@ -2966,13 +2975,13 @@ h1,h2,h3{margin-top:1.5em}
     if (!await flushBeforeAction()) return
     setTemplatesBusy(true)
     try {
-      const created = await window.electronAPI.createNoteFromTemplate(
+      const created = await createNoteWithEvidence(activeWorkspaceId, () => window.electronAPI.createNoteFromTemplate(
         activeWorkspaceId,
         templateId,
         title || undefined,
         destination.folder,
         mutationOptions(activeWorkspaceId, title || templateId, null),
-      )
+      ))
       setTemplatesDialogOpen(false)
       setCreateInFolder(undefined)
       await refreshNotes()
@@ -2982,7 +2991,7 @@ h1,h2,h3{margin-top:1.5em}
     } finally {
       setTemplatesBusy(false)
     }
-  }, [activeWorkspaceId, createInFolder, flushBeforeAction, mutationOptions, noteScope, refreshNotes, t])
+  }, [activeWorkspaceId, createInFolder, createNoteWithEvidence, flushBeforeAction, mutationOptions, noteScope, refreshNotes, t])
 
   const handleSaveAsTemplate = React.useCallback(async (templateId: string, title: string, confirmReplace?: boolean) => {
     if (!activeWorkspaceId || !activeNote || typeof window.electronAPI.saveNoteAsTemplate !== 'function') return

@@ -954,7 +954,7 @@ export interface NoteChangedPayload {
   workspaceId: string
   /** Stable identity of a durable native invalidation; replay may deliver it again. */
   eventId?: string
-  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties' | 'comments' | 'descriptor'
+  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties' | 'comments' | 'descriptor' | 'templates'
   noteId?: string
 }
 
