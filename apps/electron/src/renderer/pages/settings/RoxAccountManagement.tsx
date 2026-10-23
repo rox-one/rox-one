@@ -103,14 +103,14 @@ export function RoxAccountManagement({ handle, keyPrefix, onAccountChanged }: { 
             </SettingsRow>
           ) : null}
           <SettingsRow label={t('settings.account.rox.handle')} description={t('settings.account.rox.handleHint')}>
-            <div className="flex min-w-[260px] items-center gap-2">
+            <div className="flex w-full min-w-0 max-w-[260px] items-center gap-2">
               <Input
                 value={handleDraft}
                 onChange={(e) => setHandleDraft(e.target.value)}
                 aria-label={t('settings.account.rox.handle')}
                 aria-invalid={draft !== '' && !handleValid}
                 disabled={expired}
-                className="h-8"
+                className="h-8 min-w-0 flex-1"
                 maxLength={30}
                 data-testid="rox-handle-input"
               />

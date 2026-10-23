@@ -805,10 +805,24 @@ html .popover-styled {
     justify-content: flex-start;
   }
 
-  /* Full-width form controls (selects, inputs) in stacked layout */
+  /* Full-width form controls (selects, inputs) in stacked layout.
+     Also neutralize common fixed min-width / w-80 call sites that otherwise
+     overflow the stacked control column in narrow panels (~≤448px). */
   [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-slot="select-trigger"],
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-slot="input"],
   [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] > .w-\[180px\],
-  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] > .w-\[200px\] {
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] > .w-\[200px\],
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] > .w-80,
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] > .w-72,
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] .min-w-\[180px\],
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] .min-w-\[220px\],
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] .min-w-\[240px\],
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] .min-w-\[260px\],
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] .min-w-\[12rem\],
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] .max-w-\[220px\],
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] .max-w-\[240px\],
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] .max-w-\[260px\],
+  [data-layout="settings-row"]:not(:has([data-slot="switch"])) [data-layout="settings-control"] .max-w-80 {
     width: 100%;
     max-width: 100%;
     min-width: 0;

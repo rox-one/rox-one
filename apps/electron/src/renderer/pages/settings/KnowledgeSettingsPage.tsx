@@ -265,7 +265,7 @@ export default function KnowledgeSettingsPage() {
             description={t('settings.knowledge.baseUrlHint')}
           >
             <Input
-              className="w-80"
+              className="w-full min-w-0 max-w-80"
               value={connection?.baseUrl ?? DEFAULT_BASE_URL}
               disabled
               readOnly
@@ -276,7 +276,7 @@ export default function KnowledgeSettingsPage() {
             description={t('settings.knowledge.tokenHint')}
           >
             <Input
-              className="w-80"
+              className="w-full min-w-0 max-w-80"
               type="password"
               value={token}
               onChange={(e) => setToken(e.target.value)}
