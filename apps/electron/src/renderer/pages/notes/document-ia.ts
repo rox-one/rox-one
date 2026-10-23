@@ -5,6 +5,11 @@
 
 import i18n from 'i18next'
 import { toBasicMarkdownExport } from '@rox/core/docs'
+import {
+  ROX_BLOCK_KINDS,
+  ROX_BLOCK_KIND_ALIASES,
+  canonicalizeRoxBlockKind,
+} from '@rox/ui/markdown/rox-block-kinds'
 
 function authoringLabel(key: string): string {
   const value = i18n.t(key)
@@ -142,7 +147,8 @@ const FOOTNOTE_REF_RE = /\[\^([^\]]+)\]/g
 const BLOCK_ID_RE = /(?:^|\s)\^([A-Za-z0-9_-]{3,})\s*$/gm
 const COMMENT_RE = /<!--\s*rox:comment\s+id="([^"]+)"\s+quote="([^"]*)"\s+created="(\d+)"\s*-->\n?([\s\S]*?)<!--\s*\/rox:comment\s*-->/g
 const FOLD_RE = /<details\s+data-rox-fold="([^"]+)">\s*<summary>([\s\S]*?)<\/summary>([\s\S]*?)<\/details>/gi
-const SPOILER_RE = /^>\s*\[!spoiler\]\s*$/gim
+const CALLOUT_KIND_RE = [...ROX_BLOCK_KINDS, ...Object.keys(ROX_BLOCK_KIND_ALIASES)].join('|')
+const SPOILER_RE = new RegExp(`^>\\s*\\[!(${CALLOUT_KIND_RE})\\]([+-])?(?:[ \\t].*)?\\s*$`, 'gim')
 const TABLE_RE = /^\|.+\|\s*$/gm
 const HR_RE = /^(?:-{3,}|\*{3,}|_{3,})\s*$/gm
 const TASK_RE = /^(\s*)-\s+\[([ xX])\]\s+(.+?)(?:\s+<!--\s*folded\s*-->)?\s*$/gm
@@ -786,7 +792,10 @@ export function parseNoteDocument(markdown: string): NoteDocumentStructure {
     tabs: extractTabs(markdown),
     comments: extractComments(markdown),
     folds: extractFolds(markdown),
-    spoilers: [...markdown.matchAll(SPOILER_RE)].map(() => 'spoiler'),
+    spoilers: [...markdown.matchAll(SPOILER_RE)].map(match => {
+      const raw = (match[1] ?? 'spoiler').toLowerCase()
+      return canonicalizeRoxBlockKind(raw) ?? raw
+    }),
     embeds,
     tables: countMarkdownTables(markdown),
     horizontalRules: [...markdown.matchAll(HR_RE)].length,
@@ -821,7 +830,7 @@ function decodeCommentAttr(value: string): string {
 
 export const FOOTNOTE_SNIPPET = 'See note.[^1]\n\n[^1]: '
 export const TABLE_SNIPPET = '| A | B |\n| --- | --- |\n|  |  |\n'
-export const SPOILER_SNIPPET = '> [!spoiler]\n> \n'
+export const SPOILER_SNIPPET = '> [!spoiler]-\n> \n'
 export const EMBED_SNIPPET = '![['
 export const TWO_COLUMN_SNIPPET = serializeColumns(['', ''])
 export const THREE_COLUMN_SNIPPET = serializeColumns(['', '', ''])
