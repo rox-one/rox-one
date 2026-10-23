@@ -8,11 +8,16 @@ from .server import MAX_LINE_BYTES, serve
 
 
 async def _amain() -> int:
-    # Protocol frames must be the only bytes on the real stdout. Capture it
-    # before redirecting sys.stdout so cognee/fastembed/hf prints cannot
-    # interleave with JSON-RPC. Fake backend is for tests only — the host
-    # must never set ROX_COGNEE_FAKE_BACKEND in production.
-    real_out = sys.stdout.buffer
+    # Protocol frames must be the only bytes on fd 1. Dup the real stdout, then
+    # point fd 1 / sys.stdout at stderr so Python *and* native C extensions that
+    # write to fileno 1 cannot interleave with JSON-RPC. Fake backend is for
+    # tests only — the host must never set ROX_COGNEE_FAKE_BACKEND in production.
+    real_out_fd = os.dup(1)
+    real_out = os.fdopen(real_out_fd, "wb", buffering=0)
+    try:
+        os.dup2(sys.stderr.fileno(), 1)
+    except OSError:
+        pass
     sys.stdout = sys.stderr
 
     if os.environ.get("ROX_COGNEE_FAKE_BACKEND") == "1":

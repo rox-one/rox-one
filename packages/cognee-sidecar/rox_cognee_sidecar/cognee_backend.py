@@ -193,12 +193,16 @@ class CogneeBackend:
         if first_err is not None and added == 0:
             raise first_err
         # Partial success: map reflects accepted sources; host may retry the rest.
-        # Re-adding the same ids rewrites the same file names; cognee-level
-        # dedup of duplicate graph nodes is not assumed here.
+        # Re-adding the same ids rewrites the same file names. Graph-level dedup
+        # is not assumed — host should delete before re-adding when replacing content.
         return {"added": added}
 
     async def cognify(self, sources: list[str] | None) -> dict[str, Any]:
-        datasets = sorted({dataset_for(v["source"]) for v in self._ids.values() if not sources or v["source"] in sources})
+        # sources=None → all known datasets; sources=[] → none (explicit empty, not "all").
+        if sources is None:
+            datasets = sorted({dataset_for(v["source"]) for v in self._ids.values()})
+        else:
+            datasets = sorted({dataset_for(v["source"]) for v in self._ids.values() if v["source"] in sources})
         if not datasets:
             return {"datasets": []}
         async with self._write_lock:
