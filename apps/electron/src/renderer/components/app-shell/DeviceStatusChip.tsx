@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { cn } from '@/lib/utils'
+import { Skeleton } from '@rox/ui'
 
 const loadDiagnostics = () => import('./diagnostics/LazyDiagnostics')
 
@@ -54,7 +55,12 @@ export function DeviceStatusChip({ className }: { className?: string }) {
               <button type="button" onClick={retry} className="min-h-[var(--control-hit-min)] rounded-md border border-border px-3 text-xs font-medium outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring">{t('common.retry')}</button>
             </div>
           }>
-            <React.Suspense fallback={<div role="status" className="p-5 text-sm text-muted-foreground">{t('common.loading')}</div>}>
+            <React.Suspense fallback={
+              <div role="status" aria-busy="true" aria-label={t('common.loading')} className="space-y-2 p-5 text-muted-foreground">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton lines={4} className="w-full" />
+              </div>
+            }>
               <LazyDiagnostics transport={transport} />
             </React.Suspense>
           </DiagnosticsBoundary>

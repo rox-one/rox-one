@@ -247,6 +247,7 @@ function fixtureBundleSource(main: string, shell: string, tabs: string) {
     const EXTRA_SCREENS=[],getModeRegistry=()=>({list:()=>[]});
     const automationsAtom=atom([]),knowledgeHomeViewAtom=atom('search'),knowledgeActiveViewIdAtom=atom(null);
     const Pass=props=>React.createElement('section',null,props.children), Panel=Pass, StoplightProvider=Pass;
+    const Skeleton=props=>React.createElement('span',{'data-skeleton':true,'aria-hidden':true},null);
     // Product-tour instrumentation is a declared fixture seam; real navigation
     // and content recovery callbacks above remain the production implementation.
     const TourPanelScope=Pass, navigationEntity=()=>({}), UnavailableAutomationTour=()=>null;
