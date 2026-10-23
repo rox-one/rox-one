@@ -3,6 +3,7 @@ import { ChevronLeft, Menu } from 'lucide-react'
 import type { PanelWorkspaceLayoutMode } from '@/lib/panel-workspace-layout'
 import { ShellSidebarPortal, useSidebarHandledOutside } from '@/components/app-shell/ShellSidebarPortal'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
 
 export interface ResponsiveModeScreen {
   selectedId: string | null
@@ -44,6 +45,8 @@ export function ResponsiveModeScreenLayout({ navigator, list, detail, status, te
     : layout === 'focus'
       ? false
       : panelWidth > 0 && panelWidth < 480
+  /** Mid-band (720–960): keep split but shrink list so detail is not a dead strip. */
+  const midBand = !narrow && panelWidth > 0 && panelWidth < 960
   React.useEffect(() => {
     const focused = (event: FocusEvent) => {
       if (event.target !== document.body) lastFocus.current = root.current?.contains(event.target as Node) ? event.target as HTMLElement : null
@@ -77,7 +80,7 @@ export function ResponsiveModeScreenLayout({ navigator, list, detail, status, te
     </div> : null}
     <div className="flex min-h-0 min-w-0 flex-1">
       {showNavigator ? <div ref={navigatorPane} hidden={narrow && !sidebarTarget} className="flex shrink-0" style={narrow && !sidebarTarget ? { display: 'none' } : undefined}><ShellSidebarPortal bareLabelKey="navigation.barePanel.folders" className="w-[220px] shrink-0 gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3" data-glass-slot="panel">{navigator}</ShellSidebarPortal></div> : null}
-      <section ref={listPane} tabIndex={-1} hidden={hasDetail || focusDetail} data-mode-pane="list" data-glass-slot="panel" className={narrow || detail == null ? 'flex min-w-0 flex-1 flex-col bg-foreground/[0.025] outline-none' : 'flex w-[440px] min-w-[240px] shrink flex-col bg-foreground/[0.025] outline-none'} style={hasDetail || focusDetail ? { display: 'none' } : undefined}>{list}</section>
+      <section ref={listPane} tabIndex={-1} hidden={hasDetail || focusDetail} data-mode-pane="list" data-glass-slot="panel" className={narrow || detail == null ? 'flex min-w-0 flex-1 flex-col bg-foreground/[0.025] outline-none' : cn('flex shrink flex-col bg-foreground/[0.025] outline-none', midBand ? 'w-[min(22rem,38%)] min-w-[12.5rem]' : 'w-[440px] min-w-[240px]')} style={hasDetail || focusDetail ? { display: 'none' } : undefined}>{list}</section>
       {detail != null ? <section ref={detailPane} tabIndex={-1} hidden={narrow && !hasDetail} aria-label={responsive.detailLabel} data-mode-pane="detail" data-glass-slot="panel" className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-background outline-none" style={narrow && !hasDetail ? { display: 'none' } : undefined}>{detail}</section> : null}
     </div>
     {status ? <div className="flex min-h-7 shrink-0 flex-wrap items-center gap-2 bg-surface-rail px-3 text-xs text-text-muted" role="status" data-glass-slot="toolbar">{status}</div> : null}

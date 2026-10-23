@@ -13,11 +13,13 @@ import { onMessengerCreateRequest, takeMessengerCreateRequest } from '@/platform
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSetAtom } from 'jotai'
-import { Archive, Bell, BellOff, CornerDownRight, Hash, Lock, LogIn, LogOut, MessagesSquare, Paperclip, PanelRight, Phone, Plus, ScrollText, Search, Send, Sparkles, Users, X } from 'lucide-react'
+import { Archive, Bell, BellOff, CornerDownRight, Hash, Lock, LogIn, LogOut, MessagesSquare, MoreHorizontal, Paperclip, PanelRight, Phone, Plus, ScrollText, Search, Send, Sparkles, Users, X } from 'lucide-react'
 import type { TeamChannelKind, TeamChannelMessage, TeamChannelView, TeamChannelVisibility, TeamMessageAttachment } from '@rox/shared/team-chat'
 import type { TeamMemberRef } from '@rox/shared/team'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { StyledDropdownMenuContent, StyledDropdownMenuItem } from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
 import { messengerStatusAtom } from '@/atoms/messenger-status'
 import { postTeamMessage, teamChatErrorText, useFollowedChannelFanOut, useImChannelSubscriptions, useTeamChannels, useTeamMessages, useTeamSearch } from './use-team-chat'
@@ -55,7 +57,26 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const [creating, setCreating] = React.useState<TeamChannelKind | null>(null)
   const [actionError, setActionError] = React.useState<string | null>(null)
-  const [infoOpen, setInfoOpen] = React.useState(true)
+  const [infoOpen, setInfoOpen] = React.useState(false)
+  const rootRef = React.useRef<HTMLDivElement>(null)
+  const [panelW, setPanelW] = React.useState(0)
+  const wasMidNarrow = React.useRef(false)
+  React.useLayoutEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+    const measure = () => setPanelW(el.getBoundingClientRect().width)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  /** Mid-band (~900) and below: info docks as overlay; header secondary folds. */
+  const midNarrow = panelW > 0 && panelW < 900
+  const headerCompact = panelW > 0 && panelW < 720
+  React.useEffect(() => {
+    if (midNarrow && !wasMidNarrow.current) setInfoOpen(false)
+    wasMidNarrow.current = midNarrow
+  }, [midNarrow])
   const [query, setQuery] = React.useState('')
   const search = useTeamSearch(orgId, query)
   const selfName = React.useMemo(() => members.find(m => m.userId === selfUserId)?.displayName ?? t('teamCollab.you'), [members, selfUserId, t])
@@ -184,8 +205,8 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
   })
 
   return (
-    <div className="flex min-h-0 flex-1 bg-background" data-testid="messenger-channels" data-messenger-chrome="rox-engineering" data-relay-live={live ? 'true' : 'false'}>
-      <aside data-glass-slot="panel" className="flex w-64 shrink-0 flex-col border-e border-border/60" aria-label={t('messenger.channels.listLabel')}>
+    <div ref={rootRef} className="relative flex min-h-0 min-w-0 flex-1 bg-background @container/messenger" data-testid="messenger-channels" data-messenger-chrome="rox-engineering" data-relay-live={live ? 'true' : 'false'} data-mid-narrow={midNarrow || undefined}>
+      <aside data-glass-slot="panel" className={cn('flex shrink-0 flex-col border-e border-border/60', midNarrow ? 'w-[min(16rem,42%)] min-w-[11rem]' : 'w-64')} aria-label={t('messenger.channels.listLabel')}>
         <div className="px-2 pt-2">
           <label className="flex h-8 items-center gap-2 rounded-md bg-surface-input px-2 text-small text-text-muted">
             <Search className="icon-caption shrink-0" aria-hidden />
@@ -245,75 +266,122 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
           />
         ) : (
           <>
-            <header data-glass-slot="toolbar" className="flex shrink-0 items-center gap-2 border-b border-border/60 px-4 py-2">
+            <header data-glass-slot="toolbar" className="flex min-w-0 shrink-0 items-center gap-2 border-b border-border/60 px-3 py-2 sm:px-4">
               <ChannelIcon channel={selected} className="text-text-muted" />
               <div className="flex min-w-0 flex-1 items-baseline gap-2">
                 <h2 className="truncate text-body font-semibold">{channelLabel(selected, t)}</h2>
-                <p className="truncate text-caption text-text-muted" data-testid="messenger-header-meta">
-                  {t('messenger.channels.memberCount', { count: selected.memberCount })} · {t('messenger.channels.onlineCount', { count: onlineCount })}
-                  {selected.topic ? ` · ${selected.topic}` : ''}
-                </p>
+                {!headerCompact ? (
+                  <p className="truncate text-caption text-text-muted" data-testid="messenger-header-meta">
+                    {t('messenger.channels.memberCount', { count: selected.memberCount })} · {t('messenger.channels.onlineCount', { count: onlineCount })}
+                    {selected.topic ? ` · ${selected.topic}` : ''}
+                  </p>
+                ) : null}
               </div>
-              <ul className="flex -space-x-1.5" aria-label={t('messenger.info.memberList')}>
-                {selected.memberIds.slice(0, 5).map(id => <li key={id} title={nameOf(id)}><Avatar name={nameOf(id)} className="size-6 ring-2 ring-background" /></li>)}
-                {selected.memberIds.length > 5 ? <li className="ps-2.5 text-caption text-text-muted">+{selected.memberIds.length - 5}</li> : null}
-              </ul>
+              {!headerCompact ? (
+                <ul className="flex -space-x-1.5" aria-label={t('messenger.info.memberList')}>
+                  {selected.memberIds.slice(0, 5).map(id => <li key={id} title={nameOf(id)}><Avatar name={nameOf(id)} className="size-6 ring-2 ring-background" /></li>)}
+                  {selected.memberIds.length > 5 ? <li className="ps-2.5 text-caption text-text-muted">+{selected.memberIds.length - 5}</li> : null}
+                </ul>
+              ) : null}
               {!inThisCall ? (
                 <Button size="sm" variant={selected.activeCall ? 'default' : 'secondary'} onClick={joinCall} disabled={joining || (!selected.viewerRole && selected.visibility !== 'public')} data-testid="messenger-join-call"
-                  className={cn(selected.activeCall && 'bg-success text-white hover:bg-success/90')}>
-                  <Phone aria-hidden />{selected.activeCall ? t('messenger.calls.join') : t('messenger.calls.start')}
+                  className={cn('shrink-0', selected.activeCall && 'bg-success text-white hover:bg-success/90')}>
+                  <Phone aria-hidden />{headerCompact ? null : (selected.activeCall ? t('messenger.calls.join') : t('messenger.calls.start'))}
                 </Button>
               ) : null}
-              {selected.visibility === 'public' ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost" size="icon"
-                      aria-pressed={selected.viewerSubscribed}
-                      aria-label={selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')}
-                      onClick={() => void run(async () => {
+              {headerCompact ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label={t('common.more')} data-testid="messenger-header-more">
+                      <MoreHorizontal aria-hidden />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <StyledDropdownMenuContent align="end" sideOffset={8}>
+                    {selected.visibility === 'public' ? (
+                      <StyledDropdownMenuItem onClick={() => void run(async () => {
                         const next = !selected.viewerSubscribed
                         await window.electronAPI.teamChatSetSubscribed(selected.id, next)
-                        setMessengerFeedChannel({
-                          channelId: selected.id,
-                          name: channelLabel(selected, t),
-                          orgId,
-                          subscribed: next,
-                        })
-                      })}
-                    >
-                      {selected.viewerSubscribed ? <BellOff aria-hidden /> : <Bell aria-hidden />}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')} — {t('messenger.channels.followHint')}</TooltipContent>
-                </Tooltip>
-              ) : null}
-              {!selected.viewerRole && selected.visibility === 'public' ? (
-                <Button size="sm" variant="secondary" onClick={() => void run(() => window.electronAPI.teamChatJoin(selected.id))}>
-                  <LogIn aria-hidden />{t('messenger.channels.join')}
-                </Button>
-              ) : null}
-              {selected.viewerRole && !selected.isDefault ? (
-                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label={t('messenger.channels.leave')} onClick={() => void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatLeave(selected.id, orgId); setSelectedId(null) })}>
-                  <LogOut aria-hidden />
-                </Button></TooltipTrigger><TooltipContent>{t('messenger.channels.leave')}</TooltipContent></Tooltip>
-              ) : null}
-              {!selected.isDefault && (selected.viewerRole === 'owner' || selected.viewerRole === 'admin' || viewerOrgRole === 'owner' || viewerOrgRole === 'admin') ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label={t('messenger.channels.archive')}
-                      onClick={() => {
+                        setMessengerFeedChannel({ channelId: selected.id, name: channelLabel(selected, t), orgId, subscribed: next })
+                      })}>
+                        {selected.viewerSubscribed ? <BellOff className="icon-caption" /> : <Bell className="icon-caption" />}
+                        <span className="flex-1">{selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')}</span>
+                      </StyledDropdownMenuItem>
+                    ) : null}
+                    {!selected.viewerRole && selected.visibility === 'public' ? (
+                      <StyledDropdownMenuItem onClick={() => void run(() => window.electronAPI.teamChatJoin(selected.id))}>
+                        <LogIn className="icon-caption" /><span className="flex-1">{t('messenger.channels.join')}</span>
+                      </StyledDropdownMenuItem>
+                    ) : null}
+                    {selected.viewerRole && !selected.isDefault ? (
+                      <StyledDropdownMenuItem onClick={() => void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatLeave(selected.id, orgId); setSelectedId(null) })}>
+                        <LogOut className="icon-caption" /><span className="flex-1">{t('messenger.channels.leave')}</span>
+                      </StyledDropdownMenuItem>
+                    ) : null}
+                    {!selected.isDefault && (selected.viewerRole === 'owner' || selected.viewerRole === 'admin' || viewerOrgRole === 'owner' || viewerOrgRole === 'admin') ? (
+                      <StyledDropdownMenuItem onClick={() => {
                         if (!window.confirm(t('messenger.channels.archiveConfirm', { name: selected.name }))) return
                         void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatArchive(selected.id, orgId); setSelectedId(null) })
-                      }}
-                    >
-                      <Archive aria-hidden />
+                      }}>
+                        <Archive className="icon-caption" /><span className="flex-1">{t('messenger.channels.archive')}</span>
+                      </StyledDropdownMenuItem>
+                    ) : null}
+                  </StyledDropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <>
+                  {selected.visibility === 'public' ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost" size="icon"
+                          aria-pressed={selected.viewerSubscribed}
+                          aria-label={selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')}
+                          onClick={() => void run(async () => {
+                            const next = !selected.viewerSubscribed
+                            await window.electronAPI.teamChatSetSubscribed(selected.id, next)
+                            setMessengerFeedChannel({
+                              channelId: selected.id,
+                              name: channelLabel(selected, t),
+                              orgId,
+                              subscribed: next,
+                            })
+                          })}
+                        >
+                          {selected.viewerSubscribed ? <BellOff aria-hidden /> : <Bell aria-hidden />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{selected.viewerSubscribed ? t('messenger.channels.unfollow') : t('messenger.channels.follow')} — {t('messenger.channels.followHint')}</TooltipContent>
+                    </Tooltip>
+                  ) : null}
+                  {!selected.viewerRole && selected.visibility === 'public' ? (
+                    <Button size="sm" variant="secondary" onClick={() => void run(() => window.electronAPI.teamChatJoin(selected.id))}>
+                      <LogIn aria-hidden />{t('messenger.channels.join')}
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{t('messenger.channels.archive')}</TooltipContent>
-                </Tooltip>
-              ) : null}
-              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-pressed={infoOpen} onClick={() => setInfoOpen(v => !v)} aria-label={t('messenger.info.title')}>
+                  ) : null}
+                  {selected.viewerRole && !selected.isDefault ? (
+                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-label={t('messenger.channels.leave')} onClick={() => void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatLeave(selected.id, orgId); setSelectedId(null) })}>
+                      <LogOut aria-hidden />
+                    </Button></TooltipTrigger><TooltipContent>{t('messenger.channels.leave')}</TooltipContent></Tooltip>
+                  ) : null}
+                  {!selected.isDefault && (selected.viewerRole === 'owner' || selected.viewerRole === 'admin' || viewerOrgRole === 'owner' || viewerOrgRole === 'admin') ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label={t('messenger.channels.archive')}
+                          onClick={() => {
+                            if (!window.confirm(t('messenger.channels.archiveConfirm', { name: selected.name }))) return
+                            void run(async () => { if (call.channelId === selected.id) await call.leave(); await window.electronAPI.teamChatArchive(selected.id, orgId); setSelectedId(null) })
+                          }}
+                        >
+                          <Archive aria-hidden />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t('messenger.channels.archive')}</TooltipContent>
+                    </Tooltip>
+                  ) : null}
+                  {/* info stays outside overflow — mirrors ChatPage */}
+                </>
+              )}
+              <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" aria-pressed={infoOpen} onClick={() => setInfoOpen(v => !v)} aria-label={t('messenger.info.title')} data-testid="messenger-info-toggle">
                 <PanelRight aria-hidden />
               </Button></TooltipTrigger><TooltipContent>{t('messenger.info.title')}</TooltipContent></Tooltip>
             </header>
@@ -346,19 +414,28 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
         )}
       </section>
       {selected && infoOpen ? (
-        <ChannelInfoPanel
-          channel={selected}
-          label={channelLabel(selected, t)}
-          members={members}
-          presenceOf={presenceOf}
-          nameOf={nameOf}
-          messageCount={selected.messageCount ?? 0}
-          inCall={inThisCall}
-          joining={joining}
-          onJoinCall={joinCall}
-          onClose={() => setInfoOpen(false)}
-          locale={i18n.language}
-        />
+        <div
+          className={cn(
+            midNarrow
+              ? 'absolute inset-y-0 end-0 z-raised flex max-w-[min(18rem,92%)] bg-background shadow-modal-small'
+              : 'contents',
+          )}
+          data-messenger-info-dock={midNarrow ? 'overlay' : 'rail'}
+        >
+          <ChannelInfoPanel
+            channel={selected}
+            label={channelLabel(selected, t)}
+            members={members}
+            presenceOf={presenceOf}
+            nameOf={nameOf}
+            messageCount={selected.messageCount ?? 0}
+            inCall={inThisCall}
+            joining={joining}
+            onJoinCall={joinCall}
+            onClose={() => setInfoOpen(false)}
+            locale={i18n.language}
+          />
+        </div>
       ) : null}
     </div>
   )

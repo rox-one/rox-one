@@ -2,11 +2,11 @@
  * P7.3 — LeftSidebar disclosure/list motion: opacity+transform only,
  * no height layout anim, no stagger spam, SE spring tokens.
  */
+import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, it } from 'vitest'
 
-const ROOT = join(import.meta.dirname, '../../components/app-shell')
+const ROOT = join(import.meta.dir, '../../components/app-shell')
 
 describe('P7.3 LeftSidebar motion', () => {
   const src = readFileSync(join(ROOT, 'LeftSidebar.tsx'), 'utf8')
