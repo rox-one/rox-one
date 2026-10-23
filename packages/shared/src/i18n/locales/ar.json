@@ -9496,6 +9496,7 @@
   "settings.appearance.layers.frameText": "نص الإطار",
   "settings.appearance.layers.glass": "الزجاج",
   "settings.appearance.layers.glassNeedsWallpaper": "يظهر الزجاج عند تعيين خلفية.",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "استيراد",
   "settings.appearance.layers.importError": "هذا الملف ليس ملف .rox-theme.json صالحًا.",
   "settings.appearance.layers.importSuccess": "تم استيراد «{{name}}».",

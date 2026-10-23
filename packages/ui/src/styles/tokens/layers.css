@@ -11,7 +11,7 @@
      L2 content    --content-bg / -fg / -border / -seam / -radius / -shadow / -inset
      L3 elevation  --elev-1 (cards) / --elev-2 (popover, composer) / --elev-3 (modal)
      accent        --accent / --accent-soft
-     glass         --glass-intensity (0..1; default 0.6 = Arc Glass / GlassSurface)
+     glass         --glass-intensity (0..1; default 0 = off; SE accents use intensity > 0)
      grid          --grid-divider (hairline between flush grid panels)
 
    Other branches consume these names (titlebar glass, grid dividers); keep
@@ -45,7 +45,7 @@
   --elev-2: var(--popover-solid);
   --elev-3: var(--popover-solid);
   --accent-soft: color-mix(in oklch, var(--accent) 14%, transparent);
-  --glass-intensity: 0.6;
+  --glass-intensity: 0;
   --grid-divider: color-mix(in oklch, var(--foreground) 9%, transparent);
 }
 

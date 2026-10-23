@@ -162,7 +162,7 @@ function NoteNavigationItem({ note, depth, activeNoteId, dreamNoteIds, ...action
           aria-current={activeNoteId === note.id ? 'page' : undefined}
           data-note-id={note.id}
           /* Arc Glass: interactive row — transparent base; hover/selected paint
-             come from arc-glass-surfaces.css, not a local fill. */
+             come from GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed), not a local fill. */
           data-glass-slot="row"
           data-state={activeNoteId === note.id ? 'selected' : undefined}
           onClick={() => actions.onOpenNote(note.id)}

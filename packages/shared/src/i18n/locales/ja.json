@@ -9448,6 +9448,7 @@
   "settings.appearance.layers.frameText": "フレームの文字",
   "settings.appearance.layers.glass": "ガラス",
   "settings.appearance.layers.glassNeedsWallpaper": "壁紙を設定するとガラスが表示されます。",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "インポート",
   "settings.appearance.layers.importError": "有効な .rox-theme.json ではありません。",
   "settings.appearance.layers.importSuccess": "「{{name}}」をインポートしました。",

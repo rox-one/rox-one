@@ -9458,6 +9458,7 @@
   "settings.appearance.layers.frameText": "Texte du cadre",
   "settings.appearance.layers.glass": "Verre",
   "settings.appearance.layers.glassNeedsWallpaper": "Le verre apparaît quand un fond d’écran est défini.",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "Importer",
   "settings.appearance.layers.importError": "Ce fichier n’est pas un .rox-theme.json valide.",
   "settings.appearance.layers.importSuccess": "« {{name}} » importé.",

@@ -1,10 +1,13 @@
-/* Arc Glass skin: applies the glass material to existing chrome without
-   touching component layout. Loaded lazily (installGlassSkin) and active only
-   under html[data-theme="arc-glass"]. Slots: the top mode pill and explicit
-   data-glass-slot elements (popover, composer, mini-button). Refraction:
-   static slots only (pill, Rox Mini buttons) on the full tier, never the
-   composer or popovers. Blur is static; only transform/opacity animate. */
-html[data-theme="arc-glass"] :is(.rox-mode-pill, [data-glass-slot]) {
+/* SE optional glass accents: Rox Engineering chrome only. Loaded lazily
+   (installGlassSkin) under html[data-ui-profile="super-engineering"][data-glass-accents]
+   (theme-layer glass intensity > 0). Slots: .rox-mode-pill, popover, composer,
+   mini-button. Pill / popover / mini get static backdrop blur (fixed 20px via
+   material.css when accents are on; both backdrop-filter and -webkit-). Composer
+   is fill/tint only (≥70% mix) — omit backdrop-filter so SE .input-container
+   blur(~20px) remains; no refraction. Refraction: static pill / Rox Mini on
+   full tier only. Not an Arc Glass theme. */
+/* Pill / popover / mini: fill + static backdrop blur (fixed 20px when on). */
+html[data-ui-profile="super-engineering"][data-glass-accents] :is(.rox-mode-pill, [data-glass-slot="popover"], [data-glass-slot="mini-button"]) {
   --glass-fill: var(--background);
   --glass-fill-mix: var(--glass-tint);
 
@@ -16,24 +19,33 @@ html[data-theme="arc-glass"] :is(.rox-mode-pill, [data-glass-slot]) {
     ),
     color-mix(in srgb, var(--glass-fill) calc(var(--glass-fill-mix) + var(--glass-hover-boost, 0%)), transparent);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   box-shadow: var(--glass-shadow);
 }
 
-/* Readable surfaces: popovers/menus and the composer carry their own surface
-   colour at a high mix (lightly scaled by intensity, never below 70%); the
-   pill and Rox Mini buttons keep the lighter glass tint. */
-html[data-theme="arc-glass"] [data-glass-slot="popover"] {
+/* Popovers/menus: readable surface colour at a high mix (never below 70%). */
+html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="popover"] {
   --glass-fill: var(--popover);
   --glass-fill-mix: max(70%, calc(86% - 10% * var(--glass-intensity)));
 }
 
-html[data-theme="arc-glass"] [data-glass-slot="composer"] {
+/* Composer: fill/tint only (≥70%) — omit backdrop-filter (keep SE input blur); no refraction. */
+html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="composer"] {
   --glass-fill: var(--background);
   --glass-fill-mix: max(70%, calc(81% - 10% * var(--glass-intensity)));
+
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, white calc(var(--glass-specular-alpha) + var(--glass-hover-boost, 0%)), transparent) 0%,
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--glass-fill) calc(var(--glass-fill-mix) + var(--glass-hover-boost, 0%)), transparent);
+  box-shadow: var(--glass-shadow);
 }
 
 /* Accent buttons (Rox Mini send) stay accent: an accent tint over the glass. */
-html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"] {
+html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="mini-button"][data-glass-tone="accent"] {
   --glass-fill: var(--accent);
   --glass-fill-mix: 90%;
   /* Opaque ink for the icon: the theme background with alpha forced to 1
@@ -44,44 +56,49 @@ html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"] {
   --glass-specular-alpha: 4%;
 }
 
-html[data-theme="arc-glass"] [data-glass-slot][data-glass-tone="accent"]:hover:not(:disabled) {
+html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="mini-button"][data-glass-tone="accent"]:hover:not(:disabled) {
   --glass-hover-boost: 4%;
 }
 
 /* Glass hover: a slightly stronger tint and highlight (paint only). */
-html[data-theme="arc-glass"] :is(.rox-mode-pill-item, [data-glass-slot="mini-button"]):hover:not(:disabled) {
+html[data-ui-profile="super-engineering"][data-glass-accents] :is(.rox-mode-pill-item, [data-glass-slot="mini-button"]):hover:not(:disabled) {
   --glass-hover-boost: 8%;
 }
 
-html[data-theme="arc-glass"] .rox-mode-pill-item:hover {
+html[data-ui-profile="super-engineering"][data-glass-accents] .rox-mode-pill-item:hover {
   background: color-mix(in srgb, white var(--glass-edge-alpha), transparent);
 }
 
-html[data-theme="arc-glass"][data-glass="full"] :is(.rox-mode-pill, [data-glass-slot="mini-button"]) {
+html[data-ui-profile="super-engineering"][data-glass-accents][data-glass="full"] :is(.rox-mode-pill, [data-glass-slot="mini-button"]) {
   backdrop-filter: url(#rox-glass-skin-refraction) blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: url(#rox-glass-skin-refraction) blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
 /* Popovers/menus: symmetric spring open / faster exit. Replaces the overlay
    and tailwindcss-animate animations on these elements (single animation). */
-html[data-theme="arc-glass"] [data-glass-slot="popover"] {
+html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="popover"] {
   transform-origin: var(--radix-popover-content-transform-origin, var(--radix-dropdown-menu-content-transform-origin, top center));
 }
 
-html[data-theme="arc-glass"] [data-glass-slot="popover"]:is([data-state="open"], :not([data-state])) {
-  animation: rox-glass-pop-in var(--motion-spring) var(--ease-spring) both;
+/* !important beats apps/electron index.css animation:none !important on
+   radix dropdown/context-menu without data-overlay-motion. Only under SE
+   accents + data-glass-slot=popover — does not re-enable Tailwind animate-in
+   when accents are off. */
+html[data-ui-profile="super-engineering"][data-glass-accents]:not([data-render-profile="performance"]) [data-glass-slot="popover"][data-state="open"] {
+  animation: rox-glass-pop-in var(--motion-spring) var(--ease-spring) both !important;
 }
 
-html[data-theme="arc-glass"] [data-glass-slot="popover"][data-state="closed"] {
-  animation: rox-glass-pop-out var(--motion-spring-exit) var(--ease-exit) both;
+html[data-ui-profile="super-engineering"][data-glass-accents]:not([data-render-profile="performance"]) [data-glass-slot="popover"][data-state="closed"] {
+  animation: rox-glass-pop-out var(--motion-spring-exit) var(--ease-exit) both !important;
 }
 
 /* Press spring for pill items and Rox Mini buttons (pointer :active and the
    keyboard via useGlassPress's data-glass-pressed). */
-html[data-theme="arc-glass"] :is(.rox-mode-pill-item, [data-glass-slot="mini-button"]) {
+html[data-ui-profile="super-engineering"][data-glass-accents] :is(.rox-mode-pill-item, [data-glass-slot="mini-button"]) {
   transition: transform var(--motion-spring) var(--ease-spring);
 }
 
-html[data-theme="arc-glass"] :is(.rox-mode-pill-item, [data-glass-slot="mini-button"]):is(:active, [data-glass-pressed]) {
+html[data-ui-profile="super-engineering"][data-glass-accents] :is(.rox-mode-pill-item, [data-glass-slot="mini-button"]):is(:active, [data-glass-pressed]) {
   transform: scale(0.96);
   transition-duration: var(--motion-fast);
 }
@@ -90,12 +107,11 @@ html[data-theme="arc-glass"] :is(.rox-mode-pill-item, [data-glass-slot="mini-but
 /* Reduced transparency, high contrast and the low-power render profile: the
    glass goes solid (100% fill, no sheen) and blur drops to zero; high contrast
    re-points the hairline at the stronger edge colour. The `basic` glass tier
-   (low core count / memory, unplugged below 20%, no backdrop url() support) is
-   the same solid, blur-free material — it already loses refraction, so it loses
-   the blur too. Declared before the keyframes on purpose: the blur is a static
-   paint, so nothing here ever transitions backdrop-filter. */
-html[data-theme="arc-glass"][data-contrast="high"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot]),
-html[data-theme="arc-glass"][data-glass="basic"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot]) {
+   is the same solid, blur-free material. Composer is never in any
+   backdrop-filter:none :is() — SE .input-container blur must remain. Fill
+   solidification for composer is a separate filter-free rule. */
+html[data-ui-profile="super-engineering"][data-glass-accents][data-contrast="high"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot="popover"], [data-glass-slot="mini-button"]),
+html[data-ui-profile="super-engineering"][data-glass-accents][data-glass="basic"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot="popover"], [data-glass-slot="mini-button"]) {
   --glass-tint: 100%;
   --glass-fill-mix: 100%;
   --glass-specular-alpha: 0%;
@@ -103,20 +119,31 @@ html[data-theme="arc-glass"][data-glass="basic"] :is(.glass-surface, .rox-mode-p
   --glass-blur: 0px;
   --glass-blur-tight: 0px;
   backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
-html[data-theme="arc-glass"][data-contrast="high"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot]) {
+/* Composer: solidify fill only — never reset backdrop-filter. */
+html[data-ui-profile="super-engineering"][data-glass-accents][data-contrast="high"] [data-glass-slot="composer"],
+html[data-ui-profile="super-engineering"][data-glass-accents][data-glass="basic"] [data-glass-slot="composer"] {
+  --glass-tint: 100%;
+  --glass-fill-mix: 100%;
+  --glass-specular-alpha: 0%;
+  --glass-hover-boost: 0%;
+}
+
+html[data-ui-profile="super-engineering"][data-glass-accents][data-contrast="high"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot="popover"], [data-glass-slot="composer"], [data-glass-slot="mini-button"]) {
   --glass-hairline: var(--border-strong);
 }
 
-html[data-theme="arc-glass"][data-render-profile="performance"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot]) {
+html[data-ui-profile="super-engineering"][data-glass-accents][data-render-profile="performance"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot="popover"], [data-glass-slot="mini-button"]) {
   --glass-blur: 0px;
   --glass-blur-tight: 0px;
   backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  html[data-theme="arc-glass"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot]) {
+  html[data-ui-profile="super-engineering"][data-glass-accents] :is(.glass-surface, .rox-mode-pill, [data-glass-slot="popover"], [data-glass-slot="mini-button"]) {
     --glass-tint: 100%;
     --glass-fill-mix: 100%;
     --glass-specular-alpha: 0%;
@@ -124,6 +151,14 @@ html[data-theme="arc-glass"][data-render-profile="performance"] :is(.glass-surfa
     --glass-blur: 0px;
     --glass-blur-tight: 0px;
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="composer"] {
+    --glass-tint: 100%;
+    --glass-fill-mix: 100%;
+    --glass-specular-alpha: 0%;
+    --glass-hover-boost: 0%;
   }
 }
 

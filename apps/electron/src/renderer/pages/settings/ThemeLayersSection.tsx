@@ -38,6 +38,7 @@ import { SettingsSection, SettingsCard, SettingsRow, SettingsSegmentedControl } 
 import { ColorPicker } from '@/components/ui/color-picker'
 import { Button } from '@/components/ui/button'
 import { useTheme, useAppTheme } from '@/context/ThemeContext'
+import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
 
 /** Theme files are tiny; refuse anything bigger before reading untrusted bytes. */
 const MAX_THEME_IMPORT_BYTES = 64 * 1024
@@ -252,6 +253,7 @@ function LayerColorRow({ label, description, value, onChange, derived, testId }:
 
 export function ThemeLayersSection({ onPresetsChanged }: { onPresetsChanged?: () => void }) {
   const { t } = useTranslation()
+  const seProfile = useSuperEngineeringProfile()
   const { resolvedTheme, isDark, effectiveColorTheme, setColorTheme } = useTheme()
   const overrideLayers = useAppTheme()?.layers ?? null
   const committed = useMemo(
@@ -440,7 +442,15 @@ export function ThemeLayersSection({ onPresetsChanged }: { onPresetsChanged?: ()
             <RangeRow testId="theme-glass" label={t('settings.appearance.layers.glass')} min={0} max={100} step={5}
               value={glassPercent} display={`${glassPercent}%`}
               onChange={(value) => update((l) => ({ ...l, glass: value / 100 }))} />
-            {!draft.wallpaper && <p className="material-note">{t('settings.appearance.layers.glassNeedsWallpaper')}</p>}
+            {!draft.wallpaper && !seProfile && <p className="material-note">{t('settings.appearance.layers.glassNeedsWallpaper')}</p>}
+            {seProfile && (
+              <p className="material-note">
+                {t(
+                  'settings.appearance.layers.glassSeAccents',
+                  'Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.',
+                )}
+              </p>
+            )}
           </>
         ), 'theme-group-wallpaper')}
 

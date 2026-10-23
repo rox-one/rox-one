@@ -9448,6 +9448,7 @@
   "settings.appearance.layers.frameText": "Keret szövege",
   "settings.appearance.layers.glass": "Üveg",
   "settings.appearance.layers.glassNeedsWallpaper": "Az üveg háttérkép beállításakor látszik.",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "Importálás",
   "settings.appearance.layers.importError": "A fájl nem érvényes .rox-theme.json.",
   "settings.appearance.layers.importSuccess": "„{{name}}” importálva.",

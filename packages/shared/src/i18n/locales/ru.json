@@ -9496,6 +9496,7 @@
   "settings.appearance.layers.frameText": "Текст рамки",
   "settings.appearance.layers.glass": "Стекло",
   "settings.appearance.layers.glassNeedsWallpaper": "Стекло видно, когда заданы обои.",
+  "settings.appearance.layers.glassSeAccents": "В Rox Engineering слайдер Glass включает опциональные акценты на хроме (пилюли, Mini, меню, композер). 0 = выкл.",
   "settings.appearance.layers.import": "Импорт",
   "settings.appearance.layers.importError": "Файл не является корректным .rox-theme.json.",
   "settings.appearance.layers.importSuccess": "Импортирована тема «{{name}}».",
