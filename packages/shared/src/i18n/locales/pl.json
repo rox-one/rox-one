@@ -9473,6 +9473,7 @@
   "settings.appearance.layers.frameText": "Tekst ramki",
   "settings.appearance.layers.glass": "Szkło",
   "settings.appearance.layers.glassNeedsWallpaper": "Szkło jest widoczne, gdy ustawiono tapetę.",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "Importuj",
   "settings.appearance.layers.importError": "Ten plik nie jest prawidłowym .rox-theme.json.",
   "settings.appearance.layers.importSuccess": "Zaimportowano „{{name}}”.",

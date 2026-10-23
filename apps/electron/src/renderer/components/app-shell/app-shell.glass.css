@@ -1,48 +1,16 @@
-/* Arc Glass chrome polish (wave: glass-all-screens, slice S12).
+/* Legacy Arc Glass chrome polish (wallpaper-only theme; Design removed).
  *
- * Corrections the shared recipes cannot express from markup alone. Every rule is
- * scoped to the arc-glass theme and uses tokens only, so other themes and the
- * degradations (high contrast / basic tier / reduced transparency / performance
- * profile) are untouched — the recipes in
- * packages/ui/src/components/glass/arc-glass-surfaces.css already flatten
- * themselves, and nothing here re-declares a --glass-* value.
- *
- * 1. A glass toolbar draws its divider as the recipe's inset bottom hairline, so
- *    the component's own bottom border must not double it (PanelHeader and the
- *    grid-tile header both carry `border-b border-border-subtle`).
- * 2. Rail rows carry their own strong selected fill and draw their own marker
- *    pseudo-element (RailRow), so the `row` recipe's transparent base — and its
- *    neutral hover — must not erase the active destination. The fill is the same
- *    --state-selected-strong token RailRow already paints, so the row reads
- *    identically at rest, hovered and collapsed.
- * 3. No double glass: a panel header — or a section plate — already inside a
- *    chrome plate is on glass and stays transparent (sidebar sections group by
- *    rhythm, not by a nested card). The frame rules in tokens/layers.css name
- *    the rail/sidebar/navigator panes; this covers the compact navigator strip,
- *    the top bar and the inspector, which that rule does not list.
+ * Toolbar/panel double-glass corrections that depended on deleted Arc Glass
+ * surfaces CSS were removed. Remaining: rail selected fill + mission ring.
  */
-
-html[data-theme="arc-glass"] [data-glass-slot="toolbar"] {
-  border-bottom-width: 0;
-}
-
-html[data-theme="arc-glass"] :is(.chrome-rail, .chrome-strip, .chrome-topbar, [data-inspector-panel]) [data-glass-slot="toolbar"],
-html[data-theme="arc-glass"] :is(.rox-shell-pane[data-panel-role="sidebar"], .rox-shell-pane[data-panel-role="navigator"]) :is([data-glass-slot="toolbar"], [data-glass-slot="panel"]) {
-  background: transparent;
-  backdrop-filter: none;
-  box-shadow: none;
-}
 
 html[data-theme="arc-glass"] [data-rail-row][aria-current="page"],
 html[data-theme="arc-glass"] [data-rail-row][aria-current="page"]:hover {
   background-color: var(--state-selected-strong);
 }
 
-/* 4. A selected mission card keeps its accent ring: the card recipe owns
-   box-shadow, so the ring is re-stated (together with the recipe's own ring) for
-   the selection state the markup publishes as `data-active`. The combined value
-   lives in a local custom property, the same pattern the recipes use. */
+/* Selected mission card accent ring; falls back when --glass-surface-ring unset. */
 html[data-theme="arc-glass"] [data-mission-row][data-active] {
-  --glass-mission-ring: var(--glass-surface-ring), 0 0 0 1px var(--accent);
+  --glass-mission-ring: var(--glass-surface-ring, var(--glass-card-shadow)), 0 0 0 1px var(--accent);
   box-shadow: var(--glass-mission-ring);
 }

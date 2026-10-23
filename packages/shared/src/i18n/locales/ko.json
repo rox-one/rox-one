@@ -9443,6 +9443,7 @@
   "settings.appearance.layers.frameText": "프레임 텍스트",
   "settings.appearance.layers.glass": "유리",
   "settings.appearance.layers.glassNeedsWallpaper": "배경화면이 설정되면 유리 효과가 보입니다.",
+  "settings.appearance.layers.glassSeAccents": "Under Rox Engineering, Glass turns on optional chrome accents (pills, Mini, menus, composer). 0 = off.",
   "settings.appearance.layers.import": "가져오기",
   "settings.appearance.layers.importError": "올바른 .rox-theme.json 파일이 아닙니다.",
   "settings.appearance.layers.importSuccess": "“{{name}}”을(를) 가져왔습니다.",
