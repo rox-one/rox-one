@@ -41,11 +41,12 @@ describe('SE shell parity checklist (docs + contract)', () => {
     }
     expect(contract.profile).toBe('super-engineering')
     expect(contract.done.some((d) => d.id === 'popover-blur-accents')).toBe(true)
-    expect(contract.gaps.map((g) => g.id).sort()).toEqual(['G1', 'G2', 'G3', 'G4', 'G5'])
+    expect(contract.gaps.map((g) => g.id).sort()).toEqual(['G1', 'G3', 'G4', 'G5'])
     const md = readFileSync(checklistPath, 'utf8')
     expect(md).toContain('do not re-PR')
     expect(md).toContain('Remaining gaps')
-    for (const id of ['G1', 'G2', 'G3', 'G4', 'G5']) expect(md).toContain(id)
+    for (const id of ['G1', 'G3', 'G4', 'G5']) expect(md).toContain(id)
+    expect(contract.done.some((d) => d.id === 'worktree-hover-delay')).toBe(true)
   })
 })
 
@@ -104,23 +105,18 @@ describe('SE pointwise popover blur (already correct — lock)', () => {
   })
 })
 
-describe('SE shell parity open gaps (documented only)', () => {
+describe('SE shell parity remaining / closed gaps', () => {
   it('G1: packages/ui/src/icons/se extract is still absent', () => {
     expect(existsSync(join(root, 'packages/ui/src/icons/se'))).toBe(false)
   })
 
-  it('G2: WorktreeHoverCard has no 200–300ms hover delay helper', () => {
-    const card = readFileSync(
-      join(root, 'apps/electron/src/renderer/components/workspace/WorktreeHoverCard.tsx'),
-      'utf8',
-    )
+  it('G2 DONE: WorkspaceNavigator gates WorktreeHoverCard at 250ms', () => {
     const nav = readFileSync(
       join(root, 'apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx'),
       'utf8',
     )
-    expect(card).not.toMatch(/delay|setTimeout|200|300/)
-    // Navigator shows the card on hoverBranch without a timed gate.
+    expect(nav).toContain('export const WORKTREE_HOVER_DELAY_MS = 250')
+    expect(nav).toMatch(/setTimeout\([^,]+,\s*WORKTREE_HOVER_DELAY_MS\)/)
     expect(nav).toContain("layout === 'compact' && hoverBranch?.id === branch.id")
-    expect(nav).not.toMatch(/hoverDelay|HOVER_DELAY|200\s*\*\s*|300\s*\*\s*/)
   })
 })
