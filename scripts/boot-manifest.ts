@@ -44,6 +44,7 @@
  * `__vitePreload` dependency list (which mirrors the static edges we already walk).
  *
  * Usage:
+ *   bun run perf:gate:regen                    # preferred: build + rewrite manifest + bundle baseline
  *   bun run scripts/boot-manifest.ts           # build if needed, (re)write the manifest
  *   bun run scripts/boot-manifest.ts --check   # derive and diff; write nothing (idempotent)
  *   bun run scripts/boot-manifest.ts --no-build # never build; fail if dist is missing, stale or map-less
@@ -54,6 +55,7 @@
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { isAbsolute, join, posix, relative, resolve, sep } from 'node:path'
+import { PERF_GATE_REGEN_CMD } from './perf-gate-regen'
 
 const ROOT = resolve(import.meta.dir, '..')
 const ELECTRON_DIR = join(ROOT, 'apps/electron')
@@ -663,8 +665,8 @@ async function ensureDist(allowBuild: boolean): Promise<void> {
       missing
         ? `boot-manifest: ${DIST_DIR} is missing and --no-build was given`
         : stale
-          ? `boot-manifest: ${DIST_DIR} was built from different renderer inputs and --no-build was given (rebuild with \`bun run vite build\`, or drop --no-build)`
-          : `boot-manifest: ${DIST_DIR} has no *.js.map files and the closure is derived from them — rebuild with ROX_RENDERER_SOURCEMAP=1, or drop --no-build`,
+          ? `boot-manifest: ${DIST_DIR} was built from different renderer inputs and --no-build was given (run ${PERF_GATE_REGEN_CMD}, or drop --no-build)`
+          : `boot-manifest: ${DIST_DIR} has no *.js.map files and the closure is derived from them — run ${PERF_GATE_REGEN_CMD} (builds with ROX_RENDERER_SOURCEMAP=1), or drop --no-build`,
     )
   }
   console.log(`[boot-manifest] dist ${missing ? 'missing' : stale ? 'was built from different renderer inputs' : 'has no source maps'} — building the renderer (vite build)…`)
@@ -699,7 +701,7 @@ async function main(): Promise<number> {
 
   if (check) {
     if (!existsSync(MANIFEST_PATH)) {
-      console.error('[boot-manifest] --check: manifest missing; run without --check to write it')
+      console.error(`[boot-manifest] --check: manifest missing; regenerate with ${PERF_GATE_REGEN_CMD}`)
       return 1
     }
     const committed = readFileSync(MANIFEST_PATH, 'utf8')
@@ -707,6 +709,7 @@ async function main(): Promise<number> {
     if (!diff.ok) {
       console.error('[boot-manifest] --check: manifest is STALE')
       console.error(formatDiff(diff))
+      console.error(`[boot-manifest] regenerate with ${PERF_GATE_REGEN_CMD}`)
       return 1
     }
     console.log('[boot-manifest] --check: up to date (no changes)')
