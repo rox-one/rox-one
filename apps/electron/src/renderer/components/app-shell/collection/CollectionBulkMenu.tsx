@@ -31,7 +31,7 @@ export function CollectionBulkMenu({
         aria-expanded={open}
         aria-label={label}
         className={cn(
-          'rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground/80 hover:bg-foreground/[0.03] disabled:opacity-50',
+          'rounded-md border border-border bg-background px-2 py-1 text-xs text-text-secondary hover:bg-surface-hover disabled:opacity-50',
           className,
         )}
         onClick={() => setOpen((value) => !value)}
