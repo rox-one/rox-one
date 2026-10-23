@@ -144,3 +144,7 @@ export type {
 // Board widgets
 export { handleShowWidget } from './show-widget.ts';
 export type { ShowWidgetArgs } from './show-widget.ts';
+
+// Canvas / «Доска» entity cards (WP3.5)
+export { handleCanvasCreateEntityCard, handleCanvasLinkEntity } from './canvas-entity.ts';
+export type { CanvasCreateEntityCardArgs, CanvasLinkEntityArgs } from './canvas-entity.ts';

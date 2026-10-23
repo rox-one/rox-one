@@ -124,6 +124,7 @@ import { listTaskSlugs, parseTaskSpec, uniqueTaskSlug } from '@rox/shared/tasks'
 import { createTaskFromSpec, resolveCreateTaskProjectId } from '../tasks'
 import { buildPagesToolCallbacks } from '../pages/tool-callbacks'
 import { buildBoardWidgetToolCallbacks } from '../board/tool-callbacks'
+import { buildCanvasToolCallbacks } from '../canvas/tool-callbacks'
 import type { BoardWidgetToolRecord } from '@rox/session-tools-core'
 import { memoryToolCallbacksForSession } from '../memory/tool-callbacks'
 import { buildVisitorToolCallbacks } from '../visitors/tool-callbacks'
@@ -2913,6 +2914,118 @@ export class SessionManager implements ISessionManager {
     if (!this.eventSink) return
     sessionLog.info(`Broadcasting pages changed (${pages.length} pages)`)
     this.eventSink(RPC_CHANNELS.pages.CHANGED, { to: 'workspace', workspaceId }, workspaceId, pages)
+  }
+
+  /** WP3.5: `workbench.mode.canvas.v1` — default ON; Electron mirrors the renderer toggle via setCanvasModeEnabled. */
+  private canvasModeEnabled = true
+  setCanvasModeEnabled(enabled: boolean): void { this.canvasModeEnabled = enabled }
+  private isCanvasModeEnabled(): boolean { return this.canvasModeEnabled }
+
+  /**
+   * WP3.5: turn `entities.links.v1` on the same way the surface does (Electron
+   * registers applyEntitiesLinksFlag). Fallback: in-process workbench publish.
+   */
+  private canvasLinksEnsure: (() => void | Promise<void>) | null = null
+  setCanvasLinksEnsure(fn: (() => void | Promise<void>) | null): void { this.canvasLinksEnsure = fn }
+
+  /** Local host: owner of everything. Shared hosts can override later via ACL. */
+  private async canEditCanvasBoard(_workspaceId: string, _boardId: string): Promise<boolean> { return true }
+  private async canViewCanvasEntity(_workspaceId: string, _ref: { kind: string; id: string }): Promise<boolean> { return true }
+
+  /**
+   * Mint an entity for a canvas card through existing kind APIs (pages / sessions /
+   * a minimal local note file). Task is link-only (create schema excludes it).
+   */
+  private async createCanvasEntity(
+    workspaceId: string,
+    workspaceRootPath: string,
+    input: { kind: 'note' | 'page' | 'dashboard' | 'session'; title: string; props?: Record<string, unknown>; boardId: string },
+  ): Promise<{ kind: string; id: string }> {
+    const title = input.title.trim() || 'Untitled'
+    switch (input.kind) {
+      case 'page':
+      case 'dashboard': {
+        const { createPage, loadWorkspacePages } = await import('@rox/shared/pages')
+        const config = createPage(workspaceRootPath, {
+          name: title,
+          kind: input.kind === 'dashboard' ? 'live' : 'interactive',
+        })
+        this.notifyConfigFileChange(workspaceRootPath, `pages/${config.slug}/page.json`)
+        this.broadcastPagesChanged(workspaceId, loadWorkspacePages(workspaceRootPath))
+        return { kind: 'page', id: config.slug }
+      }
+      case 'session': {
+        const session = await this.createSession(workspaceId, { name: title })
+        return { kind: 'session', id: session.id }
+      }
+      case 'note': {
+        const { mkdirSync, writeFileSync, existsSync } = await import('node:fs')
+        const { join } = await import('node:path')
+        const { loadWorkspaceConfig, getDefaultWorkspacesDir } = await import('@rox/shared/workspaces')
+        const config = loadWorkspaceConfig(workspaceRootPath)
+        const notesPath = config && typeof (config as { notesPath?: unknown }).notesPath === 'string'
+          ? (config as { notesPath: string }).notesPath
+          : null
+        // Same fallback as notes RPC getWorkspaceNotesRoot when notesPath is unset.
+        const notesRoot = notesPath || join(getDefaultWorkspacesDir(), workspaceId, 'notes')
+        mkdirSync(notesRoot, { recursive: true })
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'untitled'
+        let file = `${slug}.md`
+        let n = 2
+        while (existsSync(join(notesRoot, file))) { file = `${slug}-${n++}.md` }
+        const createdAt = Date.now()
+        const nl = String.fromCharCode(10)
+        const body = ['---', `title: ${JSON.stringify(title)}`, 'tags: []', `createdAt: ${createdAt}`, '---', '', ''].join(nl)
+        writeFileSync(join(notesRoot, file), body, 'utf8')
+        return { kind: 'note', id: file.replace(/\.md$/i, '') }
+      }
+      default:
+        throw new Error(`entity kind not creatable: ${(input as { kind: string }).kind}`)
+    }
+  }
+
+  /** Orphan cleanup after a failed embeds link (createEntityCard compensating delete). */
+  private async deleteCanvasEntity(
+    workspaceId: string,
+    workspaceRootPath: string,
+    ref: { kind: string; id: string },
+  ): Promise<void> {
+    switch (ref.kind) {
+      case 'page': {
+        const { deletePage, loadWorkspacePages } = await import('@rox/shared/pages')
+        deletePage(workspaceRootPath, ref.id)
+        this.notifyConfigFileChange(workspaceRootPath, `pages/${ref.id}/page.json`)
+        this.broadcastPagesChanged(workspaceId, loadWorkspacePages(workspaceRootPath))
+        return
+      }
+      case 'session': {
+        await this.deleteSession(ref.id)
+        return
+      }
+      case 'note': {
+        const { unlinkSync, existsSync } = await import('node:fs')
+        const { join, resolve, sep } = await import('node:path')
+        const { loadWorkspaceConfig, getDefaultWorkspacesDir } = await import('@rox/shared/workspaces')
+        const config = loadWorkspaceConfig(workspaceRootPath)
+        const notesPath = config && typeof (config as { notesPath?: unknown }).notesPath === 'string'
+          ? (config as { notesPath: string }).notesPath
+          : null
+        const notesRoot = notesPath || join(getDefaultWorkspacesDir(), workspaceId, 'notes')
+        // Refuse path escape: create only ever mints bare slug ids.
+        if (!ref.id || ref.id.includes('..') || ref.id.includes('/') || ref.id.includes('\\') || ref.id.includes(sep)) {
+          throw new Error(`canvas note delete: unsafe id ${ref.id}`)
+        }
+        const file = resolve(notesRoot, ref.id.endsWith('.md') ? ref.id : `${ref.id}.md`)
+        if (!file.startsWith(resolve(notesRoot) + sep) && file !== resolve(notesRoot)) {
+          throw new Error('canvas note delete: path escaped notes root')
+        }
+        if (existsSync(file)) unlinkSync(file)
+        return
+      }
+      default:
+        // Unknown / link-only kinds: nothing to delete.
+        return
+    }
   }
 
   /** Broadcast a board widget revision staged through the show_widget tool. */
@@ -6086,6 +6199,28 @@ export class SessionManager implements ISessionManager {
           onWidgetMutated: (record) => {
             this.broadcastBoardWidgetChanged(managed.workspace.id, record)
           },
+        }),
+        // Canvas entity cards (canvas_create_entity_card / canvas_link_entity) —
+        // same CanvasFileStore as Electron canvas IPC (via setCanvasFileStoreHost)
+        // and the same embeds link path as the surface «+ Сущность» picker.
+        canvas: buildCanvasToolCallbacks({
+          workspaceId: managed.workspace.id,
+          workspaceRootPath: managed.workspace.rootPath,
+          sessionId: managed.id,
+          actorId: managed.owner?.id ?? managed.creator?.accountId ?? `agent:${managed.id}`,
+          isCanvasEnabled: () => this.isCanvasModeEnabled(),
+          canEditBoard: async (boardId) => this.canEditCanvasBoard(managed.workspace.id, boardId),
+          canViewEntity: async (ref) => this.canViewCanvasEntity(managed.workspace.id, ref),
+          createEntity: async (input) => this.createCanvasEntity(managed.workspace.id, managed.workspace.rootPath, input),
+          deleteEntity: async (ref) => this.deleteCanvasEntity(managed.workspace.id, managed.workspace.rootPath, ref),
+          ensureLinksEnabled: async () => {
+            if (this.canvasLinksEnsure) await this.canvasLinksEnsure()
+            else {
+              const { ensureCanvasLinksEnabled } = await import('../canvas/links-ensure-host')
+              await ensureCanvasLinksEnabled()
+            }
+          },
+          log: (message: string) => sessionLog.info(message),
         }),
         // Memory recall tools (memory_search / memory_get / memory_forget) — bound to
         // the invoking session's workspace chunk index. Absent when the session is
