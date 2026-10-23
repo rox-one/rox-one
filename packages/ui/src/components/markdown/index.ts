@@ -88,3 +88,9 @@ export {
   type RoxBlockMarker,
   type RoxBlockToggle,
 } from './extensions/rox-block-syntax'
+
+export {
+  ActionButtonBlock,
+  createActionButtonContent,
+  insertActionButtonContent,
+} from './extensions/ActionButtonBlock'

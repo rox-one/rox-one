@@ -1127,3 +1127,96 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   color: var(--text-secondary);
   font-size: 13px;
 }
+
+/* LSX-WP-033: declarative action button — inert imports stay disabled. */
+.tiptap-editor .tiptap-action-button-block,
+.tiptap-action-button-block {
+  margin: 0.65rem 0;
+}
+
+.tiptap-action-button-chrome {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 28rem;
+}
+
+.tiptap-action-button-surface {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: var(--control-hit-min);
+  min-width: var(--control-hit-min);
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle, color-mix(in oklch, var(--foreground) 10%, transparent));
+  background: var(--surface-elevated, color-mix(in oklch, var(--foreground) 4%, transparent));
+  color: var(--text-primary, var(--foreground));
+  font-size: var(--text-body, 0.95rem);
+  font-weight: 500;
+  line-height: var(--text-body-leading, 1.4);
+  cursor: pointer;
+  transition: background-color var(--motion-fast, 120ms), border-color var(--motion-fast, 120ms), opacity var(--motion-fast, 120ms);
+}
+
+.tiptap-action-button-surface:hover:not(:disabled) {
+  background: var(--surface-hover, color-mix(in oklch, var(--foreground) 7%, transparent));
+}
+
+.tiptap-action-button-surface:focus-visible {
+  outline: 2px solid var(--focus, color-mix(in oklch, var(--accent) 45%, transparent));
+  outline-offset: 1px;
+}
+
+.tiptap-action-button-surface:disabled,
+.tiptap-action-button-surface[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.tiptap-action-button-surface[data-presentation='inert'] {
+  border-color: color-mix(in oklch, var(--warning, var(--foreground)) 35%, transparent);
+  background: color-mix(in oklch, var(--warning, var(--foreground)) 8%, transparent);
+}
+
+.tiptap-action-button-surface[data-presentation='pending'] {
+  border-color: color-mix(in oklch, var(--info, var(--accent)) 40%, transparent);
+  background: color-mix(in oklch, var(--info, var(--accent)) 10%, transparent);
+}
+
+.tiptap-action-button-surface[data-presentation='offline'] {
+  border-color: color-mix(in oklch, var(--foreground) 18%, transparent);
+  color: var(--text-muted, color-mix(in oklch, var(--foreground) 62%, transparent));
+}
+
+.tiptap-action-button-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tiptap-action-button-kind {
+  flex-shrink: 0;
+  font-size: var(--text-caption);
+  font-family: var(--font-mono);
+  color: var(--text-secondary, color-mix(in oklch, var(--foreground) 68%, transparent));
+  text-transform: lowercase;
+}
+
+.tiptap-action-button-status {
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: 1.35;
+  color: var(--text-secondary, color-mix(in oklch, var(--foreground) 68%, transparent));
+}
+
+.tiptap-action-button-status[data-presentation='inert'] {
+  color: color-mix(in oklch, var(--foreground) 72%, var(--warning, var(--foreground)));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tiptap-action-button-surface {
+    transition: none;
+  }
+}
