@@ -9,7 +9,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { FileWarning } from 'lucide-react'
-import { Markdown, Spinner } from '@rox/ui'
+import { Markdown, Skeleton } from '@rox/ui'
 import type { KnowledgeMapNode } from '@rox/shared/knowledge/knowledge-map-types'
 import { toErrorMessage } from '@/lib/errors'
 
@@ -108,8 +108,16 @@ export function KnowledgeMapDocView({ node, workspaceId }: KnowledgeMapDocViewPr
         </span>
       </div>
       {loading ? (
-        <div className="flex justify-center py-8">
-          <Spinner className="w-4 h-4" />
+        <div
+          className="w-full space-y-3 py-6 text-muted-foreground"
+          role="status"
+          aria-busy="true"
+          aria-label={t('common.loading')}
+          data-testid="knowledge-map-doc-loading"
+        >
+          <Skeleton className="h-4 w-1/3" />
+          <Skeleton lines={5} className="w-full" />
+          <p className="sr-only">{t('common.loading')}</p>
         </div>
       ) : error ? (
         <p

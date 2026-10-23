@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { Maximize2, RefreshCw, Search, ZoomIn, ZoomOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Spinner, Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
+import { Skeleton, Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { SettingsSegmentedControl } from '@/components/settings'
 import { radialLayout } from './radial-layout'
 import {
@@ -98,8 +98,16 @@ export function KnowledgeMapPanel({ workspaceId, compact = false, onOpenFull }: 
   }
   if (!dto) {
     return (
-      <div className="flex justify-center py-8">
-        <Spinner className="w-4 h-4" />
+      <div
+        className="w-full space-y-3 px-1 py-6 text-muted-foreground"
+        role="status"
+        aria-busy="true"
+        aria-label={t('common.loading')}
+        data-testid="knowledge-map-panel-loading"
+      >
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton lines={5} className="w-full" />
+        <p className="sr-only">{t('common.loading')}</p>
       </div>
     )
   }

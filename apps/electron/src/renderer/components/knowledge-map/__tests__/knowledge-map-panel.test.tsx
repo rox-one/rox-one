@@ -29,7 +29,8 @@ mock.module('react-i18next', () => ({
 }))
 
 mock.module('@rox/ui', () => ({
-  Spinner: () => React.createElement('span', { 'data-testid': 'spinner' }),
+  Skeleton: (props: { className?: string; lines?: number }) =>
+    React.createElement('span', { 'data-testid': 'skeleton', 'data-lines': props.lines ?? 1, className: props.className }),
   Markdown: ({ children }: { children?: React.ReactNode }) =>
     React.createElement('div', { 'data-markdown': true }, children),
   // Tooltip primitives are pass-throughs: no portal, no extra DOM, so the
