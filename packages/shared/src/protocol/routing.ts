@@ -1074,6 +1074,8 @@ export const REMOTE_ELIGIBLE_CHANNEL_LIST: readonly string[] = [
   RPC_CHANNELS.memory.WIKI_GET,
   RPC_CHANNELS.memory.WIKI_APPLY,
   RPC_CHANNELS.memory.WIKI_LINT,
+  RPC_CHANNELS.memory.GET_CONFIG,
+  RPC_CHANNELS.memory.UPDATE_CONFIG,
 
   // learning — candidates/evidence/outcomes/policies live under the
   // workspace's memory/learning dir on the workspace-owning server (PRD §5/§15).

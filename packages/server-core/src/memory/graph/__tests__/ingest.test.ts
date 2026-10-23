@@ -85,6 +85,18 @@ describe('toInjectableGraphDocs', () => {
     expect(graphSourceForPath('memory/calls/1.md')).toBe('calls')
     expect(graphSourceForPath('memory/files/1.md')).toBe('files')
   })
+
+  test('allowedSources drops disabled sources', () => {
+    const out = toInjectableGraphDocs(
+      [
+        doc('memory/mail/a.md', 'mail body', 'owner'),
+        doc('memory/notes/b.md', 'note body', 'owner'),
+      ],
+      new Set(['notes']),
+    )
+    expect(out.map(d => d.source)).toEqual(['notes'])
+  })
+
 })
 
 describe('scheduleGraphIngest', () => {
@@ -188,6 +200,9 @@ describe('MemoryIndexService rebuild enqueue', () => {
   test('rebuild schedules injectable ingest; graphIngest:false skips', async () => {
     const { MemoryIndexService } = await import('../../MemoryIndexService')
     const h = home()
+    const prevHome = process.env.ROX_HOME
+    process.env.ROX_HOME = h
+    try {
     const p = new FakeProvider()
     const svc = new MemoryIndexService({
       workspaceRoot: h,
@@ -217,5 +232,9 @@ describe('MemoryIndexService rebuild enqueue', () => {
     await flush()
     expect(p2.ingested).toEqual([])
     svc2.close()
+    } finally {
+      if (prevHome === undefined) delete process.env.ROX_HOME
+      else process.env.ROX_HOME = prevHome
+    }
   })
 })

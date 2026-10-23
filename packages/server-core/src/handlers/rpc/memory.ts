@@ -2,7 +2,7 @@ import { peekRoxAccountAuthority, LOCAL_ROX_CALLER } from '@rox/shared/auth'
 import { RPC_CHANNELS } from '@rox/shared/protocol'
 import type { PushTarget } from '@rox/shared/protocol'
 import { getWorkspaceByNameOrId, getWorkspaces } from '@rox/shared/config'
-import { getMemoryConfig } from '@rox/shared/config/storage'
+import { getMemoryConfig, updateMemoryConfig, type MemoryConfigPatch } from '@rox/shared/config/storage'
 import type { Lesson, LessonCategory, LessonOwner, LessonScope, ProjectMemoryDto, WorkspaceMemory } from '@rox/shared/memory/types'
 import type { WikiApplyResult, WikiClaimStatus, WikiGetResult, WikiLintReport, WikiListResult, WikiMutation } from '@rox/shared/memory/types'
 import { pushTyped, type RequestContext, type RpcServer } from '@rox/server-core/transport'
@@ -47,6 +47,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.memory.WIKI_GET,
   RPC_CHANNELS.memory.WIKI_APPLY,
   RPC_CHANNELS.memory.WIKI_LINT,
+  RPC_CHANNELS.memory.GET_CONFIG,
+  RPC_CHANNELS.memory.UPDATE_CONFIG,
 ]
 
 export interface LessonInput {
@@ -575,6 +577,27 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
       return { report, digestPath }
     },
     { nativeAction: 'read' },
+  )
+
+  server.handle(RPC_CHANNELS.memory.GET_CONFIG, async () => getMemoryConfig(), { nativeAction: 'read' })
+
+  server.handle(
+    RPC_CHANNELS.memory.UPDATE_CONFIG,
+    async (_ctx, patch: MemoryConfigPatch) => {
+      if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return getMemoryConfig()
+      const safe: MemoryConfigPatch = {}
+      if (typeof patch.enabled === 'boolean') safe.enabled = patch.enabled
+      if (typeof patch.semantic === 'boolean') safe.semantic = patch.semantic
+      if (typeof patch.graph === 'boolean') safe.graph = patch.graph
+      if (typeof patch.graphDailyCostCapUsd === 'number' && patch.graphDailyCostCapUsd >= 0) {
+        safe.graphDailyCostCapUsd = patch.graphDailyCostCapUsd
+      }
+      if (patch.graphSources && typeof patch.graphSources === 'object' && !Array.isArray(patch.graphSources)) {
+        safe.graphSources = patch.graphSources
+      }
+      return updateMemoryConfig(safe) ?? getMemoryConfig()
+    },
+    { nativeAction: 'write' },
   )
 
 }

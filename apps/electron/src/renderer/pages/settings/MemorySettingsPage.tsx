@@ -1,0 +1,144 @@
+/**
+ * Settings → Память — graph-memory (cognee) master toggle + per-source ingest gates.
+ * Defaults: graph ON; every source ON when unset.
+ */
+import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { PanelHeader } from '@/components/app-shell/PanelHeader'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  SettingsSection,
+  SettingsCard,
+  SettingsToggle,
+} from '@/components/settings'
+import type { DetailsPageMeta } from '@/lib/navigation-registry'
+import type { MemoryConfig } from '@rox/shared/memory/types'
+import type { MemoryConfigPatch, GraphSourceKey } from '@rox/shared/config/storage'
+import { toErrorMessage } from '@/lib/errors'
+
+export const meta: DetailsPageMeta = {
+  navigator: 'settings',
+  slug: 'memory',
+}
+
+const GRAPH_SOURCES: readonly GraphSourceKey[] = [
+  'session',
+  'notes',
+  'tasks',
+  'chats',
+  'calls',
+  'mail',
+  'files',
+  'lessons',
+] as const
+
+function sourceEnabled(cfg: MemoryConfig | null, key: GraphSourceKey): boolean {
+  if (!cfg) return true
+  return cfg.graphSources?.[key] !== false
+}
+
+export default function MemorySettingsPage() {
+  const { t } = useTranslation()
+  const [config, setConfig] = useState<MemoryConfig | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(() => {
+    const get = window.electronAPI?.getMemoryConfig
+    if (typeof get !== 'function') {
+      setLoading(false)
+      setError(t('settings.memory.unavailable'))
+      return
+    }
+    setLoading(true)
+    get()
+      .then((c) => {
+        setConfig(c)
+        setError(null)
+      })
+      .catch((err) => setError(toErrorMessage(err)))
+      .finally(() => setLoading(false))
+  }, [t])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  const patch = useCallback(
+    async (next: MemoryConfigPatch) => {
+      const update = window.electronAPI?.updateMemoryConfig
+      if (typeof update !== 'function') {
+        setError(t('settings.memory.unavailable'))
+        return
+      }
+      setSaving(true)
+      try {
+        const c = await update(next)
+        setConfig(c)
+        setError(null)
+      } catch (err) {
+        setError(toErrorMessage(err))
+      } finally {
+        setSaving(false)
+      }
+    },
+    [t],
+  )
+
+  const graphOn = config?.graph !== false
+  const semanticOn = config?.semantic !== false
+
+  return (
+    <div data-testid="memory-settings" className="flex h-full min-h-0 flex-col">
+      <PanelHeader title={t('settings.memory.title')} />
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="space-y-6 p-5">
+          <p className="text-sm text-muted-foreground">{t('settings.memory.description')}</p>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <SettingsSection title={t('settings.memory.layersTitle')} description={t('settings.memory.layersDesc')}>
+            <SettingsCard>
+              <SettingsToggle
+                label={t('settings.memory.graph')}
+                description={t('settings.memory.graphDesc')}
+                checked={graphOn}
+                disabled={loading || saving || !config}
+                onCheckedChange={(checked) => void patch({ graph: checked })}
+              />
+              <SettingsToggle
+                label={t('settings.memory.semantic')}
+                description={t('settings.memory.semanticDesc')}
+                checked={semanticOn}
+                disabled={loading || saving || !config}
+                onCheckedChange={(checked) => void patch({ semantic: checked })}
+              />
+            </SettingsCard>
+          </SettingsSection>
+          <SettingsSection
+            title={t('settings.memory.sourcesTitle')}
+            description={t('settings.memory.sourcesDesc')}
+          >
+            <SettingsCard>
+              {GRAPH_SOURCES.map((key) => (
+                <SettingsToggle
+                  key={key}
+                  label={t(`settings.memory.source.${key}`)}
+                  description={t(`settings.memory.sourceDesc.${key}`)}
+                  checked={sourceEnabled(config, key)}
+                  disabled={loading || saving || !config || !graphOn}
+                  onCheckedChange={(checked) =>
+                    void patch({ graphSources: { [key]: checked } })
+                  }
+                />
+              ))}
+            </SettingsCard>
+          </SettingsSection>
+        </div>
+      </ScrollArea>
+    </div>
+  )
+}

@@ -518,6 +518,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'memory:export',
   'memory:extractProposals',
   'memory:get',
+  'memory:getConfig',
   'memory:getContext',
   'memory:getProjectMemory',
   'memory:import',
@@ -547,6 +548,7 @@ export const EXPECTED_CHANNELS: string[] = [
   'memory:repoTree',
   'memory:restoreArchive',
   'memory:search',
+  'memory:updateConfig',
   'memory:updateContext',
   'memory:updateLesson',
   'memory:wikiApply',
@@ -1132,4 +1134,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1128
+export const EXPECTED_CHANNEL_COUNT = 1130

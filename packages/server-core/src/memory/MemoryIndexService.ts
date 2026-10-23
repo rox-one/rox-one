@@ -98,6 +98,8 @@ export interface MemoryIndexServiceDeps {
   graphDailyCostCapUsd?: number
   /** When false, skip background graph ingest after rebuild. Default true. */
   graphIngest?: boolean
+  /** Enabled graph sources; missing → all on. */
+  graphSources?: Partial<Record<'session' | 'notes' | 'tasks' | 'chats' | 'calls' | 'mail' | 'files' | 'lessons', boolean>>
 }
 
 const SNIPPET_CHARS = 240
@@ -367,11 +369,20 @@ export class MemoryIndexService {
   private enqueueGraphIngest(docs: ChunkSourceDoc[]): void {
     if (this.deps.graphIngest === false) return
     try {
+      const src = this.deps.graphSources
+      const allowed =
+        src &&
+        new Set(
+          (['session', 'notes', 'tasks', 'chats', 'calls', 'mail', 'files', 'lessons'] as const).filter(
+            k => src[k] !== false,
+          ),
+        )
       scheduleGraphIngest({
         provider: this.graphProvider(),
         docs,
         dailyCostCapUsd: this.deps.graphDailyCostCapUsd ?? DEFAULT_GRAPH_DAILY_COST_CAP_USD,
         logger: this.logger,
+        ...(allowed ? { allowedSources: allowed } : {}),
       })
     } catch (err) {
       this.logger.warn('MemoryIndexService: graph ingest schedule failed', err)
@@ -584,6 +595,7 @@ export interface MemoryIndexServiceOptions {
   graphDailyCostCapUsd?: number
   /** When false, skip background graph ingest after rebuild. */
   graphIngest?: boolean
+  graphSources?: Partial<Record<'session' | 'notes' | 'tasks' | 'chats' | 'calls' | 'mail' | 'files' | 'lessons', boolean>>
 }
 
 /**
@@ -598,12 +610,14 @@ export function memoryIndexServiceOptions(config: {
   semantic?: boolean
   graphDailyCostCapUsd?: number
   graph?: boolean
+  graphSources?: MemoryIndexServiceOptions['graphSources']
 }): MemoryIndexServiceOptions {
   return {
     semantic: config.semantic === true,
     ...(typeof config.graphDailyCostCapUsd === 'number' ? { graphDailyCostCapUsd: config.graphDailyCostCapUsd } : {}),
     // graph:false means do not push rebuilds into the provider (search may still fuse if one is set).
     ...(config.graph === false ? { graphIngest: false } : {}),
+    ...(config.graphSources ? { graphSources: config.graphSources } : {}),
   }
 }
 
@@ -624,6 +638,7 @@ export function memoryIndexServiceFor(
         ? { graphDailyCostCapUsd: options.graphDailyCostCapUsd }
         : {}),
       ...(options?.graphIngest === false ? { graphIngest: false } : {}),
+      ...(options?.graphSources ? { graphSources: options.graphSources } : {}),
     })
     serviceCache.set(key, svc)
   }
