@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react"
 import * as React from "react"
 import { AnimatePresence, motion, PresenceDiv } from '@/lib/deferred-motion'
+import { SE_MOTION_SEC, SE_SPRING_LIST } from '@/lib/motion/super-engineering-springs'
 import type { Variants } from 'motion/react'
 import { usePrefersReducedMotion } from "@/lib/render-profile-motion"
 
@@ -143,39 +144,32 @@ interface LeftSidebarProps {
   disclosureColumn?: boolean
 }
 
-// Stagger only small trees. A 500-row section must not pay sequential delays.
-function nestedContainerVariants(childCount: number): Variants {
-  const stagger = childCount > 24 ? 0 : 0.025
+/** Nested nav enter/exit — opacity + transform only; no stagger spam (P7). */
+function nestedContainerVariants(_childCount: number): Variants {
   return {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: stagger,
-        delayChildren: stagger === 0 ? 0 : 0.01,
-      },
+      transition: { duration: SE_MOTION_SEC.fast },
     },
     exit: {
       opacity: 0,
-      transition: {
-        staggerChildren: stagger === 0 ? 0 : 0.015,
-        staggerDirection: -1,
-      },
+      transition: { duration: SE_MOTION_SEC.fast },
     },
   }
 }
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, x: -8 },
+  hidden: { opacity: 0, x: -6 },
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.15, ease: 'easeOut' },
+    transition: SE_SPRING_LIST,
   },
   exit: {
     opacity: 0,
-    x: -8,
-    transition: { duration: 0.1, ease: 'easeIn' },
+    x: -6,
+    transition: { duration: SE_MOTION_SEC.fast },
   },
 }
 
@@ -219,7 +213,7 @@ export const LeftSidebar = React.memo(function LeftSidebar({ links, isCollapsed,
   const visibleLinks = !isNested && serviceId !== undefined
     ? getServiceContextLinks(links, serviceId)
     : links
-  // For nested sidebars, wrap in motion container for stagger effect
+  // For nested sidebars, wrap in motion container (opacity only; no stagger)
   const NavWrapper = isNested && !reduceMotion ? motion.nav : 'nav'
   const navProps = isNested && !reduceMotion ? {
     variants: nestedContainerVariants(visibleLinks.length),
@@ -359,7 +353,6 @@ const ExpandableSection = React.memo(function ExpandableSection({
   const toggleRef = React.useRef<HTMLButtonElement>(null)
   const sectionId = sidebarSectionDomId(link.id)
   const navParent = isNavigableExpandable(link)
-  const duration = reduceMotion ? 0 : 0.18
   const groupAriaLabel = !navParent
     ? t(link.expanded ? 'sidebar.disclosure.collapse' : 'sidebar.disclosure.expand', { section: link.title })
     : undefined
@@ -410,11 +403,11 @@ const ExpandableSection = React.memo(function ExpandableSection({
             <SidebarSectionBody
               ref={bodyRef}
               id={sectionId}
-              initial={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
-              animate={{ height: 'auto', opacity: 1, marginTop: 2, marginBottom: isNested ? 4 : 8 }}
-              exit={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
-              transition={{ duration, ease: 'easeInOut' }}
-              className="overflow-hidden"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={reduceMotion ? { duration: 0 } : SE_SPRING_LIST}
+              className={isNested ? 'mt-0.5 mb-1' : 'mt-0.5 mb-2'}
             >
               {renderExpandedContent(link, getItemProps, focusedItemId, isNested)}
             </SidebarSectionBody>
