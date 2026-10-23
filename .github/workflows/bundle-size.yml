@@ -20,6 +20,7 @@ on:
       - 'scripts/boot-manifest.ts'
       - 'scripts/__tests__/boot-manifest.test.ts'
       - 'scripts/__tests__/check-bundle-size.test.ts'
+      - 'scripts/__tests__/perf-gate-regen.test.ts'
       - 'apps/electron/src/shared/rail-surfaces.ts'
       - 'scripts/electron-build-renderer.ts'
       - 'apps/electron/vite.config.ts'
@@ -38,6 +39,7 @@ on:
       - 'scripts/boot-manifest.ts'
       - 'scripts/__tests__/boot-manifest.test.ts'
       - 'scripts/__tests__/check-bundle-size.test.ts'
+      - 'scripts/__tests__/perf-gate-regen.test.ts'
       - 'apps/electron/src/shared/rail-surfaces.ts'
       - 'scripts/electron-build-renderer.ts'
       - 'apps/electron/vite.config.ts'
@@ -94,7 +96,7 @@ jobs:
         run: bun run scripts/boot-manifest.ts --check --no-build
       - name: Bundle-size unit tests
         if: always()
-        run: bun test scripts/__tests__/check-bundle-size.test.ts
+        run: bun test scripts/__tests__/check-bundle-size.test.ts scripts/__tests__/perf-gate-regen.test.ts
       - name: Boot-manifest + stale-chunk unit tests
         if: always()
         run: bun test scripts/__tests__/boot-manifest.test.ts apps/electron/src/renderer/lib/__tests__/stale-chunk-reload.test.ts
