@@ -43,7 +43,7 @@ export function EntityListEmptyScreen({
           {icon}
         </EmptyMedia>
         <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
+        {description.trim() ? <EmptyDescription>{description}</EmptyDescription> : null}
       </EmptyHeader>
       {hasActions && (
         <EmptyContent>
