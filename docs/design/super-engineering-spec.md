@@ -1,6 +1,6 @@
 # super.engineering UI profile — technical spec (rox-one)
 
-**Status:** Wave 1–2 complete on `main` (opt-in profile)  
+**Status:** Wave 1–2 complete on `main` (default theme for new installs as of 2026-10-23)  
 **Contracts:** [`se-wave1-contract.json`](./se-wave1-contract.json), [`se-wave2-contract.json`](./se-wave2-contract.json)
 
 ## 1. Scope
