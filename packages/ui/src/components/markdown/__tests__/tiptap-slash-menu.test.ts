@@ -149,7 +149,7 @@ describe('tiptap slash menu', () => {
     expect(calls).toContain('insertContentAt:5:{"type":"latexBlock","attrs":{"code":"E = mc^2"}}')
   })
 
-  it('includes footnote, table, columns, spoiler and embed commands', () => {
+  it('includes footnote, table, columns, tabs, spoiler and embed commands', () => {
     const { editor, calls } = createMockEditor()
     const items = createSlashCommandItems(editor)
     expect(items.map((item) => item.id)).toEqual(expect.arrayContaining([
@@ -157,6 +157,7 @@ describe('tiptap slash menu', () => {
       'table',
       'columns-2',
       'columns-3',
+      'tabs',
       'spoiler',
       'embed',
     ]))
@@ -167,5 +168,7 @@ describe('tiptap slash menu', () => {
     expect(calls.some((call) => call.includes('| A | B |\\n| ---'))).toBe(false)
     items.find((item) => item.id === 'columns-2')?.run(editor)
     expect(calls.some((call) => call.startsWith('insertContentAt:') && call.includes('roxColumns'))).toBe(true)
+    items.find((item) => item.id === 'tabs')?.run(editor)
+    expect(calls.some((call) => call.startsWith('insertContentAt:') && call.includes('roxTabs'))).toBe(true)
   })
 })

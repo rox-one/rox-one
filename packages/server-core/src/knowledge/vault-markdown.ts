@@ -4,6 +4,7 @@
  */
 import { basename } from 'node:path'
 import matter from 'gray-matter'
+import { toBasicMarkdownExport } from '@rox/core/docs'
 
 export const WIKILINK_RE = /\[\[([^\]|#]+)(#[^\]|]*)?(?:\|([^\]]+))?\]\]/g
 export const FOOTNOTE_DEF_RE = /^\[\^([^\]]+)\]:\s*(.*)$/gm
@@ -124,6 +125,10 @@ export function parseVaultMarkdown(content: string, relativePath: string): Parse
     properties = {}
     body = content
   }
+
+  // Basic Markdown expansion so FTS/search indexes nested tab/column body text.
+  // Portable ::: containers remain on disk; only the projected body_text expands.
+  body = toBasicMarkdownExport(body)
 
   const id = noteIdFromRelativePath(relativePath)
   const title = typeof properties.title === 'string' && properties.title.trim()

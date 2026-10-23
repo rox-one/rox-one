@@ -42,7 +42,7 @@ export {
 } from './markdown-preview-helpers'
 export { ImageCardStack, type ImageCardStackProps, type ImageCardStackItem } from './ImageCardStack'
 export { PerEditorMarkdown } from './official-markdown'
-export { TiptapMarkdownEditor, type TiptapEditorHandle, type TiptapMarkdownEditorProps, type MarkdownEngine } from './TiptapMarkdownEditor'
+export { TiptapMarkdownEditor, toBasicMarkdownExport, postprocessMarkdownFromOfficial, preprocessMarkdownForOfficial, type TiptapEditorHandle, type TiptapMarkdownEditorProps, type MarkdownEngine } from './TiptapMarkdownEditor'
 // W1-08 (#1505): entity mention / embed nodes + Markdown serialisation.
 export { type EntityNodesOptions } from './TiptapMarkdownEditor'
 export { EntityMention, type EntityMentionOptions } from './extensions/EntityMention'

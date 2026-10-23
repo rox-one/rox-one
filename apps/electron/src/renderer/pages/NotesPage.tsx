@@ -99,6 +99,7 @@ import {
 import { PersonalTaskStore } from '@rox/core/tasks/personal'
 import {
   applyPersistentFolds,
+  basicMarkdownForNotes,
   defaultNoteCommands,
   extractComments,
   matchNoteCommands,
@@ -117,6 +118,7 @@ import {
   upsertMarkdownComment,
 } from './notes/document-ia'
 import { selectedNoteQuote, selectionComposerOffset } from './notes/comment-highlights'
+import { NOTE_PDF_TABS_REVEAL_CSS, cloneEditorHtmlForNotePdf } from './notes/note-pdf-export'
 import { NOTES_AI_PROMPTS_STORAGE_KEY, parseNotesAiPrompts, resolveNotesAiInstruction } from './notes/note-ai'
 import { NOTES_SURFACE_ID, bindNativeNote } from './notes-rox2-surface'
 import {
@@ -2555,12 +2557,16 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const handleExportPdf = async () => {
     if (!activeNote || !richEditorRef.current) return
     const editorDom = richEditorRef.current.view.dom as HTMLElement
+    // LSX-WP-031: clone + strip hidden/inert on inactive (and nested) rox-tab panes
+    // so printToPDF includes every pane body; live editor selection is unchanged.
+    const bodyHtml = cloneEditorHtmlForNotePdf(editorDom)
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
 body{font-family:system-ui,sans-serif;max-width:800px;margin:2em auto;line-height:1.6;color:#111}
 pre{background:#f4f4f4;padding:1em;border-radius: var(--radius-xs);overflow-x:auto}
 code{font-family:monospace;font-size:.9em}img{max-width:100%}
 h1,h2,h3{margin-top:1.5em}
-</style></head><body><h1>${activeNote.title.replace(/</g,'&lt;')}</h1>${editorDom.innerHTML}</body></html>`
+${NOTE_PDF_TABS_REVEAL_CSS}
+</style></head><body><h1>${activeNote.title.replace(/</g,'&lt;')}</h1>${bodyHtml}</body></html>`
     const result = await window.electronAPI.exportNotePdf({ html, defaultPath: `${activeNote.title}.pdf` })
     if (!result.canceled) toast.success(t('notes.toast.exportedPdf'))
   }
@@ -2790,7 +2796,7 @@ h1,h2,h3{margin-top:1.5em}
       }),
       '',
       '```markdown',
-      content,
+      basicMarkdownForNotes(content),
       '```',
       '',
       instruction,
@@ -3407,8 +3413,11 @@ h1,h2,h3{margin-top:1.5em}
             <p className="min-w-0 break-words text-destructive" data-testid="notes-save-recovery-message">{saveError}</p>
             <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Button variant="ghost" size="sm" onClick={async () => {
-              try { await navigator.clipboard.writeText(contentRef.current); toast.success(t('notes.content.draftCopied')) }
-              catch { toast.error(t('notes.content.copyFailed')) }
+              try {
+                // Basic MD for humans/clipboard; rich disk body stays portable ::: via autosave.
+                await navigator.clipboard.writeText(basicMarkdownForNotes(contentRef.current))
+                toast.success(t('notes.content.draftCopied'))
+              } catch { toast.error(t('notes.content.copyFailed')) }
             }}>{t('notes.content.copyDraft')}</Button>
             <Button variant="ghost" size="sm" onClick={() => saveNeedsReload ? setSaveRecoveryOpen(true) : void saveCurrentNote()}>
               {saveNeedsReload ? t('notes.content.reloadSource') : t('notes.content.retrySave')}

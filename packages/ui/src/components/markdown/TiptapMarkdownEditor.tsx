@@ -28,6 +28,8 @@ import { HashTag } from './extensions/HashTag'
 import { MarkdownComment } from './extensions/MarkdownComment'
 import { DocumentFolding, type DocumentFoldingJSON } from './extensions/DocumentFolding'
 import { RoxColumnsBlock, RoxColumnBlock } from './extensions/ColumnsBlock'
+import { RoxTabsBlock, RoxTabBlock } from './extensions/TabsBlock'
+import { toBasicMarkdownExport as expandToBasicMarkdownExport } from '@rox/core/docs'
 import { RoxBlockCallout, PortableCalloutBlockquote } from './extensions/rox-block-syntax'
 import { cn } from '../../lib/utils'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
@@ -138,6 +140,17 @@ export function preprocessMarkdownForOfficial(markdown: string): string {
 export function postprocessMarkdownFromOfficial(markdown: string): string {
   return markdown.replaceAll(CURRENCY_MARKER, '$')
 }
+
+/**
+ * Production choke point: TipTap serialize → basic Markdown export.
+ * Keeps rich/portable onUpdate path intact (:::rox-tabs stay on disk);
+ * callers that need indexer/plain-MD visibility expand tabs/columns here.
+ * Unknown future containers remain readable.
+ */
+export function toBasicMarkdownExport(markdown: string): string {
+  return expandToBasicMarkdownExport(postprocessMarkdownFromOfficial(markdown))
+}
+
 
 const MERMAID_FILE_EXTENSIONS = new Set(['mmd', 'mermaid'])
 
@@ -338,6 +351,15 @@ export function TiptapMarkdownEditor({
       RichBlockInteractions,
       RoxColumnsBlock.configure({ labels: { resizeColumn: i18n.t('notes.columns.resize') } }),
       RoxColumnBlock,
+      RoxTabsBlock.configure({
+        labels: {
+          addTab: i18n.t('notes.tabs.add'),
+          removeTab: i18n.t('notes.tabs.remove'),
+          renameTab: i18n.t('notes.tabs.rename'),
+          defaultTitle: i18n.t('notes.tabs.defaultTitle', { n: '{{n}}' }),
+        },
+      }),
+      RoxTabBlock,
       DocumentFolding.configure({
         initialState: readFoldingPreference(foldingStorageKey),
         labels: {
@@ -409,8 +431,9 @@ export function TiptapMarkdownEditor({
       LegacyMarkdown.configure({
         html: false,
         transformPastedText: true,
-        transformCopiedText: true,
-      }),
+        // Portable ::: copy is handled by editorProps.clipboardTextSerializer (expanded).
+        transformCopiedText: false,
+      })
     ]
   }, [placeholder, useOfficialMarkdown, foldingStorageKey, entityNodesEnabled, entityMentionView, entityEmbedView])
 
@@ -426,6 +449,20 @@ export function TiptapMarkdownEditor({
     editorProps: {
       attributes: {
         class: 'tiptap-prose outline-none',
+      },
+      // Wins over core ClipboardTextSerializer via view._props; expands ::: for plain copy.
+      clipboardTextSerializer: (slice) => {
+        const active = editorRef.current as { storage?: { markdown?: { serializer?: { serialize?: (content: unknown) => string } } }; getMarkdown?: () => string } | null
+        const serializer = active?.storage?.markdown?.serializer
+        if (serializer?.serialize) {
+          try {
+            return toBasicMarkdownExport(serializer.serialize(slice.content))
+          } catch {
+            /* fall through */
+          }
+        }
+        // Official engine has no slice serializer; fall through to PM textBetween.
+        return undefined as unknown as string
       },
       handlePaste: (_view, event) => {
         if (!editable) return false

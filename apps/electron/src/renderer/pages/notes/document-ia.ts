@@ -4,6 +4,7 @@
  */
 
 import i18n from 'i18next'
+import { toBasicMarkdownExport } from '@rox/core/docs'
 
 function authoringLabel(key: string): string {
   const value = i18n.t(key)
@@ -38,6 +39,7 @@ export type NoteFootnote = { id: string; body: string }
 export type NoteBlockId = { id: string; preview: string }
 export type NoteWikiLink = { target: string; alias?: string; embed: boolean }
 export type NoteColumnLayout = { columns: number; cells: string[] }
+export type NoteTabsLayout = { titles: string[]; panes: string[] }
 export type NoteInlineComment = {
   id: string
   quote: string
@@ -55,6 +57,7 @@ export type NoteDocumentStructure = {
   blockIds: NoteBlockId[]
   wikiLinks: NoteWikiLink[]
   columns: NoteColumnLayout[]
+  tabs: NoteTabsLayout[]
   comments: NoteInlineComment[]
   folds: NoteFold[]
   spoilers: string[]
@@ -230,6 +233,90 @@ export function serializeColumns(cells: string[]): string {
   const filled = Array.from({ length: columns }, (_, index) => cells[index]?.trim() ?? '')
   const inner = filled.map((cell) => `:::column\n${cell}\n:::`).join('\n')
   return `:::columns ${columns}\n${inner}\n:::`
+}
+
+
+export function serializeTabs(panes: Array<{ title?: string; body?: string }>): string {
+  const filled = panes.length > 0 ? panes : [{ title: 'Tab 1', body: '' }, { title: 'Tab 2', body: '' }]
+  const inner = filled.map((pane, index) => {
+    const title = (pane.title?.trim() || `Tab ${index + 1}`).replace(/"/g, "'")
+    const body = pane.body?.trim() ?? ''
+    return `:::rox-tab {title="${title}"}\n${body}\n:::`
+  }).join('\n')
+  return `:::rox-tabs\n${inner}\n:::`
+}
+
+/** Basic Markdown export for notes IA / search — same choke as TipTap/vault. */
+export function basicMarkdownForNotes(markdown: string): string {
+  return toBasicMarkdownExport(markdown)
+}
+
+export function extractTabs(markdown: string): NoteTabsLayout[] {
+  const layouts: NoteTabsLayout[] = []
+  const lines = markdown.split('\n')
+  const openAny = /^:::[A-Za-z]/
+  const closeBare = /^:::\s*$/
+  const fenceOpen = /^(`{3,}|~{3,})/
+  for (let i = 0; i < lines.length; i += 1) {
+    const header = /^:::(?:rox-tabs|tabs)\s*$/.exec(lines[i]!)
+    if (!header) continue
+    const titles: string[] = []
+    const panes: string[] = []
+    let currentTitle = ''
+    let current: string[] | null = null
+    let depth = 1
+    let fence: string | undefined
+    let j = i + 1
+    for (; j < lines.length; j += 1) {
+      const line = lines[j]!
+      const code = fenceOpen.exec(line)?.[1]
+      if (fence) {
+        if (code && code[0] === fence[0] && code.length >= fence.length && new RegExp(`^${fence[0]}+\\s*$`).test(line)) {
+          fence = undefined
+        }
+        if (current) current.push(line)
+        continue
+      }
+      if (code) {
+        fence = code
+        if (current) current.push(line)
+        continue
+      }
+      const openTab = /^:::(?:rox-tab|tab)(?:\s+\{title="([^"]*)"\})?\s*$/.exec(line)
+      if (openTab && current == null && depth === 1) {
+        currentTitle = openTab[1] ?? `Tab ${titles.length + 1}`
+        current = []
+        depth += 1
+        continue
+      }
+      if (openAny.test(line)) {
+        depth += 1
+        if (current) current.push(line)
+        continue
+      }
+      if (closeBare.test(line)) {
+        depth -= 1
+        if (depth === 1 && current) {
+          titles.push(currentTitle || `Tab ${titles.length + 1}`)
+          panes.push(current.join('\n').trim())
+          current = null
+          currentTitle = ''
+          continue
+        }
+        if (depth === 0) break
+        if (current) current.push(line)
+        continue
+      }
+      if (current) current.push(line)
+    }
+    if (current) {
+      titles.push(currentTitle || `Tab ${titles.length + 1}`)
+      panes.push(current.join('\n').trim())
+    }
+    layouts.push({ titles, panes })
+    i = j
+  }
+  return layouts
 }
 
 export function extractColumns(markdown: string): NoteColumnLayout[] {
@@ -510,6 +597,7 @@ export function defaultNoteCommands(input: {
     { id: 'bang:new-task', kind: 'bang', subject: 'action', label: authoringLabel('notes.authoring.newTask'), insert: '!task' },
     { id: 'bang:columns-2', kind: 'bang', subject: 'action', label: authoringLabel('notes.authoring.columns2'), insert: '!columns2' },
     { id: 'bang:columns-3', kind: 'bang', subject: 'action', label: authoringLabel('notes.authoring.columns3'), insert: '!columns3' },
+    { id: 'bang:tabs', kind: 'bang', subject: 'action', label: authoringLabel('notes.authoring.tabs'), insert: '!tabs' },
   ]
   const at: NoteCommandItem[] = [
     ...input.sessions.map((session) => ({
@@ -612,6 +700,8 @@ export function noteCommandLabelKey(item: NoteCommandItem): string | null {
       return 'notes.authoring.columns2'
     case 'bang:columns-3':
       return 'notes.authoring.columns3'
+    case 'bang:tabs':
+      return 'notes.authoring.tabs'
     default:
       return null
   }
@@ -649,10 +739,13 @@ export function groupNoteCommands(items: readonly NoteCommandItem[]): Array<{
 export function snippetForColumnCommand(id: string): string | null {
   if (id === 'bang:columns-2') return TWO_COLUMN_SNIPPET
   if (id === 'bang:columns-3') return THREE_COLUMN_SNIPPET
+  if (id === 'bang:tabs') return TABS_SNIPPET
   return null
 }
 
 export function parseNoteDocument(markdown: string): NoteDocumentStructure {
+  // Structure extractors read the portable ::: source. Callers that need
+  // indexer/plain-MD visibility use basicMarkdownForNotes (TipTap toBasicMarkdownExport / vault FTS).
   const headings: NoteDocumentStructure['headings'] = []
   const folded = new Set(extractFolds(markdown).map((fold) => fold.id))
   for (const line of markdown.split('\n')) {
@@ -690,6 +783,7 @@ export function parseNoteDocument(markdown: string): NoteDocumentStructure {
     blockIds: extractBlockIds(markdown),
     wikiLinks,
     columns: extractColumns(markdown),
+    tabs: extractTabs(markdown),
     comments: extractComments(markdown),
     folds: extractFolds(markdown),
     spoilers: [...markdown.matchAll(SPOILER_RE)].map(() => 'spoiler'),
@@ -731,4 +825,5 @@ export const SPOILER_SNIPPET = '> [!spoiler]\n> \n'
 export const EMBED_SNIPPET = '![['
 export const TWO_COLUMN_SNIPPET = serializeColumns(['', ''])
 export const THREE_COLUMN_SNIPPET = serializeColumns(['', '', ''])
+export const TABS_SNIPPET = serializeTabs([{ title: 'Tab 1', body: '' }, { title: 'Tab 2', body: '' }])
 export const HR_SHORTCUT = 'Mod-Shift--'

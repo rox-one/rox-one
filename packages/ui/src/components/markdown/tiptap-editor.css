@@ -844,6 +844,143 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
     );
 }
 
+
+/* ROX tabs — semantic containers (LSX-WP-031) */
+.tiptap-rox-tabs {
+  margin: 0.875rem 0;
+  padding: 0.35rem 0.35rem 0.5rem;
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklch, var(--foreground) 2.5%, transparent) 0%,
+      color-mix(in oklch, var(--foreground) 1%, transparent) 100%
+    );
+  border: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
+}
+
+.tiptap-rox-tabs-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+  padding: 0.15rem;
+}
+
+.tiptap-rox-tabs-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  max-width: 100%;
+}
+
+.tiptap-rox-tabs-tab {
+  min-height: var(--control-hit-min);
+  min-width: var(--control-hit-min);
+  max-width: 16rem;
+  margin: 0;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary, color-mix(in oklch, var(--foreground) 72%, transparent));
+  font: inherit;
+  font-size: var(--text-body);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.tiptap-rox-tabs-rename-input {
+  max-width: 16rem;
+  min-width: 4rem;
+  box-sizing: border-box;
+}
+
+.tiptap-rox-tabs-tab.is-active {
+  background: color-mix(in oklch, var(--background) 88%, transparent);
+  border-color: color-mix(in oklch, var(--foreground) 10%, transparent);
+  color: var(--text-primary, var(--foreground));
+  box-shadow: var(--shadow-minimal);
+}
+
+.tiptap-rox-tabs-tab:hover {
+  color: var(--text-primary, var(--foreground));
+}
+
+.tiptap-rox-tabs-tab:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.tiptap-rox-tabs-add,
+.tiptap-rox-tabs-remove {
+  min-height: var(--control-hit-min);
+  min-width: var(--control-hit-min);
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: color-mix(in oklch, var(--foreground) 55%, transparent);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tiptap-rox-tabs-add:hover,
+.tiptap-rox-tabs-remove:hover {
+  color: var(--foreground);
+  background: color-mix(in oklch, var(--foreground) 6%, transparent);
+}
+
+.tiptap-rox-tabs-add:focus-visible,
+.tiptap-rox-tabs-remove:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.tiptap-rox-tabs-panels {
+  display: block;
+}
+
+.tiptap-rox-tab {
+  min-width: 0;
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--background) 86%, transparent);
+  border: 1px solid color-mix(in oklch, var(--foreground) 7%, transparent);
+  box-shadow: var(--shadow-minimal);
+  padding: 0.75rem 0.85rem;
+}
+
+.tiptap-rox-tab > .tiptap-rox-tab-content > :first-child {
+  margin-top: 0;
+}
+
+.tiptap-rox-tab > .tiptap-rox-tab-content > :last-child {
+  margin-bottom: 0;
+}
+
+/* Personal selected tab — React NodeView toggles .is-active / [hidden] per pane
+   (no fixed nth-child cap). Child content stays in the doc for export/search.
+   TipTap nests as:
+     .tiptap-rox-tabs > .tiptap-rox-tabs-panels > [data-node-view-content-react] > .react-renderer > .tiptap-rox-tab
+   Use `>` so an outer tabs active-index never forces panes inside nested tabs. */
+.tiptap-rox-tabs > .tiptap-rox-tabs-panels > .tiptap-rox-tab:not(.is-active),
+.tiptap-rox-tabs > .tiptap-rox-tabs-panels > .tiptap-rox-tab[hidden],
+.tiptap-rox-tabs > .tiptap-rox-tabs-panels > [data-node-view-content-react] > .react-renderer:not(:has(> .tiptap-rox-tab.is-active)),
+.tiptap-rox-tabs > .tiptap-rox-tabs-panels > [data-node-view-content-react] > *:not(:has(> .tiptap-rox-tab.is-active)) {
+  display: none;
+}
+.tiptap-rox-tabs > .tiptap-rox-tabs-panels > .tiptap-rox-tab.is-active,
+.tiptap-rox-tabs > .tiptap-rox-tabs-panels > [data-node-view-content-react] > .react-renderer:has(> .tiptap-rox-tab.is-active),
+.tiptap-rox-tabs > .tiptap-rox-tabs-panels > [data-node-view-content-react] > *:has(> .tiptap-rox-tab.is-active) {
+  display: block;
+}
+
 /* W1-08 (#1505): fallback look for entity mention / embed nodes when the host
    passes no React node view. Rox tokens only. */
 .tiptap-editor .tiptap-entity-mention {
