@@ -260,15 +260,13 @@ export function ActiveOptionBadges({
 
         {/* Stacking container for label badges (left side).
          * useDynamicStack sets per-child marginLeft directly via ResizeObserver.
-         * overflow: clip prevents scroll container while py/-my gives shadow room. */}
+         * overflow: clip prevents scroll container; single hairline drop-shadow
+         * approximates shadow-minimal without stacking soft elevation chrome. */}
         {hasStackContent && (
           <div
             className="flex-1 min-w-0 max-w-full py-0.5 -my-0.5"
             style={{
-              // shadow-minimal replicated as drop-shadow (traces masked alpha, no clipping).
-              // Ring uses higher blur+opacity for visible border feel (hard 1px ring can't be replicated exactly).
-              // Blur shadows use reduced blur+opacity to stay tight (accounting for no negative spread in drop-shadow).
-              filter: 'drop-shadow(0px 0px 0.5px rgba(var(--foreground-rgb), 0.3)) drop-shadow(0px 1px 0.1px rgba(0,0,0,0.04)) drop-shadow(0px 3px 0.2px rgba(0,0,0,0.03))',
+              filter: 'drop-shadow(0px 0px 0.5px rgba(var(--foreground-rgb), 0.25))',
             }}
           >
             <div
@@ -317,8 +315,8 @@ export function ActiveOptionBadges({
 
 /**
  * Renders a single label badge with LabelValuePopover for editing/removal.
- * No box-shadow on the badge itself — all shadows come from the parent
- * wrapper's drop-shadow filter (traces masked alpha without clipping).
+ * No box-shadow on the badge itself — parent wrapper owns a single hairline
+ * drop-shadow (traces masked alpha under overflow:clip; no soft stack).
  * Shows: [color circle] [name] [· value in mono] [chevron]
  */
 function LabelBadge({
