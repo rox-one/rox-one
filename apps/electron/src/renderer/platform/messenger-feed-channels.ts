@@ -92,3 +92,37 @@ export function matchesMessengerChannelFilter(
   if (!channelId) return true
   return item.channelId === channelId
 }
+
+/**
+ * Sync Лента channel filters from the team-chat roster (viewerSubscribed),
+ * not only from the follow-button click path.
+ */
+export function hydrateMessengerFeedChannelsFromRoster(
+  orgId: string,
+  channels: readonly { id: string; name: string; isDefault?: boolean; viewerSubscribed: boolean }[],
+  labelOf: (channel: { id: string; name: string; isDefault?: boolean }) => string,
+): void {
+  if (!orgId) return
+  const subscribedIds = new Set<string>()
+  for (const channel of channels) {
+    if (!channel.viewerSubscribed) continue
+    subscribedIds.add(channel.id)
+    setMessengerFeedChannel({
+      channelId: channel.id,
+      name: labelOf(channel),
+      orgId,
+      subscribed: true,
+    })
+  }
+  for (const stored of [...listMessengerFeedChannels()]) {
+    if (stored.orgId === orgId && !subscribedIds.has(stored.channelId)) {
+      setMessengerFeedChannel({
+        channelId: stored.channelId,
+        name: stored.name,
+        orgId: stored.orgId,
+        subscribed: false,
+      })
+    }
+  }
+}
+

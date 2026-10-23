@@ -288,6 +288,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     setView(stored.view)
     setChip(stored.chip)
     setSourceFilter(stored.sourceFilter)
+    setChannelFilter(null)
     setQuery(stored.query)
     setColors(new Set(stored.colors))
     setTagFilter(stored.tagFilter)

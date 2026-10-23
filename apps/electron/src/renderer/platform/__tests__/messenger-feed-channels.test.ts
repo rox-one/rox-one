@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'bun:test'
 import {
+  hydrateMessengerFeedChannelsFromRoster,
   listMessengerFeedChannels,
   matchesMessengerChannelFilter,
   reloadMessengerFeedChannels,
@@ -41,5 +42,19 @@ describe('messenger-feed-channels', () => {
     expect(matchesMessengerChannelFilter({ channelId: 'a' }, 'a')).toBe(true)
     expect(matchesMessengerChannelFilter({ channelId: 'a' }, 'b')).toBe(false)
     expect(matchesMessengerChannelFilter({}, 'a')).toBe(false)
+  })
+
+  it('hydrates followed channels from the roster', () => {
+    setMessengerFeedChannel({ channelId: 'stale', name: 'old', orgId: 'org-1', subscribed: true })
+    hydrateMessengerFeedChannelsFromRoster(
+      'org-1',
+      [
+        { id: 'ch-1', name: 'релизы', viewerSubscribed: true },
+        { id: 'ch-2', name: 'spam', viewerSubscribed: false },
+      ],
+      (c) => c.name,
+    )
+    const ids = listMessengerFeedChannels().map((c) => c.channelId).sort()
+    expect(ids).toEqual(['ch-1'])
   })
 })

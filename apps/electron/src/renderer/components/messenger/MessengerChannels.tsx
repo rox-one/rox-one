@@ -21,8 +21,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { messengerStatusAtom } from '@/atoms/messenger-status'
 import { postTeamMessage, teamChatErrorText, useTeamChannels, useTeamMessages, useTeamSearch } from './use-team-chat'
-import { useImRelay } from './use-im-relay'
-import { setMessengerFeedChannel } from '@/platform/messenger-feed-channels'
+import { hydrateMessengerFeedChannelsFromRoster, setMessengerFeedChannel } from '@/platform/messenger-feed-channels'
 import { useTeamCall } from './use-team-call'
 import { Avatar, ChannelInfoPanel, type Presence } from './ChannelInfoPanel'
 import { CallStage } from './CallStage'
@@ -51,7 +50,6 @@ function channelLabel(channel: TeamChannelView, t: (k: string) => string): strin
 export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }: MessengerChannelsProps) {
   const { t, i18n } = useTranslation()
   const channels = useTeamChannels(orgId)
-  const { live, status: relayStatus } = useImRelay()
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const [creating, setCreating] = React.useState<TeamChannelKind | null>(null)
   const [actionError, setActionError] = React.useState<string | null>(null)
@@ -73,6 +71,15 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
 
   const selected = channels.channels.find(c => c.id === selectedId) ?? channels.channels[0] ?? null
   const messages = useTeamMessages(selected?.id ?? null)
+  const live = messages.live
+  const relayStatus = messages.relay
+
+  // Hydrate Лента filters from roster subscriptions (not click-only).
+  React.useEffect(() => {
+    if (channels.loading) return
+    hydrateMessengerFeedChannelsFromRoster(orgId, channels.channels, (c) => channelLabel(c as TeamChannelView, t))
+  }, [orgId, channels.channels, channels.loading, t])
+
   const nameOf = React.useMemo(() => {
     const map = new Map(members.map(m => [m.userId, m.displayName]))
     return (userId: string) => (userId === selfUserId ? t('teamCollab.you') : map.get(userId) ?? userId.slice(0, 8))

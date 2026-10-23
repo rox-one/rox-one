@@ -47,16 +47,23 @@ export function useImRelay(): ImRelayState {
   return { status, live }
 }
 
-/** Subscribe the native client to a channel while the surface is open. */
+/**
+ * Subscribe the native client to a channel while the surface is open.
+ * If subscribe resolves after unmount / channel switch, immediately unsubscribe
+ * so a late resolve cannot leave a stale subscription.
+ */
 export function useImChannelSubscription(channelId: string | null, live: boolean): void {
   React.useEffect(() => {
     if (!live || !channelId || !window.electronAPI?.imSubscribeChannel) return
     let cancelled = false
-    void window.electronAPI.imSubscribeChannel(channelId).catch(() => {})
+    void window.electronAPI.imSubscribeChannel(channelId).then(() => {
+      if (cancelled) {
+        void window.electronAPI.imUnsubscribeChannel?.(channelId).catch(() => {})
+      }
+    }).catch(() => {})
     return () => {
       cancelled = true
       void window.electronAPI.imUnsubscribeChannel?.(channelId).catch(() => {})
-      void cancelled
     }
   }, [channelId, live])
 }
