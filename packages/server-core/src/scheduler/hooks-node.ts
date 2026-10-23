@@ -20,6 +20,13 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { HooksHttpIngress } from './hooks-http.ts'
 
+/** Minimal fetch ingress shape shared by /hooks and /livekit/webhook. */
+export interface FetchHttpIngress {
+  matches(pathname: string): boolean
+  handle(req: Request): Promise<Response | null>
+  snapshot(): { bodyLimitBytes: number }
+}
+
 export type NodeHttpHandler = (req: IncomingMessage, res: ServerResponse) => void
 
 function notFoundHandler(_req: IncomingMessage, res: ServerResponse): void {
@@ -148,8 +155,8 @@ async function writeResponse(nodeRes: ServerResponse, response: Response): Promi
  * When no ingress is installed (no token configured) this returns `next`
  * unchanged, so the route genuinely does not exist.
  */
-export function composeHooksNodeHandler(
-  ingress: HooksHttpIngress | null | undefined,
+export function composeFetchIngressNodeHandler(
+  ingress: FetchHttpIngress | null | undefined,
   next?: NodeHttpHandler,
 ): NodeHttpHandler {
   const downstream = next ?? notFoundHandler
@@ -186,4 +193,12 @@ export function composeHooksNodeHandler(
       }
     })()
   }
+}
+
+/** @deprecated-name keep: hooks callers use this; identical to composeFetchIngressNodeHandler. */
+export function composeHooksNodeHandler(
+  ingress: HooksHttpIngress | null | undefined,
+  next?: NodeHttpHandler,
+): NodeHttpHandler {
+  return composeFetchIngressNodeHandler(ingress, next)
 }
