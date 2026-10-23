@@ -87,7 +87,8 @@ export function scheduleGraphIngest(opts: ScheduleGraphIngestOptions): void {
         return
       }
       if (opts.runCognify === false) return
-      if (typeof (provider as { cognify?: (s?: string[]) => Promise<void> }).cognify !== 'function') return
+      const cognify = (provider as unknown as { cognify?: (s?: string[]) => Promise<void> }).cognify
+      if (typeof cognify !== 'function') return
       const estimate = opts.cognifyEstimateUsd ?? DEFAULT_COGNIFY_ESTIMATE_USD
       const cap = opts.dailyCostCapUsd ?? DEFAULT_GRAPH_DAILY_COST_CAP_USD
       // Reserve before cognify so concurrent rebuilds cannot TOCTOU past the cap.
@@ -96,7 +97,7 @@ export function scheduleGraphIngest(opts: ScheduleGraphIngestOptions): void {
         return
       }
       try {
-        await (provider as { cognify: (s?: string[]) => Promise<void> }).cognify()
+        await cognify()
       } catch (err) {
         opts.logger?.warn('graph cognify failed', err)
       }
