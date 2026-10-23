@@ -13,6 +13,8 @@ export const KEYS = {
   featureProductTourV1: 'feature-product-tour-v1',
   /** Spotlight orientation tour: { status: 'completed' | 'skipped', version, at } */
   guidedTour: 'guided-tour',
+  /** Last successful desktop boot: { workspaceId, authority } for shell-first paint */
+  startupShellCache: 'startup-shell-cache-v1',
   // Chat sidebar
   sidebarVisible: 'sidebar-visible',
   sidebarPinned: 'sidebar-pinned',

@@ -107,8 +107,8 @@ test('actual NativeNotesPage delegates tool visibility and current preference ca
  const code = ts.transpileModule(`return (${arrow});`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
  const fn = new Function('setRailLayout', code)((patch: unknown) => updates.push(patch)); fn('toc'); fn('comments')
  expect(updates).toEqual([{ tocCollapsed: true }, { commentsCollapsed: true }])
- expect(text).toContain('<NotesRailTools tocShown={tocShown} commentsShown={commentsShown} sheet={railSheet} onOpen={setRailSheet}')
- expect(text).toContain('const NOTE_COLUMN_MIN = 460'); expect(text).toContain('<EntityViewTabs'); expect(text).toContain('<ShellSidebarPortal')
+ expect(text).toContain('<NotesRailTools tocShown={tocShown} commentsShown={commentsShown} historyShown={false} sheet={railSheet} onOpen={setRailSheet}')
+ expect(text).toContain('const NOTE_COLUMN_MIN = 460'); expect(text).toContain('useEntityView'); expect(text).toContain('<ShellSidebarPortal'); expect(text).toContain('VersionHistoryPanel')
  expect(text).toContain('inline={tocShown}'); expect(text).toContain('inline={commentsShown}')
 })
 

@@ -5,7 +5,7 @@ import i18next from 'i18next'
 import { NotesRailTools, NotesResponsiveRail } from '../../../NotesWorkspaceChrome'
 import { NotesRailSash, useNotesRailLayout } from '../../../NotesDocumentChrome'
 const i18n = i18next.createInstance()
-await i18n.init({ lng: 'en', fallbackLng: 'en', resources: { en: { translation: { 'notes.toc.title': 'Contents', 'notes.comments.title': 'Comments', 'common.close': 'Close' } } }, interpolation: { escapeValue: false } })
+await i18n.init({ lng: 'en', fallbackLng: 'en', resources: { en: { translation: { 'notes.toc.title': 'Contents', 'notes.comments.title': 'Comments', 'notes.history.title': 'History', 'common.close': 'Close' } } }, interpolation: { escapeValue: false } })
 const listeners = new Map<string, Set<unknown>>()
 const add = window.addEventListener.bind(window), remove = window.removeEventListener.bind(window)
 for (const name of ['pointermove','pointerup','pointercancel','blur','keydown']) listeners.set(name, new Set())
@@ -13,7 +13,7 @@ window.addEventListener = ((name: string, handler: unknown, ...rest: any[]) => {
 window.removeEventListener = ((name: string, handler: unknown, ...rest: any[]) => { listeners.get(name)?.delete(handler); return remove(name, handler as EventListener, ...rest) }) as typeof window.removeEventListener
 function Fixture() {
  const [workspace, setWorkspace] = useState('a'), [note, setNote] = useState('note-a'), [hidden, setHidden] = useState(false), [mounted, setMounted] = useState(true)
- const [sheet, setSheet] = useState<'toc' | 'comments' | null>(null), [draft, setDraft] = useState('Retained document draft'), [layout, setLayout] = useNotesRailLayout()
+ const [sheet, setSheet] = useState<'toc' | 'comments' | 'history' | null>(null), [draft, setDraft] = useState('Retained document draft'), [layout, setLayout] = useNotesRailLayout()
  useEffect(() => { setSheet(null) }, [workspace, note])
  const inline = new URLSearchParams(location.search).has('inline')
  ;(window as any).notesTools = { scope: () => setWorkspace('b'), note: () => setNote('note-b'), hide: () => setHidden(true), inert: () => { const owner = document.querySelector('.fixture-owner') as HTMLElement; owner.inert = true }, unmount: () => setMounted(false), listeners: () => [...listeners.values()].reduce((sum, set) => sum + set.size, 0) }

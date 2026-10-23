@@ -743,6 +743,8 @@ import type {
   NoteBacklink,
   CreateNoteCommentInput,
   NoteCommentThread,
+  NoteHistoryEntry,
+  NoteHistoryRevision,
   NoteDocument,
   NoteTasksEntry,
   NoteCreateOptions,
@@ -1510,6 +1512,9 @@ export interface ElectronAPI {
   createNoteComment(workspaceId: string, input: CreateNoteCommentInput): Promise<NoteCommentThread>
   updateNoteComment(workspaceId: string, input: UpdateNoteCommentInput): Promise<NoteCommentThread>
   deleteNoteComment(workspaceId: string, noteId: string, commentId: string): Promise<boolean>
+  listNoteRevisions(workspaceId: string, noteId: string): Promise<NoteHistoryEntry[]>
+  getNoteRevision(workspaceId: string, noteId: string, revisionId: string): Promise<NoteHistoryRevision | null>
+  restoreNoteRevision(workspaceId: string, noteId: string, revisionId: string, expectedRevision: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
   getNoteInsights(workspaceId: string, noteId: string): Promise<NoteInsights>
   getNoteIndexHealth(workspaceId: string): Promise<NoteIndexHealth>
   rebuildNoteIndex(workspaceId: string): Promise<NoteIndexHealth>
