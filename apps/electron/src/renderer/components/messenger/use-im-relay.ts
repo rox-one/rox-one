@@ -55,15 +55,23 @@ export function useImRelay(): ImRelayState {
 export function useImChannelSubscription(channelId: string | null, live: boolean): void {
   React.useEffect(() => {
     if (!live || !channelId || !window.electronAPI?.imSubscribeChannel) return
+    // Pair exactly one unsub per successful subscribe bump (shared ImService refcount).
+    // If cleanup runs before settle, only .then releases; if after, only cleanup releases.
     let cancelled = false
+    let bumped = false
+    let released = false
+    const release = () => {
+      if (released) return
+      released = true
+      void window.electronAPI.imUnsubscribeChannel?.(channelId).catch(() => {})
+    }
     void window.electronAPI.imSubscribeChannel(channelId).then(() => {
-      if (cancelled) {
-        void window.electronAPI.imUnsubscribeChannel?.(channelId).catch(() => {})
-      }
+      bumped = true
+      if (cancelled) release()
     }).catch(() => {})
     return () => {
       cancelled = true
-      void window.electronAPI.imUnsubscribeChannel?.(channelId).catch(() => {})
+      if (bumped) release()
     }
   }, [channelId, live])
 }
@@ -71,7 +79,7 @@ export function useImChannelSubscription(channelId: string | null, live: boolean
 
 /**
  * After `imSubscribeChannel` resolves: keep the native sub only if this hook
- * still desires and claims the id (else unsubscribe to avoid orphan refs).
+ * still desires the id (active is claimed only after settle).
  */
 export function keepSubscriptionAfterResolve(
   id: string,
@@ -82,9 +90,24 @@ export function keepSubscriptionAfterResolve(
 }
 
 /**
- * Pure followed-channel sync step. `live=false` clears active (unsubscribe all)
- * but does **not** imply desired is empty — caller keeps desired ids so a later
- * `live=true` without desiredKey change still subscribes.
+ * Late-resolve disposition for a multi-hook subscribe attempt.
+ * `pendingGen === attemptGen` → attempt still owns the in-flight slot (activate).
+ * Otherwise the effect already cancelled/superseded it → unsubscribe once to
+ * release the bump (effect must NOT have unsubscribed a still-pending attempt).
+ */
+export function lateSubscribeDisposition(
+  attemptGen: number,
+  pendingGen: number | undefined,
+): 'activate' | 'unsubscribe' {
+  return pendingGen === attemptGen ? 'activate' : 'unsubscribe'
+}
+
+/**
+ * Pure followed-channel sync step over **settled** active ids only.
+ * `live=false` clears active (unsubscribe all) but does **not** empty desired —
+ * caller keeps desired so a later `live=true` without desiredKey change still
+ * subscribes. Subscribe candidates are returned without optimistic active.add;
+ * the hook tracks pending attempts and claims active only after resolve.
  */
 export function nextSubscriptionActions(
   desiredIds: readonly string[],
@@ -98,15 +121,14 @@ export function nextSubscriptionActions(
   const nextActive = new Set(activeIds)
   const subscribe: string[] = []
   const unsubscribe: string[] = []
-  for (const id of desired) {
-    if (nextActive.has(id)) continue
-    nextActive.add(id)
-    subscribe.push(id)
-  }
   for (const id of [...nextActive]) {
     if (desired.has(id)) continue
     nextActive.delete(id)
     unsubscribe.push(id)
+  }
+  for (const id of desired) {
+    if (nextActive.has(id)) continue
+    subscribe.push(id)
   }
   return { subscribe, unsubscribe, nextActive }
 }
@@ -115,12 +137,16 @@ export function nextSubscriptionActions(
  * Subscribe the native client to many channels (e.g. followed Лента channels).
  * Incremental sync: only subscribe newly added ids and unsubscribe removed ones.
  * desiredRef tracks roster intent even while offline; live only gates wire I/O.
- * Late-resolving subscribe is compensated if the id is no longer desired/owned.
+ * In-flight attempts use a per-id generation: cancel clears pending without
+ * unsub; .then releases the bump once so shared refcount is not double-decremented.
  */
 export function useImChannelSubscriptions(channelIds: readonly string[], live: boolean): void {
   const desiredKey = [...new Set(channelIds.filter(Boolean))].sort().join('\0')
   const activeRef = React.useRef(new Set<string>())
   const desiredRef = React.useRef(new Set<string>())
+  /** In-flight subscribe attempts: id → generation. Cancel by deleting the entry. */
+  const pendingRef = React.useRef(new Map<string, number>())
+  const attemptGenRef = React.useRef(0)
 
   React.useEffect(() => {
     const desiredIds = desiredKey ? desiredKey.split('\0') : []
@@ -135,26 +161,52 @@ export function useImChannelSubscriptions(channelIds: readonly string[], live: b
     )
     activeRef.current = nextActive
 
+    // Settled actives no longer desired: one unsub each (owns a bump).
     for (const id of unsubscribe) {
       void window.electronAPI?.imUnsubscribeChannel?.(id).catch(() => {})
     }
-    if (!canWire) return
+
+    // Cancel in-flight attempts no longer desired — do NOT unsub here; the
+    // attempt's .then releases the bump once (avoids shared-refcount -2).
+    for (const id of [...pendingRef.current.keys()]) {
+      if (desiredRef.current.has(id)) continue
+      pendingRef.current.delete(id)
+    }
+
+    if (!canWire) {
+      // live=false / no API: invalidate all pending (then compensates) — actives
+      // already cleared+unsubscribed via nextSubscriptionActions above.
+      pendingRef.current.clear()
+      return
+    }
 
     for (const id of subscribe) {
+      if (pendingRef.current.has(id) || activeRef.current.has(id)) continue
+      const gen = ++attemptGenRef.current
+      pendingRef.current.set(id, gen)
       void window.electronAPI.imSubscribeChannel(id).then(() => {
-        if (!keepSubscriptionAfterResolve(id, desiredRef.current, activeRef.current)) {
-          activeRef.current.delete(id)
+        const disposition = lateSubscribeDisposition(gen, pendingRef.current.get(id))
+        if (disposition === 'unsubscribe') {
+          // Cancelled/superseded while in-flight — release this attempt's bump only.
           void window.electronAPI.imUnsubscribeChannel?.(id).catch(() => {})
+          return
         }
+        pendingRef.current.delete(id)
+        if (!desiredRef.current.has(id)) {
+          void window.electronAPI.imUnsubscribeChannel?.(id).catch(() => {})
+          return
+        }
+        activeRef.current.add(id)
       }).catch(() => {
-        activeRef.current.delete(id)
+        if (pendingRef.current.get(id) === gen) pendingRef.current.delete(id)
       })
     }
   }, [desiredKey, live])
 
-  // Unmount: drop ownership so late resolves unsubscribe, then unsubscribe actives.
+  // Unmount: invalidate pending (then releases bumps) + unsub settled actives.
   React.useEffect(() => {
     return () => {
+      pendingRef.current.clear()
       const prev = [...activeRef.current]
       activeRef.current.clear()
       desiredRef.current = new Set()
