@@ -316,11 +316,13 @@ export function SimpleDropdown({
         <SimpleDropdownContext.Provider value={contextValue}>
           <div
             ref={menuRef}
+            data-slot="dropdown-menu-content"
             data-glass-slot="popover"
+            data-overlay-motion="true"
+            data-state="open"
             className={cn(
               'fixed z-island min-w-[140px] p-1',
               'bg-background rounded-md shadow-strong border border-border/50',
-              'animate-in fade-in-0 zoom-in-95 duration-100',
               className
             )}
             style={{ top: position.top, left: position.left }}
