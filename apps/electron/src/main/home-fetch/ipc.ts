@@ -2,6 +2,7 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { HOME_FETCH_CHANNELS, parseHomeFetchRequest, parseHomeSearchRequest } from '../../shared/home-fetch'
 import type { HomeFetchService } from './service'
+import { listDockerContainers, readSystemStats } from './local'
 
 type Sender = { id: number; mainFrame: { url: string } }
 type FetchEvent = { sender: Sender; senderFrame: { url: string } | null }
@@ -49,5 +50,13 @@ export function registerHomeFetchIpc(deps: HomeFetchIpcDeps): void {
   deps.ipcMain.handle(HOME_FETCH_CHANNELS.STATUS, async (event) => {
     authorize(event)
     return deps.service.status()
+  })
+  deps.ipcMain.handle(HOME_FETCH_CHANNELS.SYSTEM, async (event) => {
+    authorize(event)
+    return readSystemStats()
+  })
+  deps.ipcMain.handle(HOME_FETCH_CHANNELS.DOCKER, async (event) => {
+    authorize(event)
+    return listDockerContainers()
   })
 }
