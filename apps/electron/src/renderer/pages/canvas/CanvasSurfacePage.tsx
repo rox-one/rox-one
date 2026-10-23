@@ -25,6 +25,8 @@ import {
   toPolylineAttr, toSmoothPath,
 } from './ink-path'
 import { bindTextArea } from './live-text'
+import { StyleInspector } from './StyleInspector'
+import { applyStyleField, FIELD_MAX, normalizeColorInput, type FieldValue, type StyleField } from './style-model'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
@@ -298,7 +300,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const { t } = useTranslation()
   const { board, error, version } = useBoard(workspaceId, boardId)
   const [tool, setTool] = useState<Tool>('select')
-  const [selected, setSelected] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [editing, setEditing] = useState<string | null>(null)
   const [view, setView] = useState({ x: 0, y: 0, zoom: 1 })
   const [picker, setPicker] = useState(false)
@@ -362,6 +364,13 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     return () => ro.disconnect()
   }, [board])
   const all = useMemo(() => board?.list() ?? [], [board, version])
+  // Drop selection ids that no longer exist (deleted remotely / undone).
+  useEffect(() => {
+    setSelectedIds(ids => {
+      const next = ids.filter(id => !!board?.get(id))
+      return next.length === ids.length ? ids : next
+    })
+  }, [board, version])
   // Deep link `canvas/board/{id}#{objectId}`: select + center the fragment object once it exists.
   const focused = useRef<string | null>(null)
   useEffect(() => {
@@ -369,15 +378,16 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     const o = board.get(focusObjectId)
     if (!o) return
     focused.current = focusObjectId
-    setSelected(o.id)
+    setSelectedIds([o.id])
     setView(v => ({ ...v, x: size.w / 2 - (o.x + o.w / 2) * v.zoom, y: size.h / 2 - (o.y + o.h / 2) * v.zoom }))
   }, [board, focusObjectId, version, size])
   const objects = useMemo(() => {
     if (!index) return []
     const m = 200 / view.zoom
     const visible = index.query({ minX: -view.x / view.zoom - m, minY: -view.y / view.zoom - m, maxX: (size.w - view.x) / view.zoom + m, maxY: (size.h - view.y) / view.zoom + m })
-    return all.filter(o => !o.hidden && (visible.has(o.id) || o.id === selected || o.id === editing))
-  }, [all, index, view, size, selected, editing])
+    const sel = new Set(selectedIds)
+    return all.filter(o => !o.hidden && (visible.has(o.id) || sel.has(o.id) || o.id === editing))
+  }, [all, index, view, size, selectedIds, editing])
   const title = board?.getMeta().title ?? ''
   useEffect(() => {
     for (const o of objects) if (o.type === 'entity') {
@@ -396,11 +406,11 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     if (!o || !board) return
     if (o.type === 'entity') { setCardDelete(o); return }
     board.delete([id], LOCAL)
-    setSelected(null)
+    setSelectedIds([])
   }
   const placeRef = async (ref: EntityRef, at = center()) => {
     if (!ctx) return
-    try { const id = await linkEntityCard(ctx, ref, at); setSelected(id) } catch (e) { console.warn('[canvas] link', e); setNotice(t('canvas.picker.failed')) }
+    try { const id = await linkEntityCard(ctx, ref, at); setSelectedIds([id]) } catch (e) { console.warn('[canvas] link', e); setNotice(t('canvas.picker.failed')) }
   }
   const createAndPlace = async (kind: CreatableKind, name: string) => {
     if (!ctx) return
@@ -413,7 +423,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       seedCreatedCardPreview(batcher, ref, title)
       resolver.invalidate(ref)
       const id = await linkEntityCard(ctx, ref, center())
-      setSelected(id)
+      setSelectedIds([id])
       setPicker(false)
       void resolver.resolve(ref)
     } catch (e) {
@@ -434,7 +444,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       if (!window.confirm(t('canvas.cardDelete.confirmDelete', { title }))) return
     }
     setCardDelete(null)
-    setSelected(null)
+    setSelectedIds([])
     try { await removeEntityCards(ctx, [o.id], { deleteEntities }) } catch (e) { console.warn('[canvas] card delete', e); setNotice(t('canvas.error.save')) }
   }
 
@@ -443,9 +453,18 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       if (editing || !board || cardDelete) return
       const tag = (e.target as HTMLElement | null)?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selected) requestDelete(selected)
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.length) {
+        // Entity cards keep the confirm dialog (one at a time); plain objects delete as a batch.
+        const entities = selectedIds.map(id => board.get(id)).filter((o): o is NonNullable<typeof o> => !!o && o.type === 'entity')
+        const plain = selectedIds.filter(id => { const o = board.get(id); return o && o.type !== 'entity' })
+        if (entities.length === 1 && plain.length === 0) requestDelete(entities[0]!.id)
+        else if (plain.length) {
+          board.delete(plain, LOCAL)
+          setSelectedIds(ids => ids.filter(id => !plain.includes(id)))
+        } else if (entities[0]) requestDelete(entities[0].id)
+      }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) undo?.redo(); else undo?.undo() }
-      if (e.key === 'Escape') { setSelected(null); setTool('select'); setPicker(false) }
+      if (e.key === 'Escape') { setSelectedIds([]); setTool('select'); setPicker(false) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -464,13 +483,13 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       if (tool === 'line') {
         const b = lineFromEndpoints(p.x, p.y, p.x, p.y)
         const [id] = board.add([{ type: 'line', x: b.x, y: b.y, w: b.w, h: b.h, rotation: 0, style: stroke, props: { points: b.points } }], LOCAL)
-        setSelected(id!)
+        setSelectedIds([id!])
         drag.current = { kind: 'draw-line', id: id!, x0: p.x, y0: p.y, undoLen }
       } else {
         const abs = [p.x, p.y]
         const b = strokeBounds(abs)
         const [id] = board.add([{ type: 'ink', x: b.x, y: b.y, w: b.w, h: b.h, rotation: 0, style: stroke, props: { points: b.points } }], LOCAL)
-        setSelected(id!)
+        setSelectedIds([id!])
         drag.current = { kind: 'draw-ink', id: id!, undoLen, abs }
       }
       e.currentTarget.setPointerCapture(e.pointerId)
@@ -484,19 +503,24 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         tool === 'text' ? { ...base, type: 'text', w: 220, h: 40, props: { text: '' } } :
         { ...base, type: 'shape', w: 160, h: 100, props: { kind: tool === 'rect' ? 'rect' : 'ellipse' } }
       const [id] = board.add([input], LOCAL)
-      setSelected(id!)
+      setSelectedIds([id!])
       if (tool === 'sticky' || tool === 'text') setEditing(id!)
       setTool('select')
       return
     }
-    setSelected(null)
+    setSelectedIds([])
     drag.current = { kind: 'pan', sx: e.clientX, sy: e.clientY, ox: view.x, oy: view.y }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
   const onObjectDown = (e: ReactPointerEvent, o: CanvasObject) => {
     if (tool !== 'select') return
     e.stopPropagation()
-    setSelected(o.id)
+    const additive = e.shiftKey || e.metaKey || e.ctrlKey
+    if (additive) {
+      setSelectedIds(ids => ids.includes(o.id) ? ids.filter(id => id !== o.id) : [...ids, o.id])
+      return // additive click does not start a move
+    }
+    setSelectedIds([o.id])
     if (o.locked) return
     drag.current = { kind: 'move', id: o.id, sx: e.clientX, sy: e.clientY, ox: o.x, oy: o.y }
     svgRef.current?.setPointerCapture(e.pointerId)
@@ -557,9 +581,9 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         while (undo && undo.undoStack.length > d.undoLen) undo.undo()
         // undo() parks the stub on redoStack — clear it or Ctrl+Shift+Z cannot resurrect crumbs.
         undo?.clear(false, true)
-        setSelected(null)
+        setSelectedIds([])
       } else {
-        setSelected(d.id)
+        setSelectedIds([d.id])
       }
       setTool('select')
       return
@@ -591,7 +615,13 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     { id: 'ink', icon: Pencil, label: t('canvas.tool.ink') },
   ]
   const editingObj = editing ? all.find(o => o.id === editing) : undefined
-  const selectedObj = selected ? all.find(o => o.id === selected) : undefined
+  const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
+  const selectedObjects = useMemo(() => all.filter(o => selectedSet.has(o.id)), [all, selectedSet])
+  const selectedObj = selectedObjects.length === 1 ? selectedObjects[0] : undefined
+  const onStyleChange = (field: StyleField, value: FieldValue) => {
+    if (!board || selectedIds.length === 0) return
+    applyStyleField(board, selectedIds, field, value, LOCAL)
+  }
 
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-background text-foreground" data-testid="canvas-editor">
@@ -615,8 +645,15 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
             className={`rounded-md p-2 ${picker ? 'bg-accent/15 text-accent' : 'text-text-muted hover:bg-surface-hover'}`} onClick={() => setPicker(p => !p)}>
             <Link2 className="icon-toolbar" />
           </button></Tip>
-          <Tip label={t('canvas.action.delete')}><button aria-label={t('canvas.action.delete')} disabled={!selected}
-            className="rounded-md p-2 text-text-muted hover:bg-surface-hover disabled:opacity-40" onClick={() => selected && requestDelete(selected)}>
+          <Tip label={t('canvas.action.delete')}><button aria-label={t('canvas.action.delete')} disabled={selectedIds.length === 0}
+            className="rounded-md p-2 text-text-muted hover:bg-surface-hover disabled:opacity-40" onClick={() => {
+              if (selectedIds.length === 1) requestDelete(selectedIds[0]!)
+              else if (selectedIds.length > 1 && board) {
+                const plain = selectedIds.filter(id => board.get(id)?.type !== 'entity')
+                if (plain.length) { board.delete(plain, LOCAL); setSelectedIds(ids => ids.filter(id => !plain.includes(id))) }
+                else if (selectedIds[0]) requestDelete(selectedIds[0])
+              }
+            }}>
             <Trash2 className="icon-toolbar" />
           </button></Tip>
         </div>
@@ -631,15 +668,18 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
           <rect width="100%" height="100%" fill="url(#canvas-grid)" />
           <g transform={`translate(${view.x} ${view.y}) scale(${view.zoom})`}>
             {objects.map(o => o.type === 'entity'
-              ? <EntityCardView key={o.id} o={o} selected={o.id === selected} r={resolved[`${String(o.props.kind)}:${String(o.props.entityId)}`]}
+              ? <EntityCardView key={o.id} o={o} selected={selectedSet.has(o.id)} r={resolved[`${String(o.props.kind)}:${String(o.props.entityId)}`]}
                   onDown={e => onObjectDown(e, o)} onOpen={() => registry.get(String(o.props.kind))?.open({ kind: String(o.props.kind), id: String(o.props.entityId) })} />
-              : <ObjectView key={o.id} o={o} selected={o.id === selected} editing={o.id === editing} placeholder={t('canvas.text.placeholder')}
+              : <ObjectView key={o.id} o={o} selected={selectedSet.has(o.id)} editing={o.id === editing} placeholder={t('canvas.text.placeholder')}
                   onDown={e => onObjectDown(e, o)} onEdit={() => (o.type === 'sticky' || o.type === 'text') && setEditing(o.id)} />)}
             {selectedObj && !editing && <SelectionHandles o={selectedObj} zoom={view.zoom} onDown={(e, h) => onHandleDown(e, selectedObj, h)} />}
           </g>
         </svg>
         {editingObj && board && <LiveTextEditor board={board} o={editingObj} view={view} placeholder={t('canvas.text.placeholder')} onDone={() => { undo?.stopCapturing(); setEditing(null) }} />}
         {picker && <EntityPicker workspaceId={workspaceId} onCreate={(k, n) => void createAndPlace(k, n)} onPick={ref => void placeRef(ref)} onClose={() => setPicker(false)} />}
+        {selectedObjects.length > 0 && !editing && (
+          <StyleInspector objects={selectedObjects} onChange={onStyleChange} />
+        )}
         {cardDelete && (
           <div className="absolute inset-0 z-sash flex items-center justify-center bg-black/30" role="dialog" aria-modal="true" aria-labelledby="canvas-card-delete-title" data-testid="canvas-card-delete">
             <div data-glass-slot="dialog" className="w-[360px] rounded-lg border border-border bg-background p-4 shadow-lg">
@@ -782,20 +822,54 @@ function EntityCardView({ o, selected, r, onDown, onOpen }: { o: CanvasObject; s
   )
 }
 
+function solidFill(o: CanvasObject): string | undefined {
+  const f = o.style?.fill
+  if (!f || f.type !== 'solid' || typeof f.color !== 'string') return undefined
+  // Allowlist only — CRDT peers can store arbitrary strings.
+  return normalizeColorInput(f.color) ?? undefined
+}
+function strokeColor(o: CanvasObject): string | undefined {
+  const c = o.style?.stroke?.color
+  if (typeof c !== 'string' || !c || c === 'currentColor') return undefined
+  return normalizeColorInput(c) ?? undefined
+}
+function strokeWidthOf(o: CanvasObject, fallback: number): number {
+  const w = o.style?.stroke?.width
+  if (typeof w !== 'number' || !Number.isFinite(w) || w < 0) return fallback
+  return Math.min(FIELD_MAX.strokeWidth, w)
+}
+function cornerRadiusOf(o: CanvasObject, fallback: number): number {
+  const r = o.props.radius
+  if (typeof r !== 'number' || !Number.isFinite(r) || r < 0) return fallback
+  return Math.min(FIELD_MAX.cornerRadius, r)
+}
+
 function ObjectView({ o, selected, editing, placeholder, onDown, onEdit }: { o: CanvasObject; selected: boolean; editing: boolean; placeholder: string; onDown: (e: ReactPointerEvent) => void; onEdit: () => void }) {
   const text = typeof o.props.text === 'string' ? o.props.text : ''
   const sel = selected ? 'stroke-accent' : 'stroke-border'
   const common = { onPointerDown: onDown, onDoubleClick: onEdit, opacity: o.opacity, 'data-object-id': o.id, 'data-object-type': o.type }
   const transform = o.rotation ? `rotate(${o.rotation} ${o.x + o.w / 2} ${o.y + o.h / 2})` : undefined
+  const fill = solidFill(o)
+  const stroke = strokeColor(o)
+  const fontSize = typeof o.style?.font?.size === 'number' && Number.isFinite(o.style.font.size) && o.style.font.size > 0
+    ? Math.min(FIELD_MAX.fontSize, o.style.font.size) : undefined
+  const fontWeight = typeof o.style?.font?.weight === 'number' ? o.style.font.weight : undefined
   if (o.type === 'sticky' || o.type === 'text') {
     const sticky = o.type === 'sticky'
+    const rx = sticky ? 8 : 4
     return (
       <g {...common} transform={transform}>
-        <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={sticky ? 8 : 4}
-          className={`${sticky ? 'fill-accent/15' : 'fill-transparent'} ${sticky ? sel : selected ? 'stroke-accent' : 'stroke-transparent hover:stroke-border'}`} strokeWidth={selected ? 2 : 1} />
+        <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={rx}
+          fill={fill ?? (sticky ? undefined : 'transparent')}
+          className={`${fill ? '' : sticky ? 'fill-accent/15' : 'fill-transparent'} ${selected ? 'stroke-accent' : stroke ? '' : sticky ? sel : 'stroke-transparent hover:stroke-border'}`}
+          stroke={selected ? undefined : stroke}
+          strokeWidth={selected ? 2 : strokeWidthOf(o, 1)} />
         {!editing && (
           <foreignObject x={o.x} y={o.y} width={o.w} height={o.h} pointerEvents="none">
-            <div className={`h-full w-full overflow-hidden whitespace-pre-wrap break-words p-2 text-sm ${text ? 'text-foreground' : 'italic text-text-muted'}`}>{text || placeholder}</div>
+            <div
+              className={`h-full w-full overflow-hidden whitespace-pre-wrap break-words p-2 ${text ? 'text-foreground' : 'italic text-text-muted'} ${fontSize ? '' : 'text-sm'}`}
+              style={{ fontSize: fontSize ? `${fontSize}px` : undefined, fontWeight: fontWeight || undefined }}
+            >{text || placeholder}</div>
           </foreignObject>
         )}
       </g>
@@ -803,18 +877,23 @@ function ObjectView({ o, selected, editing, placeholder, onDown, onEdit }: { o: 
   }
   if (o.type === 'shape') {
     const ellipse = o.props.kind === 'ellipse'
+    const sw = strokeWidthOf(o, 1.5)
+    const strokeCls = selected ? 'stroke-accent' : stroke ? '' : 'stroke-border-strong'
+    const fillCls = fill ? '' : 'fill-accent/5'
     return (
       <g {...common} transform={transform}>
         {ellipse
-          ? <ellipse cx={o.x + o.w / 2} cy={o.y + o.h / 2} rx={o.w / 2} ry={o.h / 2} className={`fill-accent/5 ${selected ? 'stroke-accent' : 'stroke-border-strong'}`} strokeWidth={1.5} />
-          : <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={6} className={`fill-accent/5 ${selected ? 'stroke-accent' : 'stroke-border-strong'}`} strokeWidth={1.5} />}
+          ? <ellipse cx={o.x + o.w / 2} cy={o.y + o.h / 2} rx={o.w / 2} ry={o.h / 2}
+              fill={fill} className={`${fillCls} ${strokeCls}`} stroke={selected ? undefined : stroke} strokeWidth={selected ? 2 : sw} />
+          : <rect x={o.x} y={o.y} width={o.w} height={o.h} rx={cornerRadiusOf(o, 6)}
+              fill={fill} className={`${fillCls} ${strokeCls}`} stroke={selected ? undefined : stroke} strokeWidth={selected ? 2 : sw} />}
       </g>
     )
   }
   if (o.type === 'line' || o.type === 'ink') {
     const pts = readPoints(o.props)
-    const sw = typeof o.style?.stroke?.width === 'number' ? o.style.stroke.width : 2
-    const stroke = selected ? 'stroke-accent' : 'stroke-foreground'
+    const sw = strokeWidthOf(o, 2)
+    const strokeCls = selected ? 'stroke-accent' : stroke ? '' : 'stroke-foreground'
     const hit = Math.max(12, sw + 8)
     const poly = toPolylineAttr(pts, o.x, o.y)
     const path = o.type === 'ink' ? toSmoothPath(pts, o.x, o.y) : ''
@@ -823,11 +902,11 @@ function ObjectView({ o, selected, editing, placeholder, onDown, onEdit }: { o: 
         {o.type === 'line'
           ? <>
               <polyline points={poly} fill="none" stroke="transparent" strokeWidth={hit} strokeLinecap="round" strokeLinejoin="round" />
-              <polyline points={poly} fill="none" className={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points={poly} fill="none" className={strokeCls} stroke={selected ? undefined : stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
             </>
           : <>
               <path d={path} fill="none" stroke="transparent" strokeWidth={hit} strokeLinecap="round" strokeLinejoin="round" />
-              <path d={path} fill="none" className={stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+              <path d={path} fill="none" className={strokeCls} stroke={selected ? undefined : stroke} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
             </>}
       </g>
     )
