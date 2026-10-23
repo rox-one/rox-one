@@ -104,6 +104,8 @@ export class CogneeGraphProvider implements GraphMemoryProvider {
         ROX_COGNEE_LLM_MODEL: this.deps.llmModel ?? 'rox/r1-max',
         ROX_COGNEE_LLM_FALLBACK_MODEL: this.deps.llmFallbackModel ?? 'rox/fast',
         ROX_COGNEE_LLM_API_KEY: key,
+        // Also expose under the build-injected name for diagnostics (never logged).
+        ROX_SHARED_API_KEY: key,
       }
       if (process.platform === 'win32') {
         for (const k of ['SYSTEMROOT', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'TEMP', 'TMP']) {
