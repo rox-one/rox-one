@@ -2256,3 +2256,44 @@ html[data-ui-profile="super-engineering"][data-wallpaper] :is(
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+
+/* Rox Engineering shared floating content card / PanelSlot chrome.
+   Theme role `paper` (super-engineering.json) maps to
+   --paper via themeToCSS; --surface-elevated aliases it. Under SE, pin
+   the shared content pane chrome and the float-join card
+   ([data-panel-grid-viewport]) to --paper so material/wallpaper ladders
+   cannot wash the canon fill. Pane chrome only (--shell-content + background);
+   does not remap --background so surface interiors / elevation stay intact
+   (Home/Tasks/Messenger/Calls). Keeps #2199 ultra-wide --shell-paper-max
+   and #2213 PanelSlot gutter/measure wiring. Motion/focus stay on
+   #2210/#2211. */
+html[data-ui-profile="super-engineering"] :is(
+  [data-shell-role="content"],
+  .rox-shell-pane[data-panel-role="content"]
+) {
+  --shell-content: var(--paper);
+  background: var(--paper);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-ui-profile="super-engineering"][data-content-join="float"] [data-panel-grid-viewport] {
+  --content-bg: var(--paper);
+  background: var(--paper);
+}
+
+/* Wallpaper frame glass (layers.css) can tint chrome; re-pin content card
+   / PanelSlot chrome under SE so the reading surface stays solid paper
+   (spot glass accents remain via data-glass-accents on pills/popovers). */
+html[data-ui-profile="super-engineering"][data-wallpaper] :is(
+  [data-shell-role="content"],
+  .rox-shell-pane[data-panel-role="content"]
+) {
+  background: var(--paper);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-ui-profile="super-engineering"][data-wallpaper][data-content-join="float"] [data-panel-grid-viewport] {
+  background: var(--paper);
+}
