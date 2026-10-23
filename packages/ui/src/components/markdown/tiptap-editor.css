@@ -230,7 +230,7 @@
   border-bottom: 1px solid color-mix(in oklch, var(--foreground) 8%, transparent);
   background: color-mix(in oklch, var(--info) 8%, transparent);
   color: color-mix(in oklch, var(--foreground) 72%, var(--info));
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: 500;
   line-height: 1.35;
   user-select: none;
@@ -285,13 +285,13 @@
 .tiptap-editor .tiptap-code-block-node[data-fold='semi'] .tiptap-code-block-body {
   max-height: 6.2rem;
   overflow: hidden;
-  mask-image: linear-gradient(180deg, #000 55%, transparent 100%);
+  mask-image: linear-gradient(180deg, black 55%, transparent 100%);
 }
 
 .tiptap-editor .tiptap-code-block-node[data-fold='fold'] .tiptap-code-block-body {
   max-height: 2.6rem;
   overflow: hidden;
-  mask-image: linear-gradient(180deg, #000 35%, transparent 100%);
+  mask-image: linear-gradient(180deg, black 35%, transparent 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {

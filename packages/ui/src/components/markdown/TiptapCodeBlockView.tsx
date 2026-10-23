@@ -255,6 +255,7 @@ function TiptapCodeBlockView({ node, updateAttributes }: TiptapCodeBlockViewProp
       : presentation.fold === 'semi'
         ? t('editor.codeSemiFold')
         : t('editor.codeUnfold')
+  const lineNumbersTitle = t('editor.codeLineNumbers')
 
   const actionsOpen = languageDropdownOpen
 
@@ -338,7 +339,7 @@ function TiptapCodeBlockView({ node, updateAttributes }: TiptapCodeBlockViewProp
           aria-pressed={presentation.wrap}
           onClick={toggleWrap}
         >
-          <WrapText className="w-3.5 h-3.5" />
+          <WrapText className="icon-caption" />
         </TiptapHoverActionButton>
 
         <TiptapHoverActionButton
@@ -349,17 +350,17 @@ function TiptapCodeBlockView({ node, updateAttributes }: TiptapCodeBlockViewProp
           data-fold-mode={presentation.fold}
           onClick={cycleFold}
         >
-          <ChevronsDownUp className="w-3.5 h-3.5" />
+          <ChevronsDownUp className="icon-caption" />
         </TiptapHoverActionButton>
 
         <TiptapHoverActionButton
           active={presentation.lineNumbers}
-          title={t('editor.codeLineNumbers')}
-          aria-label={t('editor.codeLineNumbers')}
+          title={lineNumbersTitle}
+          aria-label={lineNumbersTitle}
           aria-pressed={presentation.lineNumbers}
           onClick={toggleLineNumbers}
         >
-          <ListOrdered className="w-3.5 h-3.5" />
+          <ListOrdered className="icon-caption" />
         </TiptapHoverActionButton>
 
         <TiptapHoverActionButton
