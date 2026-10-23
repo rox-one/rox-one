@@ -625,7 +625,8 @@ export async function createNoteCommentForRoot(notesRoot: string, input: CreateN
     const comment: NoteCommentThread = {
       id: randomUUID(),
       noteId: safeNoteId,
-      author: typeof input.author === 'string' && input.author.trim() ? input.author.trim().slice(0, 80) : 'Вы',
+      // Bind author to the local principal — ignore any client-supplied author (same as reactions).
+      author: 'Вы',
       body: cleanCommentText(input.body, 'comment body', 20_000),
       // Replies always inherit context from the parent in the UI — never store a
       // selection anchor on a reply, even if the client sent one.

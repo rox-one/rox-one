@@ -237,6 +237,16 @@ describe('note comment threads, document scope, and reactions', () => {
     expect(cleared.reactions).toEqual([])
   })
 
+  it('ignores client-supplied create author and binds «Вы»', async () => {
+    const created = await createNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      body: 'От имени клиента',
+      author: 'attacker',
+      anchor,
+    })
+    expect(created.author).toBe('Вы')
+  })
+
   it('ignores client-supplied reaction.author and forces reply anchors to null', async () => {
     const root = await createNoteCommentForRoot(notesRoot, {
       noteId: 'Daily',
