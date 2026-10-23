@@ -241,10 +241,13 @@ function TabsNodeView({
     })
   }, [count, editor, node, resolvePos])
 
+  const tabsRootKey = typeof getPos === 'function' ? String(getPos() ?? 'x') : 'x'
+
   return (
     <NodeViewWrapper
       className="tiptap-rox-tabs"
       data-type="rox-tabs"
+      data-tabs-root-id={tabsRootKey}
       data-active-index={activeIndex}
       data-tabs-count={count}
     >
@@ -291,7 +294,8 @@ function TabsNodeView({
               <button
                 type="button"
                 role="tab"
-                id={`rox-tab-${typeof getPos === 'function' ? getPos() : 'x'}-${index}`}
+                id={`rox-tab-${tabsRootKey}-${index}`}
+                aria-controls={`rox-tab-panel-${tabsRootKey}-${index}`}
                 data-tab-index={index}
                 className={`tiptap-rox-tabs-tab${selected ? ' is-active' : ''}`}
                 aria-selected={selected}
@@ -376,6 +380,7 @@ function TabNodeView({
   const pos = typeof getPos === 'function' ? getPos() : undefined
   const wrapperRef = React.useRef<HTMLElement | null>(null)
   const [selected, setSelected] = React.useState(true)
+  const [a11yIds, setA11yIds] = React.useState<{ tabId?: string; panelId?: string }>({})
 
   React.useLayoutEffect(() => {
     const el = wrapperRef.current
@@ -387,11 +392,21 @@ function TabNodeView({
       const index = resolveTabIndex(el)
       const activeIndex = Number(root.getAttribute('data-active-index') ?? '0')
       setSelected(index >= 0 && index === activeIndex)
+      const rootKey = root.getAttribute('data-tabs-root-id') ?? 'x'
+      if (index >= 0) {
+        setA11yIds({
+          tabId: `rox-tab-${rootKey}-${index}`,
+          panelId: `rox-tab-panel-${rootKey}-${index}`,
+        })
+      }
     }
 
     sync()
     const observer = new MutationObserver(sync)
-    observer.observe(root, { attributes: true, attributeFilter: ['data-active-index', 'data-tabs-count'] })
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ['data-active-index', 'data-tabs-count', 'data-tabs-root-id'],
+    })
     const panels = root.querySelector(':scope > .tiptap-rox-tabs-panels')
     if (panels) observer.observe(panels, { childList: true, subtree: true })
     return () => observer.disconnect()
@@ -407,8 +422,9 @@ function TabNodeView({
       role="tabpanel"
       hidden={!selected}
       aria-hidden={!selected}
+      aria-labelledby={a11yIds.tabId}
       {...(!selected ? ({ inert: true } as React.HTMLAttributes<HTMLElement>) : {})}
-      id={typeof pos === 'number' ? `rox-tab-panel-at-${pos}` : undefined}
+      id={a11yIds.panelId ?? (typeof pos === 'number' ? `rox-tab-panel-at-${pos}` : undefined)}
     >
       <NodeViewContent className="tiptap-rox-tab-content" />
     </NodeViewWrapper>
