@@ -13,6 +13,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { join } from 'node:path'
 import { CanvasAssetStore, CanvasFileStore, isValidAssetHash, isValidBoardId, MAX_ASSET_BYTES, normalizeAssetMime, sanitizeAssetName, type AssetMeta, type BoardSummary } from '@rox/canvas-core/node'
 import { registerEntityResolverFactory } from '@rox/server-core/handlers/rpc/entities'
+import { setCanvasFileStoreHost } from '@rox/server-core/canvas/store-host'
 import type { EntityPreview, EntityRef } from '@rox/core/entities'
 
 export const CANVAS_IPC = {
@@ -50,6 +51,10 @@ export function createCanvasStoreRegistry(deps: Pick<CanvasIpcDependencies, 'res
       if (typeof workspaceId !== 'string' || !workspaceId) throw new Error('CANVAS_BAD_WORKSPACE')
       const root = deps.resolveWorkspaceRoot(workspaceId)
       if (!root) throw new Error('CANVAS_UNKNOWN_WORKSPACE')
+      return this.forRoot(root)
+    },
+    /** Same store instance Electron IPC and agent tools must share (lock). */
+    forRoot(root: string): CanvasFileStore {
       let s = stores.get(root)
       if (!s) { s = new CanvasFileStore(root); stores.set(root, s) }
       return s
@@ -170,12 +175,17 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
   initiallyEnabled?: boolean
   /** Config dir: the last flag value the renderer pushed is persisted here and read at init. */
   configDir?: string
+  /** Notified whenever the effective canvas flag changes (SessionManager mirrors it). */
+  onEnabledChange?: (enabled: boolean) => void
 }) {
   const registry = createCanvasStoreRegistry(deps)
+  // Share this process's stores with agent canvas tools (one store per root — lock).
+  setCanvasFileStoreHost({ forRoot: (root) => registry.forRoot(root) })
   // WP3.2: point the (once-registered) canvas resolver at this process's stores.
   bindCanvasEntityResolver((workspaceId, boardId) => registry.findBoardTitle(workspaceId, boardId))
   const forced = process.env.ROX_CANVAS === '1'
   let enabled = forced || (deps.initiallyEnabled ?? (deps.configDir ? readCanvasFlag(deps.configDir) : undefined) ?? CANVAS_FLAG_DEFAULT)
+  deps.onEnabledChange?.(enabled)
   const guard = (event: IpcMainInvokeEvent, opts: { flag?: boolean } = {}) => {
     if (deps.isTrustedSender && !deps.isTrustedSender(event)) throw new Error('IPC_SENDER_DENIED')
     if (opts.flag !== false && !enabled) throw new Error('CANVAS_DISABLED')
@@ -252,6 +262,7 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     if (typeof on !== 'boolean') throw new Error('CANVAS_BAD_FLAG')
     if (deps.configDir) writeCanvasFlag(deps.configDir, on)
     enabled = on || forced
+    deps.onEnabledChange?.(enabled)
     return { ok: true as const, enabled }
   })
   ipcMain.handle(CANVAS_IPC.listTrash, async (event, ws: unknown) => {

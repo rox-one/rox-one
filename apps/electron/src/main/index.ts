@@ -1115,6 +1115,7 @@ app.whenReady().then(async () => {
     // «Доска» (Canvas): local board persistence in <workspace>/canvas (workspace resolved in main).
     const { registerCanvasIpc } = await import('./canvas-ipc')
     registerCanvasIpc(ipcMain, {
+      onEnabledChange: (enabled) => { sessionManager?.setCanvasModeEnabled(enabled) },
       resolveWorkspaceRoot: (id) => getWorkspaceByNameOrId(id)?.rootPath ?? null,
       isTrustedSender: (event) => isRegisteredRoxRendererWebContents(event.sender),
       listRenderers: () => webContents.getAllWebContents().filter((wc) => isRegisteredRoxRendererWebContents(wc)),

@@ -67,6 +67,8 @@ export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
   'write_page_data',
   'delete_page',
   'show_widget',
+  'canvas_create_entity_card',
+  'canvas_link_entity',
   'memory_search',
   'memory_get',
   'memory_forget',
