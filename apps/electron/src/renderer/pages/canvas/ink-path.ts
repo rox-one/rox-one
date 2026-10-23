@@ -12,14 +12,36 @@ export const INK_MIN_DIST = 1.5
 /** Tiny strokes shorter than this are discarded on pointer-up. */
 export const STROKE_MIN_SPAN = 2
 
+/**
+ * Hard cap on flat ink coordinates (pairs = length/2). Stops O(n²) main-thread
+ * work and unbounded Yjs payloads from a stuck pointer or hostile peer data.
+ */
+export const INK_MAX_COORDS = 8000
+
 /** Keep `x,y` only when it moved at least `minDist` from the last sample (or is first). */
 export function sampleStroke(prev: readonly number[], x: number, y: number, minDist = INK_MIN_DIST): number[] | null {
   if (!Number.isFinite(x) || !Number.isFinite(y)) return null
   if (prev.length < 2) return [x, y]
+  if (prev.length >= INK_MAX_COORDS) return null
   const lx = prev[prev.length - 2]!, ly = prev[prev.length - 1]!
   const dx = x - lx, dy = y - ly
   if (dx * dx + dy * dy < minDist * minDist) return null
   return [...prev, x, y]
+}
+
+/**
+ * Mutating sampler for live ink gestures. Avoids O(n) copies per pointermove.
+ * Returns true when a sample was appended.
+ */
+export function pushStrokeSample(prev: number[], x: number, y: number, minDist = INK_MIN_DIST): boolean {
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false
+  if (prev.length >= INK_MAX_COORDS) return false
+  if (prev.length < 2) { prev.push(x, y); return true }
+  const lx = prev[prev.length - 2]!, ly = prev[prev.length - 1]!
+  const dx = x - lx, dy = y - ly
+  if (dx * dx + dy * dy < minDist * minDist) return false
+  prev.push(x, y)
+  return true
 }
 
 /** Absolute flat points → local points + AABB (pad expands the box for hit/stroke width). */
@@ -99,9 +121,10 @@ export function isTinyStroke(box: StrokeBox, pointCount: number): boolean {
   return box.w <= STROKE_MIN_SPAN && box.h <= STROKE_MIN_SPAN
 }
 
-/** Read a flat number[] from object props; empty if missing/odd. */
+/** Read a flat number[] from object props; empty if missing/odd/non-finite. Caps length. */
 export function readPoints(props: Record<string, unknown> | undefined): number[] {
   const p = props?.points
   if (!Array.isArray(p) || p.length < 2 || p.length % 2 !== 0) return []
-  return p.every(n => typeof n === 'number' && Number.isFinite(n)) ? (p as number[]) : []
+  if (!p.every(n => typeof n === 'number' && Number.isFinite(n))) return []
+  return p.length > INK_MAX_COORDS ? (p as number[]).slice(0, INK_MAX_COORDS) : (p as number[])
 }

@@ -21,7 +21,7 @@ import {
 import { onCanvasTarget, takeCanvasTarget, type CanvasTarget } from './canvas-target'
 import { resizeRotated } from './geometry'
 import {
-  isTinyStroke, lineFromEndpoints, localToAbs, readPoints, sampleStroke, scaleLocalPoints, strokeBounds,
+  isTinyStroke, lineFromEndpoints, pushStrokeSample, readPoints, scaleLocalPoints, strokeBounds,
   toPolylineAttr, toSmoothPath,
 } from './ink-path'
 import { bindTextArea } from './live-text'
@@ -290,7 +290,7 @@ type Drag =
   | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; rotation: number; o: { x: number; y: number; w: number; h: number }; points?: number[] }
   | { kind: 'rotate'; id: string; cx: number; cy: number }
   | { kind: 'draw-line'; id: string; x0: number; y0: number; undoLen: number }
-  | { kind: 'draw-ink'; id: string; undoLen: number }
+  | { kind: 'draw-ink'; id: string; undoLen: number; abs: number[] }
 
 export { resizeBox } from './geometry'
 
@@ -449,16 +449,22 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     if (tool === 'line' || tool === 'ink') {
       const p = toWorld(e.clientX, e.clientY)
       const stroke = { stroke: { color: 'currentColor', width: 2 } }
+      // Capture stack length BEFORE add: post-add undoLen makes tiny-stroke rollback a no-op
+      // when add+updates merge into one UndoManager item (default captureTimeout 400).
+      const undoLen = undo?.undoStack.length ?? 0
+      // Keep the whole gesture in one undo item even if the pointer pauses mid-stroke.
+      if (undo) undo.captureTimeout = 60_000
       if (tool === 'line') {
         const b = lineFromEndpoints(p.x, p.y, p.x, p.y)
         const [id] = board.add([{ type: 'line', x: b.x, y: b.y, w: b.w, h: b.h, rotation: 0, style: stroke, props: { points: b.points } }], LOCAL)
         setSelected(id!)
-        drag.current = { kind: 'draw-line', id: id!, x0: p.x, y0: p.y, undoLen: undo?.undoStack.length ?? 0 }
+        drag.current = { kind: 'draw-line', id: id!, x0: p.x, y0: p.y, undoLen }
       } else {
-        const b = strokeBounds([p.x, p.y])
+        const abs = [p.x, p.y]
+        const b = strokeBounds(abs)
         const [id] = board.add([{ type: 'ink', x: b.x, y: b.y, w: b.w, h: b.h, rotation: 0, style: stroke, props: { points: b.points } }], LOCAL)
         setSelected(id!)
-        drag.current = { kind: 'draw-ink', id: id!, undoLen: undo?.undoStack.length ?? 0 }
+        drag.current = { kind: 'draw-ink', id: id!, undoLen, abs }
       }
       e.currentTarget.setPointerCapture(e.pointerId)
       return
@@ -519,12 +525,9 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       board.update(d.id, { x: b.x, y: b.y, w: b.w, h: b.h, props: { points: b.points } }, LOCAL)
     } else if (d.kind === 'draw-ink') {
       const p = toWorld(e.clientX, e.clientY)
-      const o = board.get(d.id)
-      if (!o) return
-      const abs = localToAbs(readPoints(o.props), o.x, o.y)
-      const next = sampleStroke(abs.length ? abs : [p.x, p.y], p.x, p.y)
-      if (!next) return
-      const b = strokeBounds(next)
+      // Mutate the gesture buffer in place — re-reading Yjs + spreading every move is O(n²).
+      if (!pushStrokeSample(d.abs, p.x, p.y)) return
+      const b = strokeBounds(d.abs)
       board.update(d.id, { x: b.x, y: b.y, w: b.w, h: b.h, props: { points: b.points } }, LOCAL)
     } else {
       const p = toWorld(e.clientX, e.clientY)
@@ -540,9 +543,12 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       const o = board.get(d.id)
       const pts = o ? readPoints(o.props) : []
       undo?.stopCapturing()
+      if (undo) undo.captureTimeout = 400
       if (!o || isTinyStroke(o, pts.length / 2)) {
         // Roll back the in-progress stroke so Undo is not left with a stub.
         while (undo && undo.undoStack.length > d.undoLen) undo.undo()
+        // undo() parks the stub on redoStack — clear it or Ctrl+Shift+Z resurrects crumbs.
+        undo?.clear(false, true)
         setSelected(null)
       } else {
         setSelected(d.id)

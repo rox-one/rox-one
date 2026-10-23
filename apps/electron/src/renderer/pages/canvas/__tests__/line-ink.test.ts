@@ -3,8 +3,8 @@ import * as Y from 'yjs'
 import { actorOrigin, CanvasDoc, createUndoManager, validateObject } from '@rox/canvas-core'
 import { resizeRotated } from '../geometry'
 import {
-  isTinyStroke, lineFromEndpoints, localToAbs, readPoints, sampleStroke, scaleLocalPoints, strokeBounds,
-  toPolylineAttr, toSmoothPath,
+  INK_MAX_COORDS, isTinyStroke, lineFromEndpoints, localToAbs, pushStrokeSample, readPoints,
+  sampleStroke, scaleLocalPoints, strokeBounds, toPolylineAttr, toSmoothPath,
 } from '../ink-path'
 
 const me = actorOrigin('user', 'line-ink')
@@ -14,6 +14,20 @@ describe('ink-path sampling', () => {
     expect(sampleStroke([], 0, 0)).toEqual([0, 0])
     expect(sampleStroke([0, 0], 0.5, 0)).toBeNull()
     expect(sampleStroke([0, 0], 3, 4)).toEqual([0, 0, 3, 4])
+  })
+  it('pushStrokeSample mutates without copying the prefix', () => {
+    const buf: number[] = []
+    expect(pushStrokeSample(buf, 0, 0)).toBe(true)
+    expect(buf).toEqual([0, 0])
+    expect(pushStrokeSample(buf, 0.5, 0)).toBe(false)
+    expect(pushStrokeSample(buf, 3, 4)).toBe(true)
+    expect(buf).toEqual([0, 0, 3, 4])
+  })
+  it('caps ink coordinates', () => {
+    const full = Array.from({ length: INK_MAX_COORDS }, (_, i) => i)
+    expect(sampleStroke(full, 1, 1)).toBeNull()
+    expect(pushStrokeSample(full.slice(), 1, 1)).toBe(false)
+    expect(readPoints({ points: full.concat([1, 2]) }).length).toBe(INK_MAX_COORDS)
   })
   it('builds a local AABB and polyline attr', () => {
     const b = strokeBounds([10, 20, 30, 40], 1)
@@ -107,17 +121,38 @@ describe('board line/ink lifecycle', () => {
 })
 
 describe('tiny stroke rollback', () => {
-  it('rolls back a discarded tiny stroke via undo stack', () => {
+  it('rolls back a discarded tiny stroke via undo stack (pre-add undoLen)', () => {
+    // Mirrors production: undoLen captured BEFORE add; add+update merge under captureTimeout.
     const board = new CanvasDoc()
-    const undo = createUndoManager(board, me, 0)
+    const undo = createUndoManager(board, me, 400)
     const before = undo.undoStack.length
     const b = lineFromEndpoints(5, 5, 5, 5) // zero-length → tiny after pad
     const [id] = board.add([{ type: 'line', x: b.x, y: b.y, w: b.w, h: b.h, props: { points: b.points } }], me)
+    // Simulate a no-op drag update that merges into the same stack item.
+    board.update(id!, { x: b.x, y: b.y, w: b.w, h: b.h, props: { points: b.points } }, me)
     undo.stopCapturing()
     expect(board.get(id!)).toBeDefined()
     expect(isTinyStroke(board.get(id!)!, readPoints(board.get(id!)!.props).length / 2)).toBe(true)
+    // Post-add undoLen would leave the stub — pre-add length must be used.
+    expect(undo.undoStack.length).toBe(before + 1)
     while (undo.undoStack.length > before) undo.undo()
+    undo.clear(false, true)
     expect(board.get(id!)).toBeUndefined()
     expect(undo.undoStack.length).toBe(before)
+    expect(undo.redoStack.length).toBe(0)
+    undo.redo()
+    expect(board.get(id!)).toBeUndefined()
+  })
+
+  it('post-add undoLen fails to remove a merged tiny stroke (regression guard)', () => {
+    const board = new CanvasDoc()
+    const undo = createUndoManager(board, me, 400)
+    const b = lineFromEndpoints(5, 5, 5, 5)
+    const [id] = board.add([{ type: 'line', x: b.x, y: b.y, w: b.w, h: b.h, props: { points: b.points } }], me)
+    const postAdd = undo.undoStack.length
+    board.update(id!, { x: b.x, y: b.y, w: b.w, h: b.h, props: { points: b.points } }, me)
+    undo.stopCapturing()
+    while (undo.undoStack.length > postAdd) undo.undo()
+    expect(board.get(id!)).toBeDefined() // the bug: stub survives
   })
 })
