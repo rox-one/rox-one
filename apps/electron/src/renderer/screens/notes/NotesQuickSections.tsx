@@ -5,8 +5,17 @@ import { FileText } from 'lucide-react'
 import { SidebarSection } from '@/components/shell/SidebarSection'
 import { toScreenSidebarGroups } from '../screen-sidebar-adapter'
 import type { SidebarTarget } from '../sidebar-section'
-import { buildNotesSidebarSections, dropPinnedNotes, rekeyPinnedNotes, togglePinnedNote, type NotesSidebarNote } from './notes-sidebar-sections'
+import {
+  buildNotesSidebarSections,
+  dropPinnedNotes,
+  dropRecentOpenedNotes,
+  rekeyPinnedNotes,
+  rekeyRecentOpenedNotes,
+  togglePinnedNote,
+  type NotesSidebarNote,
+} from './notes-sidebar-sections'
 import { notesPinnedByWorkspaceAtom } from './notes-pins'
+import { notesRecentOpenedByWorkspaceAtom } from './notes-recents'
 
 const ICONS = { 'file-text': FileText } as const
 const NONE: string[] = []
@@ -38,16 +47,51 @@ export function useNotePins(workspaceId: string | null | undefined) {
   return { pinned, toggle, rekey, drop }
 }
 
+/** Most-recently-opened ids — drives «Недавнее» when present. */
+export function useNoteRecents(workspaceId: string | null | undefined) {
+  const [byWs, setByWs] = useAtom(notesRecentOpenedByWorkspaceAtom)
+  const opened = (workspaceId && byWs[workspaceId]) || NONE
+  const touch = useCallback((noteId: string) => {
+    if (!workspaceId) return
+    const id = noteId.trim()
+    if (!id) return
+    setByWs((prev) => {
+      const cur = prev[workspaceId] ?? []
+      const next = [id, ...cur.filter((item) => item !== id)].slice(0, 20)
+      if (next.length === cur.length && next.every((item, index) => item === cur[index])) return prev
+      return { ...prev, [workspaceId]: next }
+    })
+  }, [setByWs, workspaceId])
+  const rekey = useCallback((from: string, to: string, folder = false) => {
+    if (!workspaceId) return
+    setByWs((prev) => {
+      const cur = prev[workspaceId] ?? []
+      const next = rekeyRecentOpenedNotes(cur, from, to, folder)
+      return next === cur ? prev : { ...prev, [workspaceId]: next }
+    })
+  }, [setByWs, workspaceId])
+  const drop = useCallback((target: string, folder = false) => {
+    if (!workspaceId) return
+    setByWs((prev) => {
+      const cur = prev[workspaceId] ?? []
+      const next = dropRecentOpenedNotes(cur, target, folder)
+      return next === cur ? prev : { ...prev, [workspaceId]: next }
+    })
+  }, [setByWs, workspaceId])
+  return { opened, touch, rekey, drop }
+}
+
 /** «Закреплённое» + «Недавнее» above the Notes folder tree (shell SidebarSection markup). */
-export const NotesQuickSections = memo(function NotesQuickSections({ notes, activeNoteId, pinned, onTogglePin, onOpenNote }: {
+export const NotesQuickSections = memo(function NotesQuickSections({ notes, activeNoteId, pinned, opened, onTogglePin, onOpenNote }: {
   notes: readonly NotesSidebarNote[]
   activeNoteId: string | null | undefined
   pinned: readonly string[]
+  opened?: readonly string[]
   onTogglePin(noteId: string): void
   onOpenNote(noteId: string): void
 }) {
   const { t } = useTranslation()
-  const sections = useMemo(() => buildNotesSidebarSections(notes, pinned), [notes, pinned])
+  const sections = useMemo(() => buildNotesSidebarSections(notes, pinned, opened ?? NONE), [notes, pinned, opened])
   const onTarget = useCallback((target: SidebarTarget) => { if (target.kind === 'note') onOpenNote(target.path) }, [onOpenNote])
   const onMenu = useCallback((target: SidebarTarget) => { if (target.kind === 'note') onTogglePin(target.path) }, [onTogglePin])
   const groups = useMemo(

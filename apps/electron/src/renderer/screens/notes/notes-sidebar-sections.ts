@@ -5,6 +5,8 @@ export interface NotesSidebarNote {
   id: string
   title: string
   updatedAt: number
+  /** Optional document icon (emoji) from note properties. */
+  icon?: string | null
 }
 
 export const NOTES_RECENT_LIMIT = 5
@@ -13,9 +15,11 @@ export const NOTES_RECENT_POOL = 20
 
 function noteItem(n: NotesSidebarNote, menu: SidebarSectionItem['menu']): SidebarSectionItem {
   const title = n.title.trim()
+  const iconLabel = typeof n.icon === 'string' && n.icon.trim() ? n.icon.trim() : ''
+  const label = title ? (iconLabel ? `${iconLabel} ${title}` : title) : undefined
   return {
     id: n.id,
-    ...(title ? { label: title } : { labelKey: 'screens.notes.untitled' }),
+    ...(label ? { label } : { labelKey: 'screens.notes.untitled' }),
     icon: 'file-text',
     menu,
     target: { kind: 'note', path: n.id },
@@ -24,10 +28,15 @@ function noteItem(n: NotesSidebarNote, menu: SidebarSectionItem['menu']): Sideba
 
 /**
  * Заметки second-sidebar groups rendered above the folder tree: Закреплённое
- * (user order; pins to deleted notes are dropped) → Недавнее (by updatedAt,
- * excluding pinned). Folders and tags stay in the existing vault navigator.
+ * (user order; pins to deleted notes are dropped) → Недавнее (opened order when
+ * provided, else updatedAt; excluding pinned). Folders and tags stay in the
+ * existing vault navigator.
  */
-export function buildNotesSidebarSections(notes: readonly NotesSidebarNote[], pinnedIds: readonly string[]): SidebarSection[] {
+export function buildNotesSidebarSections(
+  notes: readonly NotesSidebarNote[],
+  pinnedIds: readonly string[],
+  openedIds: readonly string[] = [],
+): SidebarSection[] {
   const byId = new Map(notes.map((n) => [n.id, n]))
   const pinnedSet = new Set<string>()
   const pinned: SidebarSectionItem[] = []
@@ -37,11 +46,25 @@ export function buildNotesSidebarSections(notes: readonly NotesSidebarNote[], pi
     pinnedSet.add(id)
     pinned.push(noteItem(n, [{ id: 'unpin', labelKey: 'screens.notes.unpin' }]))
   }
-  const recent = notes
-    .filter((n) => !pinnedSet.has(n.id))
-    .sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id))
-    .slice(0, NOTES_RECENT_POOL)
-    .map((n) => noteItem(n, [{ id: 'pin', labelKey: 'screens.notes.pin' }]))
+  const recentIds: string[] = []
+  const recentSet = new Set<string>()
+  for (const id of openedIds) {
+    if (pinnedSet.has(id) || recentSet.has(id) || !byId.has(id)) continue
+    recentSet.add(id)
+    recentIds.push(id)
+    if (recentIds.length >= NOTES_RECENT_POOL) break
+  }
+  if (recentIds.length < NOTES_RECENT_POOL) {
+    const byUpdated = [...notes]
+      .filter((n) => !pinnedSet.has(n.id) && !recentSet.has(n.id))
+      .sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id))
+    for (const n of byUpdated) {
+      recentSet.add(n.id)
+      recentIds.push(n.id)
+      if (recentIds.length >= NOTES_RECENT_POOL) break
+    }
+  }
+  const recent = recentIds.map((id) => noteItem(byId.get(id)!, [{ id: 'pin', labelKey: 'screens.notes.pin' }]))
   return nonEmptySections([
     { id: 'pinned', titleKey: 'screens.notes.groups.pinned', items: pinned, limit: 8, collapsible: true },
     { id: 'recent', titleKey: 'screens.notes.groups.recent', items: recent, limit: NOTES_RECENT_LIMIT, collapsible: true },
@@ -72,3 +95,7 @@ export function dropPinnedNotes(pinned: readonly string[], target: string, folde
   const out = pinned.filter((id) => (folder ? !id.startsWith(`${target}/`) : id !== target))
   return out.length === pinned.length ? (pinned as string[]) : out
 }
+
+/** Same rekey/drop rules as pins — opened-recents are also path ids. */
+export const rekeyRecentOpenedNotes = rekeyPinnedNotes
+export const dropRecentOpenedNotes = dropPinnedNotes
