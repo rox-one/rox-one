@@ -56,10 +56,10 @@ function TaskSidebarItem({
       data-testid={testId}
       className={cn(
         'flex min-h-8 w-full items-center gap-2 rounded-lg border-l-2 border-transparent px-2 text-left text-base outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring',
-        active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-foreground/[0.05] hover:text-foreground',
+        active ? 'border-l-accent bg-accent/15 font-semibold text-foreground' : 'text-text-secondary hover:bg-surface-hover hover:text-foreground',
       )}
     >
-      <span className={cn('grid size-5 shrink-0 place-items-center rounded-md bg-foreground/[0.05]', ICON_TONE[tone])}>
+      <span className={cn('grid size-5 shrink-0 place-items-center rounded-md bg-surface-hover', ICON_TONE[tone])}>
         <Icon className="size-3.5" strokeWidth={1.75} aria-hidden />
       </span>
       <span className="min-w-0 flex-1 truncate" title={typeof label === 'string' ? label : undefined}>{label}</span>
@@ -108,7 +108,7 @@ function TaskSidebarGroup({
           aria-controls={sectionId}
           aria-label={t(expanded ? 'sidebar.disclosure.collapse' : 'sidebar.disclosure.expand', { section: title })}
           onClick={toggle}
-          className="flex min-h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-sm font-medium text-text-secondary outline-none hover:bg-foreground/[0.05] focus-visible:ring-1 focus-visible:ring-ring"
+          className="flex min-h-8 w-full items-center gap-2 rounded-lg px-2 text-left text-sm font-medium text-text-secondary outline-none hover:bg-surface-hover focus-visible:ring-1 focus-visible:ring-ring"
         >
           <Icon className={cn('size-4 shrink-0', ICON_TONE[tone])} aria-hidden />
           <span className="min-w-0 flex-1 truncate" title={title}>{title}</span>
