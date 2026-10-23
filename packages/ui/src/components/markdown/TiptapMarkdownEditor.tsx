@@ -29,7 +29,7 @@ import { MarkdownComment } from './extensions/MarkdownComment'
 import { DocumentFolding, type DocumentFoldingJSON } from './extensions/DocumentFolding'
 import { RoxColumnsBlock, RoxColumnBlock } from './extensions/ColumnsBlock'
 import { RoxTabsBlock, RoxTabBlock } from './extensions/TabsBlock'
-import { expandContainersForBasicMarkdown } from '@rox/core/docs'
+import { toBasicMarkdownExport as expandToBasicMarkdownExport } from '@rox/core/docs'
 import { RoxBlockCallout, PortableCalloutBlockquote } from './extensions/rox-block-syntax'
 import { cn } from '../../lib/utils'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
@@ -148,7 +148,7 @@ export function postprocessMarkdownFromOfficial(markdown: string): string {
  * Unknown future containers remain readable.
  */
 export function toBasicMarkdownExport(markdown: string): string {
-  return expandContainersForBasicMarkdown(postprocessMarkdownFromOfficial(markdown))
+  return expandToBasicMarkdownExport(postprocessMarkdownFromOfficial(markdown))
 }
 
 
@@ -456,7 +456,7 @@ export function TiptapMarkdownEditor({
         const serializer = active?.storage?.markdown?.serializer
         if (serializer?.serialize) {
           try {
-            return expandContainersForBasicMarkdown(serializer.serialize(slice.content))
+            return toBasicMarkdownExport(serializer.serialize(slice.content))
           } catch {
             /* fall through */
           }

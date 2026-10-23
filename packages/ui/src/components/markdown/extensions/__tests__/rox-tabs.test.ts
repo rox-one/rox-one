@@ -4,7 +4,7 @@ import { join } from 'path'
 import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import { Markdown } from '@tiptap/markdown'
-import { RoxTabsBlock, RoxTabBlock, createRoxTabsContent, MAX_TABS, collectExcessTabRanges, applyExcessTabDeletes } from '../TabsBlock'
+import { RoxTabsBlock, RoxTabBlock, createRoxTabsContent, MAX_TABS } from '../TabsBlock'
 
 describe('Rox tabs block', () => {
   it('creates deterministic two-tab content payloads', () => {
@@ -132,7 +132,9 @@ describe('Rox tabs block', () => {
     editor.destroy()
   })
 
-  it('clamp helpers trim excess panes beyond MAX_TABS (appendTransaction/onCreate use these)', () => {
+  it('keeps imported panes beyond MAX_TABS; UI create/add still capped at MAX_TABS', () => {
+    expect(createRoxTabsContent(99).content).toHaveLength(MAX_TABS)
+
     const editor = new Editor({
       extensions: [
         StarterKit.configure({ codeBlock: false }),
@@ -155,26 +157,18 @@ describe('Rox tabs block', () => {
       },
     })
 
-    let before = 0
+    let count = 0
     editor.state.doc.descendants((node) => {
-      if (node.type.name === 'roxTabs') before = node.childCount
+      if (node.type.name === 'roxTabs') count = node.childCount
     })
-    expect(before).toBe(MAX_TABS + 3)
-
-    const excess = collectExcessTabRanges(editor.state.doc)
-    expect(excess.length).toBe(1)
-    const tr = applyExcessTabDeletes(editor.state.tr, excess)
-    editor.view.dispatch(tr)
-
-    let after = 0
-    editor.state.doc.descendants((node) => {
-      if (node.type.name === 'roxTabs') after = node.childCount
-    })
-    expect(after).toBe(MAX_TABS)
+    expect(count).toBe(MAX_TABS + 3)
     const json = JSON.stringify(editor.getJSON())
     expect(json).toContain('Body 1')
     expect(json).toContain(`Body ${MAX_TABS}`)
-    expect(json).not.toContain(`Body ${MAX_TABS + 1}`)
+    expect(json).toContain(`Body ${MAX_TABS + 1}`)
+    expect(json).toContain(`Body ${MAX_TABS + 3}`)
+    const markdown = editor.getMarkdown()
+    expect(markdown).toContain(`Body ${MAX_TABS + 3}`)
     editor.destroy()
   })
 

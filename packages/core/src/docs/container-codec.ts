@@ -170,6 +170,16 @@ function expandLeafSections(inner: string, leafNames: RegExp, headingPrefix: str
 }
 
 /**
+ * Production choke point for basic Markdown export / FTS / plain clipboard.
+ * Expands semantic tabs/columns; portable ::: stays on disk via TipTap onUpdate.
+ * TipTap callers that need currency-marker cleanup should postprocess first
+ * (see packages/ui toBasicMarkdownExport).
+ */
+export function toBasicMarkdownExport(source: string): string {
+  return expandContainersForBasicMarkdown(source)
+}
+
+/**
  * Expand known semantic tabs/columns into labeled Markdown sections.
  * Unknown containers are retained byte-for-byte (readable), never stripped.
  * Nested containers inside expanded pane/column bodies are expanded recursively

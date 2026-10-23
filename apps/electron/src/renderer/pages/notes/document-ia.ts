@@ -4,7 +4,7 @@
  */
 
 import i18n from 'i18next'
-import { expandContainersForBasicMarkdown } from '@rox/core/docs'
+import { toBasicMarkdownExport } from '@rox/core/docs'
 
 function authoringLabel(key: string): string {
   const value = i18n.t(key)
@@ -246,9 +246,9 @@ export function serializeTabs(panes: Array<{ title?: string; body?: string }>): 
   return `:::rox-tabs\n${inner}\n:::`
 }
 
-/** Basic Markdown export for notes IA / search: expand semantic tabs/columns. */
+/** Basic Markdown export for notes IA / search — same choke as TipTap/vault. */
 export function basicMarkdownForNotes(markdown: string): string {
-  return expandContainersForBasicMarkdown(markdown)
+  return toBasicMarkdownExport(markdown)
 }
 
 export function extractTabs(markdown: string): NoteTabsLayout[] {

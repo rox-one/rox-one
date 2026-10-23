@@ -1,6 +1,5 @@
 import { createBlockMarkdownSpec, Node, type JSONContent } from '@tiptap/core'
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
-import { Plugin, PluginKey } from '@tiptap/pm/state'
 import * as React from 'react'
 import i18n from 'i18next'
 import { installLegacyTabs, serializeLegacyTab, serializeLegacyTabs } from './legacy-tabs'
@@ -27,26 +26,6 @@ export interface RoxTabsOptions {
 const MIN_TABS = 1
 export const MAX_TABS = 8
 const DEFAULT_TAB_COUNT = 2
-
-export function collectExcessTabRanges(doc: { descendants: (f: (node: any, pos: number) => void | boolean) => void }): Array<{ from: number; to: number }> {
-  const excess: Array<{ from: number; to: number }> = []
-  doc.descendants((node, pos) => {
-    if (node.type.name !== 'roxTabs' || node.childCount <= MAX_TABS) return
-    let childPos = pos + 1
-    for (let i = 0; i < MAX_TABS; i += 1) childPos += node.child(i).nodeSize
-    excess.push({ from: childPos, to: pos + node.nodeSize - 1 })
-  })
-  return excess
-}
-
-export function applyExcessTabDeletes(tr: any, excess: Array<{ from: number; to: number }>) {
-  let next = tr
-  for (const range of excess.sort((a, b) => b.from - a.from)) {
-    next = next.delete(range.from, range.to)
-  }
-  return next
-}
-
 
 function translateLabel(key: string, fallback: string, options?: Record<string, unknown>): string {
   const value = i18n.t(key, options as never)
@@ -162,6 +141,19 @@ function TabsNodeView({
   const renameInputRef = React.useRef<HTMLInputElement | null>(null)
   const titles = React.useMemo(() => readChildTitles(node), [node])
   const count = node.childCount
+  const chipKeys = React.useMemo(() => {
+    const rootPos = typeof getPos === 'function' ? getPos() : undefined
+    if (typeof rootPos !== 'number') {
+      return titles.map((title, index) => `rox-tab-chip-${title}-${index}`)
+    }
+    const keys: string[] = []
+    let childPos = rootPos + 1
+    for (let i = 0; i < count; i += 1) {
+      keys.push(`rox-tab-chip-at-${childPos}`)
+      childPos += node.child(i).nodeSize
+    }
+    return keys
+  }, [count, getPos, node, titles])
 
   React.useEffect(() => {
     if (activeIndex >= count) setActiveIndex(Math.max(0, count - 1))
@@ -266,7 +258,7 @@ function TabsNodeView({
         {titles.map((title, index) => {
           const selected = index === activeIndex
           return (
-            <div key={`rox-tab-chip-${index}`} className="tiptap-rox-tabs-chip">
+            <div key={chipKeys[index] ?? `rox-tab-chip-${title}-${index}`} className="tiptap-rox-tabs-chip">
               {renamingIndex === index ? (
                 <input
                   ref={renameInputRef}
@@ -464,26 +456,6 @@ export const RoxTabsBlock = Node.create<RoxTabsOptions>({
           return chain().focus().insertContentAt(targetPos, createRoxTabsContent(count, undefined, this.options.labels)).run()
         },
     }
-  },
-
-  onCreate() {
-    const excess = collectExcessTabRanges(this.editor.state.doc)
-    if (excess.length === 0) return
-    this.editor.view.dispatch(applyExcessTabDeletes(this.editor.state.tr, excess))
-  },
-
-  addProseMirrorPlugins() {
-    return [
-      new Plugin({
-        key: new PluginKey('roxTabsClamp'),
-        appendTransaction(transactions, _oldState, newState) {
-          if (!transactions.some((transaction) => transaction.docChanged)) return null
-          const excess = collectExcessTabRanges(newState.doc)
-          if (excess.length === 0) return null
-          return applyExcessTabDeletes(newState.tr, excess)
-        },
-      }),
-    ]
   },
 
   addNodeView() {
