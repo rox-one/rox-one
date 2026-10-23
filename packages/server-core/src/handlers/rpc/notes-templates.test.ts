@@ -69,24 +69,24 @@ describe('note templates library', () => {
 
   it('refuses silent overwrite without confirmReplace; replaces only when confirmed', async () => {
     await saveNoteAsTemplateForRoot(notesRoot, {
-      templateId: 'daily',
-      title: 'Daily v2',
+      templateId: 'meeting',
+      title: 'Meeting v2',
       body: 'new body',
     }).then(
       () => { throw new Error('expected conflict') },
       (error: { code?: string }) => { expect(error.code).toBe('CONFLICT') },
     )
-    expect(readFileSync(join(notesRoot, 'templates', 'daily.md'), 'utf-8')).toContain('# {{date}}')
+    expect(readFileSync(join(notesRoot, 'templates', 'meeting.md'), 'utf-8')).toContain('## Agenda')
 
     const replaced = await saveNoteAsTemplateForRoot(notesRoot, {
-      templateId: 'daily',
-      title: 'Daily v2',
+      templateId: 'meeting',
+      title: 'Meeting v2',
       body: 'replaced body',
       confirmReplace: true,
     })
-    expect(replaced.title).toBe('Daily v2')
-    expect(readFileSync(join(notesRoot, 'templates', 'daily.md'), 'utf-8')).toContain('replaced body')
-    expect(readFileSync(join(notesRoot, 'templates', 'daily.md'), 'utf-8')).not.toContain('# {{date}}')
+    expect(replaced.title).toBe('Meeting v2')
+    expect(readFileSync(join(notesRoot, 'templates', 'meeting.md'), 'utf-8')).toContain('replaced body')
+    expect(readFileSync(join(notesRoot, 'templates', 'meeting.md'), 'utf-8')).not.toContain('## Agenda')
   })
 
   it('rejects path escape in template id', async () => {
@@ -214,6 +214,42 @@ describe('note templates library', () => {
     const raw = readFileSync(join(notesRoot, 'templates', 'tagged.md'), 'utf-8')
     expect(raw).toMatch(/tags:\s*\n\s*-\s*alpha/)
     expect(raw).not.toContain('tags: alpha')
+  })
+
+
+  it('rejects reserved daily template id', async () => {
+    await expect(saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'Daily',
+      title: 'Nope',
+      body: 'x',
+    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    await expect(saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'daily.md',
+      title: 'Nope',
+      body: 'x',
+    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+  })
+
+  it('skips unreadable template files instead of listing ghosts', async () => {
+    const ghost = join(notesRoot, 'templates', 'ghost.md')
+    writeFileSync(ghost, '---\ntitle: Ghost\n---\n\nbody\n', 'utf-8')
+    // Make unreadable if chmod works; otherwise skip assertion soft.
+    try {
+      const { chmodSync } = await import('fs')
+      chmodSync(ghost, 0)
+    } catch {
+      return
+    }
+    try {
+      const listed = await listNoteTemplatesForRoot(notesRoot)
+      expect(listed.some((item) => item.id === 'ghost')).toBe(false)
+    } finally {
+      try {
+        const { chmodSync, unlinkSync } = await import('fs')
+        chmodSync(ghost, 0o644)
+        unlinkSync(ghost)
+      } catch { /* ignore */ }
+    }
   })
 
 })

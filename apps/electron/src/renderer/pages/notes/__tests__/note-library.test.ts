@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 import {
+  isReservedTemplateId,
   mergeRecentsByOpened,
   readNoteCover,
   readNoteIcon,
   sanitizeTemplateId,
+  sanitizeTemplateIdDraft,
   touchRecentOpened,
   withNoteLibraryProperties,
 } from '../note-library'
@@ -51,6 +53,12 @@ describe('note-library', () => {
     expect(sanitizeTemplateId('team/weekly')).toBe('team/weekly')
     expect(sanitizeTemplateId('templates/evil')).toBe('')
     expect(sanitizeTemplateId('foo/templates/bar')).toBe('')
+    expect(sanitizeTemplateIdDraft('team/')).toBe('team/')
+    expect(sanitizeTemplateIdDraft('team/weekly')).toBe('team/weekly')
+    expect(sanitizeTemplateId('team/')).toBe('team')
+    expect(isReservedTemplateId('Daily')).toBe(true)
+    expect(isReservedTemplateId('daily.md')).toBe(true)
+    expect(isReservedTemplateId('standup')).toBe(false)
   })
 
   it('tracks opened recents and merges with updatedAt fallback', () => {

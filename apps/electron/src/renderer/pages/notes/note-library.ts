@@ -85,6 +85,21 @@ export function sanitizeTemplateId(raw: string): string {
   return id
 }
 
+/** True when sanitized id is reserved for system Daily notes (templates/daily.md). */
+export function isReservedTemplateId(raw: string): boolean {
+  return sanitizeTemplateId(raw) === 'daily'
+}
+
+/** Live typing helper — keeps a single trailing `/` so nested ids like team/weekly can be entered. */
+export function sanitizeTemplateIdDraft(raw: string): string {
+  const keepTrailingSlash = /\/\s*$/.test(raw)
+  const base = sanitizeTemplateId(raw.replace(/\/+\s*$/g, ''))
+  if (!base) return ''
+  if (!keepTrailingSlash) return base
+  const nested = `${base}/`
+  return nested.length <= 80 ? nested : base
+}
+
 /** Most-recently-opened first; keep unique ids; cap length. */
 export function touchRecentOpened(opened: readonly string[], noteId: string, limit = 20): string[] {
   const id = noteId.trim()

@@ -6421,6 +6421,7 @@
   "notes.library.replaceTemplate": "Заменить",
   "notes.library.saveAsTemplate": "Сохранить шаблон",
   "notes.library.templateIdPlaceholder": "id-шаблона",
+  "notes.library.templateIdReservedDaily": "Идентификатор «daily» зарезервирован для ежедневных заметок.",
   "notes.library.templateSaved": "Шаблон сохранён",
   "notes.library.templateTitlePlaceholder": "Название шаблона",
   "notes.library.templates": "Шаблоны",

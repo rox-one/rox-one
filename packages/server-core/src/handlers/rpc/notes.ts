@@ -1892,6 +1892,8 @@ function assertSafeTemplateId(templateId: string): string {
   const id = assertSafeNoteId(normalized)
   if (id.split('/').some(part => part === TEMPLATES_DIR || part === '')) throw new Error('Invalid template id')
   if (id !== normalized) throw new Error('Invalid template id')
+  // System Daily notes own templates/daily.md — user templates cannot claim this id.
+  if (id === 'daily') throw new CodedError('INVALID_ARGUMENT', 'Template id "daily" is reserved for Daily notes')
   return id
 }
 
@@ -1994,7 +1996,13 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
       const id = templateIdFromRelativePath(rel).toLowerCase()
       // Full relative path must already match normalized `${id}.md` (nested case too).
       if (rel !== `${id}.md`) continue
-      const content = await readFileNoFollow(abs).catch(() => '')
+      let content: string
+      try {
+        content = await readFileNoFollow(abs)
+      } catch {
+        // Unreadable template — skip rather than listing an empty-titled ghost.
+        continue
+      }
       const parsed = parseFrontmatter(content)
       const title = typeof parsed.properties.title === 'string' && parsed.properties.title.trim()
         ? parsed.properties.title.trim()

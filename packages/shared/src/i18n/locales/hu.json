@@ -6381,6 +6381,7 @@
   "notes.library.replaceTemplate": "Replace",
   "notes.library.saveAsTemplate": "Save template",
   "notes.library.templateIdPlaceholder": "template-id",
+  "notes.library.templateIdReservedDaily": "A „daily” azonosító a napi jegyzetek számára van fenntartva.",
   "notes.library.templateSaved": "Template saved",
   "notes.library.templateTitlePlaceholder": "Template title",
   "notes.library.templates": "Templates",

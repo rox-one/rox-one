@@ -736,6 +736,13 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [noteTemplates, setNoteTemplates] = React.useState<NoteTemplateSummary[]>([])
   const [templatesBusy, setTemplatesBusy] = React.useState(false)
   const [templatesPendingReplaceId, setTemplatesPendingReplaceId] = React.useState<string | null>(null)
+  React.useEffect(() => {
+    // Workspace switch must not keep another vault's templates dialog/list open.
+    setTemplatesDialogOpen(false)
+    setNoteTemplates([])
+    setTemplatesBusy(false)
+    setTemplatesPendingReplaceId(null)
+  }, [activeWorkspaceId])
   const [createTitle, setCreateTitle] = React.useState('')
   const [createFolderDialogOpen, setCreateFolderDialogOpen] = React.useState(false)
   const [createFolderName, setCreateFolderName] = React.useState('')
@@ -2373,21 +2380,40 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     }
   }, [activeWorkspaceId, activeNote, canEditContent, flushBeforeAction, applyPropertyPreview, t])
 
+  /** Per-note queue so rapid cover/icon patches cannot race on stale properties. */
+  const libraryChromeWriteChainRef = React.useRef(new Map<string, Promise<unknown>>())
+
   /** One dictionary write for cover/icon so rapid patches cannot race on stale activeNote.properties. */
-  const updateLibraryChromeProperties = React.useCallback(async (patch: { cover?: string | null; icon?: string | null }) => {
-    if (!activeWorkspaceId || !activeNote) return false
-    if (!canEditContent) { toast.error(t('notes.content.readOnly')); return false }
-    if (!await flushBeforeAction()) return false
-    const next = withNoteLibraryProperties(activeNote.properties, patch)
-    try {
-      const preview = previewPropertyDictionary(contentRef.current, activeNote.properties, next)
-      const request = { workspaceId: activeWorkspaceId, noteId: activeNote.id, preview }
-      if (preview.requiresReview) { setPropertyPreview(request); return false }
-      return await applyPropertyPreview(request)
-    } catch {
-      toast.error(t('notes.toast.updatePropertiesFailed'))
-      return false
-    }
+  const updateLibraryChromeProperties = React.useCallback((patch: { cover?: string | null; icon?: string | null }) => {
+    if (!activeWorkspaceId || !activeNote) return Promise.resolve(false)
+    if (!canEditContent) { toast.error(t('notes.content.readOnly')); return Promise.resolve(false) }
+    const workspaceId = activeWorkspaceId
+    const noteId = activeNote.id
+    const noteKey = `${workspaceId}:${noteId}`
+    const previous = libraryChromeWriteChainRef.current.get(noteKey) ?? Promise.resolve()
+    const run = previous.catch(() => undefined).then(async () => {
+      if (!await flushBeforeAction()) return false
+      // Prefer live editor frontmatter after prior writes in this chain.
+      let base: Record<string, unknown> = activeNote.properties
+      try {
+        const fromContent = propertiesFromNoteContent(contentRef.current)
+        if (Object.keys(fromContent).length > 0) base = fromContent
+      } catch {
+        /* keep note properties when frontmatter is temporarily invalid */
+      }
+      const next = withNoteLibraryProperties(base, patch)
+      try {
+        const preview = previewPropertyDictionary(contentRef.current, base, next)
+        const request = { workspaceId, noteId, preview }
+        if (preview.requiresReview) { setPropertyPreview(request); return false }
+        return await applyPropertyPreview(request)
+      } catch {
+        toast.error(t('notes.toast.updatePropertiesFailed'))
+        return false
+      }
+    })
+    libraryChromeWriteChainRef.current.set(noteKey, run.then(() => undefined, () => undefined))
+    return run
   }, [activeWorkspaceId, activeNote, canEditContent, flushBeforeAction, applyPropertyPreview, t])
 
   const updateScalarProperty = React.useCallback(async (path: string[], value: PropertyValue): Promise<boolean> => {

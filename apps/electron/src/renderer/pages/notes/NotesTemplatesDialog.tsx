@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { sanitizeTemplateId } from './note-library'
+import { isReservedTemplateId, sanitizeTemplateId, sanitizeTemplateIdDraft } from './note-library'
 
 export function NotesTemplatesDialog({
   open,
@@ -77,10 +77,11 @@ export function NotesTemplatesDialog({
   }, [pendingReplaceId, onPendingReplaceHandled])
 
   const safeId = sanitizeTemplateId(templateId)
-  const collision = mode === 'save' && safeId ? templates.some((item) => item.id === safeId) : false
+  const reservedDaily = mode === 'save' && isReservedTemplateId(safeId)
+  const collision = mode === 'save' && safeId && !reservedDaily ? templates.some((item) => item.id === safeId) : false
 
   const requestSave = (confirmReplace = false) => {
-    if (!safeId) return
+    if (!safeId || reservedDaily) return
     if (collision && !confirmReplace) {
       setReplaceConfirm(true)
       return
@@ -158,13 +159,20 @@ export function NotesTemplatesDialog({
               value={templateId}
               onChange={(event) => {
                 setTemplateIdDirty(true)
-                setTemplateId(sanitizeTemplateId(event.target.value))
+                setTemplateId(sanitizeTemplateIdDraft(event.target.value))
                 setReplaceConfirm(false)
+              }}
+              onBlur={() => {
+                setTemplateId((current) => sanitizeTemplateId(current))
               }}
               placeholder={t('notes.library.templateIdPlaceholder')}
               data-testid="notes-template-id"
             />
-            {collision ? (
+            {reservedDaily ? (
+              <p className="text-caption text-destructive" data-testid="notes-template-reserved" role="alert">
+                {t('notes.library.templateIdReservedDaily')}
+              </p>
+            ) : collision ? (
               <p className="text-caption text-status-warning" data-testid="notes-template-collision">
                 {t('notes.library.templatesReplaceHint', { id: safeId })}
               </p>
@@ -197,7 +205,7 @@ export function NotesTemplatesDialog({
                 </Button>
               ) : (
                 <Button
-                  disabled={busy || !safeId}
+                  disabled={busy || !safeId || reservedDaily}
                   data-testid="notes-template-save"
                   onClick={() => requestSave(false)}
                 >
