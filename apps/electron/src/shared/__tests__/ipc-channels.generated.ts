@@ -1132,4 +1132,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1127
+export const EXPECTED_CHANNEL_COUNT = 1128
