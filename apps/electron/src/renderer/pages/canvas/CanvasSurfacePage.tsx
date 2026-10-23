@@ -364,6 +364,13 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     return () => ro.disconnect()
   }, [board])
   const all = useMemo(() => board?.list() ?? [], [board, version])
+  // Drop selection ids that no longer exist (deleted remotely / undone).
+  useEffect(() => {
+    setSelectedIds(ids => {
+      const next = ids.filter(id => !!board?.get(id))
+      return next.length === ids.length ? ids : next
+    })
+  }, [board, version])
   // Deep link `canvas/board/{id}#{objectId}`: select + center the fragment object once it exists.
   const focused = useRef<string | null>(null)
   useEffect(() => {

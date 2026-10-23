@@ -148,7 +148,8 @@ export function patchForField(
     case 'fill': {
       if (typeof value !== 'string' || !value) return null
       const fill: Fill = { type: 'solid', color: value }
-      return { style: { ...(o.style ?? {}), fill } }
+      // Only the named style key is written (board.update merges key-wise).
+      return { style: { fill } }
     }
     case 'stroke': {
       if (typeof value !== 'string' || !value) return null
@@ -158,7 +159,7 @@ export function patchForField(
         width: typeof prev?.width === 'number' ? prev.width : 1.5,
         ...(prev?.dash ? { dash: prev.dash } : {}),
       }
-      return { style: { ...(o.style ?? {}), stroke } }
+      return { style: { stroke } }
     }
     case 'strokeWidth': {
       const width = typeof value === 'number' ? value : Number(value)
@@ -169,7 +170,7 @@ export function patchForField(
         width,
         ...(prev?.dash ? { dash: prev.dash } : {}),
       }
-      return { style: { ...(o.style ?? {}), stroke } }
+      return { style: { stroke } }
     }
     case 'opacity': {
       const opacity = typeof value === 'number' ? value : Number(value)
@@ -179,7 +180,8 @@ export function patchForField(
     case 'cornerRadius': {
       const radius = typeof value === 'number' ? value : Number(value)
       if (!Number.isFinite(radius) || radius < 0) return null
-      return { props: { ...o.props, radius } }
+      // Only `radius` — do not re-write sibling props (e.g. kind).
+      return { props: { radius } }
     }
     case 'fontSize': {
       const size = typeof value === 'number' ? value : Number(value)
@@ -190,7 +192,7 @@ export function patchForField(
         size,
         ...(typeof prev?.weight === 'number' ? { weight: prev.weight } : {}),
       }
-      return { style: { ...(o.style ?? {}), font } }
+      return { style: { font } }
     }
     case 'fontWeight': {
       const weight = typeof value === 'number' ? value : Number(value)
@@ -201,7 +203,7 @@ export function patchForField(
         size: typeof prev?.size === 'number' && prev.size > 0 ? prev.size : 14,
         weight: Math.round(weight / 100) * 100,
       }
-      return { style: { ...(o.style ?? {}), font } }
+      return { style: { font } }
     }
   }
 }

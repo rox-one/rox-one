@@ -97,6 +97,18 @@ describe('style-model apply / merge', () => {
     expect(applyStyleField(board, [stickyId!], 'cornerRadius', 4, me)).toBe(0)
   })
 
+
+  it('stroke edit does not rewrite fill (narrow style patch)', () => {
+    const { board, ids } = boardWith(
+      { type: 'shape', x: 0, y: 0, w: 40, h: 40, props: { kind: 'rect' }, style: { fill: { type: 'solid', color: '#abcdef' }, stroke: { color: '#000', width: 2 } } },
+    )
+    applyStyleField(board, ids, 'strokeWidth', 8, me)
+    const o = board.get(ids[0]!)!
+    expect(o.style.fill).toEqual({ type: 'solid', color: '#abcdef' })
+    expect(o.style.stroke?.width).toBe(8)
+    expect(o.style.stroke?.color).toBe('#000')
+  })
+
   it('skips locked objects and inapplicable types in a mixed selection', () => {
     const { board, ids } = boardWith(
       { type: 'shape', x: 0, y: 0, w: 40, h: 40, props: { kind: 'rect' } },
