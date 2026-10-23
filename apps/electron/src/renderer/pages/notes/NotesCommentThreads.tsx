@@ -100,14 +100,14 @@ export function NotesCommentThreads({
       const list = await window.electronAPI.listNoteComments(workspaceId, noteId)
       setComments(list)
       onThreadsChange?.(list)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+    } catch {
+      setError(t('notes.comments.errorUpdate'))
       setComments([])
       onThreadsChange?.([])
     } finally {
       setLoading(false)
     }
-  }, [workspaceId, noteId, onThreadsChange])
+  }, [workspaceId, noteId, onThreadsChange, t])
 
   React.useEffect(() => {
     setDocCompose(false)
@@ -156,8 +156,8 @@ export function NotesCommentThreads({
       setComments(next)
       onThreadsChange?.(next)
       clearComposer()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('notes.comments.errorCreate'))
+    } catch {
+      setError(t('notes.comments.errorCreate'))
     }
   }, [body, draftQuote, noteText, workspaceId, noteId, comments, clearComposer, onThreadsChange, t])
 
@@ -172,8 +172,8 @@ export function NotesCommentThreads({
       const next = [...comments, created]
       setComments(next)
       onThreadsChange?.(next)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('notes.comments.errorCreate'))
+    } catch {
+      setError(t('notes.comments.errorCreate'))
     }
   }, [workspaceId, noteId, comments, onThreadsChange, t])
 
@@ -187,8 +187,8 @@ export function NotesCommentThreads({
       const next = comments.map(c => c.id === id ? updated : c)
       setComments(next)
       onThreadsChange?.(next)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('notes.comments.errorUpdate'))
+    } catch {
+      setError(t('notes.comments.errorUpdate'))
     }
   }, [workspaceId, noteId, comments, onThreadsChange, t])
 
@@ -198,8 +198,8 @@ export function NotesCommentThreads({
       const next = comments.filter(c => c.id !== id && c.parentId !== id)
       setComments(next)
       onThreadsChange?.(next)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('notes.comments.errorDelete'))
+    } catch {
+      setError(t('notes.comments.errorDelete'))
     }
   }, [workspaceId, noteId, comments, onThreadsChange, t])
 
@@ -213,8 +213,8 @@ export function NotesCommentThreads({
       const next = comments.map(c => c.id === id ? updated : c)
       setComments(next)
       onThreadsChange?.(next)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('notes.comments.errorUpdate'))
+    } catch {
+      setError(t('notes.comments.errorUpdate'))
     }
   }, [workspaceId, noteId, comments, onThreadsChange, t])
 
@@ -229,8 +229,8 @@ export function NotesCommentThreads({
       const next = comments.map(c => c.id === id ? updated : c)
       setComments(next)
       onThreadsChange?.(next)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('notes.comments.errorStatus'))
+    } catch {
+      setError(t('notes.comments.errorStatus'))
     } finally {
       setBusyId(null)
     }
@@ -246,8 +246,8 @@ export function NotesCommentThreads({
       data-testid="notes-comments-rail"
       data-glass-slot="panel"
     >
-      <div className="flex h-9 shrink-0 items-center gap-1.5 px-3 text-xs font-semibold uppercase caps-label text-foreground/60">
-        <MessageSquarePlus className="h-3.5 w-3.5" aria-hidden />
+      <div className="flex h-9 shrink-0 items-center gap-1.5 px-3 text-xs font-semibold uppercase caps-label text-muted-foreground">
+        <MessageSquarePlus className="icon-caption" aria-hidden />
         {t('notes.comments.title')}
         {openCount > 0 ? (
           <span className="ml-auto normal-case tracking-normal text-muted-foreground">
@@ -277,12 +277,12 @@ export function NotesCommentThreads({
                   key={root.id}
                   data-testid={`notes-comment-thread-${root.id}`}
                   data-glass-slot="card"
-                  className="rounded-[var(--radius-card)] border border-foreground/[0.06] bg-foreground/[0.03] p-2"
+                  className="rounded-[var(--radius-card)] border border-border-subtle bg-muted/40 p-2"
                 >
                   {root.anchor?.selectedText ? (
                     <button
                       type="button"
-                      className="mb-1 block w-full truncate text-left text-xs italic text-foreground/80 hover:text-foreground"
+                      className="mb-1 block w-full truncate text-left text-xs italic text-muted-foreground hover:text-foreground"
                       onClick={() => onJumpToQuote?.(root.anchor!.selectedText)}
                       aria-label={t('notes.comments.jumpToQuote')}
                       title={root.anchor.selectedText}
@@ -293,7 +293,7 @@ export function NotesCommentThreads({
                     <p className="mb-1 text-xs text-muted-foreground">{t('notes.comments.documentScope')}</p>
                   ) : null}
                   {stale ? (
-                    <p className="mb-1 text-xs text-amber-600 dark:text-amber-400">{t('notes.comments.staleAnchor')}</p>
+                    <p className="mb-1 text-xs text-status-warning">{t('notes.comments.staleAnchor')}</p>
                   ) : null}
                   <CommentsThread
                     comments={[toCommentItem(root)].map(item => ({
@@ -315,12 +315,12 @@ export function NotesCommentThreads({
                       disabled={busyId === root.id}
                       className={cn(
                         'inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs text-muted-foreground',
-                        'hover:bg-foreground/[0.08] hover:text-foreground disabled:opacity-40',
+                        'hover:bg-surface-hover hover:text-foreground disabled:opacity-40',
                       )}
                       onClick={() => void setResolved(root.id, true)}
                       aria-label={t('notes.comments.resolve')}
                     >
-                      <CheckCircle2 className="size-3" aria-hidden />
+                      <CheckCircle2 className="icon-status" aria-hidden />
                       {t('notes.comments.resolve')}
                     </button>
                   </div>
@@ -331,25 +331,25 @@ export function NotesCommentThreads({
         ) : null}
 
         {resolvedRoots.length > 0 ? (
-          <div className="mt-2 space-y-2 border-t border-foreground/[0.06] pt-2">
+          <div className="mt-2 space-y-2 border-t border-border-subtle pt-2">
             <p className="text-xs font-medium uppercase caps-label text-muted-foreground">
               {t('notes.comments.resolved')}
             </p>
             {resolvedRoots.map(root => (
               <article
                 key={root.id}
-                className="rounded-[var(--radius-card)] bg-foreground/[0.03] px-2 py-1.5 opacity-70"
+                className="rounded-[var(--radius-card)] bg-muted/40 px-2 py-1.5 opacity-70"
                 data-testid={`notes-comment-resolved-${root.id}`}
               >
                 <p className="text-xs text-foreground line-clamp-2">{root.body}</p>
                 <button
                   type="button"
                   disabled={busyId === root.id}
-                  className="mt-1 inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground disabled:opacity-40"
+                  className="mt-1 inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs text-muted-foreground hover:bg-surface-hover hover:text-foreground disabled:opacity-40"
                   onClick={() => void setResolved(root.id, false)}
                   aria-label={t('notes.comments.reopen')}
                 >
-                  <RotateCcw className="size-3" aria-hidden />
+                  <RotateCcw className="icon-status" aria-hidden />
                   {t('notes.comments.reopen')}
                 </button>
               </article>
@@ -359,10 +359,10 @@ export function NotesCommentThreads({
       </div>
 
       {!showSelectionComposer && !showDocComposer ? (
-        <div className="shrink-0 border-t border-foreground/[0.06] p-2">
+        <div className="shrink-0 border-t border-border-subtle p-2">
           <button
             type="button"
-            className="h-7 w-full rounded-[var(--radius-control)] bg-foreground/10 text-xs font-medium text-foreground hover:bg-foreground/16"
+            className="h-7 w-full rounded-[var(--radius-control)] bg-muted text-xs font-medium text-foreground hover:bg-surface-hover"
             onClick={() => {
               setDocCompose(true)
               onClearDraft()
@@ -376,7 +376,7 @@ export function NotesCommentThreads({
 
       {showSelectionComposer || showDocComposer ? (
         <NotesCommentComposer
-          className="absolute right-2 z-10"
+          className="absolute right-2 z-popover"
           top={composerTop ?? 48}
           quote={draftQuote}
           body={body}
