@@ -2,8 +2,9 @@
    (installGlassSkin) under html[data-ui-profile="super-engineering"][data-glass-accents]
    (theme-layer glass intensity > 0). Slots: .rox-mode-pill, popover, composer,
    mini-button. Pill / popover / mini get static backdrop blur (fixed 20px via
-   material.css when accents are on). Composer is fill/tint only (≥70% mix) —
-   no backdrop-filter, no refraction. Refraction: static pill / Rox Mini on
+   material.css when accents are on; both backdrop-filter and -webkit-). Composer
+   is fill/tint only (≥70% mix) — omit backdrop-filter so SE .input-container
+   blur(~20px) remains; no refraction. Refraction: static pill / Rox Mini on
    full tier only. Not an Arc Glass theme. */
 /* Pill / popover / mini: fill + static backdrop blur (fixed 20px when on). */
 html[data-ui-profile="super-engineering"][data-glass-accents] :is(.rox-mode-pill, [data-glass-slot="popover"], [data-glass-slot="mini-button"]) {
@@ -18,6 +19,7 @@ html[data-ui-profile="super-engineering"][data-glass-accents] :is(.rox-mode-pill
     ),
     color-mix(in srgb, var(--glass-fill) calc(var(--glass-fill-mix) + var(--glass-hover-boost, 0%)), transparent);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   box-shadow: var(--glass-shadow);
 }
 
@@ -27,7 +29,7 @@ html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="
   --glass-fill-mix: max(70%, calc(86% - 10% * var(--glass-intensity)));
 }
 
-/* Composer: fill/tint only (≥70%) — no backdrop-filter, no refraction. */
+/* Composer: fill/tint only (≥70%) — omit backdrop-filter (keep SE input blur); no refraction. */
 html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="composer"] {
   --glass-fill: var(--background);
   --glass-fill-mix: max(70%, calc(81% - 10% * var(--glass-intensity)));
@@ -40,8 +42,6 @@ html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="
     ),
     color-mix(in srgb, var(--glass-fill) calc(var(--glass-fill-mix) + var(--glass-hover-boost, 0%)), transparent);
   box-shadow: var(--glass-shadow);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
 /* Accent buttons (Rox Mini send) stay accent: an accent tint over the glass. */
@@ -71,6 +71,7 @@ html[data-ui-profile="super-engineering"][data-glass-accents] .rox-mode-pill-ite
 
 html[data-ui-profile="super-engineering"][data-glass-accents][data-glass="full"] :is(.rox-mode-pill, [data-glass-slot="mini-button"]) {
   backdrop-filter: url(#rox-glass-skin-refraction) blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: url(#rox-glass-skin-refraction) blur(var(--glass-blur)) saturate(var(--glass-saturate));
 }
 
 /* Popovers/menus: symmetric spring open / faster exit. Replaces the overlay
@@ -115,6 +116,7 @@ html[data-ui-profile="super-engineering"][data-glass-accents][data-glass="basic"
   --glass-blur: 0px;
   --glass-blur-tight: 0px;
   backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 html[data-ui-profile="super-engineering"][data-glass-accents][data-contrast="high"] :is(.glass-surface, .rox-mode-pill, [data-glass-slot="popover"], [data-glass-slot="composer"], [data-glass-slot="mini-button"]) {
@@ -125,6 +127,7 @@ html[data-ui-profile="super-engineering"][data-glass-accents][data-render-profil
   --glass-blur: 0px;
   --glass-blur-tight: 0px;
   backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -136,6 +139,7 @@ html[data-ui-profile="super-engineering"][data-glass-accents][data-render-profil
     --glass-blur: 0px;
     --glass-blur-tight: 0px;
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 

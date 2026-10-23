@@ -163,30 +163,54 @@ describe('SE optional glass accents', () => {
       /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][\s\S]*?--glass-blur:\s*calc\(var\(--chrome-plate-blur/,
     )
   })
-  it('renderer opaque-overlay keeps toast/dialog reset under SE; only chrome popovers exempt', () => {
+  it('renderer opaque-overlay gates menu exemption on SE accents (same as popover-content)', () => {
     const renderer = readFileSync(
       join(import.meta.dir, '../../../../../../apps/electron/src/renderer/index.css'),
       'utf8',
     )
-    // No document-wide SE exemption on the toast/tooltip/dialog list.
-    expect(renderer).not.toContain(
+    // Toast/dialog always reset under non-arc-glass (no document-wide SE skip).
+    expect(renderer).toContain('html:not([data-theme="arc-glass"]) :is(')
+    expect(renderer).toContain('[data-sonner-toast]')
+    expect(renderer).toContain('[data-slot="dialog-content"]')
+    // Menus: reset when accents off; when accents on, only unslotted menus reset.
+    expect(renderer).toContain(
       'html:not([data-theme="arc-glass"]):not([data-ui-profile="super-engineering"][data-glass-accents]) :is(',
     )
-    expect(renderer).toContain('html:not([data-theme="arc-glass"]) :is(')
-    expect(renderer).toContain('[role="menu"]:not([data-glass-slot="popover"])')
+    expect(renderer).toContain('[data-slot="dropdown-menu-content"]')
+    expect(renderer).toContain('[role="menu"]')
+    expect(renderer).toContain(
+      'html[data-ui-profile="super-engineering"][data-glass-accents] :is(',
+    )
     expect(renderer).toContain('[data-slot="dropdown-menu-content"]:not([data-glass-slot="popover"])')
-    // popover-content still skipped when SE accents are on.
+    expect(renderer).toContain('[role="menu"]:not([data-glass-slot="popover"])')
+    // Accents-off menu reset lists bare slots (no permanent :not(popover) exemption).
+    const accentsOffMenus = renderer.match(
+      /html:not\(\[data-theme="arc-glass"\]\):not\(\[data-ui-profile="super-engineering"\]\[data-glass-accents\]\) :is\(([\s\S]*?)\)\s*\{/,
+    )?.[1] ?? ''
+    expect(accentsOffMenus).toContain('[data-slot="dropdown-menu-content"]')
+    expect(accentsOffMenus).toContain('[role="menu"]')
+    expect(accentsOffMenus).not.toContain(':not([data-glass-slot="popover"])')
     expect(renderer).toContain(
       'html:not([data-theme="arc-glass"]):not([data-ui-profile="super-engineering"][data-glass-accents]):not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"]',
     )
   })
-  it('composer is fill-only (no backdrop blur / no refraction)', () => {
+  it('composer is fill-only (omit backdrop-filter; no refraction)', () => {
     const composer = skin.split('}').find((b) => b.includes('[data-glass-slot="composer"]') && b.includes('--glass-fill-mix')) ?? ''
-    expect(composer).toMatch(/backdrop-filter:\s*none/)
-    expect(composer).not.toMatch(/backdrop-filter:\s*blur/)
+    // Omit backdrop-filter entirely so SE .input-container blur remains.
+    expect(composer).not.toMatch(/backdrop-filter/)
     expect(composer).toMatch(/--glass-fill-mix:\s*max\(70%/)
     const refr = skin.split('}').filter((r) => r.includes('url(#rox-glass-skin-refraction)'))
     for (const r of refr) expect(r).not.toMatch(/composer/)
+  })
+  it('pill/popover/mini paint and degrade set -webkit-backdrop-filter with backdrop-filter', () => {
+    expect(skin).toMatch(
+      /backdrop-filter:\s*blur\(var\(--glass-blur\)\)\s*saturate\(var\(--glass-saturate\)\);\s*-webkit-backdrop-filter:\s*blur\(var\(--glass-blur\)\)\s*saturate\(var\(--glass-saturate\)\);/,
+    )
+    expect(skin).toMatch(
+      /backdrop-filter:\s*url\(#rox-glass-skin-refraction\)[^;]+;\s*-webkit-backdrop-filter:\s*url\(#rox-glass-skin-refraction\)/,
+    )
+    const nonePairs = skin.match(/backdrop-filter:\s*none;\s*-webkit-backdrop-filter:\s*none;/g) ?? []
+    expect(nonePairs.length).toBeGreaterThanOrEqual(3)
   })
 
   it('is scoped to super-engineering + data-glass-accents (not arc-glass theme)', () => {

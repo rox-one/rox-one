@@ -1456,26 +1456,43 @@ html[data-contrast="high"] :is(.popover-styled, [data-slot="popover-content"], .
 
    Arc Glass (`html[data-theme="arc-glass"]`) is a document-wide exception for
    its legacy overlay skin. SE optional accents do NOT exempt the whole document:
-   toast / tooltip / hover-card / dialog / alertdialog / select stay reset. Only
-   chrome targets the SE skin paints keep blur — menus/popovers that carry
-   data-glass-slot="popover" (excluded below), plus [data-slot="popover-content"]
-   when SE accents are on. Composer is fill-only (no backdrop blur) and stays
-   under any opaque reset. A11y/performance gates still zero blur.
+   toast / tooltip / hover-card / dialog / alertdialog / select stay reset always
+   (under non-arc-glass). Menus/dropdowns skip the opaque reset only when
+   html[data-ui-profile="super-engineering"][data-glass-accents] AND they carry
+   data-glass-slot="popover" — same gate as popover-content. With accents off,
+   slotted menus stay opaque. Composer accent is fill/tint only (no skin blur).
+   A11y/performance gates still zero blur.
 ============================================================================= */
 html:not([data-theme="arc-glass"]) :is(
   [data-sonner-toast],
   [data-slot="tooltip-content"],
   [data-slot="hover-card-content"],
+  [data-slot="select-content"],
+  [data-slot="dialog-content"],
+  [role="tooltip"],
+  [role="dialog"]:not([data-slot="popover-content"]),
+  [role="alertdialog"]
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* Menus: opaque unless SE accents are on (then only unslotted menus reset). */
+html:not([data-theme="arc-glass"]):not([data-ui-profile="super-engineering"][data-glass-accents]) :is(
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="context-menu-content"],
+  [data-slot="context-menu-sub-content"],
+  [role="menu"]
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-ui-profile="super-engineering"][data-glass-accents] :is(
   [data-slot="dropdown-menu-content"]:not([data-glass-slot="popover"]),
   [data-slot="dropdown-menu-sub-content"]:not([data-glass-slot="popover"]),
   [data-slot="context-menu-content"]:not([data-glass-slot="popover"]),
   [data-slot="context-menu-sub-content"]:not([data-glass-slot="popover"]),
-  [data-slot="select-content"],
-  [data-slot="dialog-content"],
-  [role="tooltip"],
-  [role="menu"]:not([data-glass-slot="popover"]),
-  [role="dialog"]:not([data-slot="popover-content"]),
-  [role="alertdialog"]
+  [role="menu"]:not([data-glass-slot="popover"])
 ) {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
