@@ -11,7 +11,7 @@ import type { SchedulePatch, TimelineGroup } from '../tasks/timeline-model'
 import { localDateTimeInput, parseLocalDateTime, workspaceProjectOptions, type WorkspaceProjectOption } from '@/lib/workspace-work-client'
 
 const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
-const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-base transition-colors motion-reduce:transition-none hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
+const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-base transition-colors motion-reduce:transition-none hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
 const WORKSPACE_GROUPINGS = ['none', 'project'] as const
 type TaskDraft = { id: string | null; title: string; description: string; status: WorkspaceTaskStatus; assigneeId: string; projectId: string; due: string; links: WorkspaceTaskLink[]; expectedRevision: number }
 
