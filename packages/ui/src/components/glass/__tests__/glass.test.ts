@@ -173,7 +173,20 @@ describe('SE optional glass accents', () => {
   })
   it('pop-in is scoped to the explicit popover slot, with a symmetric exit', () => {
     expect(skin).not.toMatch(/role="menu"|\.popover-styled/)
+    expect(skin).toMatch(/\[data-glass-slot="popover"\]\[data-state="open"\]\s*{[^}]*rox-glass-pop-in[^}]*--motion-spring/)
     expect(skin).toMatch(/\[data-glass-slot="popover"\]\[data-state="closed"\]\s*{[^}]*rox-glass-pop-out[^}]*--motion-spring-exit/)
+    // No mount spring for elements without data-state (PremiumMenu/Command).
+    expect(skin).not.toMatch(/\[data-glass-slot="popover"\]:is\([^)]*:not\(\[data-state\]\)/)
+    expect(skin).not.toContain(':not([data-state])')
+  })
+  it('tooltip and Command palette do not opt into the popover glass slot', () => {
+    const tip = readFileSync(join(import.meta.dir, '../../tooltip.tsx'), 'utf8')
+    const command = readFileSync(
+      join(import.meta.dir, '../../../../../../apps/electron/src/renderer/components/ui/command.tsx'),
+      'utf8',
+    )
+    expect(tip).not.toMatch(/data-glass-slot/)
+    expect(command).not.toMatch(/data-glass-slot/)
   })
   it('accent buttons keep an accent tint and glass buttons get a hover state', () => {
     expect(skin).toMatch(/\[data-glass-tone="accent"\]\s*{[^}]*--glass-fill:\s*var\(--accent\)/)

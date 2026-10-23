@@ -68,7 +68,7 @@ html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="
   transform-origin: var(--radix-popover-content-transform-origin, var(--radix-dropdown-menu-content-transform-origin, top center));
 }
 
-html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="popover"]:is([data-state="open"], :not([data-state])) {
+html[data-ui-profile="super-engineering"][data-glass-accents] [data-glass-slot="popover"][data-state="open"] {
   animation: rox-glass-pop-in var(--motion-spring) var(--ease-spring) both;
 }
 
