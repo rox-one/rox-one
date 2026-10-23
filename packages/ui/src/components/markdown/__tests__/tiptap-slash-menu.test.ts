@@ -62,7 +62,7 @@ function createMockEditor() {
     },
     splitBlock: () => {
       calls.push('splitBlock')
-      parentOffset = 0
+      applySplitBlock()
       return chainApi
     },
     command: (fn: (props: { state: unknown; commands: { splitBlock: () => boolean } }) => boolean) => {
@@ -71,13 +71,16 @@ function createMockEditor() {
         state: {
           selection: {
             from: selectionFrom,
-            $from: { parentOffset },
+            $from: {
+              parentOffset,
+              parent: { content: { size: parentContentSize } },
+            },
           },
         },
         commands: {
           splitBlock: () => {
             calls.push('splitBlock')
-            parentOffset = 0
+            applySplitBlock()
             return true
           },
         },
@@ -92,18 +95,37 @@ function createMockEditor() {
 
   let selectionFrom = 5
   let parentOffset = 0
+  let parentContentSize = 0
+
+  /** Mirror ProseMirror splitBlock enough for embed isolation: mid → suffix stays; end → empty; start → push content after. */
+  function applySplitBlock() {
+    if (parentOffset > 0) {
+      parentContentSize = Math.max(0, parentContentSize - parentOffset)
+      parentOffset = 0
+      return
+    }
+    if (parentContentSize > 0) {
+      parentContentSize = 0
+    }
+  }
 
   const editor = {
     state: {
       selection: {
         from: 5,
         get $from() {
-          return { parentOffset }
+          return {
+            parentOffset,
+            parent: { content: { size: parentContentSize } },
+          }
         },
       },
       doc: {
         nodesBetween: () => {},
-        resolve: () => ({ parentOffset, parent: { isTextblock: true } }),
+        resolve: () => ({
+          parentOffset,
+          parent: { isTextblock: true, content: { size: parentContentSize } },
+        }),
       },
     },
     can: () => ({
@@ -122,6 +144,9 @@ function createMockEditor() {
     calls,
     setParentOffset: (value: number) => {
       parentOffset = value
+    },
+    setParentContentSize: (value: number) => {
+      parentContentSize = value
     },
   }
 }
@@ -214,7 +239,7 @@ describe('tiptap slash menu', () => {
     expect(calls.some((call) => call.startsWith('insertContentAt:') && call.includes('roxTabs'))).toBe(true)
   })
 
-  it('embed inserts ![[ at insertPos with caret ready (block-level trigger)', () => {
+  it('embed inserts ![[ at insertPos in empty paragraph (no split)', () => {
     const { editor, calls } = createMockEditor()
     const items = createSlashCommandItems(editor)
     const embed = items.find((item) => item.id === 'embed')
@@ -226,13 +251,43 @@ describe('tiptap slash menu', () => {
     expect(calls).not.toContain('splitBlock')
   })
 
-  it('embed splits mid-paragraph so ![[ starts a line', () => {
-    const { editor, calls, setParentOffset } = createMockEditor()
+  it('embed at end of non-empty paragraph splits once into empty textblock', () => {
+    const { editor, calls, setParentOffset, setParentContentSize } = createMockEditor()
+    setParentOffset(5)
+    setParentContentSize(5)
+    const embed = createSlashCommandItems(editor).find((item) => item.id === 'embed')
+    embed?.run(editor, 10)
+    const splits = calls.filter((c) => c === 'splitBlock')
+    expect(splits).toHaveLength(1)
+    expect(calls).toContain('insertContent:"![["')
+    // After end-split the mock leaves an empty textblock (size 0) before insert.
+    expect(editor.state.selection.$from.parent.content.size).toBe(0)
+  })
+
+  it('embed mid-paragraph splits twice so suffix moves after and ![[ sits alone', () => {
+    const { editor, calls, setParentOffset, setParentContentSize } = createMockEditor()
     setParentOffset(4)
+    setParentContentSize(8)
     const embed = createSlashCommandItems(editor).find((item) => item.id === 'embed')
     embed?.run(editor, 9)
-    expect(calls).toContain('splitBlock')
+    const splits = calls.filter((c) => c === 'splitBlock')
+    expect(splits).toHaveLength(2)
     expect(calls).toContain('insertContent:"![["')
+    expect(editor.state.selection.$from.parentOffset).toBe(0)
+    expect(editor.state.selection.$from.parent.content.size).toBe(0)
+  })
+
+  it('embed at start of non-empty paragraph pushes existing text into following para', () => {
+    const { editor, calls, setParentOffset, setParentContentSize } = createMockEditor()
+    setParentOffset(0)
+    setParentContentSize(7)
+    const embed = createSlashCommandItems(editor).find((item) => item.id === 'embed')
+    embed?.run(editor, 1)
+    const splits = calls.filter((c) => c === 'splitBlock')
+    expect(splits).toHaveLength(1)
+    expect(calls).toContain('insertContent:"![["')
+    expect(editor.state.selection.$from.parentOffset).toBe(0)
+    expect(editor.state.selection.$from.parent.content.size).toBe(0)
   })
 
   it('equation aliases resolve to latex block insert', async () => {

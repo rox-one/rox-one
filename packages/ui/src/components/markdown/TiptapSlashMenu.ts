@@ -170,7 +170,10 @@ function insertRichBlockAndOpenEditor(
   queueMicrotask(() => (editor as any).emit(RICH_BLOCK_EDIT_EVENT))
 }
 
-/** Obsidian-style embed trigger: block-level `![[` with caret ready to type a target. */
+/** Obsidian-style embed trigger: block-level `![[` with caret ready to type a target.
+ * Isolates into an empty textblock so `entityEmbedInputRule` can promote `![[…]]`
+ * (whole paragraph must match; nothing after the cursor).
+ */
 function insertEmbedTrigger(editor: Editor, insertPos?: number) {
   const targetPos = insertPos ?? editor.state.selection.from
 
@@ -179,8 +182,17 @@ function insertEmbedTrigger(editor: Editor, insertPos?: number) {
     .focus()
     .setTextSelection(targetPos)
     .command(({ state, commands }) => {
-      // Mid-paragraph → split so `![[` starts a line (entity embed promote path).
+      // Mid/end of paragraph → split so caret is at the start of the (remaining) textblock.
       if (state.selection.$from.parentOffset > 0) return commands.splitBlock()
+      return true
+    })
+    .command(({ state, commands }) => {
+      // Caret at start of a non-empty paragraph → push existing content into a following
+      // paragraph so `![[` sits alone (covers prepend-at-start and mid-paragraph suffix).
+      const $from = state.selection.$from
+      if ($from.parentOffset === 0 && $from.parent.content.size > 0) {
+        return commands.splitBlock()
+      }
       return true
     })
     .insertContent('![[')
