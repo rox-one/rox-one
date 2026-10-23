@@ -66,7 +66,7 @@ describe('per-surface intensity', () => {
   })
   it('declares the non-SE blur formula once; SE accents override separately', () => {
     expect(material.match(/--glass-blur:\s*calc\(8px \+ 24px/g)?.length).toBe(1)
-    expect(material.match(/--glass-blur:\s*calc\(var\(--chrome-glass-blur/g)?.length).toBe(1)
+    expect(material.match(/--glass-blur:\s*calc\(20px \* var\(--glass-intensity\)\)/g)?.length).toBe(1)
     expect(css).not.toMatch(/--glass-blur:/)
     expect(block).toMatch(/--glass-shadow:/)
   })
@@ -140,10 +140,20 @@ describe('SE optional glass accents', () => {
     expect(material).not.toMatch(/:root\s*{[^}]*--glass-intensity:\s*0\.6;/)
     expect(layers).not.toMatch(/:root\s*{[^}]*--glass-intensity:\s*0\.6;/)
   })
-  it('SE accents blur uses chrome-glass-blur; non-SE keeps 8px + 24px * intensity', () => {
+  it('SE accents blur uses fixed 20px * intensity (not chrome-glass-blur); non-SE keeps 8px + 24px', () => {
     expect(material).toMatch(/\.glass-surface\s*{[^}]*--glass-blur:\s*calc\(8px \+ 24px \* var\(--glass-intensity\)\)/)
     expect(material).toMatch(
-      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][^{]*{[\s\S]*?--glass-blur:\s*calc\(var\(--chrome-glass-blur/,
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][^{]*{[\s\S]*?--glass-blur:\s*calc\(20px \* var\(--glass-intensity\)\)/,
+    )
+    expect(material).toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][^{]*{[\s\S]*?--glass-blur-tight:\s*calc\(10px \* var\(--glass-intensity\)\)/,
+    )
+    // Must not multiply wallpaper plate blur (would square intensity).
+    expect(material).not.toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][\s\S]*?--glass-blur:\s*calc\(var\(--chrome-glass-blur/,
+    )
+    expect(material).not.toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][\s\S]*?--glass-blur:\s*calc\(var\(--chrome-plate-blur/,
     )
   })
   it('is scoped to super-engineering + data-glass-accents (not arc-glass theme)', () => {
