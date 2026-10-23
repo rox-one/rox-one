@@ -849,7 +849,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 .tiptap-rox-tabs {
   margin: 0.875rem 0;
   padding: 0.35rem 0.35rem 0.5rem;
-  border-radius: 1rem;
+  border-radius: var(--radius-overlay);
   background:
     linear-gradient(
       180deg,
@@ -876,17 +876,17 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 }
 
 .tiptap-rox-tabs-tab {
-  min-height: 32px;
-  min-width: 32px;
+  min-height: var(--control-hit-min);
+  min-width: var(--control-hit-min);
   max-width: 16rem;
   margin: 0;
   padding: 0.35rem 0.7rem;
   border: 1px solid transparent;
-  border-radius: var(--radius-full, 999px);
+  border-radius: var(--radius-full);
   background: transparent;
   color: var(--text-secondary, color-mix(in oklch, var(--foreground) 72%, transparent));
   font: inherit;
-  font-size: 0.92em;
+  font-size: var(--text-body);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -918,12 +918,12 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 
 .tiptap-rox-tabs-add,
 .tiptap-rox-tabs-remove {
-  min-height: 32px;
-  min-width: 32px;
+  min-height: var(--control-hit-min);
+  min-width: var(--control-hit-min);
   margin: 0;
   padding: 0;
   border: 1px solid transparent;
-  border-radius: var(--radius-full, 999px);
+  border-radius: var(--radius-full);
   background: transparent;
   color: color-mix(in oklch, var(--foreground) 55%, transparent);
   font: inherit;
@@ -949,7 +949,7 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
 
 .tiptap-rox-tab {
   min-width: 0;
-  border-radius: 0.875rem;
+  border-radius: var(--radius-lg);
   background: color-mix(in oklch, var(--background) 86%, transparent);
   border: 1px solid color-mix(in oklch, var(--foreground) 7%, transparent);
   box-shadow: var(--shadow-minimal);

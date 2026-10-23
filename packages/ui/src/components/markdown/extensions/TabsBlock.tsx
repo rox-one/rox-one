@@ -28,8 +28,12 @@ export const MAX_TABS = 8
 const DEFAULT_TAB_COUNT = 2
 
 function translateLabel(key: string, fallback: string, options?: Record<string, unknown>): string {
-  const value = i18n.t(key, options as never)
-  return typeof value === 'string' && value.length > 0 && value !== key ? value : fallback
+  // Dynamic key + options: i18next's typed TFunction can collapse to `never` if options are
+  // cast incorrectly. Coerce through unknown so `.length` stays valid (ColumnsBlock uses
+  // literal keys; tabs need interpolation templates like `Tab {{n}}`).
+  const raw = i18n.t(key, { defaultValue: fallback, ...(options ?? {}) }) as unknown
+  const value = typeof raw === 'string' ? raw : String(raw ?? '')
+  return value.length > 0 && value !== key ? value : fallback
 }
 
 const DEFAULT_ROX_TABS_LABELS: RoxTabsLabels = {
@@ -293,6 +297,7 @@ function TabsNodeView({
               ) : (
               <button
                 type="button"
+                // eslint-disable-next-line rox/prefer-primitives -- TipTap NodeView: panes are ProseMirror roxTab children with NodeViewContent; shared Tabs expects controlled TabsContent and cannot own editor node views (same pattern as GlanceTabs)
                 role="tab"
                 id={`rox-tab-${tabsRootKey}-${index}`}
                 aria-controls={`rox-tab-panel-${tabsRootKey}-${index}`}
