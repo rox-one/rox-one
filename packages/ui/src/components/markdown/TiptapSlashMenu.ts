@@ -511,7 +511,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
       description: slashTitle('notes.slash.spoilerDescription', 'Insert a foldable spoiler callout'),
       icon: 'quote',
       group: 'Blocks',
-      aliases: ['spoiler', 'hidden', 'fold'],
+      aliases: slashAliasesForRoxBlockKind('spoiler', ['hidden', 'fold']),
       run: (e, insertPos) => {
         e.chain().focus().insertContentAt(
           insertPos ?? e.state.selection.from,

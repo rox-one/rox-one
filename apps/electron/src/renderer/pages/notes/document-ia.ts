@@ -9,7 +9,7 @@ import {
   ROX_BLOCK_KINDS,
   ROX_BLOCK_KIND_ALIASES,
   canonicalizeRoxBlockKind,
-} from '@rox/ui/markdown'
+} from '@rox/ui/markdown/rox-block-kinds'
 
 function authoringLabel(key: string): string {
   const value = i18n.t(key)
