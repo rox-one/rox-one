@@ -24,17 +24,15 @@ import type {
   CanvasLinkEntityInput,
   CanvasToolCallbacks,
 } from '@rox/session-tools-core'
-import { ENTITIES_LINKS_WORKBENCH_FLAG, isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
+import { isEntitiesLinksEnabled } from '@rox/shared/feature-flags'
 import { getEntityLinkStore } from '../entities/link-store.ts'
-import {
-  getEntitiesWorkbenchFlags,
-  setEntitiesWorkbenchFlags,
-} from '../entities/workbench-flags.ts'
+import { getEntitiesWorkbenchFlags } from '../entities/workbench-flags.ts'
+import { ensureCanvasLinksEnabled } from './links-ensure-host.ts'
 import { canvasFileStoreFor } from './store-host.ts'
 
-export type CanvasCreatableKind = 'note' | 'page' | 'dashboard' | 'session' | 'task'
+export type CanvasCreatableKind = 'note' | 'page' | 'dashboard' | 'session'
 
-const CREATABLE = new Set<CanvasCreatableKind>(['note', 'page', 'dashboard', 'session', 'task'])
+const CREATABLE = new Set<CanvasCreatableKind>(['note', 'page', 'dashboard', 'session'])
 
 export class CanvasToolError extends Error {
   readonly code: string
@@ -69,8 +67,13 @@ export interface CanvasToolCallbacksDeps {
     boardId: string
   }) => Promise<EntityRef>
   /**
+   * Delete an entity minted for a card (orphan cleanup when link fails).
+   * Required for create path; link path never deletes.
+   */
+  deleteEntity?: (ref: EntityRef) => void | Promise<void>
+  /**
    * Enable `entities.links.v1` the same way the UI does when a card add hits
-   * `disabled`. Default: publish the flag into the live workbench set.
+   * `disabled`. Default: process links-ensure host (Electron → durable flag).
    */
   ensureLinksEnabled?: () => void | Promise<void>
   /** Live workbench flag set for entities.links (tests inject a fixed set). */
@@ -87,30 +90,35 @@ function coded(code: string, message: string): never {
   throw new CanvasToolError(code, message)
 }
 
-async function defaultEnsureLinksEnabled(): Promise<void> {
-  const current = getEntitiesWorkbenchFlags()
-  if (current.has(ENTITIES_LINKS_WORKBENCH_FLAG)) return
-  setEntitiesWorkbenchFlags([...current, ENTITIES_LINKS_WORKBENCH_FLAG])
-}
-
-function stubAdapter(kind: string, create?: EntityKindAdapter['create']): EntityKindAdapter {
+function stubAdapter(
+  kind: string,
+  opts?: {
+    create?: EntityKindAdapter['create']
+    delete?: EntityKindAdapter['delete']
+  },
+): EntityKindAdapter {
   return {
     kind,
     labelKey: `entities.kind.${kind}`,
     icon: 'link',
-    creatable: !!create,
-    create,
+    creatable: !!opts?.create,
+    create: opts?.create,
     async read() { return null },
     open() {},
-    async delete() {},
+    delete: opts?.delete,
   }
 }
 
-function buildRegistry(createEntity: CanvasToolCallbacksDeps['createEntity']): EntityKindRegistry {
+function buildRegistry(
+  createEntity: CanvasToolCallbacksDeps['createEntity'],
+  deleteEntity?: CanvasToolCallbacksDeps['deleteEntity'],
+): EntityKindRegistry {
   const registry = new EntityKindRegistry()
   for (const kind of CREATABLE) {
-    registry.register(stubAdapter(kind, async ({ title, boardId }) =>
-      createEntity({ kind, title, boardId })))
+    registry.register(stubAdapter(kind, {
+      create: async ({ title, boardId }) => createEntity({ kind, title, boardId }),
+      delete: deleteEntity ? async (ref) => { await deleteEntity(ref) } : undefined,
+    }))
   }
   return registry
 }
@@ -146,7 +154,7 @@ function buildLinker(
 }
 
 export function buildCanvasToolCallbacks(deps: CanvasToolCallbacksDeps): CanvasToolCallbacks {
-  const ensureLinks = deps.ensureLinksEnabled ?? defaultEnsureLinksEnabled
+  const ensureLinks = deps.ensureLinksEnabled ?? ensureCanvasLinksEnabled
   const linksFlags = deps.linksFlags ?? (() => getEntitiesWorkbenchFlags())
   const origin = actorOrigin('agent', deps.sessionId)
 
@@ -166,7 +174,7 @@ export function buildCanvasToolCallbacks(deps: CanvasToolCallbacksDeps): CanvasT
       board,
       boardId,
       workspaceId: deps.workspaceId,
-      registry: buildRegistry(deps.createEntity),
+      registry: buildRegistry(deps.createEntity, deps.deleteEntity),
       linker: buildLinker(deps.workspaceRootPath, deps.actorId, ensureLinks, linksFlags),
       origin,
     }

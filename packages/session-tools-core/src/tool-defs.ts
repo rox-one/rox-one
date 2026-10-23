@@ -325,8 +325,8 @@ export const ShowWidgetSchema = z.object({
 // Canvas / «Доска» entity cards (WP3.5)
 export const CanvasCreateEntityCardSchema = z.object({
   boardId: z.string().describe('Board id from the workspace canvas list (canvas_list_boards / the Доска surface).'),
-  kind: z.enum(['note', 'page', 'dashboard', 'session', 'task'])
-    .describe('Entity kind to mint. dashboard creates a live page. The new entity is linked to the board as an embeds card.'),
+  kind: z.enum(['note', 'page', 'dashboard', 'session'])
+    .describe('Entity kind to mint. dashboard creates a live page. Task is link-only (use canvas_link_entity). The new entity is linked to the board as an embeds card.'),
   title: z.string().optional().describe('Title for the new entity (default Untitled).'),
   props: z.record(z.unknown()).optional().describe('Optional kind-specific create props (ignored when the kind has none).'),
   x: z.number().optional().describe('Card x on the board (default 0).'),
@@ -935,9 +935,9 @@ A published page is unpublished first (best effort); the result reports publicCo
 Provide title + widget_code + name; kind defaults to "html". widget_code for "html" is a self-contained FRAGMENT (inline CSS/JS) — the host supplies the document shell, sandbox bridge and CSP, so a full <!doctype html>/<html> document is refused. kind "a2ui" accepts an A2UI JSONL stream but is validated and then refused (unsupported kind) until an A2UI renderer ships; nothing is stored.
 
 Re-using a name creates a NEW revision of the same widget and invalidates render tickets bound to the previous revision — old mounts stop working by design. Blocked in Explore/Safe mode (it writes workspace content).`,
-  canvas_create_entity_card: `Create a new Rox entity (note / page / dashboard / session / task) and place it as a live card on a «Доска» board.
+  canvas_create_entity_card: `Create a new Rox entity (note / page / dashboard / session) and place it as a live card on a «Доска» board.
 
-Writes the board→entity embeds link (same path as the surface «+ Сущность» picker). Does not store preview snapshots in the Yjs doc. Requires workbench.mode.canvas.v1 and edit access on the board; turns entities.links.v1 on when needed (same ensure path as the UI).
+Writes the board→entity embeds link (same path as the surface «+ Сущность» picker). Does not store preview snapshots in the Yjs doc. Requires workbench.mode.canvas.v1 and edit access on the board; turns entities.links.v1 on when needed (same ensure path as the UI). Task cards: use canvas_link_entity with an existing task id.
 
 Returns { objectId, entityId, boardId }.`,
   canvas_link_entity: `Link an existing Rox entity onto a «Доска» board as a live card (origin: linked).

@@ -14,12 +14,14 @@ import {
   setEntitiesWorkbenchFlags,
 } from '../../entities/workbench-flags.ts'
 import { resetCanvasFileStoreHost, setCanvasFileStoreHost } from '../store-host.ts'
+import { resetCanvasLinksEnsureHost, setCanvasLinksEnsureHost } from '../links-ensure-host.ts'
 import { buildCanvasToolCallbacks, CanvasToolError } from '../tool-callbacks.ts'
 
 const dirs: string[] = []
 afterEach(async () => {
   closeEntityLinkStores()
   resetCanvasFileStoreHost()
+  resetCanvasLinksEnsureHost()
   resetEntitiesWorkbenchFlags()
   for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
 })
@@ -37,6 +39,7 @@ async function fixture(opts?: {
   setCanvasFileStoreHost({ forRoot: (r) => { if (r !== root) throw new Error('unexpected root'); return store } })
   const board = await store.createBoard('Test board')
   let created = 0
+  const deleted: Array<{ kind: string; id: string }> = []
   const canvas = buildCanvasToolCallbacks({
     workspaceId: 'ws-1',
     workspaceRootPath: root,
@@ -50,8 +53,9 @@ async function fixture(opts?: {
       const id = kind === 'page' || kind === 'dashboard' ? `slug-${created}` : `ent-${created}`
       return { kind: kind === 'dashboard' ? 'page' : kind, id: `${id}:${title}` }
     },
+    deleteEntity: async (ref) => { deleted.push({ kind: ref.kind, id: ref.id }) },
   })
-  return { root, board, canvas, store }
+  return { root, board, canvas, store, deleted }
 }
 
 describe('buildCanvasToolCallbacks', () => {
@@ -153,4 +157,30 @@ describe('buildCanvasToolCallbacks', () => {
       expect((e as CanvasToolError).code).toBe('CANVAS_DISABLED')
     }
   })
+
+  test('ensureLinksEnabled host is used when links start disabled', async () => {
+    resetEntitiesWorkbenchFlags()
+    let ensured = 0
+    setCanvasLinksEnsureHost(() => {
+      ensured += 1
+      setEntitiesWorkbenchFlags([ENTITIES_LINKS_WORKBENCH_FLAG])
+    })
+    const f = await fixture()
+    resetEntitiesWorkbenchFlags()
+    const result = await f.canvas.linkEntity({ boardId: f.board.id, kind: 'note', entityId: 'n1' })
+    expect(result.objectId).toBeTruthy()
+    expect(ensured).toBeGreaterThanOrEqual(1)
+  })
+
+  test('task is not creatable (link-only)', async () => {
+    const f = await fixture()
+    try {
+      await f.canvas.createEntityCard({ boardId: f.board.id, kind: 'task', title: 't' })
+      expect(true).toBe(false)
+    } catch (e) {
+      expect(e).toBeInstanceOf(CanvasToolError)
+      expect((e as CanvasToolError).code).toBe('CANVAS_KIND_NOT_CREATABLE')
+    }
+  })
 })
+

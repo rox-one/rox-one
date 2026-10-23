@@ -376,5 +376,5 @@ export function registerCanvasIpc(ipcMain: Pick<IpcMain, 'handle'>, deps: Canvas
     if (typeof hash !== 'string' || !isValidAssetHash(hash)) throw new Error('CANVAS_BAD_ASSET_HASH')
     return assetStoreFor(ws).get(hash)
   })
-  return registry
+  return Object.assign(registry, { isEnabled: () => enabled })
 }
