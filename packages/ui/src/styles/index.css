@@ -557,7 +557,11 @@ html[data-ui-profile="super-engineering"] {
   --rox-radius-panel: 0px;
   --rox-radius-composer: var(--radius-lg);
   --font-size-base: 13px;
-  --shell-motion-disclosure: 320ms;
+  /* Alias shared motion tokens so disclosure zeros under
+     prefers-reduced-motion and html[data-resizing] (spring-scale → 0).
+     180ms base + 140ms while motion is on ≈ prior 320ms SE feel. */
+  --shell-motion-fast: var(--motion-fast);
+  --shell-motion-disclosure: calc(var(--motion-base) + 140ms * var(--motion-spring-scale, 1));
   --se-editor-font-scale: 1;
 }
 
