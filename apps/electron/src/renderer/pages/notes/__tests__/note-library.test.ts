@@ -27,6 +27,7 @@ describe('note-library', () => {
     expect(readNoteCover({ cover: 'linear-gradient(red, image-set(url(https://evil.example/x.png) 1x))' })).toBeNull()
     expect(readNoteCover({ cover: 'linear-gradient(red, element(#x))' })).toBeNull()
     expect(readNoteCover({ cover: 'linear-gradient(red, paint(foo))' })).toBeNull()
+    expect(readNoteCover({ cover: 'linear-gradient(red, attr(data-x))' })).toBeNull()
     expect(readNoteIcon({ icon: '📝' })).toBe('📝')
     // ZWJ family emoji is one grapheme but many UTF-16 units — must not reject solely for length>32.
     const family = '👨\u200D👩\u200D👧\u200D👦'

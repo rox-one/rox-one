@@ -716,6 +716,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [saveNeedsReload, setSaveNeedsReload] = React.useState(false)
   const [saveRecoveryOpen, setSaveRecoveryOpen] = React.useState(false)
   const [propertyPreview, setPropertyPreview] = React.useState<{ workspaceId: string; noteId: string; preview: PropertyDictionaryPreview; createdProperty?: { key: string; value: string } } | null>(null)
+  const propertyPreviewRef = React.useRef(propertyPreview)
+  React.useEffect(() => { propertyPreviewRef.current = propertyPreview }, [propertyPreview])
   const saveBlockedRef = React.useRef(false)
   const [collapsedFolders, setCollapsedFolders] = React.useState<Set<string>>(() => {
     try { return new Set(JSON.parse(localStorage.getItem('notes:collapsed-folders') ?? '[]')) }
@@ -2383,6 +2385,14 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   /** Per-note queue so rapid cover/icon patches cannot race on stale properties. */
   const libraryChromeWriteChainRef = React.useRef(new Map<string, Promise<unknown>>())
 
+  // Drop settled chains for notes that are no longer open.
+  React.useEffect(() => {
+    const keep = activeWorkspaceId && activeNote?.id ? `${activeWorkspaceId}:${activeNote.id}` : null
+    for (const key of [...libraryChromeWriteChainRef.current.keys()]) {
+      if (key !== keep) libraryChromeWriteChainRef.current.delete(key)
+    }
+  }, [activeWorkspaceId, activeNote?.id])
+
   /** One dictionary write for cover/icon so rapid patches cannot race on stale activeNote.properties. */
   const updateLibraryChromeProperties = React.useCallback((patch: { cover?: string | null; icon?: string | null }) => {
     if (!activeWorkspaceId || !activeNote) return Promise.resolve(false)
@@ -2390,11 +2400,20 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     const workspaceId = activeWorkspaceId
     const noteId = activeNote.id
     const noteKey = `${workspaceId}:${noteId}`
+    // Freeze while a requiresReview preview is open for this note — don't overwrite the first patch.
+    const openPreview = propertyPreviewRef.current
+    if (openPreview && openPreview.workspaceId === workspaceId && openPreview.noteId === noteId) {
+      return Promise.resolve(false)
+    }
     const previous = libraryChromeWriteChainRef.current.get(noteKey) ?? Promise.resolve()
     const run = previous.catch(() => undefined).then(async () => {
       if (!await flushBeforeAction()) return false
       // Drop quietly if the user switched note/workspace while we waited.
       if (workspaceIdRef.current !== workspaceId || activeNoteIdRef.current !== noteId) return false
+      const pendingPreview = propertyPreviewRef.current
+      if (pendingPreview && pendingPreview.workspaceId === workspaceId && pendingPreview.noteId === noteId) {
+        return false
+      }
       // Prefer live editor frontmatter after prior writes in this chain.
       let base: Record<string, unknown> = activeNote.properties
       try {
@@ -2407,14 +2426,24 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       try {
         const preview = previewPropertyDictionary(contentRef.current, base, next)
         const request = { workspaceId, noteId, preview }
-        if (preview.requiresReview) { setPropertyPreview(request); return false }
+        if (preview.requiresReview) {
+          propertyPreviewRef.current = request
+          setPropertyPreview(request)
+          return false
+        }
         return await applyPropertyPreview(request)
       } catch {
         toast.error(t('notes.toast.updatePropertiesFailed'))
         return false
       }
     })
-    libraryChromeWriteChainRef.current.set(noteKey, run.then(() => undefined, () => undefined))
+    const bridge = run.then(() => undefined, () => undefined)
+    libraryChromeWriteChainRef.current.set(noteKey, bridge)
+    void bridge.finally(() => {
+      if (libraryChromeWriteChainRef.current.get(noteKey) === bridge) {
+        libraryChromeWriteChainRef.current.delete(noteKey)
+      }
+    })
     return run
   }, [activeWorkspaceId, activeNote, canEditContent, flushBeforeAction, applyPropertyPreview, t])
 

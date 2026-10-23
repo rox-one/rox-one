@@ -25,8 +25,8 @@ export function readNoteCover(properties: Record<string, unknown> | null | undef
   // Reject CSS escapes (e.g. \75rl(file:///...)) that bypass the url(...) check.
   if (value.includes('\\')) return null
   if (/url\s*\(/i.test(value)) return null
-  // Reject CSS image*() / element() / paint() that can smuggle urls inside gradients.
-  if (/\b(?:image|image-set|cross-fade|element|paint)\s*\(/i.test(value)) return null
+  // Reject CSS image*() / element() / paint() / attr() that can smuggle urls inside gradients.
+  if (/\b(?:image|image-set|cross-fade|element|paint|attr)\s*\(/i.test(value)) return null
   // Solid hex or url-free gradients only.
   if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return value
   if (/^(linear|radial)-gradient\(/i.test(value)) return value
@@ -122,12 +122,16 @@ export function mergeRecentsByOpened(
     fromOpened.push(id)
     if (fromOpened.length >= limit) return fromOpened
   }
-  const rest = notes
-    .filter((note) => !pinned.has(note.id) && !fromOpened.includes(note.id))
-    .sort((a, b) => b.updatedAt - a.updatedAt)
-  for (const note of rest) {
-    fromOpened.push(note.id)
-    if (fromOpened.length >= limit) break
+  // Top-k by updatedAt without sorting the full candidate list (k = remaining slots).
+  const openedSet = new Set(fromOpened)
+  const candidates = notes.filter((note) => !pinned.has(note.id) && !openedSet.has(note.id))
+  while (fromOpened.length < limit && candidates.length > 0) {
+    let best = 0
+    for (let i = 1; i < candidates.length; i++) {
+      if (candidates[i]!.updatedAt > candidates[best]!.updatedAt) best = i
+    }
+    const [picked] = candidates.splice(best, 1)
+    fromOpened.push(picked!.id)
   }
   return fromOpened
 }
