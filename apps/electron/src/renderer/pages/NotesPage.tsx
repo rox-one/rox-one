@@ -327,7 +327,23 @@ function commentOffsetToEndPosition(pieces: CommentTextPiece[], textLength: numb
 }
 
 
-function commentDraftOffsetsFromEditor(
+
+/** Map a ProseMirror position onto the same comment-text offsets used by findDocRangeForComment. */
+function pmPosToCommentOffset(pieces: CommentTextPiece[], pmPos: number): number | null {
+  for (const piece of pieces) {
+    if (piece.kind !== 'text') continue
+    if (pmPos >= piece.pos && pmPos <= piece.pos + piece.length) {
+      return piece.offset + (pmPos - piece.pos)
+    }
+  }
+  // Selection at a block boundary / separator.
+  for (const piece of pieces) {
+    if (piece.kind === 'separator' && pmPos === piece.pos) return piece.offset
+  }
+  return null
+}
+
+export function commentDraftOffsetsFromEditor(
   handle: TiptapEditorHandle | null,
   markdown: string,
   quote: string,
@@ -335,13 +351,21 @@ function commentDraftOffsetsFromEditor(
   if (!handle?.state || !quote) return null
   const { from, to, empty } = handle.state.selection
   if (empty || to <= from) return null
-  const selected = handle.state.doc.textBetween(from, to, '\n', '\n')
-  if (selected.trim() !== quote) return null
-  const prefix = handle.state.doc.textBetween(Math.max(0, from - 48), from, '\n', '\n')
-  const suffix = handle.state.doc.textBetween(to, Math.min(handle.state.doc.content.size, to + 48), '\n', '\n')
-  const hit = findQuoteWithContext(markdown, quote, prefix.slice(-48), suffix.slice(0, 48))
+  // Same offset space as highlight navigation (buildCommentTextMap), then project into markdown.
+  const { text, pieces } = buildCommentTextMap(handle.state.doc)
+  const mapStart = pmPosToCommentOffset(pieces, from)
+  const mapEnd = pmPosToCommentOffset(pieces, to)
+  if (mapStart == null || mapEnd == null || mapEnd <= mapStart) return null
+  const mappedQuote = text.slice(mapStart, mapEnd)
+  if (mappedQuote.trim() !== quote) return null
+  const prefix = text.slice(Math.max(0, mapStart - 48), mapStart)
+  const suffix = text.slice(mapEnd, Math.min(text.length, mapEnd + 48))
+  // When the comment-text map aligns with the stored markdown body, use those offsets directly.
+  if (markdown.slice(mapStart, mapEnd) === mappedQuote) {
+    return { start: mapStart, end: mapEnd }
+  }
+  const hit = findQuoteWithContext(markdown, quote, prefix, suffix)
   if (hit) return hit
-  // Unique occurrence in markdown is unambiguous even without context.
   const first = markdown.indexOf(quote)
   if (first < 0) return null
   if (markdown.indexOf(quote, first + 1) >= 0) return null
@@ -603,6 +627,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [focusCommentComposer, setFocusCommentComposer] = React.useState(false)
   const [rpcCommentThreads, setRpcCommentThreads] = React.useState<NoteCommentThread[]>([])
   const commentCreateInFlightRef = React.useRef(false)
+  // Collapsed comments rail unmounts NotesCommentThreads — clear highlights here so a
+  // prior note's threads cannot paint on the newly opened body.
+  React.useEffect(() => {
+    setRpcCommentThreads([])
+  }, [activeWorkspaceId, activeNote?.id])
   const [commentTooltip, setCommentTooltip] = React.useState<{ body: string; quote: string; top: number; left: number } | null>(null)
   const [footnoteDraft, setFootnoteDraft] = React.useState('')
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
@@ -3503,8 +3532,14 @@ h1,h2,h3{margin-top:1.5em}
                     if (!text || !activeNote || !activeWorkspaceId || commentCreateInFlightRef.current) return
                     // Prefer the sidecar RPC stack (threads / resolve / reactions).
                     // Selection compose from the overlay mirrors the rail submit.
+                    const requestWorkspaceId = activeWorkspaceId
+                    const requestNoteId = activeNote.id
                     commentCreateInFlightRef.current = true
                     void (async () => {
+                      const stillActive = () => (
+                        workspaceIdRef.current === requestWorkspaceId
+                        && activeNoteIdRef.current === requestNoteId
+                      )
                       try {
                         const quote = commentDraftQuote.trim()
                         const anchor = quote ? anchorFromQuote(contentRef.current, quote, commentDraftAnchor) : null
@@ -3512,11 +3547,12 @@ h1,h2,h3{margin-top:1.5em}
                           toast.error(t('notes.comments.errorAttachSelection'))
                           return
                         }
-                        const created = await window.electronAPI.createNoteComment(activeWorkspaceId, {
-                          noteId: activeNote.id,
+                        const created = await window.electronAPI.createNoteComment(requestWorkspaceId, {
+                          noteId: requestNoteId,
                           body: text,
                           anchor,
                         })
+                        if (!stillActive()) return
                         setRpcCommentThreads(prev => {
                           const index = prev.findIndex(c => c.id === created.id)
                           if (index === -1) return [...prev, created]
@@ -3527,13 +3563,14 @@ h1,h2,h3{margin-top:1.5em}
                         setCommentDraftQuote('')
                         setCommentComposerBody('')
                         try {
-                          const list = await window.electronAPI.listNoteComments(activeWorkspaceId, activeNote.id)
+                          const list = await window.electronAPI.listNoteComments(requestWorkspaceId, requestNoteId)
+                          if (!stillActive()) return
                           setRpcCommentThreads(list)
                         } catch {
                           // Keep optimistic highlight list if quiet refresh fails.
                         }
                       } catch {
-                        toast.error(t('notes.comments.errorCreate'))
+                        if (stillActive()) toast.error(t('notes.comments.errorCreate'))
                       } finally {
                         commentCreateInFlightRef.current = false
                       }
