@@ -580,10 +580,11 @@ export function renderActionFenceMarkdown(spec: ActionSpec, _language = 'rox-act
 export function renderActionBasicExport(spec: ActionSpec): string {
   const label = sanitizeActionLabel(spec.label) || defaultLabelForKind(spec.kind)
   const state = presentationStateForSpec(spec)
-  const imported =
-    spec.rejectedUnsafe ||
-    (typeof spec.sourceLanguage === 'string' &&
-      spec.sourceLanguage.trim().toLowerCase() !== 'rox-action')
+  // Import vs draft copy is driven ONLY by sourceLanguage (set and !== rox-action).
+  // rejectedUnsafe gates inert/presentation only — native validation failures stay "draft".
+  const source =
+    typeof spec.sourceLanguage === 'string' ? spec.sourceLanguage.trim().toLowerCase() : ''
+  const imported = Boolean(source && source !== 'rox-action')
   const note =
     state === 'inert'
       ? imported
@@ -639,7 +640,15 @@ export function settleClientActionAttempt(
   spec: ActionSpec,
   ui: ClientActionUiState,
   next: Exclude<ActionPresentationState, 'pending'> = 'default',
+  options?: { expectedAttemptId?: number },
 ): ClientActionUiState {
+  // Mid-flight attrs reset may replace ui (new attemptId) — do not settle a stale pulse.
+  if (
+    typeof options?.expectedAttemptId === 'number' &&
+    ui.attemptId !== options.expectedAttemptId
+  ) {
+    return ui
+  }
   if (presentationStateForSpec(spec) === 'inert') {
     return { ...ui, presentation: 'inert' }
   }

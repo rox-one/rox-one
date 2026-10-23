@@ -316,6 +316,63 @@ describe('LSX-WP-033 ActionSpec helpers', () => {
     expect(missingTargetImport.ok).toBe(true)
     if (!missingTargetImport.ok) throw new Error('expected ok')
     expect(missingTargetImport.spec.rejectedUnsafe).toBe(false)
+    expect(renderActionBasicExport(missingTargetImport.spec)).toContain('unreviewed import')
+  })
+
+  test('rejectedUnsafe alone does not flip export copy to import (native validation = draft)', () => {
+    const unsafe = normalizeActionSpec({
+      kind: 'safeFormula',
+      label: 'Calc',
+      formula: 'eval("1+1")',
+      reviewState: 'reviewed',
+    })
+    expect(unsafe.ok).toBe(false)
+    if (unsafe.ok) throw new Error('expected inert')
+    expect(unsafe.inertSpec.rejectedUnsafe).toBe(true)
+    expect(unsafe.inertSpec.sourceLanguage).toBeUndefined()
+    expect(presentationStateForSpec(unsafe.inertSpec)).toBe('inert')
+    expect(renderActionBasicExport(unsafe.inertSpec)).toContain('unreviewed draft')
+    expect(renderActionBasicExport(unsafe.inertSpec)).not.toContain('unreviewed import')
+  })
+
+  test('settle ignores stale attemptId after mid-flight attrs reset', () => {
+    const reviewed = normalizeActionSpec({
+      kind: 'command',
+      label: 'Sync',
+      commandId: 'notes.sync',
+      reviewState: 'reviewed',
+    })
+    expect(reviewed.ok).toBe(true)
+    if (!reviewed.ok) throw new Error('expected ok')
+
+    const first = beginClientActionAttempt(reviewed.spec, createClientActionUiState(reviewed.spec))
+    expect(first.accepted).toBe(true)
+    expect(first.ui.attemptId).toBe(1)
+
+    // Simulate attrs reset: chrome replaced with a new inert draft (attemptId 0).
+    const draft = normalizeActionSpec({
+      kind: 'command',
+      label: 'Action',
+      reviewState: 'unreviewed',
+    })
+    expect(draft.ok).toBe(true)
+    if (!draft.ok) throw new Error('expected ok')
+    const resetUi = createClientActionUiState(draft.spec)
+    expect(resetUi.presentation).toBe('inert')
+    expect(resetUi.attemptId).toBe(0)
+
+    const stale = settleClientActionAttempt(draft.spec, resetUi, 'default', {
+      expectedAttemptId: first.ui.attemptId,
+    })
+    expect(stale).toEqual(resetUi)
+    expect(stale.presentation).toBe('inert')
+
+    // Matching attemptId still settles normally.
+    const matched = settleClientActionAttempt(reviewed.spec, first.ui, 'default', {
+      expectedAttemptId: first.ui.attemptId,
+    })
+    expect(matched.presentation).toBe('default')
+    expect(matched.attemptId).toBe(1)
   })
 
   test('invalid-shape inert defaults keep rejectedUnsafe false', () => {

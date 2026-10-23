@@ -131,8 +131,8 @@ export function insertActionButtonContent(
   editor.chain().focus().insertContentAt(targetPos, createActionButtonContent(spec)).run()
 }
 
-function isImportedAction(spec: ActionSpec): boolean {
-  if (spec.rejectedUnsafe) return true
+/** Import copy only when sourceLanguage is set and !== rox-action (not rejectedUnsafe alone). */
+export function isImportedAction(spec: ActionSpec): boolean {
   const source = typeof spec.sourceLanguage === 'string' ? spec.sourceLanguage.trim().toLowerCase() : ''
   return Boolean(source && source !== 'rox-action')
 }
@@ -185,6 +185,8 @@ function ActionButtonNodeView({
   const language = String(node.attrs.language ?? 'rox-action')
   const spec = React.useMemo(() => parseSpecFromCode(code, language), [code, language])
   const [ui, setUi] = React.useState<ClientActionUiState>(() => createClientActionUiState(spec))
+  const specRef = React.useRef(spec)
+  specRef.current = spec
 
   React.useEffect(() => {
     setUi(createClientActionUiState(spec))
@@ -204,15 +206,21 @@ function ActionButtonNodeView({
     // Read-only: disable + no-op (no pending pulse) — same gate as Tabs/Columns.
     if (!editor.isEditable) return
     setUi((prev) => {
-      const result = beginClientActionAttempt(spec, prev)
+      const result = beginClientActionAttempt(specRef.current, prev)
       if (!result.accepted) return result.ui
+      const acceptedAttemptId = result.ui.attemptId
       // Presentation-only pending pulse — never invent success / never execute.
+      // Only settle if this attempt is still current (mid-flight attrs reset desyncs otherwise).
       queueMicrotask(() => {
-        setUi((current) => settleClientActionAttempt(spec, current, 'default'))
+        setUi((current) =>
+          settleClientActionAttempt(specRef.current, current, 'default', {
+            expectedAttemptId: acceptedAttemptId,
+          }),
+        )
       })
       return result.ui
     })
-  }, [spec, editor.isEditable])
+  }, [editor.isEditable])
 
   const selectNode = React.useCallback(() => {
     const pos = typeof getPos === 'function' ? getPos() : undefined

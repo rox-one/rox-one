@@ -7,6 +7,7 @@ import {
   createActionButtonContent,
   insertActionButtonContent,
   isActionButtonActivateAllowed,
+  isImportedAction,
 } from '../ActionButtonBlock'
 import {
   presentationStateForSpec,
@@ -183,6 +184,7 @@ describe('ActionButtonBlock TipTap', () => {
     expect(draft.ok).toBe(true)
     if (!draft.ok) throw new Error('expected ok')
     expect(draft.spec.rejectedUnsafe).toBe(false)
+    expect(isImportedAction(draft.spec)).toBe(false)
     expect(renderActionBasicExport(draft.spec)).toContain('unreviewed draft')
     expect(renderActionBasicExport(draft.spec)).not.toContain('unreviewed import')
 
@@ -198,7 +200,24 @@ describe('ActionButtonBlock TipTap', () => {
     )
     const importedSpec = imported.ok ? imported.spec : imported.inertSpec
     expect(importedSpec.sourceLanguage).toBe('button')
+    expect(isImportedAction(importedSpec)).toBe(true)
     expect(renderActionBasicExport(importedSpec)).toContain('unreviewed import')
+  })
+
+  it('native validation failure uses draft inert hint, not import (rejectedUnsafe alone)', () => {
+    const unsafe = createActionButtonContent({
+      kind: 'safeFormula',
+      label: 'Calc',
+      formula: 'eval("1+1")',
+      reviewState: 'reviewed',
+    })
+    const parsed = parseActionFenceBody(unsafe.attrs.code, { language: 'rox-action' })
+    const spec = parsed.ok ? parsed.spec : parsed.inertSpec
+    expect(spec.rejectedUnsafe).toBe(true)
+    expect(spec.sourceLanguage).toBeUndefined()
+    expect(isImportedAction(spec)).toBe(false)
+    expect(renderActionBasicExport(spec)).toContain('unreviewed draft')
+    expect(renderActionBasicExport(spec)).not.toContain('unreviewed import')
   })
 
   it('read-only editor disables activate (no pending pulse)', () => {
