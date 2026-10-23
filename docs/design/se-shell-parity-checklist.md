@@ -26,6 +26,7 @@ Glass / blur is **optional and pointwise** (blur ~20px on chrome accents). Not a
 | Rail collapse below 1280 | DONE | shell width tokens |
 | Compact WorktreeHoverCard **200–300ms** delay | DONE | `WORKTREE_HOVER_DELAY_MS=250` in WorkspaceNavigator |
 | Optional icons v2 SVG extract | DONE | `packages/ui/src/icons/se/` (stroke 1.5; WorkspaceNavigator wired) |
+| Workspace navigator design width **~260** | DONE | `NAVIGATOR_WIDTH_DEFAULT = 260` in `shell-layout-preferences.ts` |
 | Dialog / Popover enter–exit springs | DONE | SE CSS → `--motion-spring` / `--ease-spring` (mirrors `SE_SPRING_MODAL`) |
 
 ## Pointwise glass / popover blur (DONE — do not re-PR)
@@ -46,7 +47,6 @@ Lock tests: `packages/ui/src/components/glass/__tests__/glass.test.ts`, `se-acce
 
 | ID | Spec § | Gap | Owner hint |
 |----|--------|-----|------------|
-| G3 | §3 width | Design width ~260 for workspace nav — verify live SE build vs token/CSS (no dedicated contract assert) | Shell layout |
 | G4 | Frame map / parity | Manual PNG QA vs reference frames still optional (`super-engineering-parity.md`) | QA on Mac |
 | G5 | Product | Default SE ships with glass accents **off**; enabling by default would be a product change, not a Design polish PR | Product / New Bot |
 
