@@ -74,4 +74,60 @@ describe('Rox tabs block', () => {
 
     editor.destroy()
   })
+
+  it('round-trips columns nested inside tabs without truncating on nested :::', () => {
+    const source = [
+      ':::rox-tabs',
+      '',
+      ':::rox-tab {title="Split"}',
+      '',
+      ':::rox-columns {widths="50% 50%"}',
+      '',
+      ':::rox-column',
+      '',
+      'Left nested ^L',
+      '',
+      ':::',
+      '',
+      ':::rox-column',
+      '',
+      'Right nested ^R',
+      '',
+      ':::',
+      '',
+      ':::',
+      '',
+      ':::',
+      '',
+      ':::rox-tab {title="More"}',
+      '',
+      'Second pane keeps going ^S',
+      '',
+      ':::',
+      '',
+      ':::',
+    ].join('\n')
+
+    const editor = new Editor({
+      extensions: [
+        StarterKit.configure({ codeBlock: false }),
+        RoxTabsBlock,
+        RoxTabBlock,
+        Markdown,
+      ],
+      content: source,
+      contentType: 'markdown',
+    })
+
+    const markdown = editor.getMarkdown()
+    expect(markdown).toContain(':::rox-tabs')
+    expect(markdown).toContain('Left nested')
+    expect(markdown).toContain('Right nested')
+    expect(markdown).toContain('Second pane keeps going')
+    expect(markdown).toContain('^L')
+    expect(markdown).toContain('^R')
+    expect(markdown).toContain('^S')
+    editor.destroy()
+  })
+
 })

@@ -135,13 +135,22 @@ function TabsNodeView({
   labels: RoxTabsLabels
 }) {
   const [activeIndex, setActiveIndex] = React.useState(0)
+  const [renamingIndex, setRenamingIndex] = React.useState<number | null>(null)
+  const [renameDraft, setRenameDraft] = React.useState('')
   const tablistRef = React.useRef<HTMLDivElement | null>(null)
+  const renameInputRef = React.useRef<HTMLInputElement | null>(null)
   const titles = React.useMemo(() => readChildTitles(node), [node])
   const count = node.childCount
 
   React.useEffect(() => {
     if (activeIndex >= count) setActiveIndex(Math.max(0, count - 1))
   }, [activeIndex, count])
+
+  React.useEffect(() => {
+    if (renamingIndex == null) return
+    renameInputRef.current?.focus()
+    renameInputRef.current?.select()
+  }, [renamingIndex])
 
   const resolvePos = React.useCallback((): number | null => {
     if (typeof getPos !== 'function') return null
@@ -237,6 +246,35 @@ function TabsNodeView({
           const selected = index === activeIndex
           return (
             <div key={`rox-tab-chip-${index}`} className="tiptap-rox-tabs-chip">
+              {renamingIndex === index ? (
+                <input
+                  ref={renameInputRef}
+                  type="text"
+                  className="tiptap-rox-tabs-tab tiptap-rox-tabs-rename-input is-active"
+                  aria-label={labels.renameTab}
+                  value={renameDraft}
+                  onChange={(event) => setRenameDraft(event.target.value)}
+                  onBlur={() => {
+                    commitTitle(index, renameDraft)
+                    setRenamingIndex(null)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      commitTitle(index, renameDraft)
+                      setRenamingIndex(null)
+                      queueMicrotask(() => focusTabButton(index))
+                    } else if (event.key === 'Escape') {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      setRenameDraft(title)
+                      setRenamingIndex(null)
+                      queueMicrotask(() => focusTabButton(index))
+                    }
+                  }}
+                />
+              ) : (
               <button
                 type="button"
                 role="tab"
@@ -249,38 +287,18 @@ function TabsNodeView({
                 onClick={() => selectTab(index)}
                 onDoubleClick={(event) => {
                   if (!editor.isEditable) return
-                  const target = event.currentTarget
-                  target.contentEditable = 'true'
-                  target.focus()
-                  const range = document.createRange()
-                  range.selectNodeContents(target)
-                  const selection = window.getSelection()
-                  selection?.removeAllRanges()
-                  selection?.addRange(range)
-                }}
-                onBlur={(event) => {
-                  if (event.currentTarget.isContentEditable) {
-                    event.currentTarget.contentEditable = 'false'
-                    commitTitle(index, event.currentTarget.textContent ?? '')
-                  }
+                  event.preventDefault()
+                  event.stopPropagation()
+                  setRenameDraft(title)
+                  setRenamingIndex(index)
                 }}
                 onKeyDown={(event) => {
-                  if (event.currentTarget.isContentEditable) {
-                    if (event.key === 'Enter') {
-                      event.preventDefault()
-                      event.currentTarget.blur()
-                    } else if (event.key === 'Escape') {
-                      event.preventDefault()
-                      event.currentTarget.textContent = title
-                      event.currentTarget.blur()
-                    }
-                    return
-                  }
                   onTabKeyDown(index, event)
                 }}
               >
                 {title}
               </button>
+              )}
               {editor.isEditable && count > MIN_TABS ? (
                 <button
                   type="button"

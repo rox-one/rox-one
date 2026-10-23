@@ -894,6 +894,12 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   cursor: pointer;
 }
 
+.tiptap-rox-tabs-rename-input {
+  max-width: 16rem;
+  min-width: 4rem;
+  box-sizing: border-box;
+}
+
 .tiptap-rox-tabs-tab.is-active {
   background: color-mix(in oklch, var(--background) 88%, transparent);
   border-color: color-mix(in oklch, var(--foreground) 10%, transparent);
@@ -958,32 +964,45 @@ html[data-render-profile="performance"] .tiptap-editor .tiptap-prose img[data-lo
   margin-bottom: 0;
 }
 
-/* Personal selected tab — hide inactive panes visually; all children stay in the doc. */
-.tiptap-rox-tabs-panels > .tiptap-rox-tab {
+/* Personal selected tab — hide inactive panes visually; all children stay in the doc.
+   TipTap ReactNodeViewRenderer nests as:
+     .tiptap-rox-tabs-panels > [data-node-view-content-react] > .react-renderer > .tiptap-rox-tab
+   so we target the direct children of the content wrapper (and bare .tiptap-rox-tab fallback). */
+.tiptap-rox-tabs-panels > .tiptap-rox-tab,
+.tiptap-rox-tabs-panels > [data-node-view-content-react] > .react-renderer,
+.tiptap-rox-tabs-panels > [data-node-view-content-react] > * {
   display: none;
 }
-.tiptap-rox-tabs[data-active-index="0"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(1) {
+.tiptap-rox-tabs[data-active-index="0"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(1),
+.tiptap-rox-tabs[data-active-index="0"] .tiptap-rox-tabs-panels > [data-node-view-content-react] > :nth-child(1) {
   display: block;
 }
-.tiptap-rox-tabs[data-active-index="1"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(2) {
+.tiptap-rox-tabs[data-active-index="1"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(2),
+.tiptap-rox-tabs[data-active-index="1"] .tiptap-rox-tabs-panels > [data-node-view-content-react] > :nth-child(2) {
   display: block;
 }
-.tiptap-rox-tabs[data-active-index="2"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(3) {
+.tiptap-rox-tabs[data-active-index="2"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(3),
+.tiptap-rox-tabs[data-active-index="2"] .tiptap-rox-tabs-panels > [data-node-view-content-react] > :nth-child(3) {
   display: block;
 }
-.tiptap-rox-tabs[data-active-index="3"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(4) {
+.tiptap-rox-tabs[data-active-index="3"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(4),
+.tiptap-rox-tabs[data-active-index="3"] .tiptap-rox-tabs-panels > [data-node-view-content-react] > :nth-child(4) {
   display: block;
 }
-.tiptap-rox-tabs[data-active-index="4"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(5) {
+.tiptap-rox-tabs[data-active-index="4"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(5),
+.tiptap-rox-tabs[data-active-index="4"] .tiptap-rox-tabs-panels > [data-node-view-content-react] > :nth-child(5) {
   display: block;
 }
-.tiptap-rox-tabs[data-active-index="5"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(6) {
+.tiptap-rox-tabs[data-active-index="5"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(6),
+.tiptap-rox-tabs[data-active-index="5"] .tiptap-rox-tabs-panels > [data-node-view-content-react] > :nth-child(6) {
   display: block;
 }
-.tiptap-rox-tabs[data-active-index="6"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(7) {
+.tiptap-rox-tabs[data-active-index="6"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(7),
+.tiptap-rox-tabs[data-active-index="6"] .tiptap-rox-tabs-panels > [data-node-view-content-react] > :nth-child(7) {
   display: block;
 }
-.tiptap-rox-tabs[data-active-index="7"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(8) {
+.tiptap-rox-tabs[data-active-index="7"] .tiptap-rox-tabs-panels > .tiptap-rox-tab:nth-child(8),
+.tiptap-rox-tabs[data-active-index="7"] .tiptap-rox-tabs-panels > [data-node-view-content-react] > :nth-child(8) {
   display: block;
 }
 

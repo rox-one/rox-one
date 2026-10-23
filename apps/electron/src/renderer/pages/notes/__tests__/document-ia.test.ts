@@ -2,7 +2,9 @@ import { describe, expect, test } from 'bun:test'
 import {
   applyPersistentFolds,
   defaultNoteCommands,
+  basicMarkdownForNotes,
   extractColumns,
+  extractTabs,
   extractComments,
   extractFootnotes,
   extractWikiLinks,
@@ -204,4 +206,40 @@ describe('notes document IA', () => {
     ])
     expect(parsePersistedFolds('["intro","tasks"]')).toEqual(['intro', 'tasks'])
   })
+
+  test('extractTabs keeps panes when columns nest inside; basic export expands recursively', () => {
+    const source = [
+      ':::rox-tabs',
+      ':::rox-tab {title="Split"}',
+      ':::rox-columns {widths="50% 50%"}',
+      ':::rox-column',
+      'Left nested',
+      ':::',
+      ':::rox-column',
+      'Right nested',
+      ':::',
+      ':::',
+      ':::',
+      ':::rox-tab {title="More"}',
+      'Second pane',
+      ':::',
+      ':::',
+    ].join('\n')
+    const tabs = extractTabs(source)
+    expect(tabs).toHaveLength(1)
+    expect(tabs[0]?.titles).toEqual(['Split', 'More'])
+    expect(tabs[0]?.panes[0]).toContain('Left nested')
+    expect(tabs[0]?.panes[0]).toContain('Right nested')
+    expect(tabs[0]?.panes[1]).toBe('Second pane')
+
+    const basic = basicMarkdownForNotes(source)
+    expect(basic).toContain('### Split')
+    expect(basic).toContain('### Column 1')
+    expect(basic).toContain('Left nested')
+    expect(basic).toContain('### More')
+    expect(basic).toContain('Second pane')
+    expect(basic).not.toContain(':::rox-tabs')
+    expect(basic).not.toContain(':::rox-columns')
+  })
+
 })

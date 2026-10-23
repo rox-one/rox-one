@@ -29,6 +29,7 @@ import { MarkdownComment } from './extensions/MarkdownComment'
 import { DocumentFolding, type DocumentFoldingJSON } from './extensions/DocumentFolding'
 import { RoxColumnsBlock, RoxColumnBlock } from './extensions/ColumnsBlock'
 import { RoxTabsBlock, RoxTabBlock } from './extensions/TabsBlock'
+import { expandContainersForBasicMarkdown } from '@rox/core/docs'
 import { RoxBlockCallout, PortableCalloutBlockquote } from './extensions/rox-block-syntax'
 import { cn } from '../../lib/utils'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
@@ -138,6 +139,16 @@ export function preprocessMarkdownForOfficial(markdown: string): string {
 /** Undo parser-safety escaping in serialized markdown. */
 export function postprocessMarkdownFromOfficial(markdown: string): string {
   return markdown.replaceAll(CURRENCY_MARKER, '$')
+}
+
+/**
+ * Production choke point: TipTap serialize → basic Markdown export.
+ * Keeps rich/portable onUpdate path intact (:::rox-tabs stay on disk);
+ * callers that need indexer/plain-MD visibility expand tabs/columns here.
+ * Unknown future containers remain readable.
+ */
+export function toBasicMarkdownExport(markdown: string): string {
+  return expandContainersForBasicMarkdown(postprocessMarkdownFromOfficial(markdown))
 }
 
 const MERMAID_FILE_EXTENSIONS = new Set(['mmd', 'mermaid'])

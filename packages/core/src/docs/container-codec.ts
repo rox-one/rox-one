@@ -122,6 +122,7 @@ function expandLeafSections(inner: string, leafNames: RegExp, headingPrefix: str
   const lines = inner.split('\n')
   const parts: string[] = []
   let index = 0
+  let leafIndex = 0
   while (index < lines.length) {
     const open = OPEN_RE.exec(lines[index]!)
     if (!open || !leafNames.test(open[1]!)) {
@@ -152,11 +153,16 @@ function expandLeafSections(inner: string, leafNames: RegExp, headingPrefix: str
         if (depth === 0) break
       }
     }
-    const title = parseTitleAttr(open[2]) || `${headingPrefix} ${parts.length + 1}`
+    leafIndex += 1
+    const title = parseTitleAttr(open[2]) || `${headingPrefix} ${leafIndex}`
     const body = lines.slice(index + 1, end).join('\n').trim()
+    // Recurse so nested tabs/columns inside a pane/column body also expand.
+    const nested = body.length > 0
+      ? expandContainersForBasicMarkdown(body).replace(/\n$/, '')
+      : ''
     parts.push(`### ${title}`)
     parts.push('')
-    parts.push(body.length > 0 ? body : '')
+    parts.push(nested)
     parts.push('')
     index = end + 1
   }
@@ -166,28 +172,35 @@ function expandLeafSections(inner: string, leafNames: RegExp, headingPrefix: str
 /**
  * Expand known semantic tabs/columns into labeled Markdown sections.
  * Unknown containers are retained byte-for-byte (readable), never stripped.
+ * Nested containers inside expanded pane/column bodies are expanded recursively
+ * (locateContainerRegions only sees top-level roots per scan).
  */
 export function expandContainersForBasicMarkdown(source: string): string {
-  const regions = locateContainerRegions(source).filter(region => isRootKind(region.rawKind) || region.kind === 'unknown')
-  // Process from the end so offsets stay valid.
-  const roots = regions
-    .filter(region => isRootKind(region.rawKind) || (region.kind === 'unknown' && !isLeafKind(region.rawKind)))
-    .sort((a, b) => b.start - a.start)
-
+  const trailingNewline = source.endsWith('\n')
+  // Process from the end so offsets stay valid. Re-scan until no known roots remain
+  // so nested regions that surface after a parent rewrite also expand.
   let result = source
-  for (const region of roots) {
-    if (region.kind === 'unknown') {
-      // Retain unknown container text as-is (readable). Do not rewrite.
-      continue
+  for (let pass = 0; pass < 32; pass += 1) {
+    const roots = locateContainerRegions(result)
+      .filter(region => isRootKind(region.rawKind))
+      .sort((a, b) => b.start - a.start)
+    if (roots.length === 0) break
+    let changed = false
+    for (const region of roots) {
+      const leaf = region.kind === 'tabs'
+        ? /^(?:rox-tab|tab)$/
+        : /^(?:rox-column|column)$/
+      const heading = region.kind === 'tabs' ? 'Tab' : 'Column'
+      const expanded = expandLeafSections(region.childrenText, leaf, heading)
+      const next = `${result.slice(0, region.start)}${expanded}${result.slice(region.end)}`
+      if (next !== result) {
+        result = next
+        changed = true
+      }
     }
-    const leaf = region.kind === 'tabs'
-      ? /^(?:rox-tab|tab)$/
-      : /^(?:rox-column|column)$/
-    const heading = region.kind === 'tabs' ? 'Tab' : 'Column'
-    const expanded = expandLeafSections(region.childrenText, leaf, heading)
-    result = `${result.slice(0, region.start)}${expanded}${result.slice(region.end)}`
+    if (!changed) break
   }
-  return result.replace(/\n{3,}/g, '\n\n').trim() + (source.endsWith('\n') ? '\n' : '')
+  return result.replace(/\n{3,}/g, '\n\n').trim() + (trailingNewline ? '\n' : '')
 }
 
 /** List unknown container kinds that remain readable in the source. */

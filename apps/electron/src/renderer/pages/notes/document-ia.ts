@@ -4,6 +4,7 @@
  */
 
 import i18n from 'i18next'
+import { expandContainersForBasicMarkdown } from '@rox/core/docs'
 
 function authoringLabel(key: string): string {
   const value = i18n.t(key)
@@ -245,9 +246,17 @@ export function serializeTabs(panes: Array<{ title?: string; body?: string }>): 
   return `:::rox-tabs\n${inner}\n:::`
 }
 
+/** Basic Markdown export for notes IA / search: expand semantic tabs/columns. */
+export function basicMarkdownForNotes(markdown: string): string {
+  return expandContainersForBasicMarkdown(markdown)
+}
+
 export function extractTabs(markdown: string): NoteTabsLayout[] {
   const layouts: NoteTabsLayout[] = []
   const lines = markdown.split('\n')
+  const openAny = /^:::[A-Za-z]/
+  const closeBare = /^:::\s*$/
+  const fenceOpen = /^(`{3,}|~{3,})/
   for (let i = 0; i < lines.length; i += 1) {
     const header = /^:::(?:rox-tabs|tabs)\s*$/.exec(lines[i]!)
     if (!header) continue
@@ -255,23 +264,47 @@ export function extractTabs(markdown: string): NoteTabsLayout[] {
     const panes: string[] = []
     let currentTitle = ''
     let current: string[] | null = null
+    let depth = 1
+    let fence: string | undefined
     let j = i + 1
     for (; j < lines.length; j += 1) {
       const line = lines[j]!
+      const code = fenceOpen.exec(line)?.[1]
+      if (fence) {
+        if (code && code[0] === fence[0] && code.length >= fence.length && new RegExp(`^${fence[0]}+\\s*$`).test(line)) {
+          fence = undefined
+        }
+        if (current) current.push(line)
+        continue
+      }
+      if (code) {
+        fence = code
+        if (current) current.push(line)
+        continue
+      }
       const openTab = /^:::(?:rox-tab|tab)(?:\s+\{title="([^"]*)"\})?\s*$/.exec(line)
-      if (line === ':::') {
-        if (current) {
+      if (openTab && current == null && depth === 1) {
+        currentTitle = openTab[1] ?? `Tab ${titles.length + 1}`
+        current = []
+        depth += 1
+        continue
+      }
+      if (openAny.test(line)) {
+        depth += 1
+        if (current) current.push(line)
+        continue
+      }
+      if (closeBare.test(line)) {
+        depth -= 1
+        if (depth === 1 && current) {
           titles.push(currentTitle || `Tab ${titles.length + 1}`)
           panes.push(current.join('\n').trim())
           current = null
           currentTitle = ''
           continue
         }
-        break
-      }
-      if (openTab && current == null) {
-        currentTitle = openTab[1] ?? `Tab ${titles.length + 1}`
-        current = []
+        if (depth === 0) break
+        if (current) current.push(line)
         continue
       }
       if (current) current.push(line)
@@ -711,6 +744,8 @@ export function snippetForColumnCommand(id: string): string | null {
 }
 
 export function parseNoteDocument(markdown: string): NoteDocumentStructure {
+  // Structure extractors read the portable ::: source. Callers that need
+  // indexer/plain-MD visibility use basicMarkdownForNotes (TipTap toBasicMarkdownExport / vault FTS).
   const headings: NoteDocumentStructure['headings'] = []
   const folded = new Set(extractFolds(markdown).map((fold) => fold.id))
   for (const line of markdown.split('\n')) {

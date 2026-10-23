@@ -111,4 +111,53 @@ describe('LSX-WP-031 semantic tabs/columns and basic Markdown fallback', () => {
     expect(isOpaqueFenceDroppingChildren(mutant, ['nested task', '^task-plan', 'Comment-ready prose'])).toBe(true)
     expect(() => assertBasicExportRevealsChildren(mutant, ['nested task', '^task-plan'])).toThrow(/reveal child content|Opaque fence/)
   })
+
+  test('columns nested inside tabs expand recursively in basic Markdown', () => {
+    const nestedInside = [
+      ':::rox-tabs',
+      '',
+      ':::rox-tab {title="Layout"}',
+      '',
+      ':::rox-columns {widths="50% 50%"}',
+      '',
+      ':::rox-column',
+      '',
+      'Inner left ^inner-left',
+      '',
+      ':::',
+      '',
+      ':::rox-column',
+      '',
+      'Inner right ^inner-right',
+      '',
+      ':::',
+      '',
+      ':::',
+      '',
+      ':::',
+      '',
+      ':::rox-tab {title="Other"}',
+      '',
+      'Sibling pane',
+      '',
+      ':::',
+      '',
+      ':::',
+    ].join('\n')
+    const basic = expandContainersForBasicMarkdown(nestedInside)
+    assertBasicExportRevealsChildren(basic, [
+      '### Layout',
+      '### Column 1',
+      'Inner left',
+      '^inner-left',
+      '### Column 2',
+      'Inner right',
+      '^inner-right',
+      '### Other',
+      'Sibling pane',
+    ])
+    expect(basic).not.toContain(':::rox-tabs')
+    expect(basic).not.toContain(':::rox-columns')
+  })
+
 })

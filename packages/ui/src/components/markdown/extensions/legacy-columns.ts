@@ -18,7 +18,8 @@ export function installLegacyColumns(markdown: any): void {
         continue
       }
       if (code) { fence = code; continue }
-      if (/^:::(?:rox-columns|rox-column|columns|column)(?:\s|$)/.test(value)) depth++
+      // Count ANY Pandoc ::: open so nested tabs/unknown inside columns do not truncate.
+      if (/^:::[A-Za-z]/.test(value)) depth++
       else if (/^:::\s*$/.test(value) && --depth === 0) break
     }
     if (depth !== 0) return false

@@ -45,7 +45,8 @@ export function installLegacyTabs(markdown: any): void {
         continue
       }
       if (code) { fence = code; continue }
-      if (/^:::(?:rox-tabs|rox-tab|tabs|tab)(?:\s|$)/.test(value)) depth++
+      // Count ANY Pandoc ::: open (columns/unknown nested inside tabs), same family as container-codec OPEN_RE.
+      if (/^:::[A-Za-z]/.test(value)) depth++
       else if (/^:::\s*$/.test(value) && --depth === 0) break
     }
     if (depth !== 0) return false
