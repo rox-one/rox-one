@@ -26,7 +26,7 @@ import {
 } from './ink-path'
 import { bindTextArea } from './live-text'
 import { StyleInspector } from './StyleInspector'
-import { applyStyleField, type FieldValue, type StyleField } from './style-model'
+import { applyStyleField, normalizeColorInput, type FieldValue, type StyleField } from './style-model'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { ShellSidebarPortal } from '@/components/app-shell/ShellSidebarPortal'
@@ -824,11 +824,14 @@ function EntityCardView({ o, selected, r, onDown, onOpen }: { o: CanvasObject; s
 
 function solidFill(o: CanvasObject): string | undefined {
   const f = o.style?.fill
-  return f && f.type === 'solid' && typeof f.color === 'string' ? f.color : undefined
+  if (!f || f.type !== 'solid' || typeof f.color !== 'string') return undefined
+  // Allowlist only — CRDT peers can store arbitrary strings.
+  return normalizeColorInput(f.color) ?? undefined
 }
 function strokeColor(o: CanvasObject): string | undefined {
   const c = o.style?.stroke?.color
-  return typeof c === 'string' && c && c !== 'currentColor' ? c : undefined
+  if (typeof c !== 'string' || !c || c === 'currentColor') return undefined
+  return normalizeColorInput(c) ?? undefined
 }
 function strokeWidthOf(o: CanvasObject, fallback: number): number {
   const w = o.style?.stroke?.width

@@ -133,6 +133,22 @@ export function visibleFields(objects: readonly CanvasObject[]): StyleField[] {
   return ALL_FIELDS.filter(f => u.has(f))
 }
 
+/** Hex (#rgb / #rrggbb / #rrggbbaa) or CSS named / currentColor. Rejects url()/breakouts. */
+export function normalizeColorInput(raw: string): string | null {
+  const s = raw.trim()
+  if (!s) return null
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(s)) return s
+  if (/^[a-zA-Z]+$/.test(s)) return s // named CSS / currentColor
+  return null
+}
+
+/** Inspector / render ceilings — keep SVG layout bounded. */
+export const FIELD_MAX = {
+  strokeWidth: 64,
+  fontSize: 400,
+  cornerRadius: 200,
+} as const
+
 /**
  * Build a board.update patch for one object + one field.
  * Merges into existing stroke/font so sibling keys survive.
@@ -146,16 +162,20 @@ export function patchForField(
   if (!applicableFields(o).has(field)) return null
   switch (field) {
     case 'fill': {
-      if (typeof value !== 'string' || !value) return null
-      const fill: Fill = { type: 'solid', color: value }
+      if (typeof value !== 'string') return null
+      const color = normalizeColorInput(value)
+      if (!color) return null
+      const fill: Fill = { type: 'solid', color }
       // Only the named style key is written (board.update merges key-wise).
       return { style: { fill } }
     }
     case 'stroke': {
-      if (typeof value !== 'string' || !value) return null
+      if (typeof value !== 'string') return null
+      const color = normalizeColorInput(value)
+      if (!color) return null
       const prev = o.style?.stroke
       const stroke = {
-        color: value,
+        color,
         width: typeof prev?.width === 'number' ? prev.width : 1.5,
         ...(prev?.dash ? { dash: prev.dash } : {}),
       }
@@ -167,7 +187,7 @@ export function patchForField(
       const prev = o.style?.stroke
       const stroke = {
         color: typeof prev?.color === 'string' && prev.color ? prev.color : 'currentColor',
-        width,
+        width: Math.min(FIELD_MAX.strokeWidth, width),
         ...(prev?.dash ? { dash: prev.dash } : {}),
       }
       return { style: { stroke } }
@@ -181,7 +201,7 @@ export function patchForField(
       const radius = typeof value === 'number' ? value : Number(value)
       if (!Number.isFinite(radius) || radius < 0) return null
       // Only `radius` — do not re-write sibling props (e.g. kind).
-      return { props: { radius } }
+      return { props: { radius: Math.min(FIELD_MAX.cornerRadius, radius) } }
     }
     case 'fontSize': {
       const size = typeof value === 'number' ? value : Number(value)
@@ -189,7 +209,7 @@ export function patchForField(
       const prev = o.style?.font
       const font = {
         family: typeof prev?.family === 'string' && prev.family ? prev.family : 'sans-serif',
-        size,
+        size: Math.min(FIELD_MAX.fontSize, size),
         ...(typeof prev?.weight === 'number' ? { weight: prev.weight } : {}),
       }
       return { style: { font } }
@@ -232,13 +252,18 @@ export function applyStyleField(
   return n
 }
 
-/** Hex (#rgb / #rrggbb) or leave as-is for named/currentColor. Used by the color input. */
-export function normalizeColorInput(raw: string): string | null {
-  const s = raw.trim()
-  if (!s) return null
-  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(s)) return s
-  if (/^[a-zA-Z]+$/.test(s)) return s // named CSS / currentColor
-  return null
+
+/** Expand #rgb → #rrggbb for <input type="color"> (which requires 6 hex digits). */
+export function colorForPicker(value: string | undefined): string {
+  if (!value) return '#888888'
+  const m = /^#([0-9a-fA-F]{3})$/.exec(value.trim())
+  if (m) {
+    const [r, g, b] = m[1]!
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase()
+  }
+  if (/^#([0-9a-fA-F]{6})$/.test(value.trim())) return value.trim().toLowerCase()
+  return '#888888'
 }
 
 export { ALL_FIELDS }
+

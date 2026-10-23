@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CanvasObject } from '@rox/canvas-core'
 import {
-  commonStyle, normalizeColorInput, visibleFields,
+  colorForPicker, commonStyle, normalizeColorInput, visibleFields,
   type CommonField, type FieldValue, type StyleField,
 } from './style-model'
 
@@ -31,6 +31,7 @@ export function StyleInspector({ objects, onChange }: StyleInspectorProps) {
   const { t } = useTranslation()
   const fields = useMemo(() => visibleFields(objects), [objects])
   const common = useMemo(() => commonStyle(objects), [objects])
+  const editable = useMemo(() => objects.some(o => !o.locked), [objects])
   if (objects.length === 0 || fields.length === 0) return null
 
   return (
@@ -38,7 +39,8 @@ export function StyleInspector({ objects, onChange }: StyleInspectorProps) {
       data-testid="canvas-style-inspector"
       data-glass-slot="panel"
       aria-label={t('canvas.inspector.title')}
-      className="absolute right-3 top-14 z-sticky w-56 rounded-lg border border-border bg-background p-3 shadow-sm"
+      aria-disabled={editable ? undefined : true}
+      className={`absolute right-3 top-14 z-sticky w-56 rounded-lg border border-border bg-background p-3 shadow-sm ${editable ? '' : 'opacity-60'}`}
     >
       <div className="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
         {t('canvas.inspector.title')}
@@ -48,7 +50,7 @@ export function StyleInspector({ objects, onChange }: StyleInspectorProps) {
           </span>
         )}
       </div>
-      <div className="flex flex-col gap-2">
+      <fieldset disabled={!editable} className="flex flex-col gap-2 border-0 p-0 m-0 min-w-0">
         {fields.map(field => (
           <FieldRow
             key={field}
@@ -59,7 +61,7 @@ export function StyleInspector({ objects, onChange }: StyleInspectorProps) {
             onChange={onChange}
           />
         ))}
-      </div>
+      </fieldset>
     </aside>
   )
 }
@@ -149,7 +151,7 @@ function ColorField({
   // Drop in-progress typing when the selection (and thus `value`/`mixed`) changes.
   useEffect(() => { setDraft(null) }, [value, mixed])
   const display = draft ?? (mixed ? '' : (value ?? ''))
-  const pickerValue = !mixed && value && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value) ? value : '#888888'
+  const pickerValue = !mixed ? colorForPicker(value) : '#888888'
 
   const commit = (raw: string) => {
     const n = normalizeColorInput(raw)
@@ -167,7 +169,12 @@ function ColorField({
           aria-label={label}
           className="h-8 w-8 cursor-pointer rounded border border-border bg-background p-0.5"
           value={pickerValue}
-          onChange={e => { setDraft(e.target.value); onChange(field, e.target.value) }}
+          onChange={e => {
+            const n = normalizeColorInput(e.target.value)
+            if (!n) return
+            setDraft(n)
+            onChange(field, n)
+          }}
         />
         <input
           type="text"

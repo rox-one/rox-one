@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import * as Y from 'yjs'
 import { actorOrigin, CanvasDoc, createUndoManager, type CanvasObject } from '@rox/canvas-core'
 import {
-  applicableFields, applyStyleField, commonStyle, normalizeColorInput, patchForField, readField, visibleFields,
+  applicableFields, applyStyleField, colorForPicker, commonStyle, normalizeColorInput, patchForField, readField, visibleFields,
 } from '../style-model'
 
 const me = actorOrigin('user', 'style-inspector')
@@ -123,6 +123,38 @@ describe('style-model apply / merge', () => {
   })
 })
 
+
+  it('rejects url()/breakout colors on fill and stroke', () => {
+    const { board, ids } = boardWith(
+      { type: 'shape', x: 0, y: 0, w: 40, h: 40, props: { kind: 'rect' } },
+    )
+    expect(applyStyleField(board, ids, 'fill', 'url(https://evil.example)', me)).toBe(0)
+    expect(applyStyleField(board, ids, 'stroke', 'red; } * {', me)).toBe(0)
+    expect(board.get(ids[0]!)!.style.fill).toBeUndefined()
+  })
+
+  it('clamps strokeWidth / fontSize / cornerRadius to inspector maxima', () => {
+    const { board, ids } = boardWith(
+      { type: 'shape', x: 0, y: 0, w: 40, h: 40, props: { kind: 'rect' } },
+      { type: 'text', x: 50, y: 0, w: 40, h: 20, props: { text: 'x' } },
+    )
+    applyStyleField(board, [ids[0]!], 'strokeWidth', 999, me)
+    applyStyleField(board, [ids[0]!], 'cornerRadius', 999, me)
+    applyStyleField(board, [ids[1]!], 'fontSize', 9999, me)
+    expect(board.get(ids[0]!)!.style.stroke?.width).toBe(64)
+    expect(board.get(ids[0]!)!.props.radius).toBe(200)
+    expect(board.get(ids[1]!)!.style.font?.size).toBe(400)
+  })
+
+  it('skips locked targets so an all-locked selection is a no-op', () => {
+    const { board, ids } = boardWith(
+      { type: 'shape', x: 0, y: 0, w: 40, h: 40, props: { kind: 'rect' } },
+    )
+    board.update(ids[0]!, { locked: true }, me)
+    expect(applyStyleField(board, ids, 'opacity', 0.2, me)).toBe(0)
+    expect(board.get(ids[0]!)!.opacity).toBe(1)
+  })
+
 describe('normalizeColorInput', () => {
   it('accepts hex and named colors', () => {
     expect(normalizeColorInput('#abc')).toBe('#abc')
@@ -130,5 +162,13 @@ describe('normalizeColorInput', () => {
     expect(normalizeColorInput('currentColor')).toBe('currentColor')
     expect(normalizeColorInput('')).toBeNull()
     expect(normalizeColorInput('not a color!')).toBeNull()
+    expect(normalizeColorInput('url(https://x)')).toBeNull()
+  })
+
+  it('expands #rgb for the native color picker', () => {
+    expect(colorForPicker('#abc')).toBe('#aabbcc')
+    expect(colorForPicker('#AABBCC')).toBe('#aabbcc')
+    expect(colorForPicker('red')).toBe('#888888')
+    expect(colorForPicker(undefined)).toBe('#888888')
   })
 })
