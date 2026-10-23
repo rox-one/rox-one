@@ -177,3 +177,63 @@ describe('local note comment sidecars', () => {
     expect(await listNoteCommentsForRoot(notesRoot, 'Daily')).toEqual([])
   })
 })
+
+describe('note comment threads, document scope, and reactions', () => {
+  it('creates whole-document comments without a selection anchor', async () => {
+    const created = await createNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      body: 'Замечание по всей заметке',
+    })
+    expect(created.anchor).toBeNull()
+    expect(created.parentId).toBeUndefined()
+    expect(created.reactions).toEqual([])
+    const listed = await listNoteCommentsForRoot(notesRoot, 'Daily')
+    expect(listed).toHaveLength(1)
+    expect(listed[0].anchor).toBeNull()
+  })
+
+  it('creates one-level replies and rejects deeper nesting', async () => {
+    const root = await createNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      body: 'Корень',
+      anchor,
+    })
+    const reply = await createNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      body: 'Ответ',
+      parentId: root.id,
+    })
+    expect(reply.parentId).toBe(root.id)
+    expect(reply.anchor).toBeNull()
+
+    await expect(createNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      body: 'Слишком глубоко',
+      parentId: reply.id,
+    })).rejects.toThrow(/one level/)
+
+    await deleteNoteCommentForRoot(notesRoot, 'Daily', root.id)
+    expect(await listNoteCommentsForRoot(notesRoot, 'Daily')).toEqual([])
+  })
+
+  it('toggles reactions on and off for an author', async () => {
+    const created = await createNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      body: 'С реакцией',
+      anchor,
+    })
+    const withThumb = await updateNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      commentId: created.id,
+      reaction: { emoji: '👍' },
+    })
+    expect(withThumb.reactions).toEqual([{ emoji: '👍', authors: ['Вы'] }])
+
+    const cleared = await updateNoteCommentForRoot(notesRoot, {
+      noteId: 'Daily',
+      commentId: created.id,
+      reaction: { emoji: '👍', author: 'Вы' },
+    })
+    expect(cleared.reactions).toEqual([])
+  })
+})
