@@ -436,7 +436,7 @@ export function KnowledgeHome() {
           view === 'proposals' && 'ring-1 ring-ring',
         )}
         // Arc Glass: the entry is an interactive row — `row` (transparent base,
-        // hover/selection from state tokens; arc-glass-surfaces.css).
+        // hover/selection from state tokens; GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed)).
         data-glass-slot="row"
       >
         <FileDiff className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
@@ -624,7 +624,7 @@ export function KnowledgeHome() {
             <form
               className="sticky top-0 z-10 bg-background px-3 pb-2 pt-3"
               // Arc Glass: full-text search = the list toolbar (static blur +
-              // bottom hairline, arc-glass-surfaces.css).
+              // bottom hairline, GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed)).
               data-glass-slot="toolbar"
               onSubmit={(e) => {
                 e.preventDefault()

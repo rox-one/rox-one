@@ -577,11 +577,10 @@ html .popover-styled {
   width: 356px !important;
 }
 
-/* Opaque like every other overlay (PERF-07 / UI-AUDIT P1-10). Arc Glass paints
-   the toast surface itself (`data-glass-slot="toast"` / `[data-sonner-toast]`
-   in packages/ui/src/components/glass/arc-glass-surfaces.css), so the opaque
-   fill is scoped to the other themes. */
-html:not([data-theme="arc-glass"]) [data-sonner-toast] {
+/* Opaque like every other overlay (PERF-07 / UI-AUDIT P1-10). Arc Glass Design
+   content surfaces CSS was removed; theme remains wallpaper-only — opaque toast
+   fill applies to every theme including arc-glass. */
+[data-sonner-toast] {
   background-color: oklch(from var(--popover) l c h / 1) !important;
 }
 
@@ -1454,32 +1453,51 @@ html[data-contrast="high"] :is(.popover-styled, [data-slot="popover-content"], .
    a11y/performance gates above still reset the popover when they are active.
    With the layer off the popover stays opaque exactly as before.
 
-   Arc Glass (`html[data-theme="arc-glass"]`) is the second exception: its
-   overlay slots (data-glass-slot dialog/sheet/toast/popover, and sonner's
-   [data-sonner-toast]) draw their own opaque-enough fill and static blur in
-   packages/ui/src/components/glass/arc-glass-*.css, so the reset would cancel
-   the material. The a11y/performance gates still turn that blur off — see the
-   degradation blocks in those two stylesheets.
+   Arc Glass is wallpaper-only (no surfaces skin): opaque toast fill and overlay
+   backdrop-filter:none apply to it too. SE optional accents do NOT exempt the
+   whole document: toast / tooltip / hover-card / dialog / alertdialog / select
+   stay reset. Menus/dropdowns skip the opaque reset only when
+   html[data-ui-profile="super-engineering"][data-glass-accents] AND they carry
+   data-glass-slot="popover" — same gate as popover-content. With accents off,
+   slotted menus stay opaque. Composer accent is fill/tint only (no skin blur).
+   A11y/performance gates still zero blur.
 ============================================================================= */
-html:not([data-theme="arc-glass"]) :is(
+html :is(
   [data-sonner-toast],
   [data-slot="tooltip-content"],
   [data-slot="hover-card-content"],
-  [data-slot="dropdown-menu-content"],
-  [data-slot="dropdown-menu-sub-content"],
-  [data-slot="context-menu-content"],
-  [data-slot="context-menu-sub-content"],
   [data-slot="select-content"],
   [data-slot="dialog-content"],
   [role="tooltip"],
-  [role="menu"],
   [role="dialog"]:not([data-slot="popover-content"]),
   [role="alertdialog"]
 ) {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-html:not([data-theme="arc-glass"]):not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"] {
+/* Menus: opaque unless SE accents are on (then only unslotted menus reset). */
+html:not([data-ui-profile="super-engineering"][data-glass-accents]) :is(
+  [data-slot="dropdown-menu-content"],
+  [data-slot="dropdown-menu-sub-content"],
+  [data-slot="context-menu-content"],
+  [data-slot="context-menu-sub-content"],
+  [role="menu"]
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-ui-profile="super-engineering"][data-glass-accents] :is(
+  [data-slot="dropdown-menu-content"]:not([data-glass-slot="popover"]),
+  [data-slot="dropdown-menu-sub-content"]:not([data-glass-slot="popover"]),
+  [data-slot="context-menu-content"]:not([data-glass-slot="popover"]),
+  [data-slot="context-menu-sub-content"]:not([data-glass-slot="popover"]),
+  [role="menu"]:not([data-glass-slot="popover"])
+) {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+/* Popover content: allow blur under SE accents or web material glass. */
+html:not([data-ui-profile="super-engineering"][data-glass-accents]):not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -2022,6 +2040,11 @@ html[data-shell-runtime] .rox-shell-pane[data-panel-role="navigator"] > div > .c
   max-inline-size: var(--panel-measure, 100%);
   margin-inline: auto;
 }
+/* SE wire: PanelSlot attaches both classes to its content body when
+   html[data-ui-profile="super-engineering"] and the route is not an
+   owner full-bleed surface (Home/Tasks/Messenger/Calls). Markers:
+   [data-se-panel-measure]. Ultra-wide bands above still retarget the
+   inherited --panel-gutter/--panel-measure tokens (#2199). */
 
 /* Rox Engineering shell micro-interactions (rail rows, top pills, panel
    header buttons). Scoped to html[data-ui-profile="super-engineering"] so
@@ -2054,17 +2077,11 @@ html[data-ui-profile="super-engineering"] .rox-rail-row:not([aria-disabled="true
   transform: scale(var(--se-shell-press-scale));
 }
 
-html[data-ui-profile="super-engineering"] .rox-rail-row:focus-visible {
-  opacity: 1;
-}
 
 html[data-ui-profile="super-engineering"] .rox-mode-pill-item:not([aria-disabled="true"]):active {
   transform: scale(var(--se-shell-press-scale));
 }
 
-html[data-ui-profile="super-engineering"] .rox-mode-pill-item:focus-visible {
-  opacity: 1;
-}
 
 html[data-ui-profile="super-engineering"] .panel-header-btn:not(:disabled):hover {
   transform: scale(var(--se-shell-hover-scale));
@@ -2075,9 +2092,6 @@ html[data-ui-profile="super-engineering"] .panel-header-btn:not(:disabled):activ
   transform: scale(var(--se-shell-press-scale));
 }
 
-html[data-ui-profile="super-engineering"] .panel-header-btn:focus-visible {
-  opacity: 1;
-}
 
 /* Rox Engineering ultra-wide / fluid shell. data-shell-band is set from
    SHELL_BREAKPOINTS (viewport-band.ts) on the shell row; these tiers only
@@ -2111,3 +2125,54 @@ html[data-ui-profile="super-engineering"][data-content-join="float"] [data-shell
   max-inline-size: min(100%, var(--shell-paper-max));
 }
 
+/* Rox Engineering shell focus rings + reduced-motion audit.
+   Keyboard-only :focus-visible on shared shell chrome (rail, mode pills,
+   panel/header icon buttons). Ring colour is --focus (= theme accent
+   #7aa2f7 under Rox Engineering). Inset so chrome plates do not clip the
+   ring; outline cleared so zen's 1px chrome outline does not double up.
+   High contrast keeps the solid G8 outline (no soft inset shadow).
+
+   Remaining shell transitions under SE alias --motion-* tokens, which are
+   already 0ms under prefers-reduced-motion and html[data-resizing]. */
+html[data-ui-profile="super-engineering"] {
+  --se-shell-focus-ring: inset 0 0 0 var(--focus-ring-width, 2px) var(--focus, var(--accent));
+  --shell-motion-fast: var(--motion-fast);
+  --shell-motion-disclosure: calc(var(--motion-base) + 140ms * var(--motion-spring-scale, 1));
+}
+
+html[data-ui-profile="super-engineering"] :is(
+  .rox-rail-row,
+  .rox-mode-pill-item,
+  .panel-header-btn,
+  .header-icon-btn
+):focus-visible {
+  outline: none;
+  box-shadow: var(--se-shell-focus-ring);
+  opacity: 1;
+  /* Focus rings must paint immediately (a11y); press/hover keep motion tokens. */
+  transition-property: transform, opacity, color, background-color;
+}
+
+html[data-contrast="high"][data-ui-profile="super-engineering"] :is(
+  .rox-rail-row,
+  .rox-mode-pill-item,
+  .panel-header-btn,
+  .header-icon-btn
+):focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus, var(--accent));
+  outline-offset: var(--focus-ring-inset-offset, -2px);
+  box-shadow: none;
+}
+
+/* Mode-pill indicator + item colour: drop hardcoded ms under SE so live
+   resize (data-resizing) and prefers-reduced-motion zero the motion. */
+html[data-ui-profile="super-engineering"] .rox-mode-pill[data-ready] .rox-mode-pill-indicator {
+  transition:
+    transform var(--motion-disclosure) var(--ease-standard),
+    width var(--motion-disclosure) var(--ease-standard),
+    opacity var(--motion-fast) var(--ease-standard);
+}
+
+html[data-ui-profile="super-engineering"][data-shell-style="zen"] .sidebar-disclosure {
+  transition: opacity var(--motion-fast) var(--ease-standard);
+}

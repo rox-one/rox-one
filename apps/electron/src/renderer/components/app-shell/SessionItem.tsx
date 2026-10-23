@@ -244,7 +244,7 @@ export function SessionItem({
       buttonProps={{
         ...itemProps,
         // Arc Glass: the interactive row is a `row` surface — transparent base,
-        // hover/selection paint from the shared recipe (arc-glass-surfaces.css).
+        // hover/selection paint from the shared recipe (GlassSurface / SE chrome accents (Arc Glass surfaces CSS removed)).
         'data-glass-slot': 'row',
         'aria-selected': isSelected || isInMultiSelect ? true : undefined,
         onPointerEnter: prefetchTranscript,
