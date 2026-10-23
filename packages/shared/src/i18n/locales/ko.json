@@ -11575,6 +11575,7 @@
   "tasks.modeGenerate": "생성",
   "tasks.modeManual": "수동",
   "tasks.move.lists": "Lists",
+  "tasks.move.noArea": "영역 없음",
   "tasks.move.noPlace": "No project",
   "tasks.move.none": "Nothing found",
   "tasks.move.other": "Other",
