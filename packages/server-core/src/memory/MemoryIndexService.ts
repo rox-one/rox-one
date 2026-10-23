@@ -58,6 +58,10 @@ export function setGraphMemoryProviderResolver(resolver: GraphMemoryProviderReso
   graphProviderResolver = resolver
 }
 
+export function getGraphMemoryProviderResolver(): GraphMemoryProviderResolver | null {
+  return graphProviderResolver
+}
+
 /** Persisted index state sidecar. */
 export interface MemoryIndexMeta {
   chunkingVersion: number

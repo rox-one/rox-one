@@ -14,6 +14,8 @@ import {
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { MemoryConfig } from '@rox/shared/memory/types'
 import type { MemoryConfigPatch, GraphSourceKey } from '@rox/shared/config/storage'
+import { Button } from '@/components/ui/button'
+import { useActiveWorkspace } from '@/context/AppShellContext'
 import { toErrorMessage } from '@/lib/errors'
 
 export const meta: DetailsPageMeta = {
@@ -43,6 +45,9 @@ export default function MemorySettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [importStatus, setImportStatus] = useState<{ status: string; cursor: number; total: number } | null>(null)
+  const [importing, setImporting] = useState(false)
+  const activeWorkspace = useActiveWorkspace()
 
   const load = useCallback(() => {
     const get = window.electronAPI?.getMemoryConfig
@@ -64,6 +69,38 @@ export default function MemorySettingsPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  const refreshImport = useCallback(() => {
+    const ws = activeWorkspace?.id
+    const get = window.electronAPI?.getGraphImportStatus
+    if (!ws || typeof get !== 'function') return
+    get(ws)
+      .then((s) => setImportStatus({ status: s.status, cursor: s.cursor, total: s.total }))
+      .catch(() => {})
+  }, [activeWorkspace?.id])
+
+  useEffect(() => {
+    refreshImport()
+  }, [refreshImport])
+
+  const runImport = useCallback(async () => {
+    const ws = activeWorkspace?.id
+    const run = window.electronAPI?.runGraphImport
+    if (!ws || typeof run !== 'function') {
+      setError(t('settings.memory.unavailable'))
+      return
+    }
+    setImporting(true)
+    try {
+      const s = await run(ws)
+      setImportStatus({ status: s.status, cursor: s.cursor, total: s.total })
+      setError(null)
+    } catch (err) {
+      setError(toErrorMessage(err))
+    } finally {
+      setImporting(false)
+    }
+  }, [activeWorkspace?.id, t])
 
   const patch = useCallback(
     async (next: MemoryConfigPatch) => {
@@ -135,6 +172,32 @@ export default function MemorySettingsPage() {
                   }
                 />
               ))}
+            </SettingsCard>
+          </SettingsSection>
+
+          <SettingsSection title={t('settings.memory.importTitle')} description={t('settings.memory.importDesc')}>
+            <SettingsCard>
+              <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium">{t('settings.memory.importStatus', {
+                    status: importStatus?.status ?? 'idle',
+                    cursor: importStatus?.cursor ?? 0,
+                    total: importStatus?.total ?? 0,
+                  })}</div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={loading || importing || !graphOn || importStatus?.status === 'done'}
+                  onClick={() => void runImport()}
+                >
+                  {importStatus?.status === 'done'
+                    ? t('settings.memory.importDone')
+                    : importStatus?.status === 'failed' || (importStatus && importStatus.cursor > 0)
+                      ? t('settings.memory.importResume')
+                      : t('settings.memory.importStart')}
+                </Button>
+              </div>
             </SettingsCard>
           </SettingsSection>
         </div>

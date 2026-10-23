@@ -521,6 +521,8 @@ export const EXPECTED_CHANNELS: string[] = [
   'memory:getConfig',
   'memory:getContext',
   'memory:getProjectMemory',
+  'memory:graphImportRun',
+  'memory:graphImportStatus',
   'memory:import',
   'memory:indexStatus',
   'memory:insights',
@@ -1134,4 +1136,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1130
+export const EXPECTED_CHANNEL_COUNT = 1132
