@@ -5,7 +5,7 @@ import {
   type PeerTrustVerifier,
   type RemoteTlsSocketOptions,
 } from '@rox/server-core/transport'
-import { normalizeRemoteTlsTrust } from '@rox/shared/config'
+import { normalizeRemoteTlsTrust } from '@rox/shared/config/remote-tls-trust'
 
 export function peerTrustOptionsForRemote(
   remote: Pick<RemoteServerConfig, 'url' | 'token' | 'remoteWorkspaceId' | 'tlsTrust' | 'sshHostId'>,
