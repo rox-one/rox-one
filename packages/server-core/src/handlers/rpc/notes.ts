@@ -2013,7 +2013,8 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         noteId: note.id,
         content: note.content,
         revisionId: note.revision ?? markdownRevision(note.content),
-        operationId: operation?.operationId ?? randomUUID(),
+        // Same operationId as commitNativeNote (required metadata) — never mint a second tip.
+        operationId: nativeOperation(operation).operationId,
         previousRevision: previous.revision ?? null,
         actorPrincipalId: JSON.stringify([context.principal.issuer, context.principal.subject]),
       })
@@ -2031,9 +2032,10 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (!expectedRevision) throw new Error('note expected revision is required')
     const existing = await readNote(notesRoot, noteId)
     if (expectedRevision !== existing.revision && expectedRevision !== contentHash(existing.content)) throw new Error('note revision conflict')
+    const markdownSaveOperationId = crypto.randomUUID()
     const { note } = await nativeContent.commit(ctx, {
       workspaceId, noteId, content, expectedRevision: markdownRevision(existing.content), sourceStoreId,
-      authorityEpoch: 1, operationId: crypto.randomUUID(),
+      authorityEpoch: 1, operationId: markdownSaveOperationId,
     })
     let autoCreated: CreatedLinkedNote[] = []
     try {
@@ -2047,7 +2049,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         noteId: note.id,
         content: note.content,
         revisionId: note.revision ?? markdownRevision(note.content),
-        operationId: crypto.randomUUID(),
+        operationId: markdownSaveOperationId,
         previousRevision: existing.revision ?? markdownRevision(existing.content),
         actorPrincipalId: null,
       })
@@ -2253,11 +2255,12 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         throw new CodedError('HASH_CONFLICT', 'Document revision conflict')
       }
       const operation = typeof operationOrSourceStoreId === 'string' ? undefined : operationOrSourceStoreId
-      await commitNativeNote(deps, context, found.entity.nativeId, operation ?? {
+      const commitOperation = operation ?? {
         operationId: randomUUID(),
         expectedRevision: previous.nativeRevision ?? null,
-        schemaVersion: 1,
-      }, [{ path: found.file.path, content: historical.content }])
+        schemaVersion: 1 as const,
+      }
+      await commitNativeNote(deps, context, found.entity.nativeId, commitOperation, [{ path: found.file.path, content: historical.content }])
       const updated = await findNativeNote(deps, context, safeId)
       const note = await nativeNoteDocument(deps, context, updated.entity, updated.file, updated.entities)
       await rememberSavedNoteRevision({
@@ -2265,7 +2268,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         noteId: note.id,
         content: note.content,
         revisionId: note.revision ?? markdownRevision(note.content),
-        operationId: operation?.operationId ?? randomUUID(),
+        operationId: commitOperation.operationId,
         previousRevision: currentRevision,
         actorPrincipalId: JSON.stringify([context.principal.issuer, context.principal.subject]),
       })
@@ -2278,16 +2281,17 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       throw new CodedError('HASH_CONFLICT', 'Document revision conflict')
     }
     const sourceStoreId = typeof operationOrSourceStoreId === 'string' ? operationOrSourceStoreId : undefined
+    const markdownRestoreOperationId = crypto.randomUUID()
     const { note } = await nativeContent.commit(ctx, {
       workspaceId, noteId: safeId, content: historical.content, expectedRevision: markdownRevision(existing.content), sourceStoreId,
-      authorityEpoch: 1, operationId: crypto.randomUUID(),
+      authorityEpoch: 1, operationId: markdownRestoreOperationId,
     })
     await rememberSavedNoteRevision({
       notesRoot,
       noteId: note.id,
       content: note.content,
       revisionId: note.revision ?? markdownRevision(note.content),
-      operationId: crypto.randomUUID(),
+      operationId: markdownRestoreOperationId,
       previousRevision: existing.revision ?? markdownRevision(existing.content),
       actorPrincipalId: null,
     })
