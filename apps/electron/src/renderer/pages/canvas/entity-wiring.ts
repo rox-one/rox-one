@@ -24,6 +24,7 @@ interface Bridge {
   createPage?: (ws: string, input: { name: string; kind?: 'static' | 'interactive' | 'live' }) => Promise<{ id: string; slug: string; name: string }>
   createSession?: (ws: string, options?: { name?: string }) => Promise<{ id: string; name?: string }>
   listNotes?: (ws: string) => Promise<Array<{ id: string; title: string }>>
+  readNote?: (ws: string, id: string) => Promise<{ id: string; title: string } | null | undefined>
   getPages?: (ws: string) => Promise<Array<{ config: { slug: string; name: string; kind?: string } }>>
   getSessions?: () => Promise<Array<{ id: string; name?: string; workspaceId?: string; isArchived?: boolean }>>
   personalTasksList?: () => Promise<{ tasks: Array<{ id: string; title: string; revision?: number }> }>
@@ -121,10 +122,118 @@ export async function searchExisting(workspaceId: string, query: string, limit =
 /** How long a resolved preview is reused before it is fetched again. */
 export const PREVIEW_TTL_MS = 30_000
 
+/** Wire preview the host can show (not a soft miss / placeholder). */
+function previewUsable(p: EntityPreview | null | undefined): p is EntityPreview {
+  return !!p && p.status !== 'unavailable'
+}
+
+export function localOkPreview(ref: EntityRef, title: string, icon?: string): EntityPreview {
+  const d = kindDescriptor(ref.kind as EntityKind)
+  return {
+    ref: { kind: ref.kind as EntityKind, id: ref.id },
+    status: 'ok',
+    title,
+    kindLabel: d?.labelKey ?? `entities.kind.${ref.kind}`,
+    icon: icon ?? d?.icon ?? 'link',
+    authority: 'local',
+    etag: `local:${ref.kind}:${ref.id}`,
+  }
+}
+
+function localTombstone(ref: EntityRef): EntityPreview {
+  const d = kindDescriptor(ref.kind as EntityKind)
+  return {
+    ref: { kind: ref.kind as EntityKind, id: ref.id },
+    status: 'tombstone',
+    title: '',
+    kindLabel: d?.labelKey ?? `entities.kind.${ref.kind}`,
+    icon: d?.icon ?? 'link',
+    authority: 'local',
+    etag: `tombstone:${ref.kind}:${ref.id}`,
+  }
+}
+
+/**
+ * When `entities:resolve` has no owner resolver (notes etc. return
+ * `unavailable`), look the entity up through its own API. `missing` = the
+ * kind's store answered and the id is gone → tombstone; `unknown` = no API /
+ * error → do not cache as deleted.
+ */
+type TitleMap = Map<string, string>
+type LocalListCache = {
+  notes?: Promise<TitleMap | null>
+  pages?: Promise<TitleMap | null>
+  sessions?: Promise<TitleMap | null>
+  tasks?: Promise<TitleMap | null>
+}
+
+async function loadTitleMap(cache: LocalListCache, key: keyof LocalListCache, load: () => Promise<TitleMap>): Promise<TitleMap | null> {
+  if (!cache[key]) {
+    cache[key] = (async () => {
+      try { return await load() } catch { return null }
+    })()
+  }
+  return cache[key]!
+}
+
+export async function lookupLocalEntityPreview(
+  workspaceId: string,
+  ref: EntityRef,
+  listCache: LocalListCache = {},
+): Promise<'unknown' | { hit: EntityPreview } | { missing: true }> {
+  const a = api()
+  const fromMap = (m: TitleMap | null) => {
+    if (!m) return 'unknown' as const
+    const title = m.get(ref.id)
+    return title !== undefined ? { hit: localOkPreview(ref, title || ref.id) } as const : { missing: true } as const
+  }
+  try {
+    switch (ref.kind) {
+      case 'note': {
+        if (a.readNote) {
+          try {
+            const n = await a.readNote(workspaceId, ref.id)
+            if (n && typeof n.id === 'string') return { hit: localOkPreview(ref, n.title || n.id) }
+            return { missing: true }
+          } catch {
+            // readNote throws for missing notes on some bridges — confirm via list.
+          }
+        }
+        if (!a.listNotes) return 'unknown'
+        return fromMap(await loadTitleMap(listCache, 'notes', async () =>
+          new Map((await a.listNotes!(workspaceId)).map(n => [n.id, n.title || n.id]))))
+      }
+      case 'page': {
+        if (!a.getPages) return 'unknown'
+        return fromMap(await loadTitleMap(listCache, 'pages', async () =>
+          new Map((await a.getPages!(workspaceId)).map(p => [p.config.slug, p.config.name || p.config.slug]))))
+      }
+      case 'session': {
+        if (!a.getSessions) return 'unknown'
+        return fromMap(await loadTitleMap(listCache, 'sessions', async () =>
+          new Map((await a.getSessions!())
+            .filter(s => !s.isArchived && (!s.workspaceId || s.workspaceId === workspaceId))
+            .map(s => [s.id, s.name || s.id]))))
+      }
+      case 'task': {
+        if (!a.personalTasksList) return 'unknown'
+        return fromMap(await loadTitleMap(listCache, 'tasks', async () =>
+          new Map((await a.personalTasksList!()).tasks.map(t => [t.id, t.title || t.id]))))
+      }
+      default:
+        return 'unknown'
+    }
+  } catch {
+    return 'unknown'
+  }
+}
+
 /**
  * One `entitiesResolve` call per frame for all refs requested in it; results
- * cached per ref for PREVIEW_TTL_MS. Null results and errors are never cached
- * (the next get() retries), and entity-change events clear the cache.
+ * cached per ref for PREVIEW_TTL_MS. Null results, errors, and `unavailable`
+ * placeholders are never cached (the next get() retries). When resolve has no
+ * owner for a kind, we fall back to that kind's local API so a just-created
+ * note card shows its title instead of «Удалено».
  */
 export function createPreviewBatcher(
   workspaceId: string,
@@ -139,11 +248,21 @@ export function createPreviewBatcher(
     const r = api().entitiesResolve
     let previews: EntityPreview[] | null = null
     if (r) { try { previews = await r(workspaceId, { refs: batch.map(b => ({ kind: b.ref.kind as EntityKind, id: b.ref.id })) }) } catch { previews = null } }
-    batch.forEach((b, i) => {
-      const p = previews?.[i] ?? null
-      if (!p && b.entry && cache.get(b.k) === b.entry) cache.delete(b.k) // don't cache misses / errors
-      b.resolve(p)
-    })
+    // One listNotes / getPages / … per flush for refs that still need a local miss check.
+    const listCache: LocalListCache = {}
+    const lookup = async (ref: EntityRef) => lookupLocalEntityPreview(workspaceId, ref, listCache)
+    await Promise.all(batch.map(async (b, i) => {
+      let p: EntityPreview | null = previews?.[i] ?? null
+      if (!previewUsable(p)) {
+        const local = await lookup(b.ref)
+        if (local !== 'unknown' && 'hit' in local) p = local.hit
+        else if (local !== 'unknown' && 'missing' in local) p = localTombstone(b.ref)
+        else p = null
+      }
+      // Soft misses must not stick: unavailable / null retry on the next get().
+      if ((!p || p.status === 'unavailable') && b.entry && cache.get(b.k) === b.entry) cache.delete(b.k)
+      b.resolve(p && p.status !== 'unavailable' ? p : null)
+    }))
   }
   const key = (ref: EntityRef) => `${ref.kind}:${ref.id}`
   return {
@@ -160,11 +279,22 @@ export function createPreviewBatcher(
       cache.set(k, entry)
       return p
     },
+    /** Cache a known-good preview (e.g. title from createNote) so the card paints before resolve. */
+    seed(ref: EntityRef, preview: EntityPreview) {
+      if (!previewUsable(preview)) return
+      const k = key(ref)
+      cache.set(k, { p: Promise.resolve(preview), at: now() })
+    },
     invalidate(ref: EntityRef) { cache.delete(key(ref)) },
     clear() { cache.clear() },
   }
 }
 export type PreviewBatcher = ReturnType<typeof createPreviewBatcher>
+
+/** First-paint seed after minting an entity from the board (title we just asked for). */
+export function seedCreatedCardPreview(batcher: PreviewBatcher, ref: EntityRef, title: string): void {
+  batcher.seed(ref, localOkPreview(ref, title))
+}
 
 interface ChangeEvents {
   onNotesChanged?: (cb: (p: unknown) => void) => () => void
@@ -195,7 +325,12 @@ export function createEntityRegistry(workspaceId: string, batcher = createPrevie
     const d = kindDescriptor(kind)
     const adapter: EntityKindAdapter = {
       kind, labelKey: d.labelKey, icon: d.icon, creatable: creatable.has(kind),
-      async canView(ref) { const p = await batcher.get(ref); return !!p && p.status !== 'no_access' },
+      async canView(ref) {
+        const p = await batcher.get(ref)
+        // unavailable must not count as visible — that used to make read() null
+        // map to «Удалено» while the note still existed (no server note resolver).
+        return !!p && p.status !== 'no_access' && p.status !== 'unavailable'
+      },
       async read(ref) {
         const p = await batcher.get(ref)
         if (!p || p.status === 'tombstone' || p.status === 'unavailable' || p.status === 'no_access') return null
@@ -207,7 +342,11 @@ export function createEntityRegistry(workspaceId: string, batcher = createPrevie
       },
     }
     if (creatable.has(kind)) {
-      adapter.create = async ({ title, workspaceId: ws }) => createEntity(ws, kind as CreatableKind, title)
+      adapter.create = async ({ title, workspaceId: ws }) => {
+        const ref = await createEntity(ws, kind as CreatableKind, title)
+        batcher.seed(ref, localOkPreview(ref, title))
+        return ref
+      }
       adapter.delete = async ref => deleteEntity(workspaceId, ref)
     }
     registry.register(adapter)
