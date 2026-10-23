@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import {
+  assertSafeCreateFolder,
   listNoteTemplatesForRoot,
   materializeTemplateNoteContent,
   readNoteTemplateContent,
@@ -176,6 +177,24 @@ describe('note templates library', () => {
     })
     expect(saved.id.length).toBeLessThanOrEqual(80)
     expect(saved.id).toBe(long.slice(0, 80))
+  })
+
+
+  it('rejects non-object properties on saveAsTemplate', async () => {
+    await expect(saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'bad-props',
+      title: 'Bad',
+      body: 'x',
+      properties: ['not', 'an', 'object'] as unknown as Record<string, unknown>,
+    })).rejects.toThrow(/Invalid template properties/)
+  })
+
+  it('rejects create folders under reserved templates/assets segments', () => {
+    expect(() => assertSafeCreateFolder('templates')).toThrow(/Invalid note folder/)
+    expect(() => assertSafeCreateFolder('assets')).toThrow(/Invalid note folder/)
+    expect(() => assertSafeCreateFolder('team/templates')).toThrow(/Invalid note folder/)
+    expect(() => assertSafeCreateFolder('projects/inbox')).not.toThrow()
+    expect(assertSafeCreateFolder(undefined)).toBe('')
   })
 
 })

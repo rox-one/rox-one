@@ -959,6 +959,16 @@ function normalizeWikiTarget(target: string): string {
   return stripMdExtension(target.trim()).replace(/\\/g, '/').replace(/^\/+|\/+$/g, '')
 }
 
+/** Folder for note creates — reject reserved templates/assets segments. */
+export function assertSafeCreateFolder(folder: string | undefined | null): string {
+  if (folder == null || folder === '') return ''
+  const safeFolder = assertSafeNoteId(folder)
+  if (safeFolder.split('/').some(part => Object.hasOwn(RESERVED_WIKI_TARGET_SEGMENTS, part.toLowerCase()))) {
+    throw new Error('Invalid note folder')
+  }
+  return safeFolder
+}
+
 function isSafeWikiTargetSegment(segment: string): boolean {
   const trimmed = segment.trim()
   if (!trimmed) return false
@@ -1947,13 +1957,15 @@ async function assertSafeTemplateFilePath(notesRoot: string, templateId: string)
 export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteTemplateSummary[]> {
   // LIST must not mkdir — missing templates root is an empty library.
   const root = join(notesRoot, TEMPLATES_DIR)
-  try {
-    await assertSafeExistingTemplatesPath(notesRoot, root)
-  } catch {
-    return []
-  }
+  // Path/symlink safety errors must surface; only a missing root is empty.
+  await assertSafeExistingTemplatesPath(notesRoot, root)
   let rootInfo
-  try { rootInfo = await lstat(root) } catch { return [] }
+  try {
+    rootInfo = await lstat(root)
+  } catch (error) {
+    if (isErrnoException(error, 'ENOENT')) return []
+    throw error
+  }
   if (!rootInfo.isDirectory() || rootInfo.isSymbolicLink()) return []
   const out: NoteTemplateSummary[] = []
   async function walk(dir: string, prefix: string): Promise<void> {
@@ -2014,7 +2026,11 @@ export async function saveNoteAsTemplateForRoot(
 ): Promise<NoteTemplateSummary> {
   const id = assertSafeTemplateId(input.templateId)
   const filePath = await assertSafeTemplateFilePath(notesRoot, id)
-  const properties: Record<string, unknown> = { ...(input.properties ?? {}), title: input.title.trim() || titleFromId(id) }
+  const rawProperties = input.properties
+  if (rawProperties != null && (typeof rawProperties !== 'object' || Array.isArray(rawProperties))) {
+    throw new Error('Invalid template properties')
+  }
+  const properties: Record<string, unknown> = { ...(rawProperties ?? {}), title: input.title.trim() || titleFromId(id) }
   // Templates keep content identity only — drop path/runtime-ish keys.
   for (const key of ['createdAt', 'cover', 'icon']) delete properties[key]
   const content = stringifyNoteContent(input.body ?? '', properties)
@@ -2798,7 +2814,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     if (ctx.principal) {
       const context = nativeNotesContext(deps, ctx, workspaceId, 'write')
       const { noteTitle, initialContent } = await materializeTemplateNoteContent(context.notesRoot, templateId, title)
-      const safeFolder = folder ? assertSafeNoteId(folder) : ''
+      const safeFolder = assertSafeCreateFolder(folder)
       const filename = safeNoteFilename(noteTitle || 'Untitled')
       const relativeId = safeFolder ? `${safeFolder}/${stripMdExtension(filename)}` : stripMdExtension(filename)
       const path = `${NOTES_DIR}/${relativeId}.md`
@@ -2815,7 +2831,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     nativeContent.assertScope(ctx, workspaceId)
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     const { noteTitle, initialContent } = await materializeTemplateNoteContent(notesRoot, templateId, title)
-    const safeFolder = folder ? assertSafeNoteId(folder) : ''
+    const safeFolder = assertSafeCreateFolder(folder)
     const dir = safeFolder ? resolve(notesRoot, safeFolder) : notesRoot
     if (!isInsidePath(notesRoot, dir)) throw new Error('Invalid note folder')
     await ensureSafeNoteDirectory(notesRoot, dir)

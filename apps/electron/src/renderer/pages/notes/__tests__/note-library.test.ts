@@ -16,6 +16,9 @@ describe('note-library', () => {
     expect(readNoteCover({ cover: 'javascript:alert(1)' })).toBeNull()
     expect(readNoteCover({ cover: 'linear-gradient(red, blue), url(https://evil.example/x.png)' })).toBeNull()
     expect(readNoteCover({ cover: 'url(https://cdn.example/x.png)' })).toBeNull()
+    // CSS hex-escape bypass of url(...) — backslash must be rejected on non-URL covers.
+    expect(readNoteCover({ cover: 'linear-gradient(red, \\75rl(file:///etc/passwd))' })).toBeNull()
+    expect(readNoteCover({ cover: 'linear-gradient(red, blue)' })).toContain('linear-gradient')
     expect(readNoteIcon({ icon: '📝' })).toBe('📝')
     expect(readNoteIcon({ icon: 'x'.repeat(40) })).toBeNull()
   })

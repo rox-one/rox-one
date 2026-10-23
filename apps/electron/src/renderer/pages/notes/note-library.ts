@@ -21,6 +21,8 @@ export function readNoteCover(properties: Record<string, unknown> | null | undef
   if (/^https?:\/\/\S+$/i.test(value) || /^data:image\/[a-z0-9.+-]+;base64,\S+$/i.test(value) || /^data:image\/[a-z0-9.+-]+,.+/i.test(value)) {
     return value
   }
+  // Reject CSS escapes (e.g. \75rl(file:///...)) that bypass the url(...) check.
+  if (value.includes('\\')) return null
   if (/url\s*\(/i.test(value)) return null
   // Solid hex or url-free gradients only.
   if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return value
