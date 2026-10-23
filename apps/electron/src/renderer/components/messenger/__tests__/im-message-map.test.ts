@@ -30,3 +30,18 @@ describe('im-message-map', () => {
     expect(imMessagesToTeam(messages).map((m) => [m.id, m.seq])).toEqual([['a', 1], ['b', 2]])
   })
 })
+
+  it('maps reply/thread fields', () => {
+    const mapped = imMessageToTeam({
+      id: 'r1',
+      channelId: 'c',
+      senderId: 'u2',
+      text: 'reply',
+      createdAt: 30,
+      replyToId: 'root-1',
+      threadId: 'root-1',
+    }, 3)
+    expect(mapped.replyToId).toBe('root-1')
+    expect(mapped.threadId).toBe('root-1')
+  })
+

@@ -12881,5 +12881,12 @@
   "xfn.x23.title": "Akcje po wysłaniu formularza",
   "xfn.x24.title": "Rozpocznij spotkanie z dowolnego elementu",
   "xfn.x25.title": "Otwórz panel @rox",
-  "xfn.x26.title": "Przypięcia we wszystkich widokach"
+  "xfn.x26.title": "Przypięcia we wszystkich widokach",
+  "messenger.threads.reply": "Reply",
+  "messenger.threads.replyTo": "Replying to {{name}}: {{text}}",
+  "messenger.threads.replyingTo": "Replying to: {{text}}",
+  "messenger.attachments.attach": "Attach file",
+  "messenger.attachments.unavailable": "Offline",
+  "messenger.attachments.unavailableHint": "Media storage is unavailable — file kept locally until the media backend is back.",
+  "messenger.attachments.placeholder": "(attachment)"
 }

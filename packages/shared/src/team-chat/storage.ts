@@ -14,12 +14,15 @@ import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts'
 import { resolveConfigDir } from '../config/paths.ts'
 import type {
   CreateTeamChannelInput,
+  IngestTeamMessageInput,
   ListTeamMessagesInput,
+  PostTeamMessageOptions,
   TeamChannel,
   TeamChannelMember,
   TeamCallTranscriptSegment,
   TeamChannelCall,
   TeamChannelMessage,
+  TeamMessageAttachment,
   TeamChannelView,
   TeamChatActor,
   TeamChatStoreFile,
@@ -280,8 +283,40 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     }
   }
 
+  function normalizeAttachments(raw: unknown): TeamMessageAttachment[] | undefined {
+    if (!Array.isArray(raw) || raw.length === 0) return undefined
+    const out: TeamMessageAttachment[] = []
+    for (const row of raw.slice(0, 16)) {
+      if (!row || typeof row !== 'object' || Array.isArray(row)) continue
+      const rec = row as Record<string, unknown>
+      const id = typeof rec.id === 'string' && /^[A-Za-z0-9._:-]{1,128}$/.test(rec.id) ? rec.id : ''
+      const name = typeof rec.name === 'string' ? rec.name.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 200) : ''
+      if (!id || !name) continue
+      const att: TeamMessageAttachment = { id, name }
+      if (typeof rec.mimeType === 'string' && rec.mimeType.trim()) att.mimeType = rec.mimeType.trim().slice(0, 120)
+      if (typeof rec.size === 'number' && Number.isFinite(rec.size) && rec.size >= 0) att.size = Math.min(Math.round(rec.size), 5_000_000_000)
+      if (typeof rec.url === 'string' && /^https?:\/\//i.test(rec.url)) att.url = rec.url.slice(0, 2000)
+      if (rec.status === 'ready' || rec.status === 'pending' || rec.status === 'unavailable') att.status = rec.status
+      else if (!att.url) att.status = 'unavailable'
+      out.push(att)
+    }
+    return out.length ? out : undefined
+  }
+
+  function trimChannelMessages(store: TeamChatStoreFile, channelId: string): void {
+    const inChannel = store.messages.filter(m => m.channelId === channelId)
+    if (inChannel.length <= TEAM_MESSAGES_PER_CHANNEL_MAX) return
+    const drop = new Set(inChannel.slice(0, inChannel.length - TEAM_MESSAGES_PER_CHANNEL_MAX).map(m => m.id))
+    store.messages = store.messages.filter(m => !drop.has(m.id))
+  }
+
   /** postMessage plus the channel's orgId (avoids a second store load for the change event). */
-  function postMessageWithOrg(channelIdInput: unknown, textInput: unknown, actor: TeamChatActor): { message: TeamChannelMessage; orgId: string } {
+  function postMessageWithOrg(
+    channelIdInput: unknown,
+    textInput: unknown,
+    actor: TeamChatActor,
+    opts: PostTeamMessageOptions = {},
+  ): { message: TeamChannelMessage; orgId: string } {
     const store = load()
     const channel = visibleChannel(store, requireId(channelIdInput, 'channelId'), actor)
     if (channel.archivedAt) throw new TeamChatError('INVALID', 'Channel is archived')
@@ -290,16 +325,84 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
     const text = cleanText(textInput, TEAM_MESSAGE_MAX, 'text')
     channel.lastSeq += 1
     channel.lastMessageAt = now()
-    const message: TeamChannelMessage = { id: randomUUID(), channelId: channel.id, seq: channel.lastSeq, senderId: actor.userId, text, createdAt: channel.lastMessageAt }
+    const message: TeamChannelMessage = {
+      id: randomUUID(),
+      channelId: channel.id,
+      seq: channel.lastSeq,
+      senderId: actor.userId,
+      text,
+      createdAt: channel.lastMessageAt,
+    }
+    if (opts.replyToId) {
+      const replyToId = requireId(opts.replyToId, 'replyToId')
+      message.replyToId = replyToId
+      message.threadId = opts.threadId ? requireId(opts.threadId, 'threadId') : replyToId
+    }
+    const attachments = normalizeAttachments(opts.attachments)
+    if (attachments) message.attachments = attachments
     store.messages.push(message)
     member.lastReadSeq = channel.lastSeq
-    const inChannel = store.messages.filter(m => m.channelId === channel.id)
-    if (inChannel.length > TEAM_MESSAGES_PER_CHANNEL_MAX) {
-      const drop = new Set(inChannel.slice(0, inChannel.length - TEAM_MESSAGES_PER_CHANNEL_MAX).map(m => m.id))
-      store.messages = store.messages.filter(m => !drop.has(m.id))
-    }
+    trimChannelMessages(store, channel.id)
     save(store)
     return { message, orgId: channel.orgId }
+  }
+
+  /**
+   * Persist a remote (or dual-written own-send) message with its original senderId.
+   * Actor must be a channel member (authorized to write the local store) but is
+   * never stamped as the author. Idempotent when `id` already exists.
+   */
+  function ingestRemoteMessageWithOrg(
+    input: IngestTeamMessageInput | Record<string, unknown>,
+    actor: TeamChatActor,
+  ): { message: TeamChannelMessage; orgId: string; created: boolean } {
+    const channelId = requireId((input as IngestTeamMessageInput).channelId, 'channelId')
+    const senderId = requireId((input as IngestTeamMessageInput).senderId, 'senderId')
+    const text = cleanText((input as IngestTeamMessageInput).text, TEAM_MESSAGE_MAX, 'text')
+    const store = load()
+    const channel = visibleChannel(store, channelId, actor)
+    if (channel.archivedAt) throw new TeamChatError('INVALID', 'Channel is archived')
+    // Member may ingest for durability; public subscribers may also see messages
+    // but only members write the local store (same gate as post).
+    if (!memberOf(store, channel.id, actor.userId)) {
+      throw new TeamChatError('FORBIDDEN', 'Join the channel to ingest')
+    }
+    const remoteId = typeof (input as IngestTeamMessageInput).id === 'string' && (input as IngestTeamMessageInput).id
+      ? requireId((input as IngestTeamMessageInput).id, 'id')
+      : null
+    if (remoteId) {
+      const existing = store.messages.find(m => m.id === remoteId)
+      if (existing) return { message: existing, orgId: channel.orgId, created: false }
+    }
+    const createdAtRaw = (input as IngestTeamMessageInput).createdAt
+    const createdAt =
+      typeof createdAtRaw === 'number' && Number.isFinite(createdAtRaw) && createdAtRaw > 0
+        ? Math.round(createdAtRaw)
+        : now()
+    channel.lastSeq += 1
+    channel.lastMessageAt = Math.max(channel.lastMessageAt ?? 0, createdAt)
+    const message: TeamChannelMessage = {
+      id: remoteId ?? randomUUID(),
+      channelId: channel.id,
+      seq: channel.lastSeq,
+      senderId,
+      text,
+      createdAt,
+    }
+    const kind = (input as IngestTeamMessageInput).kind
+    if (kind === 'text' || kind === 'system' || kind === 'transcript' || kind === 'summary') message.kind = kind
+    const replyToId = (input as IngestTeamMessageInput).replyToId
+    if (replyToId) {
+      message.replyToId = requireId(replyToId, 'replyToId')
+      const threadId = (input as IngestTeamMessageInput).threadId
+      message.threadId = threadId ? requireId(threadId, 'threadId') : message.replyToId
+    }
+    const attachments = normalizeAttachments((input as IngestTeamMessageInput).attachments)
+    if (attachments) message.attachments = attachments
+    store.messages.push(message)
+    trimChannelMessages(store, channel.id)
+    save(store)
+    return { message, orgId: channel.orgId, created: true }
   }
 
   function canManage(store: TeamChatStoreFile, channel: TeamChannel, actor: TeamChatActor): boolean {
@@ -428,11 +531,17 @@ export function createTeamChatStore(options: TeamChatStoreOptions) {
       return { channel: toView(store, channel, actor.userId), messages }
     },
 
-    postMessage(channelIdInput: unknown, textInput: unknown, actor: TeamChatActor): TeamChannelMessage {
-      return postMessageWithOrg(channelIdInput, textInput, actor).message
+    postMessage(channelIdInput: unknown, textInput: unknown, actor: TeamChatActor, opts?: PostTeamMessageOptions): TeamChannelMessage {
+      return postMessageWithOrg(channelIdInput, textInput, actor, opts).message
     },
 
     postMessageWithOrg,
+
+    ingestRemoteMessage(input: IngestTeamMessageInput | Record<string, unknown>, actor: TeamChatActor): TeamChannelMessage {
+      return ingestRemoteMessageWithOrg(input, actor).message
+    },
+
+    ingestRemoteMessageWithOrg,
 
     /**
      * Join (or start) the channel's call. Returns the room to connect to; the

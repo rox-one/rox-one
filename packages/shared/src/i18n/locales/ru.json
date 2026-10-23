@@ -12913,5 +12913,12 @@
   "xfn.x23.title": "Действия при отправке формы",
   "xfn.x24.title": "Начать встречу из любой сущности",
   "xfn.x25.title": "Открыть панель @rox",
-  "xfn.x26.title": "Закреплённое на всех экранах"
+  "xfn.x26.title": "Закреплённое на всех экранах",
+  "messenger.threads.reply": "Ответить",
+  "messenger.threads.replyTo": "Ответ для {{name}}: {{text}}",
+  "messenger.threads.replyingTo": "Ответ на: {{text}}",
+  "messenger.attachments.attach": "Прикрепить файл",
+  "messenger.attachments.unavailable": "Офлайн",
+  "messenger.attachments.unavailableHint": "Хранилище медиа недоступно — файл сохранён локально, пока бэкенд не вернётся.",
+  "messenger.attachments.placeholder": "(вложение)"
 }

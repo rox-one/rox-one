@@ -12857,5 +12857,12 @@
   "xfn.x23.title": "Acciones al enviar el formulario",
   "xfn.x24.title": "Iniciar una reunión desde cualquier entidad",
   "xfn.x25.title": "Abrir el panel de @rox",
-  "xfn.x26.title": "Fijados en todas las vistas"
+  "xfn.x26.title": "Fijados en todas las vistas",
+  "messenger.threads.reply": "Reply",
+  "messenger.threads.replyTo": "Replying to {{name}}: {{text}}",
+  "messenger.threads.replyingTo": "Replying to: {{text}}",
+  "messenger.attachments.attach": "Attach file",
+  "messenger.attachments.unavailable": "Offline",
+  "messenger.attachments.unavailableHint": "Media storage is unavailable — file kept locally until the media backend is back.",
+  "messenger.attachments.placeholder": "(attachment)"
 }

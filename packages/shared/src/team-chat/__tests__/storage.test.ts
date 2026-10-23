@@ -101,3 +101,62 @@ describe('team chat store', () => {
     expect(s.setSubscribed(pub.id, false, carol).viewerSubscribed).toBe(false)
   })
 })
+
+describe('sender-preserving ingest (PR3)', () => {
+  it('preserves remote senderId and is idempotent by id', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'ingest-ch' }, alice)
+    s.joinChannel(pub.id, bob)
+    const first = s.ingestRemoteMessage({
+      channelId: pub.id,
+      senderId: 'carol',
+      text: 'from carol via relay',
+      id: 'evt-carol-1',
+      createdAt: 1_700_000_000_000,
+    }, bob)
+    expect(first.senderId).toBe('carol')
+    expect(first.id).toBe('evt-carol-1')
+    expect(first.text).toBe('from carol via relay')
+    // Actor bob must not be stamped as author
+    expect(first.senderId).not.toBe('bob')
+    const again = s.ingestRemoteMessage({
+      channelId: pub.id,
+      senderId: 'carol',
+      text: 'from carol via relay',
+      id: 'evt-carol-1',
+    }, bob)
+    expect(again.id).toBe(first.id)
+    expect(s.listMessages({ channelId: pub.id }, bob).messages.filter(m => m.id === 'evt-carol-1')).toHaveLength(1)
+  })
+
+  it('rejects ingest from non-members and preserves reply/thread + attachments', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'thread-ch' }, alice)
+    expect(() => s.ingestRemoteMessage({
+      channelId: pub.id, senderId: 'alice', text: 'nope', id: 'x1',
+    }, carol)).toThrow('Join the channel to ingest')
+    s.joinChannel(pub.id, bob)
+    const root = s.postMessage(pub.id, 'root', alice)
+    const reply = s.ingestRemoteMessage({
+      channelId: pub.id,
+      senderId: 'bob',
+      text: 'reply',
+      id: 'evt-reply-1',
+      replyToId: root.id,
+      attachments: [{ id: 'att-1', name: 'spec.pdf', status: 'unavailable' }],
+    }, alice)
+    expect(reply.replyToId).toBe(root.id)
+    expect(reply.threadId).toBe(root.id)
+    expect(reply.attachments?.[0]).toMatchObject({ name: 'spec.pdf', status: 'unavailable' })
+  })
+
+  it('own post accepts replyToId without changing sender', () => {
+    const s = store()
+    const pub = s.createChannel({ orgId: ORG, name: 'own-reply' }, alice)
+    const root = s.postMessage(pub.id, 'hello', alice)
+    const reply = s.postMessage(pub.id, 'thread reply', alice, { replyToId: root.id })
+    expect(reply.senderId).toBe('alice')
+    expect(reply.replyToId).toBe(root.id)
+    expect(reply.threadId).toBe(root.id)
+  })
+})

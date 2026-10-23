@@ -12843,5 +12843,12 @@
   "xfn.x23.title": "Form submit actions",
   "xfn.x24.title": "Start a meeting from any entity",
   "xfn.x25.title": "Open the @rox panel",
-  "xfn.x26.title": "Pins across surfaces"
+  "xfn.x26.title": "Pins across surfaces",
+  "messenger.threads.reply": "Reply",
+  "messenger.threads.replyTo": "Replying to {{name}}: {{text}}",
+  "messenger.threads.replyingTo": "Replying to: {{text}}",
+  "messenger.attachments.attach": "Attach file",
+  "messenger.attachments.unavailable": "Offline",
+  "messenger.attachments.unavailableHint": "Media storage is unavailable — file kept locally until the media backend is back.",
+  "messenger.attachments.placeholder": "(attachment)"
 }

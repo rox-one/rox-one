@@ -2,20 +2,36 @@
  * Team messenger data hooks. Channel roster stays on teamChat:* (org store).
  * Message list/send prefer native im:* when the relay reports live; otherwise
  * fall back to the JSON team-chat store (eu-swiss offline / no native addon).
- * Own sends dual-write into team-chat.json after a successful imSendMessage so
- * history stays durable when the relay flaps. Inbound im:message is UI-only
- * until sender-preserving ingest exists (teamChatPost stamps actor.userId).
+ *
+ * Own sends dual-write via teamChatIngest (preserves relay id + senderId).
+ * Inbound im:message also ingests with the remote sender — never teamChatPost
+ * (which would stamp actor.userId).
  */
 import * as React from 'react'
-import type { TeamChannelMessage, TeamChannelView } from '@rox/shared/team-chat'
+import type { IngestTeamMessageInput, PostTeamMessageOptions, TeamChannelMessage, TeamChannelView, TeamMessageAttachment } from '@rox/shared/team-chat'
 import type { ImMessageEvent } from '@rox/shared/protocol'
 import { imMessageToTeam, imMessagesToTeam } from './im-message-map'
 import { useImChannelSubscription, useImMessageListener, useImRelay } from './use-im-relay'
+import { recordMessengerFeedItem } from '@/platform/messenger-feed-items'
+import { listMessengerFeedChannels } from '@/platform/messenger-feed-channels'
 
 function errorText(error: unknown): string {
   const raw = error instanceof Error ? error.message : String(error)
   // Strip transport prefixes ("Error invoking remote method '…': Error: …").
   return raw.replace(/^.*?Error:\s*/s, '').trim() || raw
+}
+
+function fanOutIfFollowed(message: TeamChannelMessage, channelName?: string): void {
+  const followed = listMessengerFeedChannels().some((c) => c.channelId === message.channelId)
+  if (!followed) return
+  recordMessengerFeedItem({
+    channelId: message.channelId,
+    messageId: message.id,
+    senderId: message.senderId,
+    text: message.text,
+    at: message.createdAt,
+    channelName,
+  })
 }
 
 export function useTeamChannels(orgId: string | null) {
@@ -88,12 +104,26 @@ export function useTeamMessages(channelId: string | null) {
     return () => { version.current++; off?.() }
   }, [channelId, reload])
 
-  // Inbound im:message is UI-only — do not teamChatPost (stamps actor.userId).
+  // Inbound im:message — UI + sender-preserving ingest (never teamChatPost).
   useImMessageListener(channelId, live, (message: ImMessageEvent) => {
     setState((prev) => {
       if (prev.messages.some((m) => m.id === message.id)) return prev
       const seq = (prev.messages.at(-1)?.seq ?? 0) + 1
       return { ...prev, messages: [...prev.messages, imMessageToTeam(message, seq)] }
+    })
+    if (!window.electronAPI.teamChatIngest) return
+    const input: IngestTeamMessageInput = {
+      channelId: message.channelId,
+      senderId: message.senderId,
+      text: message.text,
+      id: message.id,
+      createdAt: message.createdAt,
+      ...(message.replyToId ? { replyToId: message.replyToId, threadId: message.threadId ?? message.replyToId } : {}),
+    }
+    void window.electronAPI.teamChatIngest(input).then((stored) => {
+      fanOutIfFollowed(stored)
+    }).catch(() => {
+      // Local durability is best-effort; UI already shows the push.
     })
   })
 
@@ -101,10 +131,10 @@ export function useTeamMessages(channelId: string | null) {
 }
 
 /**
- * Debounced search over the team-chat store.
- * im-path search (chat-core) is deferred to PR3 — keep teamChatSearch for now.
+ * Debounced search: prefer im:* (chat-core FTS) when live; else team-chat store.
  */
 export function useTeamSearch(orgId: string | null, query: string) {
+  const { live } = useImRelay()
   const [state, setState] = React.useState<{ loading: boolean; results: TeamChannelMessage[]; error: string | null }>({ loading: false, results: [], error: null })
   React.useEffect(() => {
     const q = query.trim()
@@ -112,28 +142,87 @@ export function useTeamSearch(orgId: string | null, query: string) {
     let alive = true
     setState(prev => ({ ...prev, loading: true }))
     const id = setTimeout(() => {
-      window.electronAPI.teamChatSearch(orgId, q)
-        .then(results => { if (alive) setState({ loading: false, results, error: null }) })
-        .catch(error => { if (alive) setState({ loading: false, results: [], error: errorText(error) }) })
+      void (async () => {
+        try {
+          if (live && window.electronAPI.imSearchMessages) {
+            try {
+              const result = await window.electronAPI.imSearchMessages(q, { limit: 50 })
+              if (!alive) return
+              if (result.ok) {
+                setState({ loading: false, results: imMessagesToTeam(result.messages), error: null })
+                return
+              }
+            } catch {
+              // fall through
+            }
+          }
+          const results = await window.electronAPI.teamChatSearch(orgId, q)
+          if (alive) setState({ loading: false, results, error: null })
+        } catch (error) {
+          if (alive) setState({ loading: false, results: [], error: errorText(error) })
+        }
+      })()
     }, 200)
     return () => { alive = false; clearTimeout(id) }
-  }, [orgId, query])
+  }, [orgId, query, live])
   return state
 }
 
+export interface PostTeamMessageInput extends PostTeamMessageOptions {
+  /** Used when im send returns a MessageRef without senderId. */
+  selfUserId?: string
+  channelName?: string
+}
+
 /**
- * Post via im:* when live, then dual-write into team-chat.json on success.
+ * Post via im:* when live, then dual-write via teamChatIngest (preserve id/sender).
  * imSendMessage throw / ok:false falls through to teamChatPost alone.
  */
-export async function postTeamMessage(channelId: string, text: string, live: boolean): Promise<void> {
+export async function postTeamMessage(
+  channelId: string,
+  text: string,
+  live: boolean,
+  opts: PostTeamMessageInput = {},
+): Promise<TeamChannelMessage | void> {
+  const postOpts: PostTeamMessageOptions = {}
+  if (opts.replyToId) postOpts.replyToId = opts.replyToId
+  if (opts.threadId) postOpts.threadId = opts.threadId
+  if (opts.attachments) postOpts.attachments = opts.attachments
+
   if (live && window.electronAPI.imSendMessage) {
     try {
       const result = await window.electronAPI.imSendMessage(channelId, text)
       if (result.ok) {
-        try {
-          await window.electronAPI.teamChatPost(channelId, text)
-        } catch {
-          // im already delivered; local durability is best-effort
+        const msg = result.message
+        const senderId =
+          msg.senderId && msg.senderId !== 'self'
+            ? msg.senderId
+            : (opts.selfUserId || '')
+        if (window.electronAPI.teamChatIngest && senderId) {
+          try {
+            const stored = await window.electronAPI.teamChatIngest({
+              channelId,
+              senderId,
+              text: msg.text || text,
+              id: msg.id,
+              createdAt: msg.createdAt,
+              ...postOpts,
+              ...(msg.replyToId ? { replyToId: msg.replyToId, threadId: msg.threadId ?? msg.replyToId } : {}),
+            })
+            fanOutIfFollowed(stored, opts.channelName)
+            return stored
+          } catch {
+            // im already delivered; local durability is best-effort
+          }
+        } else {
+          // No trustworthy remote sender — fall through to actor-stamped post.
+          try {
+            const stored = await window.electronAPI.teamChatPost(channelId, text, Object.keys(postOpts).length ? postOpts : undefined)
+            fanOutIfFollowed(stored, opts.channelName)
+            return stored
+          } catch {
+            return
+          }
         }
         return
       }
@@ -141,7 +230,10 @@ export async function postTeamMessage(channelId: string, text: string, live: boo
       // fall through to team-chat
     }
   }
-  await window.electronAPI.teamChatPost(channelId, text)
+  const stored = await window.electronAPI.teamChatPost(channelId, text, Object.keys(postOpts).length ? postOpts : undefined)
+  fanOutIfFollowed(stored, opts.channelName)
+  return stored
 }
 
 export { errorText as teamChatErrorText }
+export type { TeamMessageAttachment }

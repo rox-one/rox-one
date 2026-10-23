@@ -12907,5 +12907,12 @@
   "xfn.x23.title": "إجراءات عند إرسال النموذج",
   "xfn.x24.title": "بدء اجتماع من أي عنصر",
   "xfn.x25.title": "فتح لوحة الوكيل",
-  "xfn.x26.title": "التثبيت عبر الصفحات"
+  "xfn.x26.title": "التثبيت عبر الصفحات",
+  "messenger.threads.reply": "Reply",
+  "messenger.threads.replyTo": "Replying to {{name}}: {{text}}",
+  "messenger.threads.replyingTo": "Replying to: {{text}}",
+  "messenger.attachments.attach": "Attach file",
+  "messenger.attachments.unavailable": "Offline",
+  "messenger.attachments.unavailableHint": "Media storage is unavailable — file kept locally until the media backend is back.",
+  "messenger.attachments.placeholder": "(attachment)"
 }

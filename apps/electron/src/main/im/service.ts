@@ -62,6 +62,54 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : null
 }
 
+/** Normalize native / mock message shapes into ImMessageEvent (pubkey→senderId, content→text). */
+export function normalizeImMessage(raw: unknown, fallback?: { channelId?: string; text?: string; senderId?: string }): ImMessageEvent | null {
+  const record = asRecord(raw)
+  if (!record) return null
+  const id = typeof record.id === 'string' ? record.id : ''
+  if (!id) return null
+  const channelId =
+    (typeof record.channelId === 'string' && record.channelId) ||
+    (typeof record.channel_id === 'string' && record.channel_id) ||
+    fallback?.channelId ||
+    ''
+  const senderId =
+    (typeof record.senderId === 'string' && record.senderId) ||
+    (typeof record.pubkey === 'string' && record.pubkey) ||
+    fallback?.senderId ||
+    ''
+  const text =
+    (typeof record.text === 'string' && record.text) ||
+    (typeof record.content === 'string' && record.content) ||
+    fallback?.text ||
+    ''
+  if (!channelId || !senderId) return null
+  // Native ChatMessage uses `created_at` (unix seconds); ImMessageEvent uses `createdAt` (ms).
+  let createdAt = Date.now()
+  if (typeof record.createdAt === 'number' && Number.isFinite(record.createdAt)) {
+    createdAt = Math.round(record.createdAt)
+  } else if (typeof record.created_at === 'number' && Number.isFinite(record.created_at)) {
+    const sec = record.created_at
+    createdAt = sec < 1_000_000_000_000 ? Math.round(sec * 1000) : Math.round(sec)
+  }
+  const out: ImMessageEvent = { id, channelId, senderId, text, createdAt }
+  if (typeof record.editedAt === 'number') out.editedAt = record.editedAt
+  if (typeof record.deletedAt === 'number') out.deletedAt = record.deletedAt
+  // reply from explicit fields or Nostr `e` tag (first non-edit marker)
+  if (typeof record.replyToId === 'string' && record.replyToId) out.replyToId = record.replyToId
+  if (typeof record.threadId === 'string' && record.threadId) out.threadId = record.threadId
+  if (!out.replyToId && Array.isArray(record.tags)) {
+    for (const tag of record.tags) {
+      if (!Array.isArray(tag) || tag[0] !== 'e' || typeof tag[1] !== 'string') continue
+      if (tag[3] === 'edit') continue
+      out.replyToId = tag[1]
+      out.threadId = tag[1]
+      break
+    }
+  }
+  return out
+}
+
 /** Normalize an untrusted native `onStatus` payload into our wire shape. */
 export function normalizeImStatus(raw: unknown): ImStatusEvent {
   // Boundary value from the native module; read only validated fields below.
@@ -140,7 +188,10 @@ export class ImService {
   }
 
   private wireClient(client: ImChatCoreClient): void {
-    client.onMessage?.((message) => this.push?.message(message))
+    client.onMessage?.((message) => {
+      const normalized = normalizeImMessage(message)
+      if (normalized) this.push?.message(normalized)
+    })
     client.onPresence?.((presence) => this.push?.presence(presence))
     client.onTyping?.((typing) => this.push?.typing(typing))
     client.onStatus?.((status) => this.publishStatus(normalizeImStatus(status)))
@@ -182,7 +233,10 @@ export class ImService {
   async sendMessage(channelId: string, text: string): Promise<ImResult<{ message: ImMessageEvent }>> {
     await this.ensureStarted()
     if (!this.client) return this.fallback()
-    const message = await this.client.sendMessage(channelId, text)
+    const raw = await this.client.sendMessage(channelId, text)
+    const message =
+      normalizeImMessage(raw, { channelId, text, senderId: 'self' }) ??
+      ({ id: typeof (raw as { id?: string })?.id === 'string' ? (raw as { id: string }).id : `local-${Date.now()}`, channelId, senderId: 'self', text, createdAt: Date.now() } satisfies ImMessageEvent)
     return { ok: true, message }
   }
 
@@ -194,7 +248,24 @@ export class ImService {
       input.limit !== undefined || before !== undefined
         ? { ...(input.limit !== undefined ? { limit: input.limit } : {}), ...(before !== undefined ? { before } : {}) }
         : undefined
-    const messages = await this.client.listMessages(input.channelId, options)
+    const raw = await this.client.listMessages(input.channelId, options)
+    const messages = (Array.isArray(raw) ? raw : [])
+      .map((row) => normalizeImMessage(row, { channelId: input.channelId }))
+      .filter((m): m is ImMessageEvent => m !== null)
+    return { ok: true, messages }
+  }
+
+  async searchMessages(
+    query: string,
+    opts?: { channelId?: string; limit?: number },
+  ): Promise<ImResult<{ messages: ImMessageEvent[] }>> {
+    await this.ensureStarted()
+    if (!this.client) return this.fallback()
+    if (!this.client.searchMessages) return this.fallback()
+    const raw = await this.client.searchMessages(query, opts)
+    const messages = (Array.isArray(raw) ? raw : [])
+      .map((row) => normalizeImMessage(row, opts?.channelId ? { channelId: opts.channelId } : undefined))
+      .filter((m): m is ImMessageEvent => m !== null)
     return { ok: true, messages }
   }
 

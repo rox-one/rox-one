@@ -50,7 +50,7 @@ export interface ImChatCoreClient {
   deleteMessage?(channelId: string, messageId: string): void | Promise<void>
   listMessages(channel: string, options?: { limit?: number; before?: number }): ImMessageEvent[] | Promise<ImMessageEvent[]>
   markRead?(channelId: string): void | Promise<void>
-  searchMessages?(query: string): ImMessageEvent[] | Promise<ImMessageEvent[]>
+  searchMessages?(query: string, opts?: { channelId?: string; limit?: number }): ImMessageEvent[] | Promise<ImMessageEvent[]>
   publishTyping(channelId: string, isTyping: boolean): void | Promise<void>
   onMessage?(callback: (message: ImMessageEvent) => void): void
   onPresence?(callback: (presence: ImPresenceEvent) => void): void

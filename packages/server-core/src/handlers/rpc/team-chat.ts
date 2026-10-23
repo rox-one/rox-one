@@ -21,7 +21,9 @@ import {
   TeamChatError,
   type TeamChannelCall,
   type CreateTeamChannelInput,
+  type IngestTeamMessageInput,
   type ListTeamMessagesInput,
+  type PostTeamMessageOptions,
   type TeamChatActor,
   type TeamChatOrgDirectory,
 } from '@rox/shared/team-chat'
@@ -65,6 +67,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.teamChat.ARCHIVE,
   RPC_CHANNELS.teamChat.LIST_MESSAGES,
   RPC_CHANNELS.teamChat.POST,
+  RPC_CHANNELS.teamChat.INGEST,
   RPC_CHANNELS.teamChat.MARK_READ,
   RPC_CHANNELS.teamChat.CALL_JOIN,
   RPC_CHANNELS.teamChat.CALL_LEAVE,
@@ -164,9 +167,15 @@ export function registerTeamChatHandlers(server: RpcServer, _deps: HandlerDeps):
   handle(RPC_CHANNELS.teamChat.LIST_MESSAGES, async (ctx, input: ListTeamMessagesInput) =>
     store().listMessages(input, actorOf(ctx)), { nativeAction: 'read' })
 
-  handle(RPC_CHANNELS.teamChat.POST, async (ctx, channelId: string, text: string) => {
-    const { message, orgId } = store().postMessageWithOrg(channelId, text, actorOf(ctx))
+  handle(RPC_CHANNELS.teamChat.POST, async (ctx, channelId: string, text: string, opts?: PostTeamMessageOptions) => {
+    const { message, orgId } = store().postMessageWithOrg(channelId, text, actorOf(ctx), opts)
     changed(orgId, channelId)
+    return message
+  }, { nativeAction: 'write' })
+
+  handle(RPC_CHANNELS.teamChat.INGEST, async (ctx, input: IngestTeamMessageInput) => {
+    const { message, orgId, created } = store().ingestRemoteMessageWithOrg(input, actorOf(ctx))
+    if (created) changed(orgId, message.channelId)
     return message
   }, { nativeAction: 'write' })
 

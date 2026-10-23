@@ -12843,5 +12843,12 @@
   "xfn.x23.title": "表單提交動作",
   "xfn.x24.title": "從任意實體發起會議",
   "xfn.x25.title": "開啟 @rox 面板",
-  "xfn.x26.title": "跨介面釘選"
+  "xfn.x26.title": "跨介面釘選",
+  "messenger.threads.reply": "Reply",
+  "messenger.threads.replyTo": "Replying to {{name}}: {{text}}",
+  "messenger.threads.replyingTo": "Replying to: {{text}}",
+  "messenger.attachments.attach": "Attach file",
+  "messenger.attachments.unavailable": "Offline",
+  "messenger.attachments.unavailableHint": "Media storage is unavailable — file kept locally until the media backend is back.",
+  "messenger.attachments.placeholder": "(attachment)"
 }

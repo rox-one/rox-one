@@ -13,8 +13,8 @@ import { onMessengerCreateRequest, takeMessengerCreateRequest } from '@/platform
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSetAtom } from 'jotai'
-import { Archive, Bell, BellOff, Hash, Lock, LogIn, LogOut, MessagesSquare, PanelRight, Phone, Plus, ScrollText, Search, Send, Sparkles, Users } from 'lucide-react'
-import type { TeamChannelKind, TeamChannelMessage, TeamChannelView, TeamChannelVisibility } from '@rox/shared/team-chat'
+import { Archive, Bell, BellOff, CornerDownRight, Hash, Lock, LogIn, LogOut, MessagesSquare, Paperclip, PanelRight, Phone, Plus, ScrollText, Search, Send, Sparkles, Users, X } from 'lucide-react'
+import type { TeamChannelKind, TeamChannelMessage, TeamChannelView, TeamChannelVisibility, TeamMessageAttachment } from '@rox/shared/team-chat'
 import type { TeamMemberRef } from '@rox/shared/team'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@rox/ui'
 import { Button } from '@/components/ui/button'
@@ -303,25 +303,19 @@ export function MessengerChannels({ orgId, selfUserId, members, viewerOrgRole }:
                     : t('messenger.relay.local')}
               </p>
             ) : null}
-            <MessageList
+            <MessageThread
               loading={messages.loading}
               error={messages.error}
               messages={messages.messages}
               nameOf={nameOf}
               locale={i18n.language}
+              selfUserId={selfUserId}
+              channelName={channelLabel(selected, t)}
+              live={live}
+              canPost={Boolean(selected.viewerRole)}
+              onReload={() => messages.reload()}
+              channelId={selected.id}
             />
-            {selected.viewerRole ? (
-              <Composer
-                key={selected.id}
-                placeholder={t('messenger.channels.composerPlaceholder', { name: channelLabel(selected, t) })}
-                onSend={async (text) => {
-                  await postTeamMessage(selected.id, text, live)
-                  await messages.reload()
-                }}
-              />
-            ) : (
-              <p className="border-t border-border/60 px-4 py-3 text-caption text-text-muted">{t('messenger.channels.joinToPost')}</p>
-            )}
           </>
         )}
       </section>
@@ -504,64 +498,177 @@ function CreateChannelForm({ kind, members, onCancel, onCreate }: {
   )
 }
 
-function MessageList({ loading, error, messages, nameOf, locale }: {
+function MessageThread({
+  loading, error, messages, nameOf, locale, selfUserId, channelName, live, canPost, onReload, channelId,
+}: {
   loading: boolean
   error: string | null
   messages: TeamChannelMessage[]
   nameOf: (userId: string) => string
   locale: string
+  selfUserId: string | null
+  channelName: string
+  live: boolean
+  canPost: boolean
+  onReload: () => Promise<void>
+  channelId: string
 }) {
   const { t } = useTranslation()
+  const [replyTo, setReplyTo] = React.useState<TeamChannelMessage | null>(null)
   const endRef = React.useRef<HTMLDivElement>(null)
   React.useEffect(() => { endRef.current?.scrollIntoView({ block: 'end' }) }, [messages.length])
+  React.useEffect(() => { setReplyTo(null) }, [channelId])
   const time = React.useMemo(() => new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }), [locale])
+  const byId = React.useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages])
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3" data-testid="messenger-messages" aria-live="polite">
-      {loading ? <p className="text-small text-text-secondary" role="status">{t('teamCollab.loading')}</p> : null}
-      {error ? <p className="text-small text-destructive" role="alert">{error}</p> : null}
-      {!loading && !error && messages.length === 0 ? (
-        <div data-glass-slot="empty" className="flex h-full flex-col items-center justify-center gap-2 text-center text-text-muted">
-          <MessagesSquare className="icon-empty" aria-hidden />
-          <p className="text-small">{t('messenger.channels.noMessages')}</p>
-        </div>
-      ) : null}
-      <ul className="flex flex-col gap-2">
-        {messages.map((m, i) => {
-          const prev = messages[i - 1]
-          const grouped = prev && prev.kind !== 'system' && prev.senderId === m.senderId && m.senderId !== 'system' && m.createdAt - prev.createdAt < 5 * 60_000
-          return (
-            <li key={m.id} className={cn(!grouped && 'pt-1')}>
-              {!grouped && m.kind !== 'system' ? (
-                <div className="flex items-baseline gap-2">
-                  <span className="text-small font-semibold">{m.senderId === 'system' ? t('messenger.calls.botName') : nameOf(m.senderId)}</span>
-                  <time className="text-caption text-text-muted" dateTime={new Date(m.createdAt).toISOString()}>{time.format(m.createdAt)}</time>
-                </div>
-              ) : null}
-              <MessageBody message={m} nameOf={nameOf} />
-            </li>
-          )
-        })}
-      </ul>
-      <div ref={endRef} />
-    </div>
+    <>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3" data-testid="messenger-messages" aria-live="polite">
+        {loading ? <p className="text-small text-text-secondary" role="status">{t('teamCollab.loading')}</p> : null}
+        {error ? <p className="text-small text-destructive" role="alert">{error}</p> : null}
+        {!loading && !error && messages.length === 0 ? (
+          <div data-glass-slot="empty" className="flex h-full flex-col items-center justify-center gap-2 text-center text-text-muted">
+            <MessagesSquare className="icon-empty" aria-hidden />
+            <p className="text-small">{t('messenger.channels.noMessages')}</p>
+          </div>
+        ) : null}
+        <ul className="flex flex-col gap-2">
+          {messages.map((m, i) => {
+            const prev = messages[i - 1]
+            const grouped = prev && prev.kind !== 'system' && prev.senderId === m.senderId && m.senderId !== 'system' && !m.replyToId && !prev.replyToId && m.createdAt - prev.createdAt < 5 * 60_000
+            const parent = m.replyToId ? byId.get(m.replyToId) : undefined
+            return (
+              <li key={m.id} className={cn(!grouped && 'pt-1', m.replyToId && 'ms-4 border-s border-border/50 ps-3')} data-testid={m.replyToId ? 'messenger-thread-reply' : undefined}>
+                {parent ? (
+                  <p className="mb-0.5 truncate text-caption text-text-muted" data-testid="messenger-reply-ref">
+                    <CornerDownRight className="me-1 inline size-3" aria-hidden />
+                    {t('messenger.threads.replyTo', { name: nameOf(parent.senderId), text: parent.text.slice(0, 80) })}
+                  </p>
+                ) : null}
+                {!grouped && m.kind !== 'system' ? (
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-small font-semibold">{m.senderId === 'system' ? t('messenger.calls.botName') : nameOf(m.senderId)}</span>
+                    <time className="text-caption text-text-muted" dateTime={new Date(m.createdAt).toISOString()}>{time.format(m.createdAt)}</time>
+                    {canPost && m.kind !== 'system' ? (
+                      <button
+                        type="button"
+                        className="text-caption text-text-muted hover:text-text-primary"
+                        onClick={() => setReplyTo(m)}
+                        data-testid="messenger-reply-btn"
+                      >
+                        {t('messenger.threads.reply')}
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+                <MessageBody message={m} nameOf={nameOf} />
+              </li>
+            )
+          })}
+        </ul>
+        <div ref={endRef} />
+      </div>
+      {canPost ? (
+        <Composer
+          key={channelId}
+          placeholder={t('messenger.channels.composerPlaceholder', { name: channelName })}
+          replyTo={replyTo}
+          onCancelReply={() => setReplyTo(null)}
+          onSend={async (text, attachments) => {
+            await postTeamMessage(channelId, text, live, {
+              selfUserId: selfUserId ?? undefined,
+              channelName,
+              ...(replyTo ? { replyToId: replyTo.id, threadId: replyTo.threadId ?? replyTo.id } : {}),
+              ...(attachments.length ? { attachments } : {}),
+            })
+            setReplyTo(null)
+            await onReload()
+          }}
+        />
+      ) : (
+        <p className="border-t border-border/60 px-4 py-3 text-caption text-text-muted">{t('messenger.channels.joinToPost')}</p>
+      )}
+    </>
   )
 }
 
-function Composer({ placeholder, onSend }: { placeholder: string; onSend: (text: string) => Promise<void> }) {
+function Composer({ placeholder, onSend, replyTo, onCancelReply }: {
+  placeholder: string
+  onSend: (text: string, attachments: TeamMessageAttachment[]) => Promise<void>
+  replyTo: TeamChannelMessage | null
+  onCancelReply: () => void
+}) {
   const { t } = useTranslation()
   const [text, setText] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [attachments, setAttachments] = React.useState<TeamMessageAttachment[]>([])
+  const fileRef = React.useRef<HTMLInputElement>(null)
   const send = async () => {
     const value = text.trim()
-    if (!value || busy) return
+    if ((!value && attachments.length === 0) || busy) return
     setBusy(true); setError(null)
-    try { await onSend(value); setText('') } catch (e) { setError(teamChatErrorText(e)) } finally { setBusy(false) }
+    try {
+      await onSend(value || t('messenger.attachments.placeholder'), attachments)
+      setText('')
+      setAttachments([])
+    } catch (e) {
+      setError(teamChatErrorText(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const onPickFiles = (files: FileList | null) => {
+    if (!files?.length) return
+    const next: TeamMessageAttachment[] = []
+    for (const file of Array.from(files).slice(0, 8)) {
+      const safeName = file.name.replace(/[^A-Za-z0-9._-]+/g, '_').slice(0, 80) || 'file'
+      next.push({
+        id: `local-${safeName}-${file.size}-${file.lastModified}`,
+        name: file.name.slice(0, 200),
+        mimeType: file.type || undefined,
+        size: file.size,
+        // Media/MinIO may be down — keep local metadata, mark unavailable until upload exists.
+        status: 'unavailable',
+      })
+    }
+    setAttachments((prev) => [...prev, ...next].slice(0, 16))
   }
   return (
     <div className="shrink-0 border-t border-border/60 px-4 py-2">
+      {replyTo ? (
+        <div className="mb-1.5 flex items-center gap-2 rounded-md bg-surface-raised px-2 py-1 text-caption text-text-secondary" data-testid="messenger-reply-bar">
+          <CornerDownRight className="size-3.5 shrink-0" aria-hidden />
+          <span className="min-w-0 flex-1 truncate">{t('messenger.threads.replyingTo', { text: replyTo.text.slice(0, 100) })}</span>
+          <button type="button" className="shrink-0 text-text-muted hover:text-text-primary" aria-label={t('common.cancel')} onClick={onCancelReply}>
+            <X className="size-3.5" aria-hidden />
+          </button>
+        </div>
+      ) : null}
+      {attachments.length > 0 ? (
+        <ul className="mb-1.5 flex flex-wrap gap-1" data-testid="messenger-attach-chips">
+          {attachments.map((a) => (
+            <li key={a.id} className="flex max-w-xs items-center gap-1 rounded-md border border-border/60 bg-surface-raised px-2 py-0.5 text-caption">
+              <Paperclip className="size-3 shrink-0 text-text-muted" aria-hidden />
+              <span className="truncate">{a.name}</span>
+              <span className="text-text-muted">{t('messenger.attachments.unavailable')}</span>
+              <button type="button" aria-label={t('common.cancel')} onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== a.id))}>
+                <X className="size-3" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {error ? <p className="pb-1 text-caption text-destructive" role="alert">{error}</p> : null}
       <div className="flex items-end gap-2">
+        <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => { onPickFiles(e.target.files); e.target.value = '' }} />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" size="icon" variant="ghost" aria-label={t('messenger.attachments.attach')} onClick={() => fileRef.current?.click()} data-testid="messenger-attach-btn">
+              <Paperclip aria-hidden />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t('messenger.attachments.attach')}</TooltipContent>
+        </Tooltip>
         <textarea
           value={text} maxLength={MESSAGE_MAX} rows={1} placeholder={placeholder} aria-label={placeholder}
           onChange={e => setText(e.target.value)}
@@ -570,7 +677,7 @@ function Composer({ placeholder, onSend }: { placeholder: string; onSend: (text:
         />
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button size="icon" onClick={() => void send()} disabled={!text.trim() || busy} aria-label={t('messenger.channels.send')}>
+            <Button size="icon" onClick={() => void send()} disabled={(!text.trim() && attachments.length === 0) || busy} aria-label={t('messenger.channels.send')}>
               <Send aria-hidden />
             </Button>
           </TooltipTrigger>

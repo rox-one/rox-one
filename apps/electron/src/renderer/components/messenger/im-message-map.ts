@@ -18,6 +18,12 @@ export function imMessageToTeam(message: ImMessageEvent, seq = 0): TeamChannelMe
   }
   if (typeof message.editedAt === 'number') out.editedAt = message.editedAt
   if (typeof message.deletedAt === 'number') out.deletedAt = message.deletedAt
+  if (message.replyToId) {
+    out.replyToId = message.replyToId
+    out.threadId = message.threadId ?? message.replyToId
+  } else if (message.threadId) {
+    out.threadId = message.threadId
+  }
   return out
 }
 
