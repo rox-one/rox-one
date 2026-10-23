@@ -259,7 +259,7 @@ export const LeftSidebar = React.memo(function LeftSidebar({ links, isCollapsed,
                 aria-current={link.variant === 'default' ? 'page' : undefined}
                 data-sidebar-link-id={link.id}
                 onClick={() => { if (onExpand) onExpand(link); else link.onClick?.() }}
-                className={cn('group mx-auto grid size-9 place-items-center rounded-[var(--radius-control)] outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring', link.variant === 'default' ? cn('rox-nav-shimmer', ROW_FILL) : 'hover:bg-[var(--state-hover)]')}>
+                className={cn('group mx-auto grid size-9 place-items-center rounded-[var(--radius-control)] outline-none transition-colors focus-visible:outline-none', link.variant === 'default' ? cn('rox-nav-shimmer', ROW_FILL) : 'hover:bg-[var(--state-hover)]')}>
                 <span className="flex h-4 w-4 items-center justify-center">{renderIcon(link)}</span>
               </button>
             )
@@ -719,7 +719,7 @@ const SidebarButton = React.memo(React.forwardRef<HTMLButtonElement, SidebarButt
         aria-label={groupAriaLabel}
         className={cn(
           "group flex min-h-7 w-full min-w-0 items-center gap-2 rounded-[var(--radius-control)] text-base select-none outline-none transition-colors [@media(pointer:coarse)]:min-h-11",
-          "focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
+          "focus-visible:outline-none",
           // 4px grid: rows hold 28px (min-h-7); compact rows trim the padding.
           link.compact ? "py-0.5" : "py-1",
           "px-2",

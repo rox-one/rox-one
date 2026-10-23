@@ -2180,6 +2180,21 @@ html[data-contrast="high"][data-ui-profile="super-engineering"] :is(
   box-shadow: none;
 }
 
+/* P9.3: LeftSidebar rail links reuse the same SE focus token (#2211). */
+html[data-ui-profile="super-engineering"] [data-sidebar-link-id]:focus-visible {
+  outline: none;
+  box-shadow: var(--se-shell-focus-ring);
+  opacity: 1;
+  transition-property: transform, opacity, color, background-color;
+}
+
+html[data-contrast="high"][data-ui-profile="super-engineering"] [data-sidebar-link-id]:focus-visible {
+  outline: var(--focus-ring-width, 2px) solid var(--focus, var(--accent));
+  outline-offset: var(--focus-ring-inset-offset, -2px);
+  box-shadow: none;
+}
+
+
 /* Mode-pill indicator + item colour: drop hardcoded ms under SE so live
    resize (data-resizing) and prefers-reduced-motion zero the motion. */
 html[data-ui-profile="super-engineering"] .rox-mode-pill[data-ready] .rox-mode-pill-indicator {
