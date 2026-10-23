@@ -242,7 +242,19 @@ async function findInCommittedJournals(
   return null
 }
 
-async function listNativeWriteJournals(notesRoot: string, workspaceId: string, noteId: string): Promise<NoteHistoryRevision[]> {
+type NativeJournalFile = {
+  phase?: string
+  command?: { changes?: Array<{ kind?: string; noteId?: string; content?: string; expectedRevision?: string | null }> }
+  receipt?: { operationId?: string; committedAt?: string; actorPrincipalId?: string }
+}
+
+/** Scan workspace-wide native journals for one noteId. Early-filters by noteId string before JSON.parse. */
+async function collectNativeWriteJournals(
+  notesRoot: string,
+  workspaceId: string,
+  noteId: string,
+  revisionId?: string,
+): Promise<NoteHistoryRevision[]> {
   const directory = join(notesRoot, COMMITS_ROOT, digest(`native\0${workspaceId}`))
   let names: string[]
   try {
@@ -259,19 +271,17 @@ async function listNativeWriteJournals(notesRoot: string, workspaceId: string, n
     try {
       const raw = await readFile(join(directory, name), 'utf8')
       if (!raw.includes(noteNeedle)) continue
-      const value = JSON.parse(raw) as {
-        phase?: string
-        command?: { changes?: Array<{ kind?: string; noteId?: string; content?: string; expectedRevision?: string | null }> }
-        receipt?: { operationId?: string; committedAt?: string; actorPrincipalId?: string }
-      }
+      const value = JSON.parse(raw) as NativeJournalFile
       if (value.phase !== 'committed' || !Array.isArray(value.command?.changes)) continue
       const operationId = value.receipt?.operationId
       const committedAt = value.receipt?.committedAt
       if (typeof operationId !== 'string' || typeof committedAt !== 'string') continue
       for (const change of value.command!.changes!) {
         if (change.kind !== 'write' || change.noteId !== noteId || typeof change.content !== 'string') continue
+        const id = `sha256:${digest(change.content)}`
+        if (revisionId !== undefined && id !== revisionId) continue
         out.push({
-          revisionId: `sha256:${digest(change.content)}`,
+          revisionId: id,
           operationId,
           previousRevision: typeof change.expectedRevision === 'string' ? change.expectedRevision : null,
           committedAt,
@@ -279,6 +289,7 @@ async function listNativeWriteJournals(notesRoot: string, workspaceId: string, n
           byteSize: byteSizeOf(change.content),
           content: change.content,
         })
+        if (revisionId !== undefined) return out
       }
     } catch {
       // skip corrupt
@@ -287,54 +298,18 @@ async function listNativeWriteJournals(notesRoot: string, workspaceId: string, n
   return out
 }
 
+async function listNativeWriteJournals(notesRoot: string, workspaceId: string, noteId: string): Promise<NoteHistoryRevision[]> {
+  return collectNativeWriteJournals(notesRoot, workspaceId, noteId)
+}
+
 async function findInNativeWriteJournals(
   notesRoot: string,
   workspaceId: string,
   noteId: string,
   revisionId: string,
 ): Promise<NoteHistoryRevision | null> {
-  const directory = join(notesRoot, COMMITS_ROOT, digest(`native\0${workspaceId}`))
-  let names: string[]
-  try {
-    names = await readdir(directory)
-  } catch (error) {
-    if (isMissing(error)) return null
-    throw error
-  }
-  const noteNeedle = JSON.stringify(noteId)
-  for (const name of names) {
-    if (!/^native-[a-f0-9]{64}\.json$/.test(name)) continue
-    try {
-      const raw = await readFile(join(directory, name), 'utf8')
-      if (!raw.includes(noteNeedle)) continue
-      const value = JSON.parse(raw) as {
-        phase?: string
-        command?: { changes?: Array<{ kind?: string; noteId?: string; content?: string; expectedRevision?: string | null }> }
-        receipt?: { operationId?: string; committedAt?: string; actorPrincipalId?: string }
-      }
-      if (value.phase !== 'committed' || !Array.isArray(value.command?.changes)) continue
-      const operationId = value.receipt?.operationId
-      const committedAt = value.receipt?.committedAt
-      if (typeof operationId !== 'string' || typeof committedAt !== 'string') continue
-      for (const change of value.command!.changes!) {
-        if (change.kind !== 'write' || change.noteId !== noteId || typeof change.content !== 'string') continue
-        const id = `sha256:${digest(change.content)}`
-        if (id !== revisionId) continue
-        return {
-          revisionId: id,
-          operationId,
-          previousRevision: typeof change.expectedRevision === 'string' ? change.expectedRevision : null,
-          committedAt,
-          actorPrincipalId: typeof value.receipt?.actorPrincipalId === 'string' ? value.receipt.actorPrincipalId : null,
-          byteSize: byteSizeOf(change.content),
-          content: change.content,
-        }
-      }
-    } catch {
-      // skip corrupt
-    }
-  }
-  return null
+  const hits = await collectNativeWriteJournals(notesRoot, workspaceId, noteId, revisionId)
+  return hits[0] ?? null
 }
 
 /** List version history for a note (newest first). Bodies are omitted. */
@@ -346,10 +321,8 @@ export async function listNoteRevisions(
   assertSafeNoteId(noteId)
   const fromJournals = await listCommittedJournals(notesRoot, workspaceId, noteId)
   const fromSidecar = (await readSidecar(notesRoot, noteId))?.revisions ?? []
-  // Workspace-wide native journals are expensive; skip when per-note sources already cover the note.
-  const fromNative = (fromJournals.length > 0 || fromSidecar.length > 0)
-    ? []
-    : await listNativeWriteJournals(notesRoot, workspaceId, noteId)
+  // Always merge native tips (early-filtered). Sidecar alone is not full coverage of pre-sidecar native history.
+  const fromNative = await listNativeWriteJournals(notesRoot, workspaceId, noteId)
   // Distinct tip events are keyed by operationId so identical-byte restores stay listed.
   const byOp = new Map<string, NoteHistoryRevision>()
   for (const entry of [...fromJournals, ...fromNative, ...fromSidecar]) {

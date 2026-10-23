@@ -139,8 +139,8 @@ describe('note-revision-history', () => {
     })).rejects.toThrow(/Invalid note ID/)
   })
 
-  it('skips workspace-wide native scan when sidecar already covers the note', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'rox-note-history-skip-native-'))
+  it('merges native tips even when sidecar already has rows (sidecar is not full coverage)', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'rox-note-history-merge-native-'))
     const workspaceId = 'ws'
     const noteId = 'covered'
     const body = '# Covered\n'
@@ -150,14 +150,14 @@ describe('note-revision-history', () => {
     })
     const nativeDir = join(root, '.rox-docs', 'commits', digest(`native\0${workspaceId}`))
     await mkdir(nativeDir, { recursive: true })
-    // Would collide if scanned: same noteId, different operation — must be ignored because sidecar covers.
+    // Pre-sidecar native-only tip must remain visible after the first sidecar row appears.
     await writeFile(join(nativeDir, `native-${'b'.repeat(64)}.json`), JSON.stringify({
       phase: 'committed',
       command: { changes: [{ kind: 'write', noteId, content: '# From native only\n', expectedRevision: null }] },
-      receipt: { operationId: 'native-only', committedAt: '2026-10-23T11:05:00.000Z', actorPrincipalId: 'x' },
+      receipt: { operationId: 'native-only', committedAt: '2026-10-23T10:55:00.000Z', actorPrincipalId: 'x' },
     }))
     const listed = await listNoteRevisions(root, workspaceId, noteId)
-    expect(listed.map((e) => e.operationId)).toEqual(['side-1'])
+    expect(listed.map((e) => e.operationId)).toEqual(['side-1', 'native-only'])
   })
 
   it('early-filters native journals by noteId without requiring coverage skip', async () => {
