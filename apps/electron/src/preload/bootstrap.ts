@@ -266,13 +266,12 @@ client.handleCapability(CLIENT_BROWSER_INVOKE, async (req: BrowserCapabilityRequ
 // ---------------------------------------------------------------------------
 
 const api = buildClientApi(client, CHANNEL_MAP, (ch) => client.isChannelAvailable(ch))
-if (isClientOnly) {
-  // Window ownership lives in Electron main, including thin clients. A
-  // headless workspace service cannot answer desktop window channels.
-  api.getWindowWorkspace = async () => {
-    const value: unknown = ipcRenderer.sendSync('__get-workspace-id')
-    return typeof value === 'string' && value ? value : null
-  }
+// Window ownership lives in Electron main (local and thin). Never wait on the
+// workspace RPC / `__await-ws-port` for this answer — shell-first boot paints
+// chrome from the sync binding while the server is still coming up.
+api.getWindowWorkspace = async () => {
+  const value: unknown = ipcRenderer.sendSync('__get-workspace-id')
+  return typeof value === 'string' && value ? value : null
 }
 const nativeReplicaBridge = createNativeReplicaBridge({ client, invokeIpc: (channel, input) => ipcRenderer.invoke(channel, input) })
 ;(api as ElectronAPI).nativeReplica = nativeReplicaBridge.nativeReplica
