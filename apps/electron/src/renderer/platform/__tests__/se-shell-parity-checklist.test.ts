@@ -41,15 +41,17 @@ describe('SE shell parity checklist (docs + contract)', () => {
     }
     expect(contract.profile).toBe('super-engineering')
     expect(contract.done.some((d) => d.id === 'popover-blur-accents')).toBe(true)
-    expect(contract.gaps.map((g) => g.id).sort()).toEqual(['G3', 'G4', 'G5'])
+    expect(contract.gaps.map((g) => g.id).sort()).toEqual(['G4', 'G5'])
     const md = readFileSync(checklistPath, 'utf8')
     expect(md).toContain('do not re-PR')
     expect(md).toContain('Remaining gaps')
-    for (const id of ['G3', 'G4', 'G5']) expect(md).toContain(id)
+    for (const id of ['G4', 'G5']) expect(md).toContain(id)
+    expect(md).toContain('Workspace navigator design width')
     expect(contract.done.some((d) => d.id === 'icons-se-v2')).toBe(true)
     expect(md).toContain('Optional icons v2 SVG extract')
     expect(contract.done.some((d) => d.id === 'worktree-hover-delay')).toBe(true)
     expect(contract.done.some((d) => d.id === 'dialog-popover-springs')).toBe(true)
+    expect(contract.done.some((d) => d.id === 'navigator-width-260')).toBe(true)
   })
 })
 
@@ -131,6 +133,25 @@ describe('SE shell parity remaining / closed gaps', () => {
     )
     expect(nav).toContain("from '@rox/ui/icons/se'")
     expect(nav).not.toMatch(/from 'lucide-react'/)
+  })
+
+  it('G3 DONE: NAVIGATOR_WIDTH_DEFAULT is 260 (spec left_sidebar_width_design)', () => {
+    const prefs = readFileSync(
+      join(root, 'apps/electron/src/renderer/lib/shell-layout-preferences.ts'),
+      'utf8',
+    )
+    expect(prefs).toMatch(/export const NAVIGATOR_WIDTH_DEFAULT = 260\b/)
+    expect(prefs).toMatch(/export const NAVIGATOR_WIDTH_MIN = 240\b/)
+    expect(prefs).toMatch(/export const NAVIGATOR_WIDTH_MAX = 480\b/)
+    const contract = JSON.parse(readFileSync(contractPath, 'utf8')) as {
+      done: Array<{ id: string }>
+      gaps: Array<{ id: string }>
+    }
+    expect(contract.done.some((d) => d.id === 'navigator-width-260')).toBe(true)
+    expect(contract.gaps.map((g) => g.id)).not.toContain('G3')
+    const md = readFileSync(checklistPath, 'utf8')
+    expect(md).toContain('NAVIGATOR_WIDTH_DEFAULT = 260')
+    expect(md).not.toMatch(/\| G3 \|/)
   })
 
   it('G2 DONE: WorkspaceNavigator gates WorktreeHoverCard at 250ms', () => {
