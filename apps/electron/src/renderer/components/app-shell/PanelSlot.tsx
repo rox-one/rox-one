@@ -24,7 +24,7 @@ import { useAppShellContext, AppShellProvider } from '@/context/AppShellContext'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@rox/ui/tooltip'
 import { MainContentPanel } from './MainContentPanel'
-import { PANEL_MIN_WIDTH } from './panel-constants'
+import { PANEL_MIN_WIDTH, sePanelMeasureActive } from './panel-constants'
 import { NavigationContext } from '@/contexts/NavigationContext'
 import { BarePanelContext, ShellSidebarContext } from './ShellSidebarPortal'
 import { destroyBrowserInstanceForRoute } from '@/platform/browser-panel-lifecycle'
@@ -32,7 +32,8 @@ import { AuxiliaryToolPanel } from './AuxiliaryToolPanel'
 import { WorkspaceToolContext } from '@/atoms/workspace-context'
 import { PRIMARY_NAV } from './primary-nav'
 import { useSuperEngineeringProfile } from '@/hooks/useSuperEngineeringProfile'
-import { sePanelMeasureActive } from './se-panel-measure'
+
+/** Minimal nav shape for SE measure gating (avoids importing the heavy NavigationState graph). */
 
 /** Header title for a grid tile: the surface the route belongs to. */
 export function gridTileTitleKey(navState: Parameters<(typeof PRIMARY_NAV)[number]['isActive']>[0]): string | null {

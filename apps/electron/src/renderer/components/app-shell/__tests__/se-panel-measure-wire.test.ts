@@ -4,11 +4,11 @@ import { join } from 'path'
 import {
   sePanelMeasureActive,
   sePanelMeasureBleed,
-} from '../se-panel-measure'
+} from '../panel-constants'
 
 const root = join(import.meta.dir, '../../../../../../..')
 const slot = readFileSync(join(root, 'apps/electron/src/renderer/components/app-shell/PanelSlot.tsx'), 'utf8')
-const helper = readFileSync(join(root, 'apps/electron/src/renderer/components/app-shell/se-panel-measure.ts'), 'utf8')
+const helper = readFileSync(join(root, 'apps/electron/src/renderer/components/app-shell/panel-constants.ts'), 'utf8')
 const css = readFileSync(join(root, 'apps/electron/src/renderer/index.css'), 'utf8')
 const seUltra = css.slice(css.indexOf('/* Rox Engineering ultra-wide / fluid shell.'))
 const primEnd = css.indexOf('/* Rox Engineering shell micro-interactions')
