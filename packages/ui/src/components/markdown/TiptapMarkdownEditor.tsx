@@ -29,6 +29,7 @@ import { MarkdownComment } from './extensions/MarkdownComment'
 import { DocumentFolding, type DocumentFoldingJSON } from './extensions/DocumentFolding'
 import { RoxColumnsBlock, RoxColumnBlock } from './extensions/ColumnsBlock'
 import { RoxTabsBlock, RoxTabBlock } from './extensions/TabsBlock'
+import { ActionButtonBlock } from './extensions/ActionButtonBlock'
 import { toBasicMarkdownExport as expandToBasicMarkdownExport } from '@rox/core/docs'
 import { RoxBlockCallout, PortableCalloutBlockquote } from './extensions/rox-block-syntax'
 import { cn } from '../../lib/utils'
@@ -360,6 +361,7 @@ export function TiptapMarkdownEditor({
         },
       }),
       RoxTabBlock,
+      ActionButtonBlock,
       DocumentFolding.configure({
         initialState: readFoldingPreference(foldingStorageKey),
         labels: {

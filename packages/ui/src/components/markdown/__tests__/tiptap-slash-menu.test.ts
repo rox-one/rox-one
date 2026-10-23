@@ -252,6 +252,7 @@ describe('tiptap slash menu', () => {
       'callout-question',
       'spoiler',
       'callout-details',
+      'action-button',
       'embed',
     ]))
     items.find((item) => item.id === 'footnote')?.run(editor)
