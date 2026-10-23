@@ -258,4 +258,143 @@ export function registerBuiltinGlanceWidgets(): void {
     network: true,
     load: () => import('./widgets/GithubReposWidget'),
   })
+
+  registerGlanceWidget({
+    type: 'weather',
+    category: 'essentials',
+    titleKey: 'glance.w.weather',
+    icon: 'cloud-sun',
+    defaultConfig: { location: '', units: 'metric' },
+    fields: [
+      { key: 'location', kind: 'text', labelKey: 'common.location', placeholder: 'Москва / 55.75, 37.62' },
+      {
+        key: 'units',
+        kind: 'select',
+        labelKey: 'glance.f.units',
+        options: [
+          { value: 'metric', labelKey: 'glance.o.metric' },
+          { value: 'imperial', labelKey: 'glance.o.imperial' },
+        ],
+      },
+    ],
+    network: true,
+    load: () => import('./widgets/WeatherWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'markets',
+    category: 'finance',
+    titleKey: 'glance.w.markets',
+    icon: 'trending-up',
+    defaultConfig: { symbols: ['^GSPC', 'BTC-USD', 'EURUSD=X'] },
+    fields: [{ key: 'symbols', kind: 'strings', labelKey: 'glance.f.symbols', placeholder: 'AAPL' }],
+    network: true,
+    load: () => import('./widgets/MarketsWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'search',
+    category: 'news',
+    titleKey: 'feed.search',
+    icon: 'search',
+    defaultConfig: { query: '', limit: 8 },
+    fields: [
+      { key: 'query', kind: 'text', labelKey: 'feed.search' },
+      { ...limitField, max: 20 },
+    ],
+    network: true,
+    load: () => import('./widgets/SearchWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'calendar',
+    category: 'essentials',
+    titleKey: 'entities.kind.calendar',
+    icon: 'calendar',
+    defaultConfig: { url: '', days: 14, limit: 10 },
+    fields: [
+      { key: 'url', kind: 'url', labelKey: 'common.url', placeholder: 'webcal://… .ics' },
+      { key: 'days', kind: 'number', labelKey: 'glance.f.days', min: 1, max: 60 },
+      limitField,
+    ],
+    network: true,
+    load: () => import('./widgets/CalendarWidget'),
+  })
+
+  const refreshField = { key: 'refreshMin', kind: 'number', labelKey: 'glance.f.refreshMin', min: 1, max: 1440 } as const
+
+  registerGlanceWidget({
+    type: 'monitor',
+    category: 'system',
+    titleKey: 'glance.w.monitor',
+    icon: 'activity',
+    defaultConfig: { links: [] },
+    fields: [{ key: 'links', kind: 'links', labelKey: 'glance.f.links' }],
+    network: true,
+    load: () => import('./widgets/MonitorWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'server-stats',
+    category: 'system',
+    titleKey: 'glance.w.serverStats',
+    icon: 'cpu',
+    defaultConfig: {},
+    fields: [],
+    load: () => import('./widgets/ServerStatsWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'docker',
+    category: 'system',
+    title: 'Docker',
+    icon: 'container',
+    defaultConfig: { runningOnly: false },
+    fields: [{ key: 'runningOnly', kind: 'boolean', labelKey: 'glance.f.runningOnly' }],
+    load: () => import('./widgets/DockerWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'change-detection',
+    category: 'advanced',
+    titleKey: 'glance.w.changes',
+    icon: 'scan-eye',
+    defaultConfig: { url: '', path: '', refreshMin: 60 },
+    fields: [
+      { key: 'url', kind: 'url', labelKey: 'common.url', placeholder: 'https://' },
+      { key: 'path', kind: 'text', labelKey: 'glance.f.jsonPath', placeholder: 'data.version' },
+      { ...refreshField, min: 5 },
+    ],
+    network: true,
+    load: () => import('./widgets/ChangeDetectionWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'custom-api',
+    category: 'advanced',
+    titleKey: 'glance.w.customApi',
+    icon: 'braces',
+    defaultConfig: { url: '', fields: [], refreshMin: 10 },
+    fields: [
+      { key: 'url', kind: 'url', labelKey: 'common.url', placeholder: 'https://' },
+      { key: 'fields', kind: 'strings', labelKey: 'glance.f.jsonFields', placeholder: 'Price = data.price' },
+      refreshField,
+    ],
+    network: true,
+    load: () => import('./widgets/CustomApiWidget'),
+  })
+
+  registerGlanceWidget({
+    type: 'extension',
+    category: 'advanced',
+    titleKey: 'glance.w.extension',
+    icon: 'puzzle',
+    defaultConfig: { url: '', refreshMin: 15 },
+    fields: [
+      { key: 'url', kind: 'url', labelKey: 'common.url', hintKey: 'glance.f.extensionHint', placeholder: 'https://' },
+      refreshField,
+    ],
+    network: true,
+    load: () => import('./widgets/ExtensionWidget'),
+  })
 }
