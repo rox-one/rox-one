@@ -88,6 +88,7 @@ import { feedDayGroupStyle } from './feed/feed-list-render'
 import { ColorFilter, ColorPicker, FEED_COLOR_HEX, SourceIcon, TagChip, TagEditor } from './feed/FeedParts'
 import { SourceEditor, SourcesView } from './feed/FeedSources'
 import { FeedSidebar, type FeedView } from './feed/FeedSidebar'
+import { listMessengerFeedChannels, subscribeMessengerFeedChannels } from '@/platform/messenger-feed-channels'
 import { useTourSignals, useTourTarget } from '@/features/product-tour/runtime/hooks'
 import { inboxFeedCapabilities } from '@/features/product-tour/adapters/work/inbox-feed'
 import { useFeedReaderTour } from '@/features/product-tour/adapters/work/inbox-feed/use-feed-reader-tour'
@@ -259,6 +260,10 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const [view, setView] = useState<View>(initialPrefs.view)
   const [chip, setChip] = useState<FeedChip>(initialPrefs.chip)
   const [sourceFilter, setSourceFilter] = useState<string | null>(initialPrefs.sourceFilter)
+  const [channelFilter, setChannelFilter] = useState<string | null>(null)
+  const [messengerChannelsAll, setMessengerChannelsAll] = useState(() => [...listMessengerFeedChannels()])
+  useEffect(() => subscribeMessengerFeedChannels(() => setMessengerChannelsAll([...listMessengerFeedChannels()])), [])
+
   const [query, setQuery] = useState(initialPrefs.query)
   const [colors, setColors] = useState<ReadonlySet<FeedColor>>(() => new Set(initialPrefs.colors))
   const [tagFilter, setTagFilter] = useState<string | null>(initialPrefs.tagFilter)
@@ -283,6 +288,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     setView(stored.view)
     setChip(stored.chip)
     setSourceFilter(stored.sourceFilter)
+    setChannelFilter(null)
     setQuery(stored.query)
     setColors(new Set(stored.colors))
     setTagFilter(stored.tagFilter)
@@ -366,6 +372,19 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   // Team («Команда») — renderer-side local-first store.
   const team = useTeamState()
   const roster = useTeamRoster()
+  const messengerChannels = useMemo(
+    () => {
+      const orgId = roster.org?.id
+      if (!orgId) return []
+      return messengerChannelsAll.filter((c) => c.orgId === orgId)
+    },
+    [messengerChannelsAll, roster.org?.id],
+  )
+  // Drop a channelFilter that is not in the current org's followed set.
+  useEffect(() => {
+    if (channelFilter && !messengerChannels.some((c) => c.channelId === channelFilter)) setChannelFilter(null)
+  }, [channelFilter, messengerChannels])
+
   const teamItems = useMemo(
     () => caller.native ? [] : buildTeamItems(team.activity ?? [], (e) => activityText(e, roster.members, roster.selfUserId, t)),
     [caller.native, team.activity, roster.members, roster.selfUserId, t],
@@ -387,8 +406,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const tabItems = useMemo(() => allItems.filter((i) => i.tab === tab), [allItems, tab])
   const tabTags = useMemo(() => tagsInUse(tabItems), [tabItems])
   const visible = useMemo(
-    () => filterView(allItems, { tab, chip, sourceId: tab === 'news' ? sourceFilter : null, query, colors, tag: tagFilter, mark }, now, data.sources),
-    [allItems, tab, chip, sourceFilter, query, colors, tagFilter, mark, now, data.sources],
+    () => filterView(allItems, { tab, chip, sourceId: tab === 'news' ? sourceFilter : null, channelId: tab === 'team' ? channelFilter : null, query, colors, tag: tagFilter, mark }, now, data.sources),
+    [allItems, tab, chip, sourceFilter, channelFilter, query, colors, tagFilter, mark, now, data.sources],
   )
   const colorCounts = useMemo(() => {
     const out: Partial<Record<FeedColor, number>> = {}
@@ -402,7 +421,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const ordered = useMemo(() => groups.flatMap((g) => g.items), [groups])
   const selected = useMemo(() => allItems.find((i) => i.id === currentId) ?? null, [allItems, currentId])
   const suggestions = useMemo(() => suggestTags(allItems, data.sources, [], 10, t('feed.tags.defaults').split(',').map((x) => x.trim()).filter(Boolean)), [allItems, data.sources, t])
-  const filtersActive = !!(query || chip !== 'all' || sourceFilter || colors.size || tagFilter || mark !== 'all')
+  const filtersActive = !!(query || chip !== 'all' || sourceFilter || channelFilter || colors.size || tagFilter || mark !== 'all')
   const { selectItem: selectFeedItem, readerRef: readerTourRef } = useFeedReaderTour({
     selected, workspaceId, readerVisible: view !== 'sources', loaded, failed: !!loadError, select,
   })
@@ -420,7 +439,7 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
   const longFmt = useMemo(() => new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }), [locale])
   const when = useCallback((at: number) => (new Date(at).toDateString() === new Date(now).toDateString() ? timeFmt.format(at) : dateFmt.format(at)), [now, timeFmt, dateFmt])
 
-  const resetFilters = () => { setChip('all'); setQuery(''); setSourceFilter(null); setColors(new Set()); setTagFilter(null); setMark('all') }
+  const resetFilters = () => { setChip('all'); setQuery(''); setSourceFilter(null); setChannelFilter(null); setColors(new Set()); setTagFilter(null); setMark('all') }
   const switchView = (next: View) => {
     setView(next)
     setChip('all')
@@ -557,11 +576,13 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     <div ref={view === 'sources' ? undefined : sourcesTourRef} data-tour-id={view === 'sources' ? undefined : 'feed.sources'}>
     <FeedSidebar
       view={view} sourceFilter={sourceFilter} tagFilter={tagFilter}
+      messengerChannels={messengerChannels} channelFilter={channelFilter}
       sources={data.sources} tags={tabTags} counts={counts} visibleCount={visible.length} attention={attention}
       x={data.x} hasTeam={Boolean(roster.org)} teamName={roster.org ? roster.org.name ?? t('feed.nav.teamLocal') : t('feed.nav.teamNoOrg')}
-      onViewSelect={(next) => { switchView(next); if (next !== 'sources') setSourceFilter(null) }}
-      onSourceSelect={(id) => { switchView('news'); setSourceFilter(id) }}
+      onViewSelect={(next) => { switchView(next); if (next !== 'sources') setSourceFilter(null); if (next !== 'team') setChannelFilter(null) }}
+      onSourceSelect={(id) => { switchView('news'); setSourceFilter(id); setChannelFilter(null) }}
       onTagSelect={setTagFilter}
+      onChannelSelect={setChannelFilter}
     />
     </div>
   )
@@ -576,8 +597,8 @@ function FeedPageForCaller({ selectedId, caller }: { selectedId?: string | null;
     x: { connected: data.x.state === 'connected', username: data.x.username },
     team: { connected: Boolean(roster.org), name: roster.org ? roster.org.name ?? t('feed.nav.teamLocal') : t('feed.nav.teamNoOrg') },
     activeKey: tagFilter ? `label:${tagFilter}` : view === 'news' && sourceFilter ? `source:${sourceFilter}` : `view:${view}`,
-    onView: (next) => { switchView(next); if (next !== 'sources') setSourceFilter(null) },
-    onSource: (id) => { switchView('news'); setSourceFilter(id) },
+    onView: (next) => { switchView(next); if (next !== 'sources') setSourceFilter(null); if (next !== 'team') setChannelFilter(null) },
+    onSource: (id) => { switchView('news'); setSourceFilter(id); setChannelFilter(null) },
     onTag: (tag) => setTagFilter(tagFilter?.toLowerCase() === tag.toLowerCase() ? null : tag),
     query,
     onQuery: setQuery,
