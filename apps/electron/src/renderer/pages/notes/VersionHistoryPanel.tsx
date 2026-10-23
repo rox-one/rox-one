@@ -32,7 +32,6 @@ function actorLabel(actor: string | null, t: (key: string) => string): string {
   return actor.length > 48 ? `${actor.slice(0, 45)}…` : actor
 }
 
-
 export function VersionHistoryPanel({
   workspaceId,
   noteId,
@@ -129,8 +128,8 @@ export function VersionHistoryPanel({
       data-testid="notes-history-rail"
       data-glass-slot="panel"
     >
-      <div className="flex h-9 shrink-0 items-center gap-1.5 px-3 text-xs font-semibold uppercase caps-label text-foreground/60">
-        <History className="h-3.5 w-3.5" aria-hidden />
+      <div className="flex h-9 shrink-0 items-center gap-1.5 px-3 text-xs font-semibold uppercase caps-label text-muted-foreground">
+        <History className="icon-caption" aria-hidden />
         {t('notes.history.title')}
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
@@ -149,7 +148,7 @@ export function VersionHistoryPanel({
                 data-testid="notes-history-entry"
                 aria-pressed={active}
                 className={`mb-1 flex w-full flex-col rounded-[var(--radius-card)] px-2.5 py-2 text-left ${
-                  active ? 'bg-foreground/[0.10] ring-1 ring-border/60' : 'bg-foreground/[0.04] hover:bg-foreground/[0.08]'
+                  active ? 'bg-muted ring-1 ring-border' : 'bg-muted/40 hover:bg-muted'
                 }`}
                 onClick={() => { setSelectedId(entry.revisionId); setConfirmRestore(false) }}
               >
@@ -163,7 +162,7 @@ export function VersionHistoryPanel({
         </div>
         <div className="flex min-h-[40%] flex-col overflow-hidden px-3 py-2" data-testid="notes-history-preview">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-xs font-medium text-foreground/70">{t('notes.history.preview')}</p>
+            <p className="text-xs font-medium text-muted-foreground">{t('notes.history.preview')}</p>
             <Button
               type="button"
               size="sm"
@@ -172,12 +171,12 @@ export function VersionHistoryPanel({
               data-testid="notes-history-restore"
               onClick={() => setConfirmRestore(true)}
             >
-              <RotateCcw className="mr-1 h-3.5 w-3.5" aria-hidden />
+              <RotateCcw className="icon-caption mr-1" aria-hidden />
               {t('notes.history.restore')}
             </Button>
           </div>
           {confirmRestore ? (
-            <div className="mb-2 rounded-[var(--radius-card)] bg-foreground/[0.06] p-2 text-xs" data-glass-slot="card">
+            <div className="mb-2 rounded-[var(--radius-card)] bg-muted p-2 text-xs" data-glass-slot="card">
               <p className="mb-2 text-foreground">{t('notes.history.restoreConfirm')}</p>
               <div className="flex gap-2">
                 <Button type="button" size="sm" disabled={restoring} onClick={() => void restore()} data-testid="notes-history-restore-confirm">
@@ -190,7 +189,7 @@ export function VersionHistoryPanel({
             </div>
           ) : null}
           {error ? <p className="mb-2 text-xs text-destructive" role="alert">{error}</p> : null}
-          <div className="min-h-0 flex-1 overflow-auto rounded-[var(--radius-card)] bg-background/60 p-2 font-mono text-[11px] leading-relaxed ring-1 ring-border/40">
+          <div className="min-h-0 flex-1 overflow-auto rounded-[var(--radius-card)] bg-background p-2 font-mono text-xs leading-relaxed ring-1 ring-border">
             {!preview ? (
               <p className="text-muted-foreground">{t('notes.history.selectVersion')}</p>
             ) : (
@@ -199,10 +198,10 @@ export function VersionHistoryPanel({
                   key={`${row.type}:${index}:${row.text.slice(0, 24)}`}
                   className={
                     row.type === 'add'
-                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                      ? 'bg-success/15 text-success'
                       : row.type === 'del'
-                        ? 'bg-rose-500/15 text-rose-700 line-through dark:text-rose-300'
-                        : 'text-foreground/80'
+                        ? 'bg-destructive/15 text-destructive line-through'
+                        : 'text-muted-foreground'
                   }
                 >
                   <span className="mr-2 inline-block w-3 select-none opacity-60">

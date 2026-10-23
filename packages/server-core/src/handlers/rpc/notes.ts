@@ -2049,7 +2049,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
         revisionId: note.revision ?? markdownRevision(note.content),
         operationId: crypto.randomUUID(),
         previousRevision: existing.revision ?? markdownRevision(existing.content),
-        actorPrincipalId: ctx.principal ? JSON.stringify([ctx.principal.issuer, ctx.principal.subject]) : null,
+        actorPrincipalId: null,
       })
       changed({ workspaceId, reason: 'save', noteId: note.id })
       return { ...note, autoCreatedNoteIds: autoCreated.map(created => created.id) }

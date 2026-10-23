@@ -254,7 +254,19 @@ export async function listNoteRevisions(
     const prev = byId.get(entryKey(entry))
     if (!prev || entry.committedAt > prev.committedAt) byId.set(entryKey(entry), entry)
   }
-  return sortNewestFirst([...byId.values()]).map(({ content: _c, ...summary }) => summary)
+  const sorted = [...byId.values()].sort((a, b) => {
+    const byTime = b.committedAt.localeCompare(a.committedAt)
+    if (byTime !== 0) return byTime
+    return b.revisionId.localeCompare(a.revisionId)
+  })
+  return sorted.map((entry): NoteHistoryEntry => ({
+    revisionId: entry.revisionId,
+    operationId: entry.operationId,
+    previousRevision: entry.previousRevision,
+    committedAt: entry.committedAt,
+    actorPrincipalId: entry.actorPrincipalId,
+    byteSize: entry.byteSize,
+  }))
 }
 
 /** Load one historical body by revisionId. */
