@@ -800,17 +800,19 @@ export function shouldSetThemeOverride(
 }
 
 /**
- * The default Rox theme for new installs: Arc Glass (2026-10-14) — a glass
- * frame over a radial wallpaper with the content as one floating card.
+ * The default Rox theme for new installs: Rox Engineering (2026-10-23) —
+ * dark glass agent IDE profile (`uiProfile: super-engineering`).
  *
- * Ships as the out-of-the-box theme; users may switch to any other preset in
- * Settings → Внешний вид. Legacy selections of the previous defaults
- * (`nordfox-opaque`, `haze`, unset) are migrated once — see `storage.ts`,
- * migration marker `appearance-defaults-v1`.
+ * Ships as the out-of-the-box theme; users may switch to any other preset
+ * (including Arc Glass) in Settings → Внешний вид. Existing explicit picks
+ * are kept. Legacy selections of older product defaults (`nordfox-opaque`,
+ * `haze`, unset, and the v1 Rox Engineering + deep-glass seed) still migrate
+ * once to Rox Ink — see `storage.ts`, markers `appearance-defaults-v1` and
+ * `appearance-defaults-v2-ink`.
  */
-export const ROX_THEME_ID = 'arc-glass';
+export const ROX_THEME_ID = 'super-engineering';
 
-/** The previous default (grayscale sumi-e); still a bundled preset. */
+/** Prior grayscale sumi-e default; still a bundled preset and migration target. */
 export const ROX_INK_THEME_ID = 'rox-ink';
 
 /**
