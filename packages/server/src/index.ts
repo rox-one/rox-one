@@ -37,6 +37,8 @@ import { readFileSync, existsSync } from 'node:fs'
 import { version as packageVersion } from '../package.json'
 import { enableDebug } from '@rox/shared/utils/debug'
 import { bootstrapServer, startHealthHttpServer, generateServerToken, maskTokenForDisplay } from '@rox/server-core/bootstrap'
+import { installCogneeGraphMemory } from '@rox/server-core/memory/graph/install'
+import { getMemoryConfig } from '@rox/shared/config/storage'
 import { validateSession, createWebuiHandler, nodeHttpAdapter, readWebDefaultWorkspace, maybeCreateCloudHandoffBroker } from '@rox/server-core/webui'
 import type { WebuiHandler } from '@rox/server-core/webui'
 import { getCredentialManager } from '@rox/shared/credentials'
@@ -234,6 +236,11 @@ let nodeRegistry: NodeRegistry | undefined
 
 const instance = await (async () => {
   try {
+    // Graph-memory (cognee): register resolver before RPC handlers use MemoryIndexService.
+    installCogneeGraphMemory({
+      isEnabled: () => { const c = getMemoryConfig(); return Boolean(c.enabled && (c.graph ?? true)) },
+      logger: { warn: (m, e) => console.warn(m, e), info: (m) => console.info(m) },
+    })
     return await bootstrapServer<SessionManager, HandlerDeps>({
       bundledAssetsRoot,
       serverVersion: process.env.CRAFT_VERSION ?? packageVersion,

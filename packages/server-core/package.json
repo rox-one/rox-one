@@ -41,7 +41,9 @@
     "./xsc": "./src/xsc/index.ts",
     "./playbooks/jobs": "./src/playbooks/jobs.ts",
     "./playbooks/codebook": "./src/playbooks/codebook/index.ts",
-    "./handlers/rpc/google-meet": "./src/handlers/rpc/google-meet.ts"
+    "./handlers/rpc/google-meet": "./src/handlers/rpc/google-meet.ts",
+    "./memory/graph/*": "./src/memory/graph/*.ts",
+    "./memory/graph": "./src/memory/graph/install.ts"
   },
   "scripts": {},
   "dependencies": {

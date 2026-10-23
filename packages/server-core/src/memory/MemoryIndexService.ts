@@ -45,6 +45,8 @@ import {
   type GraphMemoryHit,
   type GraphMemoryProvider,
 } from '@rox/shared/memory/graph-provider'
+import { scheduleGraphIngest } from './graph/ingest'
+import { DEFAULT_GRAPH_DAILY_COST_CAP_USD } from './graph/cost-cap'
 
 /** Resolves the graph-memory provider for a workspace (null = none). Set once by bootstrap. */
 export type GraphMemoryProviderResolver = (ctx: { workspaceRoot: string; workspaceId?: string }) => GraphMemoryProvider | null
@@ -54,6 +56,10 @@ let graphProviderResolver: GraphMemoryProviderResolver | null = null
 /** Register (or clear with null) the process-wide graph-memory provider resolver. */
 export function setGraphMemoryProviderResolver(resolver: GraphMemoryProviderResolver | null): void {
   graphProviderResolver = resolver
+}
+
+export function getGraphMemoryProviderResolver(): GraphMemoryProviderResolver | null {
+  return graphProviderResolver
 }
 
 /** Persisted index state sidecar. */
@@ -92,6 +98,12 @@ export interface MemoryIndexServiceDeps {
   graphProvider?: GraphMemoryProvider | null
   /** Budget for one graph search (ms); late results are dropped. Default 300. */
   graphBudgetMs?: number
+  /** Daily USD cap for graph cognify; default {@link DEFAULT_GRAPH_DAILY_COST_CAP_USD}. */
+  graphDailyCostCapUsd?: number
+  /** When false, skip background graph ingest after rebuild. Default true. */
+  graphIngest?: boolean
+  /** Enabled graph sources; missing → all on. */
+  graphSources?: Partial<Record<'session' | 'notes' | 'tasks' | 'chats' | 'calls' | 'mail' | 'files' | 'lessons', boolean>>
 }
 
 const SNIPPET_CHARS = 240
@@ -353,12 +365,41 @@ export class MemoryIndexService {
     return meta
   }
 
+
+  /**
+   * Soft-fail background push of injectable docs into the graph provider.
+   * Never blocks rebuild; untrusted docs are dropped in scheduleGraphIngest.
+   */
+  private enqueueGraphIngest(docs: ChunkSourceDoc[]): void {
+    if (this.deps.graphIngest === false) return
+    try {
+      const src = this.deps.graphSources
+      const allowed =
+        src &&
+        new Set(
+          (['session', 'notes', 'tasks', 'chats', 'calls', 'mail', 'files', 'lessons'] as const).filter(
+            k => src[k] !== false,
+          ),
+        )
+      scheduleGraphIngest({
+        provider: this.graphProvider(),
+        docs,
+        dailyCostCapUsd: this.deps.graphDailyCostCapUsd ?? DEFAULT_GRAPH_DAILY_COST_CAP_USD,
+        logger: this.logger,
+        ...(allowed ? { allowedSources: allowed } : {}),
+      })
+    } catch (err) {
+      this.logger.warn('MemoryIndexService: graph ingest schedule failed', err)
+    }
+  }
+
   /** Deterministically rebuild the index from current sources (lexical only). */
   rebuild(): MemoryIndexStatus {
     const docs = this.collect()
     const chunks: MemoryChunk[] = chunkDocuments(docs)
     this.backendInstance.replaceAll(chunks)
     this.writeMeta(chunks.length, this.corpusFingerprint(docs))
+    this.enqueueGraphIngest(docs)
     return this.status()
   }
 
@@ -394,6 +435,7 @@ export class MemoryIndexService {
     this.backendInstance.replaceAll(chunks, embeddings)
     const usable = embeddings.size > 0 || chunks.length === 0
     this.writeMeta(chunks.length, this.corpusFingerprint(docs), usable)
+    this.enqueueGraphIngest(docs)
     return usable
   }
 
@@ -553,6 +595,11 @@ export interface MemoryIndexServiceOptions {
   semantic?: boolean
   /** c1.3: config dir for the embedding-model cache. */
   configDir?: string
+  /** Daily USD cap for graph cognify (from memory.graphDailyCostCapUsd). */
+  graphDailyCostCapUsd?: number
+  /** When false, skip background graph ingest after rebuild. */
+  graphIngest?: boolean
+  graphSources?: Partial<Record<'session' | 'notes' | 'tasks' | 'chats' | 'calls' | 'mail' | 'files' | 'lessons', boolean>>
 }
 
 /**
@@ -563,8 +610,19 @@ export interface MemoryIndexServiceOptions {
  * agree on rebuilds. Reading `semantic` anywhere else in the process re-creates
  * that split (issue: shared-instance drift).
  */
-export function memoryIndexServiceOptions(config: { semantic?: boolean }): MemoryIndexServiceOptions {
-  return { semantic: config.semantic === true }
+export function memoryIndexServiceOptions(config: {
+  semantic?: boolean
+  graphDailyCostCapUsd?: number
+  graph?: boolean
+  graphSources?: MemoryIndexServiceOptions['graphSources']
+}): MemoryIndexServiceOptions {
+  return {
+    semantic: config.semantic === true,
+    ...(typeof config.graphDailyCostCapUsd === 'number' ? { graphDailyCostCapUsd: config.graphDailyCostCapUsd } : {}),
+    // graph:false means do not push rebuilds into the provider (search may still fuse if one is set).
+    ...(config.graph === false ? { graphIngest: false } : {}),
+    ...(config.graphSources ? { graphSources: config.graphSources } : {}),
+  }
 }
 
 export function memoryIndexServiceFor(
@@ -580,6 +638,11 @@ export function memoryIndexServiceFor(
       ...(workspaceId ? { workspaceId } : {}),
       ...(options?.semantic ? { semantic: true } : {}),
       ...(options?.configDir ? { configDir: options.configDir } : {}),
+      ...(typeof options?.graphDailyCostCapUsd === 'number'
+        ? { graphDailyCostCapUsd: options.graphDailyCostCapUsd }
+        : {}),
+      ...(options?.graphIngest === false ? { graphIngest: false } : {}),
+      ...(options?.graphSources ? { graphSources: options.graphSources } : {}),
     })
     serviceCache.set(key, svc)
   }

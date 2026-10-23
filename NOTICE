@@ -52,6 +52,15 @@ the pinned upstream version, and the list of local adaptations.
 
 ---
 
+Graph memory (Settings → Память) optionally runs the cognee knowledge-graph
+engine via packages/cognee-sidecar. cognee (https://github.com/topoteretes/cognee)
+is licensed under the Apache License, Version 2.0 and is downloaded into a
+per-user runtime on first use — it is not vendored in this repository. See
+packages/cognee-sidecar/NOTICE for the reproduced cognee NOTICE and dependency
+notes (fastembed / MiniLM embeddings, Apache-2.0).
+
+---
+
 Portions derived from Buzz, Copyright Block, Inc., Apache-2.0.
 
 The Rox chat relay deployment (deploy/rox-chat/) and the native chat client
