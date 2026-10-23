@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useAtomValue } from 'jotai'
-import { FolderGit2, GitBranch, GitPullRequest } from 'lucide-react'
+import { FolderGit2, GitBranch, GitPullRequest } from '@rox/ui/icons/se'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { seLeftSidebarLayoutAtom } from '@/atoms/workbench-layout'

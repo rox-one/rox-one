@@ -41,11 +41,13 @@ describe('SE shell parity checklist (docs + contract)', () => {
     }
     expect(contract.profile).toBe('super-engineering')
     expect(contract.done.some((d) => d.id === 'popover-blur-accents')).toBe(true)
-    expect(contract.gaps.map((g) => g.id).sort()).toEqual(['G1', 'G3', 'G4', 'G5'])
+    expect(contract.gaps.map((g) => g.id).sort()).toEqual(['G3', 'G4', 'G5'])
     const md = readFileSync(checklistPath, 'utf8')
     expect(md).toContain('do not re-PR')
     expect(md).toContain('Remaining gaps')
-    for (const id of ['G1', 'G3', 'G4', 'G5']) expect(md).toContain(id)
+    for (const id of ['G3', 'G4', 'G5']) expect(md).toContain(id)
+    expect(contract.done.some((d) => d.id === 'icons-se-v2')).toBe(true)
+    expect(md).toContain('Optional icons v2 SVG extract')
     expect(contract.done.some((d) => d.id === 'worktree-hover-delay')).toBe(true)
   })
 })
@@ -106,8 +108,28 @@ describe('SE pointwise popover blur (already correct — lock)', () => {
 })
 
 describe('SE shell parity remaining / closed gaps', () => {
-  it('G1: packages/ui/src/icons/se extract is still absent', () => {
-    expect(existsSync(join(root, 'packages/ui/src/icons/se'))).toBe(false)
+  it('G1 DONE: packages/ui/src/icons/se extract ships v2 stroke 1.5', () => {
+    const seDir = join(root, 'packages/ui/src/icons/se')
+    expect(existsSync(seDir)).toBe(true)
+    const index = readFileSync(join(seDir, 'index.ts'), 'utf8')
+    expect(index).toContain('SE_ICON_LAYER_VERSION = 2')
+    expect(index).toContain('FolderGit2')
+    expect(index).toContain('GitBranch')
+    expect(index).toContain('GitPullRequest')
+    expect(index).toContain('CircleCheck')
+    const create = readFileSync(join(seDir, 'createSeIcon.tsx'), 'utf8')
+    expect(create).toContain('SE_ICON_STROKE = 1.5')
+    const stub = readFileSync(
+      join(root, 'apps/electron/src/renderer/components/icons/se/index.ts'),
+      'utf8',
+    )
+    expect(stub).toContain("from '@rox/ui/icons/se'")
+    const nav = readFileSync(
+      join(root, 'apps/electron/src/renderer/components/workspace/WorkspaceNavigator.tsx'),
+      'utf8',
+    )
+    expect(nav).toContain("from '@rox/ui/icons/se'")
+    expect(nav).not.toMatch(/from 'lucide-react'/)
   })
 
   it('G2 DONE: WorkspaceNavigator gates WorktreeHoverCard at 250ms', () => {
