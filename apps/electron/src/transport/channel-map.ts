@@ -848,6 +848,10 @@ export const CHANNEL_MAP = {
   searchMemory: invoke(RPC_CHANNELS.memory.SEARCH),
   getMemoryChunk: invoke(RPC_CHANNELS.memory.GET),
   getMemoryIndexStatus: invoke(RPC_CHANNELS.memory.INDEX_STATUS),
+  getMemoryConfig: invoke(RPC_CHANNELS.memory.GET_CONFIG),
+  updateMemoryConfig: invoke(RPC_CHANNELS.memory.UPDATE_CONFIG),
+  getGraphImportStatus: invoke(RPC_CHANNELS.memory.GRAPH_IMPORT_STATUS),
+  runGraphImport: invoke(RPC_CHANNELS.memory.GRAPH_IMPORT_RUN),
   rebuildMemoryIndex: invoke(RPC_CHANNELS.memory.REBUILD_INDEX),
   onMemoryChanged: listener(RPC_CHANNELS.memory.CHANGED),
 

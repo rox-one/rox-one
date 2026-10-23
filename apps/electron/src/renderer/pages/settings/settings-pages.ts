@@ -23,6 +23,7 @@ const LearningSettingsPage = lazy(() => import('./LearningSettingsPage'))
 const PrivacySettingsPage = lazy(() => import('./PrivacySettingsPage'))
 const RuntimeSettingsPage = lazy(() => import('./RuntimeSettingsPage'))
 const ContextSettingsPage = lazy(() => import('./ContextSettingsPage'))
+const MemorySettingsPage = lazy(() => import('./MemorySettingsPage'))
 const KnowledgeSettingsPage = lazy(() => import('./KnowledgeSettingsPage'))
 const MarketplaceSettingsPage = lazy(() => import('./MarketplaceSettingsPage'))
 const ExtensionsSettingsPage = lazy(() => import('./ExtensionsSettingsPage'))
@@ -57,6 +58,7 @@ export const SETTINGS_PAGE_COMPONENTS: Record<
   privacy: PrivacySettingsPage,
   runtime: RuntimeSettingsPage,
   context: ContextSettingsPage,
+  memory: MemorySettingsPage,
   knowledge: KnowledgeSettingsPage,
   marketplace: MarketplaceSettingsPage,
   extensions: ExtensionsSettingsPage,
