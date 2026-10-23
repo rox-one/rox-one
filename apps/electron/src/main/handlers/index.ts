@@ -18,6 +18,7 @@ import { registerClipboardHistoryGuiHandlers } from './clipboard-history'
 import { registerNativeIntegrationHandlers } from './native-integration'
 import { registerZedThemesHandlers } from './zed-themes'
 import { registerKeeperGuiHandlers } from '../keeper/register'
+import { registerImHandlers } from '../im'
 export { startClipboardMonitor } from './clipboard-history'
 import { setGithubUserToolHost } from '@rox/shared/connections'
 import { createGithubEnvImportHost, registerWorkGraphHandlers } from './workgraph'
@@ -39,6 +40,7 @@ export function registerGuiRpcHandlers(server: RpcServer, deps: HandlerDeps): vo
   registerNativeIntegrationHandlers(server, deps)
   registerZedThemesHandlers(server, deps)
   registerKeeperGuiHandlers(server, deps)
+  registerImHandlers(server, deps)
 }
 
 export function registerAllRpcHandlers(

@@ -372,6 +372,17 @@ export const EXPECTED_CHANNELS: string[] = [
   'identity:getState',
   'identity:refreshStatus',
   'identity:updateProfile',
+  'im:listMessages',
+  'im:markRead',
+  'im:message',
+  'im:presence',
+  'im:publishTyping',
+  'im:sendMessage',
+  'im:status',
+  'im:statusChanged',
+  'im:subscribeChannel',
+  'im:typing',
+  'im:unsubscribeChannel',
   'input:getAutoCapitalisation',
   'input:getSendMessageKey',
   'input:getSpellCheck',
@@ -1132,4 +1143,4 @@ export const EXPECTED_CHANNELS: string[] = [
   'zedThemes:list',
 ]
 
-export const EXPECTED_CHANNEL_COUNT = 1128
+export const EXPECTED_CHANNEL_COUNT = 1139
