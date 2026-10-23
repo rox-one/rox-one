@@ -1,3 +1,4 @@
+export * from './asset-meta.ts'
 export * from './schema.ts'
 export * from './fractional-index.ts'
 export * from './doc.ts'

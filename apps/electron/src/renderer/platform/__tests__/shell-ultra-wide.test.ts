@@ -13,7 +13,9 @@ const chrome = readFileSync(join(root, 'packages/ui/src/styles/tokens/chrome.css
 const css = readFileSync(join(root, 'apps/electron/src/renderer/index.css'), 'utf8')
 const appShell = readFileSync(join(root, 'apps/electron/src/renderer/components/app-shell/AppShell.tsx'), 'utf8')
 const hook = readFileSync(join(root, 'apps/electron/src/renderer/hooks/useContainerWidth.ts'), 'utf8')
-const seBlock = css.slice(css.indexOf('/* Rox Engineering ultra-wide / fluid shell.'))
+const uwStart = css.indexOf('/* Rox Engineering ultra-wide / fluid shell.')
+const uwEnd = css.indexOf('/* Rox Engineering shell focus rings')
+const seBlock = css.slice(uwStart, uwEnd < 0 ? undefined : uwEnd)
 
 describe('SE ultra-wide / fluid shell', () => {
   it('shellBand mirrors SHELL_BREAKPOINTS / --shell-bp-*', () => {

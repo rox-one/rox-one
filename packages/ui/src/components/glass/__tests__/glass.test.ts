@@ -59,13 +59,14 @@ describe('closed surface', () => {
 
 const material = strip(readFileSync(join(import.meta.dir, '../../../styles/tokens/material.css'), 'utf8'))
 describe('per-surface intensity', () => {
-  const block = material.slice(material.indexOf('.glass-surface,'))
+  const block = material.slice(material.indexOf('.glass-surface'))
   it('re-derives every glass token on .glass-surface from --glass-intensity', () => {
     for (const t of ['blur', 'saturate', 'tint', 'edge-alpha', 'specular-alpha'])
       expect(block).toMatch(new RegExp(`--glass-${t}:\\s*calc\\([^;]*var\\(--glass-intensity\\)`))
   })
-  it('declares derived tokens exactly once (single source)', () => {
-    expect(material.match(/--glass-blur:/g)?.length).toBe(1)
+  it('declares the non-SE blur formula once; SE accents override separately', () => {
+    expect(material.match(/--glass-blur:\s*calc\(8px \+ 24px/g)?.length).toBe(1)
+    expect(material.match(/html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][\s\S]*?--glass-blur:\s*20px;/g)?.length).toBe(1)
     expect(css).not.toMatch(/--glass-blur:/)
     expect(block).toMatch(/--glass-shadow:/)
   })
@@ -115,10 +116,118 @@ describe('keyboard press', () => {
   })
 })
 
-describe('Arc Glass skin', () => {
-  it('is scoped to the arc-glass theme', () => {
+describe('SE optional glass accents', () => {
+  it('base paint and degradations are chrome-only (never bare [data-glass-slot])', () => {
+    const chrome = ['.rox-mode-pill', '[data-glass-slot="popover"]', '[data-glass-slot="composer"]', '[data-glass-slot="mini-button"]']
+    // Blurred chrome (pill/popover/mini) — composer is fill-only, separate rule.
+    expect(skin).toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\]\s*:is\(\.rox-mode-pill,\s*\[data-glass-slot="popover"\],\s*\[data-glass-slot="mini-button"\]\)/,
+    )
+    expect(skin).not.toMatch(
+      /:is\(\.rox-mode-pill,\s*\[data-glass-slot="popover"\],\s*\[data-glass-slot="composer"\],\s*\[data-glass-slot="mini-button"\]\)/,
+    )
+    // No content-layer slots in the skin.
+    for (const slot of ['panel', 'toolbar', 'card', 'table', 'row', 'empty', 'editor', 'dialog', 'sheet', 'toast'])
+      expect(skin).not.toContain(`[data-glass-slot="${slot}"]`)
+    // Bare attribute must not appear in selectors.
+    for (const rule of skin.split('}').filter((r) => r.includes('{'))) {
+      const sel = rule.split('{')[0]
+      if (!sel.includes('[data-glass-slot]')) continue
+      expect(sel).not.toMatch(/\[data-glass-slot\](?!=")/)
+    }
+    for (const c of chrome) expect(skin).toContain(c)
+  })
+  it('default --glass-intensity is 0 in material and layers (off until themes emit glass)', () => {
+    const layers = strip(readFileSync(join(import.meta.dir, '../../../styles/tokens/layers.css'), 'utf8'))
+    expect(material).toMatch(/:root\s*{[^}]*--glass-intensity:\s*0;/)
+    expect(layers).toMatch(/:root\s*{[^}]*--glass-intensity:\s*0;/)
+    expect(material).not.toMatch(/:root\s*{[^}]*--glass-intensity:\s*0\.6;/)
+    expect(layers).not.toMatch(/:root\s*{[^}]*--glass-intensity:\s*0\.6;/)
+  })
+  it('SE accents blur is fixed 20px/10px when on; non-SE keeps 8px + 24px * intensity', () => {
+    expect(material).toMatch(/\.glass-surface\s*{[^}]*--glass-blur:\s*calc\(8px \+ 24px \* var\(--glass-intensity\)\)/)
+    expect(material).toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][^{]*{[\s\S]*?--glass-blur:\s*20px;/,
+    )
+    expect(material).toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][^{]*{[\s\S]*?--glass-blur-tight:\s*10px;/,
+    )
+    // Not intensity-scaled and not wallpaper plate tokens.
+    expect(material).not.toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][\s\S]*?--glass-blur:\s*calc\(20px \* var\(--glass-intensity\)/,
+    )
+    expect(material).not.toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][\s\S]*?--glass-blur:\s*calc\(var\(--chrome-glass-blur/,
+    )
+    expect(material).not.toMatch(
+      /html\[data-ui-profile="super-engineering"\]\[data-glass-accents\][\s\S]*?--glass-blur:\s*calc\(var\(--chrome-plate-blur/,
+    )
+  })
+  it('renderer opaque-overlay gates menu exemption on SE accents; Arc Glass not exempt', () => {
+    const renderer = readFileSync(
+      join(import.meta.dir, '../../../../../../apps/electron/src/renderer/index.css'),
+      'utf8',
+    )
+    // No document-wide arc-glass skip for toast fill or overlay resets.
+    expect(renderer).not.toContain('html:not([data-theme="arc-glass"]) [data-sonner-toast]')
+    expect(renderer).not.toContain('html:not([data-theme="arc-glass"]) :is(')
+    expect(renderer).toContain('[data-sonner-toast]')
+    expect(renderer).toContain('html :is(')
+    expect(renderer).toContain('[data-slot="dialog-content"]')
+    // Menus: reset when accents off; when accents on, only unslotted menus reset.
+    expect(renderer).toContain(
+      'html:not([data-ui-profile="super-engineering"][data-glass-accents]) :is(',
+    )
+    expect(renderer).toContain('[data-slot="dropdown-menu-content"]')
+    expect(renderer).toContain('[role="menu"]')
+    expect(renderer).toContain(
+      'html[data-ui-profile="super-engineering"][data-glass-accents] :is(',
+    )
+    expect(renderer).toContain('[data-slot="dropdown-menu-content"]:not([data-glass-slot="popover"])')
+    expect(renderer).toContain('[role="menu"]:not([data-glass-slot="popover"])')
+    const accentsOffMenus = renderer.match(
+      /html:not\(\[data-ui-profile="super-engineering"\]\[data-glass-accents\]\) :is\(([\s\S]*?)\)\s*\{/,
+    )?.[1] ?? ''
+    expect(accentsOffMenus).toContain('[data-slot="dropdown-menu-content"]')
+    expect(accentsOffMenus).toContain('[role="menu"]')
+    expect(accentsOffMenus).not.toContain(':not([data-glass-slot="popover"])')
+    expect(renderer).toContain(
+      'html:not([data-ui-profile="super-engineering"][data-glass-accents]):not([data-shell-runtime="web"][data-material="on"]:not([data-shell-css-material="solid"])) [data-slot="popover-content"]',
+    )
+  })
+  it('composer is fill-only (omit backdrop-filter; no refraction)', () => {
+    const composer = skin.split('}').find((b) => b.includes('[data-glass-slot="composer"]') && b.includes('--glass-fill-mix')) ?? ''
+    // Omit backdrop-filter entirely so SE .input-container blur remains.
+    expect(composer).not.toMatch(/backdrop-filter/)
+    expect(composer).toMatch(/--glass-fill-mix:\s*max\(70%/)
+    const refr = skin.split('}').filter((r) => r.includes('url(#rox-glass-skin-refraction)'))
+    for (const r of refr) expect(r).not.toMatch(/composer/)
+  })
+  it('degrade backdrop-filter:none :is() never includes composer', () => {
+    for (const m of skin.matchAll(/:is\(([^)]*)\)\s*\{([^}]*)\}/g)) {
+      const sel = m[1]
+      const body = m[2]
+      if (!/backdrop-filter\s*:\s*none/.test(body)) continue
+      expect(sel).not.toContain('[data-glass-slot="composer"]')
+    }
+  })
+  it('pill/popover/mini paint and degrade set -webkit-backdrop-filter with backdrop-filter', () => {
+    expect(skin).toMatch(
+      /backdrop-filter:\s*blur\(var\(--glass-blur\)\)\s*saturate\(var\(--glass-saturate\)\);\s*-webkit-backdrop-filter:\s*blur\(var\(--glass-blur\)\)\s*saturate\(var\(--glass-saturate\)\);/,
+    )
+    expect(skin).toMatch(
+      /backdrop-filter:\s*url\(#rox-glass-skin-refraction\)[^;]+;\s*-webkit-backdrop-filter:\s*url\(#rox-glass-skin-refraction\)/,
+    )
+    const nonePairs = skin.match(/backdrop-filter:\s*none;\s*-webkit-backdrop-filter:\s*none;/g) ?? []
+    expect(nonePairs.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('is scoped to super-engineering + data-glass-accents (not arc-glass theme)', () => {
     for (const rule of skin.split('}').filter((r) => r.includes('{') && !r.trim().startsWith('@') && !/^\s*(from|to)\b/.test(r.split('{')[0].trim())))
-      if (!/^\s*(from|to)\s*$/.test(rule.split('{')[0])) expect(rule.split('{')[0]).toContain('html[data-theme="arc-glass"]')
+      if (!/^\s*(from|to)\s*$/.test(rule.split('{')[0])) {
+        expect(rule.split('{')[0]).toContain('html[data-ui-profile="super-engineering"][data-glass-accents]')
+        expect(rule.split('{')[0]).not.toContain('data-theme="arc-glass"')
+      }
   })
   it('refraction only on static slots on the full tier, never composer or popovers', () => {
     const refr = skin.split('}').filter((r) => r.includes('url(#rox-glass-skin-refraction)'))
@@ -130,7 +239,20 @@ describe('Arc Glass skin', () => {
   })
   it('pop-in is scoped to the explicit popover slot, with a symmetric exit', () => {
     expect(skin).not.toMatch(/role="menu"|\.popover-styled/)
-    expect(skin).toMatch(/\[data-glass-slot="popover"\]\[data-state="closed"\]\s*{[^}]*rox-glass-pop-out[^}]*--motion-spring-exit/)
+    expect(skin).toMatch(/\[data-ui-profile="super-engineering"\]\[data-glass-accents\]:not\(\[data-render-profile="performance"\]\) \[data-glass-slot="popover"\]\[data-state="open"\]\s*{[^}]*animation:\s*rox-glass-pop-in[^}]*!important/)
+    expect(skin).toMatch(/\[data-ui-profile="super-engineering"\]\[data-glass-accents\]:not\(\[data-render-profile="performance"\]\) \[data-glass-slot="popover"\]\[data-state="closed"\]\s*{[^}]*animation:\s*rox-glass-pop-out[^}]*!important/)
+    // No mount spring for elements without data-state (PremiumMenu/Command).
+    expect(skin).not.toMatch(/\[data-glass-slot="popover"\]:is\([^)]*:not\(\[data-state\]\)/)
+    expect(skin).not.toContain(':not([data-state])')
+  })
+  it('tooltip and Command palette do not opt into the popover glass slot', () => {
+    const tip = readFileSync(join(import.meta.dir, '../../tooltip.tsx'), 'utf8')
+    const command = readFileSync(
+      join(import.meta.dir, '../../../../../../apps/electron/src/renderer/components/ui/command.tsx'),
+      'utf8',
+    )
+    expect(tip).not.toMatch(/data-glass-slot/)
+    expect(command).not.toMatch(/data-glass-slot/)
   })
   it('accent buttons keep an accent tint and glass buttons get a hover state', () => {
     expect(skin).toMatch(/\[data-glass-tone="accent"\]\s*{[^}]*--glass-fill:\s*var\(--accent\)/)

@@ -136,3 +136,18 @@ describe('subscriber lifecycle (review 6 #8)', () => {
     expect(closed).toEqual([b.id])
   })
 })
+
+describe('canvas assets IPC (WP2.2b)', () => {
+  it('putAsset stores bytes; getAsset returns them; rejects bad mime/hash', async () => {
+    const a = setup()
+    const s = fakeSender()
+    const bytes = new Uint8Array([1, 2, 3, 4, 5])
+    const meta = await a.call(CANVAS_IPC.putAsset, s, 'ws', bytes, 'image/png', 'a.png')
+    expect(meta.hash).toMatch(/^[a-f0-9]{64}$/)
+    expect(meta.size).toBe(5)
+    const got = await a.call(CANVAS_IPC.getAsset, s, 'ws', meta.hash)
+    expect([...got]).toEqual([1, 2, 3, 4, 5])
+    await expect(a.call(CANVAS_IPC.putAsset, s, 'ws', bytes, 'application/pdf', 'x.pdf')).rejects.toThrow(/MIME|mime|ASSET/)
+    await expect(a.call(CANVAS_IPC.getAsset, s, 'ws', 'nope')).rejects.toThrow(/HASH|hash|ASSET/)
+  })
+})

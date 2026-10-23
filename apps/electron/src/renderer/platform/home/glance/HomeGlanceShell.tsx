@@ -57,14 +57,14 @@ export function HomeGlanceShell({ overview }: { overview: React.ReactNode }) {
   )
 }
 
-/** Shown while the page chunk loads: placeholder cards in a small/full/small layout. */
+/** First-paint placeholders (8 cards) so the shell paints within ~100ms of route mount. */
 function GlancePageSkeleton() {
   return (
-    <div className="mx-auto grid w-full max-w-[1600px] gap-3" style={{ gridTemplateColumns: '300px minmax(0, 1fr) 300px' }} aria-busy="true" data-glance-skeleton="">
-      {[3, 4, 3].map((n, c) => (
+    <div className="mx-auto grid w-full max-w-[1600px] gap-3" style={{ gridTemplateColumns: '300px minmax(0, 1fr) 300px' }} aria-busy="true" data-glance-skeleton="page">
+      {[2, 4, 2].map((n, c) => (
         <div key={c} className="flex flex-col gap-3">
           {Array.from({ length: n }, (_, i) => (
-            <div key={i} className="h-28 animate-pulse rounded-[var(--radius-card)] bg-surface-hover" />
+            <div key={i} className="h-28 animate-pulse rounded-[var(--radius-card)] bg-surface-hover" data-glance-skeleton="card" />
           ))}
         </div>
       ))}
