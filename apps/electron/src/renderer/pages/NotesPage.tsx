@@ -75,6 +75,9 @@ import {
 import { MindMapHost } from '@/mindmap/MindMapHost'
 import { deriveNoteMindMap, type MindMapGraph } from '@rox/core/mindmap'
 import { NotesCommentComposer, NotesCommentHighlights, NotesCommentTooltip, NotesComments, NotesEditorHeadlineStyles, NotesToc } from './notes/NotesReadingChrome'
+import { NotesCommentThreads, noteThreadsToHighlightComments } from './notes/NotesCommentThreads'
+import { anchorFromQuote, findQuoteWithContext } from './notes/note-comments'
+import type { NoteCommentThread } from '@rox/shared/protocol'
 import {
   NotesBreadcrumbs,
   NotesCommandPalette,
@@ -323,6 +326,52 @@ function commentOffsetToEndPosition(pieces: CommentTextPiece[], textLength: numb
   return previous ? previous.pos + previous.length : null
 }
 
+
+
+/** Map a ProseMirror position onto the same comment-text offsets used by findDocRangeForComment. */
+function pmPosToCommentOffset(pieces: CommentTextPiece[], pmPos: number): number | null {
+  for (const piece of pieces) {
+    if (piece.kind !== 'text') continue
+    if (pmPos >= piece.pos && pmPos <= piece.pos + piece.length) {
+      return piece.offset + (pmPos - piece.pos)
+    }
+  }
+  // Selection at a block boundary / separator.
+  for (const piece of pieces) {
+    if (piece.kind === 'separator' && pmPos === piece.pos) return piece.offset
+  }
+  return null
+}
+
+export function commentDraftOffsetsFromEditor(
+  handle: TiptapEditorHandle | null,
+  markdown: string,
+  quote: string,
+): { start: number; end: number } | null {
+  if (!handle?.state || !quote) return null
+  const { from, to, empty } = handle.state.selection
+  if (empty || to <= from) return null
+  // Same offset space as highlight navigation (buildCommentTextMap), then project into markdown.
+  const { text, pieces } = buildCommentTextMap(handle.state.doc)
+  const mapStart = pmPosToCommentOffset(pieces, from)
+  const mapEnd = pmPosToCommentOffset(pieces, to)
+  if (mapStart == null || mapEnd == null || mapEnd <= mapStart) return null
+  const mappedQuote = text.slice(mapStart, mapEnd)
+  if (mappedQuote.trim() !== quote) return null
+  const prefix = text.slice(Math.max(0, mapStart - 48), mapStart)
+  const suffix = text.slice(mapEnd, Math.min(text.length, mapEnd + 48))
+  // When the comment-text map aligns with the stored markdown body, use those offsets directly.
+  if (markdown.slice(mapStart, mapEnd) === mappedQuote) {
+    return { start: mapStart, end: mapEnd }
+  }
+  const hit = findQuoteWithContext(markdown, quote, prefix, suffix)
+  if (hit) return hit
+  const first = markdown.indexOf(quote)
+  if (first < 0) return null
+  if (markdown.indexOf(quote, first + 1) >= 0) return null
+  return { start: first, end: first + quote.length }
+}
+
 export function findDocRangeForComment(
   handle: TiptapEditorHandle,
   quote: string,
@@ -561,10 +610,71 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const commentDraft = (commentDraftKey ? commentDrafts.get(commentDraftKey) : null) ?? EMPTY_COMMENT_DRAFT
   const commentDraftQuote = commentDraft.quote
   const commentComposerBody = commentDraft.body
-  const setCommentDraftQuote = React.useCallback((quote: string) => setCommentDrafts(drafts => updateCommentDraft(drafts, commentDraftKey, { quote })), [commentDraftKey])
+  const setCommentDraftQuote = React.useCallback((quote: string, offsets?: { start: number; end: number } | null) => {
+    setCommentDrafts(drafts => updateCommentDraft(drafts, commentDraftKey, {
+      quote,
+      start: offsets?.start,
+      end: offsets?.end,
+    }))
+  }, [commentDraftKey])
+  const commentDraftAnchor = (
+    typeof commentDraft.start === 'number'
+    && typeof commentDraft.end === 'number'
+    && commentDraft.end > commentDraft.start
+  ) ? { start: commentDraft.start, end: commentDraft.end } : null
   const setCommentComposerBody = React.useCallback((body: string) => setCommentDrafts(drafts => updateCommentDraft(drafts, commentDraftKey, { body })), [commentDraftKey])
+  /** Clear an unsent draft for a specific note — used after create succeeds even if the user navigated away. */
+  const clearCommentDraftAt = React.useCallback((workspaceId: string, noteId: string) => {
+    setCommentDrafts(drafts => updateCommentDraft(drafts, noteCommentDraftKey(workspaceId, noteId), EMPTY_COMMENT_DRAFT))
+  }, [])
   const [commentComposerTop, setCommentComposerTop] = React.useState(48)
   const [focusCommentComposer, setFocusCommentComposer] = React.useState(false)
+  const [rpcCommentThreads, setRpcCommentThreads] = React.useState<NoteCommentThread[]>([])
+  // Shared create flights: unique tokens map to note keys. end(token) only drops that token so a
+  // stale finally cannot unlock a newer flight, and A→B→A cannot start a duplicate while A's RPC
+  // is still in flight. Note switches do NOT clear in-flight tracking — only the busy UI gates on
+  // whether the active note is in the in-flight set.
+  const commentCreateFlightSeqRef = React.useRef(0)
+  const commentCreateFlightsRef = React.useRef(new Map<string, string>())
+  const commentCreateInFlightNotesRef = React.useRef(new Set<string>())
+  const [commentCreateInFlightNotes, setCommentCreateInFlightNotes] = React.useState<ReadonlySet<string>>(() => new Set())
+  const commentCreateNoteKey = React.useCallback((workspaceId: string, noteId: string) => (
+    JSON.stringify([workspaceId, noteId])
+  ), [])
+  const tryBeginCommentCreate = React.useCallback((workspaceId: string, noteId: string): string | null => {
+    const noteKey = commentCreateNoteKey(workspaceId, noteId)
+    if (commentCreateInFlightNotesRef.current.has(noteKey)) return null
+    const token = `cc-${++commentCreateFlightSeqRef.current}`
+    commentCreateFlightsRef.current.set(token, noteKey)
+    commentCreateInFlightNotesRef.current.add(noteKey)
+    setCommentCreateInFlightNotes(new Set(commentCreateInFlightNotesRef.current))
+    return token
+  }, [commentCreateNoteKey])
+  const endCommentCreate = React.useCallback((token: string) => {
+    const noteKey = commentCreateFlightsRef.current.get(token)
+    if (noteKey == null) return
+    commentCreateFlightsRef.current.delete(token)
+    // Drop the note from the in-flight set only when no other token still points at it.
+    let noteStillInFlight = false
+    for (const owned of commentCreateFlightsRef.current.values()) {
+      if (owned === noteKey) { noteStillInFlight = true; break }
+    }
+    if (!noteStillInFlight) {
+      commentCreateInFlightNotesRef.current.delete(noteKey)
+      setCommentCreateInFlightNotes(new Set(commentCreateInFlightNotesRef.current))
+    }
+  }, [])
+  const activeCommentCreateKey = (
+    activeWorkspaceId && activeNote?.id
+      ? commentCreateNoteKey(activeWorkspaceId, activeNote.id)
+      : null
+  )
+  const commentCreateBusy = activeCommentCreateKey != null && commentCreateInFlightNotes.has(activeCommentCreateKey)
+  // Clear highlights before paint so a collapsed rail cannot flash the previous note's threads.
+  // Do not touch create-flight tracking here — in-flight notes stay locked across switches.
+  React.useLayoutEffect(() => {
+    setRpcCommentThreads([])
+  }, [activeWorkspaceId, activeNote?.id])
   const [commentTooltip, setCommentTooltip] = React.useState<{ body: string; quote: string; top: number; left: number } | null>(null)
   const [footnoteDraft, setFootnoteDraft] = React.useState('')
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
@@ -2708,6 +2818,15 @@ h1,h2,h3{margin-top:1.5em}
     })),
     [content],
   )
+  // Markdown-embedded <!-- comment --> markers stay highlight-only for this PR —
+  // they are not migrated into note-comment sidecars; the RPC rail owns create/resolve/reactions.
+  const highlightComments = React.useMemo(() => {
+    const fromMarkdown = markdownComments
+    const fromRpc = noteThreadsToHighlightComments(rpcCommentThreads)
+    const seen = new Set(fromRpc.map((c) => c.id))
+    return [...fromRpc, ...fromMarkdown.filter((c) => !seen.has(c.id))]
+  }, [markdownComments, rpcCommentThreads])
+
 
   const commandCatalog = React.useMemo(() => {
     const sessions = [...sessionMetaMap.values()].slice(0, 20).map((session) => ({
@@ -3269,7 +3388,7 @@ h1,h2,h3{margin-top:1.5em}
               onMouseUp={(event) => {
                 const quote = selectedNoteQuote(event.currentTarget.querySelector('.ProseMirror'), event.currentTarget.ownerDocument.getSelection())
                 if (!quote) return
-                setCommentDraftQuote(quote)
+                setCommentDraftQuote(quote, commentDraftOffsetsFromEditor(richEditorRef.current, contentRef.current, quote))
                 setCommentTooltip(null)
                 const editor = event.currentTarget.getBoundingClientRect()
                 const range = window.getSelection()?.rangeCount ? window.getSelection()!.getRangeAt(0).getBoundingClientRect() : null
@@ -3278,7 +3397,7 @@ h1,h2,h3{margin-top:1.5em}
               onDoubleClick={(event) => {
                 if ((event.target as HTMLElement).closest('[data-testid="notes-comments-compose"]')) return
                 const quote = selectedNoteQuote(event.currentTarget.querySelector('.ProseMirror'), event.currentTarget.ownerDocument.getSelection())
-                if (quote) setCommentDraftQuote(quote)
+                if (quote) setCommentDraftQuote(quote, commentDraftOffsetsFromEditor(richEditorRef.current, contentRef.current, quote))
                 if (quote) setFocusCommentComposer(true)
                 setRailLayout({ commentsCollapsed: false })
               }}
@@ -3293,7 +3412,7 @@ h1,h2,h3{margin-top:1.5em}
                 if (noteCommentKeyboardAction(event) === 'open') {
                   event.preventDefault()
                   const quote = selectedNoteQuote(event.currentTarget.querySelector('.ProseMirror'), event.currentTarget.ownerDocument.getSelection())
-                  if (quote) setCommentDraftQuote(quote)
+                  if (quote) setCommentDraftQuote(quote, commentDraftOffsetsFromEditor(richEditorRef.current, contentRef.current, quote))
                   if (quote || commentDraftQuote) setFocusCommentComposer(true)
                   setRailLayout({ commentsCollapsed: false })
                   return
@@ -3424,7 +3543,7 @@ h1,h2,h3{margin-top:1.5em}
               ) : null}
               {noteEntityMentions.picker}
               <NotesCommentHighlights
-                comments={markdownComments}
+                comments={highlightComments}
                 hidden={!commentsShown}
                 contentKey={content}
                 onActivate={(comment, rect) => {
@@ -3447,27 +3566,64 @@ h1,h2,h3{margin-top:1.5em}
                   quote={commentDraftQuote}
                   body={commentComposerBody}
                   onBodyChange={setCommentComposerBody}
+                  creating={commentCreateBusy}
                   focusRequested={focusCommentComposer}
                   onFocusHandled={() => setFocusCommentComposer(false)}
                   onCancel={() => {
+                    if (commentCreateBusy) return
                     setCommentDraftQuote('')
                     setCommentComposerBody('')
                   }}
                   onSubmit={() => {
                     const text = commentComposerBody.trim()
-                    if (!text || !activeNote) return
-                    const nextContent = upsertMarkdownComment(contentRef.current, {
-                      id: crypto.randomUUID(),
-                      quote: commentDraftQuote.trim(),
-                      body: text,
-                      createdAt: Date.now(),
-                    })
-                    contentRef.current = nextContent
-                    dirtyRef.current = true
-                    setContent(nextContent)
-                    setDirty(true)
-                    setCommentDraftQuote('')
-                    setCommentComposerBody('')
+                    if (!text || !activeNote || !activeWorkspaceId || commentCreateBusy) return
+                    // Prefer the sidecar RPC stack (threads / resolve / reactions).
+                    // Selection compose from the overlay mirrors the rail submit.
+                    const requestWorkspaceId = activeWorkspaceId
+                    const requestNoteId = activeNote.id
+                    const quote = commentDraftQuote.trim()
+                    const anchor = quote ? anchorFromQuote(contentRef.current, quote, commentDraftAnchor) : null
+                    if (quote && !anchor) {
+                      toast.error(t('notes.comments.errorAttachSelection'))
+                      return
+                    }
+                    const flightToken = tryBeginCommentCreate(requestWorkspaceId, requestNoteId)
+                    if (!flightToken) return
+                    void (async () => {
+                      const stillActive = () => (
+                        workspaceIdRef.current === requestWorkspaceId
+                        && activeNoteIdRef.current === requestNoteId
+                      )
+                      try {
+                        const created = await window.electronAPI.createNoteComment(requestWorkspaceId, {
+                          noteId: requestNoteId,
+                          body: text,
+                          anchor,
+                        })
+                        // Always clear this note's unsent draft — even after navigation —
+                        // so returning does not resubmit a duplicate of the created comment.
+                        clearCommentDraftAt(requestWorkspaceId, requestNoteId)
+                        if (!stillActive()) return
+                        setRpcCommentThreads(prev => {
+                          const index = prev.findIndex(c => c.id === created.id)
+                          if (index === -1) return [...prev, created]
+                          const next = prev.slice()
+                          next[index] = created
+                          return next
+                        })
+                        try {
+                          const list = await window.electronAPI.listNoteComments(requestWorkspaceId, requestNoteId)
+                          if (!stillActive()) return
+                          setRpcCommentThreads(list)
+                        } catch {
+                          // Keep optimistic highlight list if quiet refresh fails.
+                        }
+                      } catch {
+                        if (stillActive()) toast.error(t('notes.comments.errorCreate'))
+                      } finally {
+                        endCommentCreate(flightToken)
+                      }
+                    })()
                   }}
                 />
               ) : null}
@@ -3497,34 +3653,67 @@ h1,h2,h3{margin-top:1.5em}
               maximumWidth={Math.max(140, docRowWidth - NOTE_COLUMN_MIN - (tocShown ? railLayout.toc : 0))}
             /> : null}
             {activeNote ? <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView])} inline={commentsShown} open={railSheet === 'comments'} title={t('notes.comments.title')} onClose={() => setRailSheet(null)}>
-              <NotesComments
-                noteId={activeNote.id}
-                draftQuote={commentDraftQuote}
-                markdownComments={markdownComments}
-                width={railLayout.comments}
-                composerTop={commentComposerTop}
-                draftBody={commentComposerBody}
-                onDraftBodyChange={setCommentComposerBody}
-                focusRequested={focusCommentComposer}
-                onFocusHandled={() => setFocusCommentComposer(false)}
-                onClearDraft={() => setCommentDraftQuote('')}
-                onJumpToQuote={(quote) => {
-                  const root = document.querySelector('.notes-editor .ProseMirror')
-                  if (!root || !quote) return
-                  const hit = Array.from(root.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6')).find(
-                    (node) => node.textContent?.includes(quote),
-                  )
-                  hit?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                }}
-                onCommit={(comments) => {
-                  let next = content
-                  for (const comment of comments) next = upsertMarkdownComment(next, comment)
-                  contentRef.current = next
-                  dirtyRef.current = true
-                  setContent(next)
-                  setDirty(true)
-                }}
-              />
+              {activeWorkspaceId ? (
+                <NotesCommentThreads
+                  workspaceId={activeWorkspaceId}
+                  noteId={activeNote.id}
+                  noteText={content}
+                  getNoteText={() => contentRef.current}
+                  draftQuote={commentDraftQuote}
+                  draftAnchor={commentDraftAnchor}
+                  width={railLayout.comments}
+                  composerTop={commentComposerTop}
+                  draftBody={commentComposerBody}
+                  onDraftBodyChange={setCommentComposerBody}
+                  focusRequested={focusCommentComposer}
+                  onFocusHandled={() => setFocusCommentComposer(false)}
+                  createBusy={commentCreateBusy}
+                  beginCreate={() => tryBeginCommentCreate(activeWorkspaceId, activeNote.id)}
+                  endCreate={endCommentCreate}
+                  onClearDraft={(scope) => {
+                    if (scope) clearCommentDraftAt(scope.workspaceId, scope.noteId)
+                    else setCommentDraftQuote('')
+                  }}
+                  onThreadsChange={setRpcCommentThreads}
+                  onJumpToQuote={(quote) => {
+                    const root = document.querySelector('.notes-editor .ProseMirror')
+                    if (!root || !quote) return
+                    const hit = Array.from(root.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6')).find(
+                      (node) => node.textContent?.includes(quote),
+                    )
+                    hit?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }}
+                />
+              ) : (
+                <NotesComments
+                  noteId={activeNote.id}
+                  draftQuote={commentDraftQuote}
+                  markdownComments={markdownComments}
+                  width={railLayout.comments}
+                  composerTop={commentComposerTop}
+                  draftBody={commentComposerBody}
+                  onDraftBodyChange={setCommentComposerBody}
+                  focusRequested={focusCommentComposer}
+                  onFocusHandled={() => setFocusCommentComposer(false)}
+                  onClearDraft={() => setCommentDraftQuote('')}
+                  onJumpToQuote={(quote) => {
+                    const root = document.querySelector('.notes-editor .ProseMirror')
+                    if (!root || !quote) return
+                    const hit = Array.from(root.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6')).find(
+                      (node) => node.textContent?.includes(quote),
+                    )
+                    hit?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }}
+                  onCommit={(comments) => {
+                    let next = content
+                    for (const comment of comments) next = upsertMarkdownComment(next, comment)
+                    contentRef.current = next
+                    dirtyRef.current = true
+                    setContent(next)
+                    setDirty(true)
+                  }}
+                />
+              )}
             </NotesResponsiveRail> : null}
             {activeNote && activeWorkspaceId ? <NotesResponsiveRail scopeKey={JSON.stringify([activeWorkspaceId, activeNote?.id, noteView, 'history'])} inline={false} open={railSheet === 'history'} title={t('notes.history.title')} onClose={() => setRailSheet(null)}>
               <VersionHistoryPanel

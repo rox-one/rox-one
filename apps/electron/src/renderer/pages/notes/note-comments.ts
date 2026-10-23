@@ -45,7 +45,7 @@ export function createNoteCommentAnchor(selection: NoteTextSelection): NoteComme
   }
 }
 
-function findQuoteWithContext(text: string, exact: string, prefix?: string, suffix?: string): { start: number; end: number } | null {
+export function findQuoteWithContext(text: string, exact: string, prefix?: string, suffix?: string): { start: number; end: number } | null {
   if (!exact) return null
 
   let cursor = 0
@@ -65,7 +65,15 @@ function findQuoteWithContext(text: string, exact: string, prefix?: string, suff
   return null
 }
 
-export function resolveNoteCommentAnchor(text: string, anchor: NoteCommentAnchor): Omit<ResolvedNoteCommentAnchor, 'commentId'> {
+/** Whole-document comments have no selection anchor and are not replies/orphans. */
+export function isDocumentNoteComment(
+  comment: Pick<NoteCommentThread, 'anchor' | 'parentId'> & { orphan?: boolean },
+): boolean {
+  return !comment.parentId && !comment.anchor && !comment.orphan
+}
+
+export function resolveNoteCommentAnchor(text: string, anchor: NoteCommentAnchor | null | undefined): Omit<ResolvedNoteCommentAnchor, 'commentId'> {
+  if (!anchor) return { start: null, end: null, stale: false }
   const position = anchor.selectors.find(selector => selector.type === 'text-position')
   const quote = anchor.selectors.find(selector => selector.type === 'text-quote')
 
@@ -102,3 +110,114 @@ export function resolveNoteCommentAnchors(text: string, comments: NoteCommentThr
     return acc
   }, {})
 }
+
+export type NestedNoteCommentThread = NoteCommentThread & {
+  replies: NoteCommentThread[]
+  /** True when parentId pointed at a missing root — not a whole-document comment. */
+  orphan?: boolean
+}
+
+/** Group flat sidecar comments into one-level threads for the rail UI. */
+export function nestNoteCommentThreads(comments: readonly NoteCommentThread[]): NestedNoteCommentThread[] {
+  const roots: NestedNoteCommentThread[] = []
+  const byId = new Map<string, NestedNoteCommentThread>()
+  for (const comment of comments) {
+    if (comment.parentId) continue
+    const nested: NestedNoteCommentThread = { ...comment, replies: [] }
+    byId.set(comment.id, nested)
+    roots.push(nested)
+  }
+  for (const comment of comments) {
+    if (!comment.parentId) continue
+    const parent = byId.get(comment.parentId)
+    if (parent) parent.replies.push(comment)
+    else {
+      // Orphan reply: keep parentId + orphan marker so UI does not label it document-scope.
+      roots.push({ ...comment, replies: [], orphan: true })
+    }
+  }
+  roots.sort((a, b) => a.createdAt - b.createdAt)
+  for (const root of roots) root.replies.sort((a, b) => a.createdAt - b.createdAt)
+  return roots
+}
+
+/** Pure list helpers for functional comment-rail updates (avoids stale closures). */
+export function upsertNoteCommentInList(
+  prev: readonly NoteCommentThread[],
+  updated: NoteCommentThread,
+): NoteCommentThread[] {
+  const index = prev.findIndex(comment => comment.id === updated.id)
+  if (index === -1) return [...prev, updated]
+  const next = prev.slice()
+  next[index] = updated
+  return next
+}
+
+export function removeNoteCommentFromList(
+  prev: readonly NoteCommentThread[],
+  commentId: string,
+): NoteCommentThread[] {
+  return prev.filter(comment => comment.id !== commentId && comment.parentId !== commentId)
+}
+
+/**
+ * Build a selection anchor from note text + selected quote.
+ * When `preferred` from/to offsets are provided and match the quote in
+ * `fullText`, they win — avoids pinning the first of several identical phrases.
+ */
+export function anchorFromQuote(
+  fullText: string,
+  quote: string,
+  preferred?: { start: number; end: number } | null,
+): NoteCommentAnchor | null {
+  const selectedText = quote.trim()
+  if (!selectedText) return null
+
+  if (
+    preferred
+    && Number.isFinite(preferred.start)
+    && Number.isFinite(preferred.end)
+    && preferred.start >= 0
+    && preferred.end > preferred.start
+    && preferred.end <= fullText.length
+  ) {
+    const slice = fullText.slice(preferred.start, preferred.end)
+    if (slice === selectedText || slice === quote) {
+      return createNoteCommentAnchor({
+        fullText,
+        start: preferred.start,
+        end: preferred.end,
+        selectedText: slice,
+      })
+    }
+  }
+
+  // Without preferred offsets, refuse to guess when the quote repeats — callers toast errorAttachSelection.
+  const start = fullText.indexOf(selectedText)
+  if (start < 0) return null
+  if (fullText.indexOf(selectedText, start + 1) >= 0) return null
+  return createNoteCommentAnchor({
+    fullText,
+    start,
+    end: start + selectedText.length,
+    selectedText,
+  })
+}
+
+/** Selection-anchored open threads → editor highlight payloads. Resolved threads drop out. */
+export function noteThreadsToHighlightComments(comments: readonly NoteCommentThread[]): Array<{
+  id: string
+  quote: string
+  body: string
+  createdAt: number
+}> {
+  return comments
+    .filter(comment => !comment.parentId && !comment.resolvedAt && comment.anchor?.selectedText)
+    .map(comment => ({
+      id: comment.id,
+      quote: comment.anchor!.selectedText,
+      body: comment.body,
+      createdAt: comment.createdAt,
+    }))
+}
+
