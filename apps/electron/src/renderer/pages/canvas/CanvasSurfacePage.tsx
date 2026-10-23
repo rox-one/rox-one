@@ -434,7 +434,9 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
           if (cache.has(hash)) continue
           const meta = board.getAssetMeta(hash)
           const mime = normalizeAssetMime(meta?.mime) ?? 'application/octet-stream'
-          const url = URL.createObjectURL(new Blob([bytes], { type: mime }))
+          const copy = new Uint8Array(bytes.byteLength)
+          copy.set(bytes)
+          const url = URL.createObjectURL(new Blob([copy], { type: mime }))
           if (gen !== assetLoadGenRef.current || cache.has(hash)) { URL.revokeObjectURL(url); continue }
           cache.set(hash, url)
           changed = true
@@ -602,10 +604,14 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       const parentId = nestParentId(selectedIds.map(id => board.get(id)).filter((o): o is CanvasObject => !!o))
       const base = { x: p.x, y: p.y, rotation: 0, parentId }
       const input =
-        tool === 'sticky' ? { ...base, type: 'sticky', w: 180, h: 140, props: { text: '' } } :
-        tool === 'text' ? { ...base, type: 'text', w: 220, h: 40, props: { text: '' } } :
-        tool === 'frame' ? { ...base, type: 'frame', w: DEFAULT_FRAME.w, h: DEFAULT_FRAME.h, name: t('canvas.frame.defaultName'), props: { clip: true }, style: { fill: { type: 'solid', color: 'transparent' }, stroke: { color: 'currentColor', width: 1.5 } } } :
-        { ...base, type: 'shape', w: 160, h: 100, props: { kind: tool === 'rect' ? 'rect' : 'ellipse' } }
+        tool === 'sticky' ? { ...base, type: 'sticky' as const, w: 180, h: 140, props: { text: '' } } :
+        tool === 'text' ? { ...base, type: 'text' as const, w: 220, h: 40, props: { text: '' } } :
+        tool === 'frame' ? {
+          ...base, type: 'frame' as const, w: DEFAULT_FRAME.w, h: DEFAULT_FRAME.h, name: t('canvas.frame.defaultName'),
+          props: { clip: true },
+          style: { fill: { type: 'solid' as const, color: 'transparent' }, stroke: { color: 'currentColor', width: 1.5 } },
+        } :
+        { ...base, type: 'shape' as const, w: 160, h: 100, props: { kind: (tool === 'rect' ? 'rect' : 'ellipse') as 'rect' | 'ellipse' } }
       const [id] = board.add([input], LOCAL)
       setSelectedIds([id!])
       if (tool === 'sticky' || tool === 'text') setEditing(id!)
