@@ -104,7 +104,7 @@ export const ACTION_FENCE_LANGUAGES = new Set([
 const UNSAFE_KEY_RE =
   /^(script|eval|shell|javascript|node|bash|powershell|cmd|exec|spawn|child_process|onload|onclick|onerror|rawjs|js|templater)$/i
 
-const UNSAFE_TYPE_RE = /^(js|javascript|shell|bash|powershell|cmd|eval|templater|raw)$/i
+const UNSAFE_TYPE_RE = /^(js|javascript|shell|bash|powershell|eval|templater|raw)$/i
 
 const HTML_TAG_RE = /<\/?[a-z][^>]*>/gi
 const EVENT_HANDLER_RE = /\bon[a-z]+\s*=/i
@@ -317,7 +317,11 @@ export function normalizeActionSpec(
   const templateId = clampId(raw.templateId ?? raw.template)
   const blockKind = clampId(raw.blockKind ?? raw.block)
   let formula = typeof raw.formula === 'string' ? raw.formula.replace(CONTROL_CHARS_RE, '').trim() : undefined
-  if (formula && formula.length > MAX_FORMULA) formula = formula.slice(0, MAX_FORMULA)
+  // Mirror normalizeInputs oversize: reject (clear + invalid-inputs), never silently slice.
+  if (formula && formula.length > MAX_FORMULA) {
+    issues.push('invalid-inputs')
+    formula = undefined
+  }
   // Mirror normalizeInputs: reject eval(/function(/HTML (and event-handler/URL) — never store eval-shaped formula.
   if (formula) {
     const lower = formula.toLowerCase()

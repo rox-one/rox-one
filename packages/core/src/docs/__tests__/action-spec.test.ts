@@ -205,6 +205,70 @@ describe('LSX-WP-033 ActionSpec helpers', () => {
     expect(ok.spec.rejectedUnsafe).toBe(false)
   })
 
+  test('type/kind cmd with target normalizes to command without rejectedUnsafe', () => {
+    const viaKind = normalizeActionSpec({
+      kind: 'cmd',
+      label: 'Sync',
+      commandId: 'notes.sync',
+      reviewState: 'reviewed',
+    })
+    expect(viaKind.ok).toBe(true)
+    if (!viaKind.ok) throw new Error('expected ok')
+    expect(viaKind.spec.kind).toBe('command')
+    expect(viaKind.spec.commandId).toBe('notes.sync')
+    expect(viaKind.spec.rejectedUnsafe).toBe(false)
+
+    const viaType = normalizeActionSpec({
+      type: 'cmd',
+      label: 'Sync',
+      commandId: 'notes.sync',
+      reviewState: 'reviewed',
+    })
+    expect(viaType.ok).toBe(true)
+    if (!viaType.ok) throw new Error('expected ok')
+    expect(viaType.spec.kind).toBe('command')
+    expect(viaType.spec.rejectedUnsafe).toBe(false)
+
+    const fence = parseActionFenceBody(
+      ['name Sync', 'type cmd', 'action notes.sync'].join('\n'),
+      { language: 'button', imported: true },
+    )
+    expect(fence.ok).toBe(true)
+    if (!fence.ok) throw new Error('expected ok')
+    expect(fence.spec.kind).toBe('command')
+    expect(fence.spec.commandId).toBe('notes.sync')
+    expect(fence.spec.rejectedUnsafe).toBe(false)
+
+    expect(canonicalizeActionKind('cmd')).toBe('command')
+  })
+
+  test('oversize formula is rejected (cleared) not silently sliced', () => {
+    const oversize = 'x'.repeat(513)
+    const result = normalizeActionSpec({
+      kind: 'safeFormula',
+      label: 'Calc',
+      formula: oversize,
+      reviewState: 'reviewed',
+    })
+    expect(result.ok).toBe(false)
+    if (result.ok) throw new Error('expected inert')
+    expect(result.issues).toContain('invalid-inputs')
+    expect(result.inertSpec.formula).toBeUndefined()
+    expect(result.inertSpec.rejectedUnsafe).toBe(true)
+    expect(presentationStateForSpec(result.inertSpec)).toBe('inert')
+
+    const atLimit = normalizeActionSpec({
+      kind: 'safeFormula',
+      label: 'Calc',
+      formula: 'y'.repeat(512),
+      reviewState: 'reviewed',
+    })
+    expect(atLimit.ok).toBe(true)
+    if (!atLimit.ok) throw new Error('expected ok')
+    expect(atLimit.spec.formula).toHaveLength(512)
+    expect(atLimit.spec.rejectedUnsafe).toBe(false)
+  })
+
 
   test('unreviewed missing-target slash draft is ok and not rejectedUnsafe', () => {
     const result = normalizeActionSpec({
