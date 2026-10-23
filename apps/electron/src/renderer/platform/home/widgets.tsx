@@ -781,7 +781,7 @@ function TasksWidget({ edit, size = 'S' }: WidgetProps) {
           </span>
         ) : null}
         {today.length === 0 ? (
-          <p className="px-1.5 py-2 text-sm text-muted-foreground">{t('workbench.home.tasks.todayEmpty')}</p>
+          <WidgetEmpty text={t('workbench.home.tasks.todayEmpty')} />
         ) : (
           <Suspense fallback={<ul className="min-h-0 flex-1 overflow-y-auto" aria-busy="true" aria-label={t('workbench.home.w.tasks')}>{shown.map((task) => <li key={task.id} className="h-7 animate-pulse rounded-[var(--radius-control)] bg-surface-hover" />)}</ul>}>
             <TodayTasksSortable
@@ -998,7 +998,7 @@ function FocusWidget({ edit }: WidgetProps) {
         </div>
         <SectionLabel>{t('workbench.home.focus.top3')}</SectionLabel>
         {top3.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('workbench.home.focus.top3Empty')}</p>
+          <WidgetEmpty text={t('workbench.home.focus.top3Empty')} />
         ) : (
           <WidgetList>
             {top3.map((task, i) => (
