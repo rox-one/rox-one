@@ -87,10 +87,10 @@ export function NotesCommentThreads({
   onThreadsChange?: (comments: NoteCommentThread[]) => void
   /** True when the shared parent flight lock is held by this note. */
   createBusy?: boolean
-  /** Acquire the shared parent create lock; returns flightKey or null if this note already owns it. */
+  /** Acquire the shared parent create lock; returns a unique flight token or null if this note is already in flight. */
   beginCreate: () => string | null
-  /** Release the shared parent create lock if still owned by flightKey. */
-  endCreate: (flightKey: string) => void
+  /** Release only the given flight token (stale finally must not unlock a newer create). */
+  endCreate: (token: string) => void
 }) {
   const { t } = useTranslation()
   const [comments, setComments] = React.useState<NoteCommentThread[]>([])
@@ -221,8 +221,8 @@ export function NotesCommentThreads({
     }
     setError(null)
     const requestKey = { workspaceId, noteId }
-    const flightKey = beginCreate()
-    if (!flightKey) return
+    const flightToken = beginCreate()
+    if (!flightToken) return
     setBusyId(CREATE_BUSY)
     try {
       const created = await window.electronAPI.createNoteComment(requestKey.workspaceId, {
@@ -239,7 +239,7 @@ export function NotesCommentThreads({
     } catch {
       if (isActiveKey(requestKey)) setError(t('notes.comments.errorCreate'))
     } finally {
-      endCreate(flightKey)
+      endCreate(flightToken)
       if (isActiveKey(requestKey)) setBusyId(null)
     }
   }, [body, draftQuote, draftAnchor, getNoteText, workspaceId, noteId, createBusy, beginCreate, endCreate, clearComposer, publishUpdate, reload, isActiveKey, t])

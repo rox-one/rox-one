@@ -630,41 +630,50 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   const [commentComposerTop, setCommentComposerTop] = React.useState(48)
   const [focusCommentComposer, setFocusCommentComposer] = React.useState(false)
   const [rpcCommentThreads, setRpcCommentThreads] = React.useState<NoteCommentThread[]>([])
-  // One parent-level create flight lock shared by overlay + NotesCommentThreads so collapsing
-  // the rail mid-flight cannot start a duplicate create. Keyed by [workspaceId, noteId].
-  const commentCreateFlightKeyRef = React.useRef<string | null>(null)
-  const [commentCreateBusyKey, setCommentCreateBusyKey] = React.useState<string | null>(null)
-  const commentCreateFlightKeyFor = React.useCallback((workspaceId: string, noteId: string) => (
+  // Shared create flights: unique tokens map to note keys. end(token) only drops that token so a
+  // stale finally cannot unlock a newer flight, and A→B→A cannot start a duplicate while A's RPC
+  // is still in flight. Note switches do NOT clear in-flight tracking — only the busy UI gates on
+  // whether the active note is in the in-flight set.
+  const commentCreateFlightSeqRef = React.useRef(0)
+  const commentCreateFlightsRef = React.useRef(new Map<string, string>())
+  const commentCreateInFlightNotesRef = React.useRef(new Set<string>())
+  const [commentCreateInFlightNotes, setCommentCreateInFlightNotes] = React.useState<ReadonlySet<string>>(() => new Set())
+  const commentCreateNoteKey = React.useCallback((workspaceId: string, noteId: string) => (
     JSON.stringify([workspaceId, noteId])
   ), [])
   const tryBeginCommentCreate = React.useCallback((workspaceId: string, noteId: string): string | null => {
-    const key = commentCreateFlightKeyFor(workspaceId, noteId)
-    // Same note already creating — reject. A different note (or free lock) may take/re-key.
-    if (commentCreateFlightKeyRef.current === key) return null
-    commentCreateFlightKeyRef.current = key
-    setCommentCreateBusyKey(key)
-    return key
-  }, [commentCreateFlightKeyFor])
-  const endCommentCreate = React.useCallback((flightKey: string) => {
-    if (commentCreateFlightKeyRef.current === flightKey) {
-      commentCreateFlightKeyRef.current = null
-      setCommentCreateBusyKey(null)
+    const noteKey = commentCreateNoteKey(workspaceId, noteId)
+    if (commentCreateInFlightNotesRef.current.has(noteKey)) return null
+    const token = `cc-${++commentCreateFlightSeqRef.current}`
+    commentCreateFlightsRef.current.set(token, noteKey)
+    commentCreateInFlightNotesRef.current.add(noteKey)
+    setCommentCreateInFlightNotes(new Set(commentCreateInFlightNotesRef.current))
+    return token
+  }, [commentCreateNoteKey])
+  const endCommentCreate = React.useCallback((token: string) => {
+    const noteKey = commentCreateFlightsRef.current.get(token)
+    if (noteKey == null) return
+    commentCreateFlightsRef.current.delete(token)
+    // Drop the note from the in-flight set only when no other token still points at it.
+    let noteStillInFlight = false
+    for (const owned of commentCreateFlightsRef.current.values()) {
+      if (owned === noteKey) { noteStillInFlight = true; break }
+    }
+    if (!noteStillInFlight) {
+      commentCreateInFlightNotesRef.current.delete(noteKey)
+      setCommentCreateInFlightNotes(new Set(commentCreateInFlightNotesRef.current))
     }
   }, [])
   const activeCommentCreateKey = (
     activeWorkspaceId && activeNote?.id
-      ? commentCreateFlightKeyFor(activeWorkspaceId, activeNote.id)
+      ? commentCreateNoteKey(activeWorkspaceId, activeNote.id)
       : null
   )
-  // Composer stays disabled only while THIS note owns the lock.
-  const commentCreateBusy = commentCreateBusyKey != null && commentCreateBusyKey === activeCommentCreateKey
-  // Collapsed comments rail unmounts NotesCommentThreads — clear highlights here so a
-  // prior note's threads cannot paint on the newly opened body. Also clear/re-key the
-  // shared create flight lock so a stale in-flight create cannot block the new note.
-  React.useEffect(() => {
+  const commentCreateBusy = activeCommentCreateKey != null && commentCreateInFlightNotes.has(activeCommentCreateKey)
+  // Clear highlights before paint so a collapsed rail cannot flash the previous note's threads.
+  // Do not touch create-flight tracking here — in-flight notes stay locked across switches.
+  React.useLayoutEffect(() => {
     setRpcCommentThreads([])
-    commentCreateFlightKeyRef.current = null
-    setCommentCreateBusyKey(null)
   }, [activeWorkspaceId, activeNote?.id])
   const [commentTooltip, setCommentTooltip] = React.useState<{ body: string; quote: string; top: number; left: number } | null>(null)
   const [footnoteDraft, setFootnoteDraft] = React.useState('')
@@ -3578,8 +3587,8 @@ h1,h2,h3{margin-top:1.5em}
                       toast.error(t('notes.comments.errorAttachSelection'))
                       return
                     }
-                    const flightKey = tryBeginCommentCreate(requestWorkspaceId, requestNoteId)
-                    if (!flightKey) return
+                    const flightToken = tryBeginCommentCreate(requestWorkspaceId, requestNoteId)
+                    if (!flightToken) return
                     void (async () => {
                       const stillActive = () => (
                         workspaceIdRef.current === requestWorkspaceId
@@ -3612,7 +3621,7 @@ h1,h2,h3{margin-top:1.5em}
                       } catch {
                         if (stillActive()) toast.error(t('notes.comments.errorCreate'))
                       } finally {
-                        endCommentCreate(flightKey)
+                        endCommentCreate(flightToken)
                       }
                     })()
                   }}
