@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import {
   isReservedTemplateId,
+  reservedTemplateIdKind,
   mergeRecentsByOpened,
   patchNoteLibraryChromeContent,
   readNoteCover,
@@ -140,6 +141,20 @@ describe('note-library', () => {
       '',
     ].join('\n')
     expect(patchNoteLibraryChromeContent(quotedSingle, { icon: '⭐' })).toBeNull()
+    // Whitespace before colon must patch in place — never insert a second key.
+    const spaced = [
+      '---',
+      'cover : "#111111"',
+      'title: A',
+      '---',
+      '',
+      'body',
+      '',
+    ].join('\n')
+    const spacedOut = patchNoteLibraryChromeContent(spaced, { cover: '#112233' })
+    expect(spacedOut).toContain('cover: "#112233"')
+    expect(spacedOut).not.toContain('cover :')
+    expect(spacedOut!.split('\n').filter((line) => /^cover\s*:/.test(line))).toHaveLength(1)
   })
 
   it('sanitizes template ids', () => {
@@ -154,6 +169,11 @@ describe('note-library', () => {
     expect(isReservedTemplateId('Daily')).toBe(true)
     expect(isReservedTemplateId('daily.md')).toBe(true)
     expect(isReservedTemplateId('team/daily')).toBe(true)
+    expect(isReservedTemplateId('Imports')).toBe(true)
+    expect(isReservedTemplateId('imports.md')).toBe(true)
+    expect(isReservedTemplateId('team/imports')).toBe(true)
+    expect(reservedTemplateIdKind('team/imports')).toBe('imports')
+    expect(reservedTemplateIdKind('daily')).toBe('daily')
     expect(isReservedTemplateId('standup')).toBe(false)
   })
 

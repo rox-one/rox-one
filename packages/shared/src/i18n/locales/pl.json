@@ -6405,6 +6405,7 @@
   "notes.library.saveAsTemplate": "Save template",
   "notes.library.templateIdPlaceholder": "template-id",
   "notes.library.templateIdReservedDaily": "Identyfikator „daily” jest zarezerwowany dla notatek dziennych.",
+  "notes.library.templateIdReservedImports": "Identyfikator „imports” jest zarezerwowany.",
   "notes.library.templateSaved": "Template saved",
   "notes.library.templateTitlePlaceholder": "Template title",
   "notes.library.templates": "Templates",

@@ -120,15 +120,16 @@ export function patchNoteLibraryChromeContent(
   const lines = match[2]!.split(/\r?\n/)
 
   for (const { key, value } of ops) {
-    const keyPrefix = `${key}:`
+    const keyLineRe = new RegExp(`^${key}\\s*:`)
     const matches: number[] = []
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]!
       // Quoted key forms (`"cover":` / `'icon':`) — refuse rather than insert a second unquoted key.
       if (new RegExp(`^["']${key}["']\\s*:`).test(line)) return null
-      // Exact top-level key (`cover:` / `cover: …`); never `coverExtra:`.
-      if (!line.startsWith(keyPrefix)) continue
-      const rawValue = line.slice(keyPrefix.length).trim()
+      // Top-level key with optional whitespace before `:` (`cover:` / `cover : …`).
+      const keyMatch = keyLineRe.exec(line)
+      if (!keyMatch) continue
+      const rawValue = line.slice(keyMatch[0].length).trim()
       // Block/folded scalar indicators — rewriting the indicator line would orphan the body.
       if (/^[|>][+-]?\d*$/.test(rawValue)) return null
       // Skip blank lines after the key; an indented non-blank body means a multiline value.
@@ -170,10 +171,19 @@ export function sanitizeTemplateId(raw: string): string {
   return id
 }
 
-/** True when any path segment is reserved for system Daily notes (…/daily). */
-export function isReservedTemplateId(raw: string): boolean {
+/** Which reserved basename applies, if any (`daily` / `imports` at any path). */
+export function reservedTemplateIdKind(raw: string): 'daily' | 'imports' | null {
   const id = sanitizeTemplateId(raw)
-  return !!id && id.split('/').some((part) => part === 'daily')
+  if (!id) return null
+  const parts = id.split('/')
+  if (parts.some((part) => part === 'daily')) return 'daily'
+  if (parts.some((part) => part === 'imports')) return 'imports'
+  return null
+}
+
+/** True when any path segment is reserved (Daily notes or imports provenance). */
+export function isReservedTemplateId(raw: string): boolean {
+  return reservedTemplateIdKind(raw) != null
 }
 
 /** Live typing helper — keeps a single trailing `/` so nested ids like team/weekly can be entered. */

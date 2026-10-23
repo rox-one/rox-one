@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { isReservedTemplateId, sanitizeTemplateId, sanitizeTemplateIdDraft } from './note-library'
+import { reservedTemplateIdKind, sanitizeTemplateId, sanitizeTemplateIdDraft } from './note-library'
 
 export function NotesTemplatesDialog({
   open,
@@ -77,11 +77,11 @@ export function NotesTemplatesDialog({
   }, [pendingReplaceId, onPendingReplaceHandled])
 
   const safeId = sanitizeTemplateId(templateId)
-  const reservedDaily = mode === 'save' && isReservedTemplateId(safeId)
-  const collision = mode === 'save' && safeId && !reservedDaily ? templates.some((item) => item.id === safeId) : false
+  const reservedKind = mode === 'save' ? reservedTemplateIdKind(safeId) : null
+  const collision = mode === 'save' && safeId && !reservedKind ? templates.some((item) => item.id === safeId) : false
 
   const requestSave = (confirmReplace = false) => {
-    if (!safeId || reservedDaily) return
+    if (!safeId || reservedKind) return
     if (collision && !confirmReplace) {
       setReplaceConfirm(true)
       return
@@ -168,9 +168,11 @@ export function NotesTemplatesDialog({
               placeholder={t('notes.library.templateIdPlaceholder')}
               data-testid="notes-template-id"
             />
-            {reservedDaily ? (
+            {reservedKind ? (
               <p className="text-caption text-destructive" data-testid="notes-template-reserved" role="alert">
-                {t('notes.library.templateIdReservedDaily')}
+                {reservedKind === 'imports'
+                  ? t('notes.library.templateIdReservedImports')
+                  : t('notes.library.templateIdReservedDaily')}
               </p>
             ) : collision ? (
               <p className="text-caption text-status-warning" data-testid="notes-template-collision">
@@ -205,7 +207,7 @@ export function NotesTemplatesDialog({
                 </Button>
               ) : (
                 <Button
-                  disabled={busy || !safeId || reservedDaily}
+                  disabled={busy || !safeId || !!reservedKind}
                   data-testid="notes-template-save"
                   onClick={() => requestSave(false)}
                 >

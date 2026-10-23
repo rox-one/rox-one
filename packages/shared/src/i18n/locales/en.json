@@ -6383,6 +6383,7 @@
   "notes.library.saveAsTemplate": "Save template",
   "notes.library.templateIdPlaceholder": "template-id",
   "notes.library.templateIdReservedDaily": "The id \"daily\" is reserved for Daily notes.",
+  "notes.library.templateIdReservedImports": "The id \"imports\" is reserved.",
   "notes.library.templateSaved": "Template saved",
   "notes.library.templateTitlePlaceholder": "Template title",
   "notes.library.templates": "Templates",

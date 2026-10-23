@@ -6383,6 +6383,7 @@
   "notes.library.saveAsTemplate": "Save template",
   "notes.library.templateIdPlaceholder": "template-id",
   "notes.library.templateIdReservedDaily": "識別碼「daily」已保留給每日筆記。",
+  "notes.library.templateIdReservedImports": "識別碼「imports」已保留。",
   "notes.library.templateSaved": "Template saved",
   "notes.library.templateTitlePlaceholder": "Template title",
   "notes.library.templates": "Templates",

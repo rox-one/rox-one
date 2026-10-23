@@ -95,6 +95,9 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.CREATE_COMMENT,
   RPC_CHANNELS.notes.UPDATE_COMMENT,
   RPC_CHANNELS.notes.DELETE_COMMENT,
+  RPC_CHANNELS.notes.LIST_TEMPLATES,
+  RPC_CHANNELS.notes.CREATE_FROM_TEMPLATE,
+  RPC_CHANNELS.notes.SAVE_AS_TEMPLATE,
   RPC_CHANNELS.notes.LIST_REVISIONS,
   RPC_CHANNELS.notes.GET_REVISION,
   RPC_CHANNELS.notes.RESTORE_REVISION,
@@ -1889,13 +1892,16 @@ function assertSafeTemplateId(templateId: string): string {
     .replace(/^[/-]+|[/-]+$/g, '')
     .slice(0, 80)
   if (!normalized) throw new Error('Invalid template id')
+  // Reserved basenames before assertSafeNoteId — imports/* would otherwise leak LOCAL_ONLY.
+  if (normalized.split('/').some(part => part === 'daily')) {
+    throw new CodedError('INVALID_ARGUMENT', 'Template id "daily" is reserved for Daily notes')
+  }
+  if (normalized.split('/').some(part => part === 'imports')) {
+    throw new CodedError('INVALID_ARGUMENT', 'Template id "imports" is reserved')
+  }
   const id = assertSafeNoteId(normalized)
   if (id.split('/').some(part => part === TEMPLATES_DIR || part === '')) throw new Error('Invalid template id')
   if (id !== normalized) throw new Error('Invalid template id')
-  // System Daily notes own templates/**/daily.md — reject basename daily at any path.
-  if (id.split('/').some(part => part === 'daily')) {
-    throw new CodedError('INVALID_ARGUMENT', 'Template id "daily" is reserved for Daily notes')
-  }
   return id
 }
 
@@ -1999,8 +2005,8 @@ export async function listNoteTemplatesForRoot(notesRoot: string): Promise<NoteT
       const id = templateIdFromRelativePath(rel).toLowerCase()
       // Full relative path must already match normalized `${id}.md` (nested case too).
       if (rel !== `${id}.md`) continue
-      // System Daily template is not a library catalog entry (basename daily at any path).
-      if (id.split('/').some(part => part === 'daily')) continue
+      // System Daily / imports templates are not library catalog entries (basename at any path).
+      if (id.split('/').some(part => part === 'daily' || part === 'imports')) continue
       let content: string
       try {
         content = await readFileNoFollow(abs)

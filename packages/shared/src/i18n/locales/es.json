@@ -6392,6 +6392,7 @@
   "notes.library.saveAsTemplate": "Save template",
   "notes.library.templateIdPlaceholder": "template-id",
   "notes.library.templateIdReservedDaily": "El id \"daily\" está reservado para las notas diarias.",
+  "notes.library.templateIdReservedImports": "El id \"imports\" está reservado.",
   "notes.library.templateSaved": "Template saved",
   "notes.library.templateTitlePlaceholder": "Template title",
   "notes.library.templates": "Templates",

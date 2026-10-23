@@ -282,4 +282,31 @@ describe('note templates library', () => {
     })).rejects.toThrow(/Invalid template path/)
   })
 
+
+  it('rejects reserved imports template id with INVALID_ARGUMENT (not LOCAL_ONLY)', async () => {
+    await expect(saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'Imports',
+      title: 'Nope',
+      body: 'x',
+    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    await expect(saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'imports/nested',
+      title: 'Nope',
+      body: 'x',
+    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+    await expect(saveNoteAsTemplateForRoot(notesRoot, {
+      templateId: 'team/imports',
+      title: 'Nope',
+      body: 'x',
+    })).rejects.toMatchObject({ code: 'INVALID_ARGUMENT' })
+  })
+
+  it('excludes imports basename templates from library catalog', async () => {
+    writeFileSync(join(notesRoot, 'templates', 'imports.md'), '---\ntitle: Imports\n---\n\nx\n', 'utf-8')
+    mkdirSync(join(notesRoot, 'templates', 'pack'), { recursive: true })
+    writeFileSync(join(notesRoot, 'templates', 'pack', 'imports.md'), '---\ntitle: Nested Imports\n---\n\nx\n', 'utf-8')
+    const listed = await listNoteTemplatesForRoot(notesRoot)
+    expect(listed.some((item) => item.id === 'imports' || item.id.endsWith('/imports'))).toBe(false)
+  })
+
 })
