@@ -9,7 +9,7 @@ import { roxKeys } from '@/lib/query/keys'
 import { readSkillsPage, SKILLS_UI_SEARCH_LIMIT } from '@/lib/skills-query'
 
 const fieldClass = 'w-full rounded-lg border border-border/70 bg-background px-2.5 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50'
-const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-base transition-colors motion-reduce:transition-none hover:bg-foreground/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
+const buttonClass = 'inline-flex min-h-8 items-center justify-center gap-1.5 rounded-lg border border-border/70 px-2.5 py-1.5 text-base transition-colors motion-reduce:transition-none hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none'
 type CatalogItem = { slug: string; name: string }
 type ProfileDraft = AgentProfileInput & { id: string | null; expectedRevision: number }
 type Catalog = { sources: CatalogItem[]; skills: CatalogItem[] }
