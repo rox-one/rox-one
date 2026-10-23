@@ -3524,6 +3524,7 @@ navState.navigator === 'unavailable' || isMemoryView || isTasksView || isProject
                 {/* Key on sidebarMode forces full remount when switching views, skipping animations */}
                 <SessionList
                   key={sessionFilter?.kind}
+                  sessionsReady={!!isSessionsReady}
                   items={searchActive ? workspaceSessionMetas : filteredSessionMetas}
                   onDelete={handleDeleteSession}
                   onFlag={onFlagSession}

@@ -299,7 +299,7 @@ export const sessionListComponents: ComponentEntry[] = [
       },
       {
         name: 'isSearching',
-        description: 'Show loading spinner while searching',
+        description: 'Show loading skeleton while searching',
         control: { type: 'boolean' },
         defaultValue: false,
       },

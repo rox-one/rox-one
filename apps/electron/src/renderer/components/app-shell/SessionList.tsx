@@ -37,6 +37,7 @@ import {
   type FolderHeaderMeta,
 } from "./chat-folders/chat-folders-model"
 import { SessionSearchHeader } from "./SessionSearchHeader"
+import { SessionListSkeleton } from "./SessionListSkeleton"
 import { SessionItem } from "./SessionItem"
 import { SessionLanes } from "./SessionLanes"
 import { CollectionBulkBar } from "./collection/CollectionBulkBar"
@@ -135,6 +136,8 @@ interface SessionListProps {
   onNavigateToView?: (view: 'allSessions' | 'flagged') => void
   /** Unified session options per session (real-time state) */
   sessionOptions?: Map<string, import('../../hooks/useSessionOptions').SessionOptions>
+  /** False while the workspace session catalog is still loading (show skeleton rows, not empty). */
+  sessionsReady?: boolean
   /** Whether search mode is active */
   searchActive?: boolean
   /** Current search query */
@@ -205,6 +208,7 @@ export function SessionList({
   onFocusChatInput,
   onOpenInNewWindow,
   sessionOptions,
+  sessionsReady = true,
   searchActive,
   searchQuery = '',
   onSearchChange,
@@ -1489,6 +1493,13 @@ export function SessionList({
   // --- Empty state (non-search) — keep search bar pinned above empty UI ---
   // Don't show empty state when there are collapsed groups with content
   if (flatRows.length === 0 && rowData.groups.length === 0 && !searchActive) {
+    if (!sessionsReady) {
+      return (
+        <div ref={listTarget} className="flex flex-col flex-1 min-h-0">
+          <SessionListSkeleton />
+        </div>
+      )
+    }
     const filtersActive = activeFilterCount(collectionFilters) > 0
     const emptyBody = currentFilter?.kind === 'archived' ? (
       <EntityListEmptyScreen
@@ -1579,11 +1590,35 @@ export function SessionList({
             exceededLimit={exceededSearchLimit}
             inputRef={searchInputRef}
           />
-          <SessionLanes
-            rows={flatRows}
-            selectedId={selectionStore.state.selected}
-            onSelect={handleSelectSessionById}
+          {isSearchingContent && flatRows.length === 0 ? (
+            <SessionListSkeleton rows={5} />
+          ) : (
+            <SessionLanes
+              rows={flatRows}
+              selectedId={selectionStore.state.selected}
+              onSelect={handleSelectSessionById}
+            />
+          )}
+        </div>
+      ) : isSearchingContent && flatRows.length === 0 ? (
+        <div className="flex flex-1 min-h-0 flex-col">
+          <SessionSearchHeader
+            searchQuery={searchQuery}
+            onSearchChange={onSearchChange}
+            onSearchClose={() => {
+              onSearchChange?.('')
+              onSearchClose?.()
+            }}
+            onKeyDown={handleSearchKeyDown}
+            onFocus={() => setIsSearchInputFocused(true)}
+            onBlur={() => setIsSearchInputFocused(false)}
+            isSearching={isSearchingContent}
+            isUnavailable={isSearchUnavailable}
+            resultCount={0}
+            exceededLimit={exceededSearchLimit}
+            inputRef={searchInputRef}
           />
+          <SessionListSkeleton rows={5} />
         </div>
       ) : (
       <EntityList<SessionListRow>
