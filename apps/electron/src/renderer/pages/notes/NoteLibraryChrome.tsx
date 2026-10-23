@@ -193,7 +193,7 @@ export function NoteCoverIconChrome({
                 setIconDraft(event.target.value)
                 setIconError(false)
               }}
-              maxLength={32}
+              maxLength={128}
               placeholder={t('notes.library.iconPlaceholder')}
               data-testid="notes-icon-input"
               aria-invalid={iconError || undefined}

@@ -20,10 +20,18 @@ describe('note-library', () => {
     expect(readNoteCover({ cover: 'linear-gradient(red, \\75rl(file:///etc/passwd))' })).toBeNull()
     expect(readNoteCover({ cover: 'linear-gradient(red, blue)' })).toContain('linear-gradient')
     expect(readNoteCover({ cover: 'data:image/svg+xml;base64,PHN2Zy8+' })).toBeNull()
+    expect(readNoteCover({ cover: 'data:image/svg;base64,PHN2Zy8+' })).toBeNull()
     expect(readNoteCover({ cover: 'linear-gradient(red, image(https://evil.example/x.png))' })).toBeNull()
     expect(readNoteCover({ cover: 'linear-gradient(red, image-set(url(https://evil.example/x.png) 1x))' })).toBeNull()
+    expect(readNoteCover({ cover: 'linear-gradient(red, element(#x))' })).toBeNull()
+    expect(readNoteCover({ cover: 'linear-gradient(red, paint(foo))' })).toBeNull()
     expect(readNoteIcon({ icon: '📝' })).toBe('📝')
-    expect(readNoteIcon({ icon: 'x'.repeat(40) })).toBeNull()
+    // ZWJ family emoji is one grapheme but many UTF-16 units — must not reject solely for length>32.
+    const family = '👨\u200D👩\u200D👧\u200D👦'
+    expect(family.length).toBeGreaterThan(8)
+    expect(readNoteIcon({ icon: family })).toBe(family)
+    expect(readNoteIcon({ icon: '😀😀😀😀😀😀😀😀😀' })).toBeNull() // 9 graphemes
+    expect(readNoteIcon({ icon: 'x'.repeat(129) })).toBeNull()
     expect(readNoteIcon({ icon: `ok${String.fromCharCode(0)}bad` })).toBeNull()
   })
 

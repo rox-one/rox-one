@@ -212,11 +212,12 @@ function propertiesFromNoteContent(content: string): Record<string, unknown> {
   })
   // Full YAML document — keep nested maps/seqs (projectFrontmatter is leaf-scalars only).
   const doc = parseDocument(yamlSource.replace(/\r(?!\n)/g, '\n'), { uniqueKeys: true })
-  if (doc.errors.length || doc.contents == null) {
-    throw new Error('Invalid note frontmatter')
-  }
+  if (doc.errors.length) throw new Error('Invalid note frontmatter')
+  // Empty / null YAML documents are valid "no properties".
+  if (doc.contents == null) return {}
   const data = doc.toJS({ maxAliasCount: 0 })
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+  if (data == null) return {}
+  if (typeof data !== 'object' || Array.isArray(data)) {
     throw new Error('Invalid note frontmatter')
   }
   return data as Record<string, unknown>
@@ -2372,6 +2373,23 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     }
   }, [activeWorkspaceId, activeNote, canEditContent, flushBeforeAction, applyPropertyPreview, t])
 
+  /** One dictionary write for cover/icon so rapid patches cannot race on stale activeNote.properties. */
+  const updateLibraryChromeProperties = React.useCallback(async (patch: { cover?: string | null; icon?: string | null }) => {
+    if (!activeWorkspaceId || !activeNote) return false
+    if (!canEditContent) { toast.error(t('notes.content.readOnly')); return false }
+    if (!await flushBeforeAction()) return false
+    const next = withNoteLibraryProperties(activeNote.properties, patch)
+    try {
+      const preview = previewPropertyDictionary(contentRef.current, activeNote.properties, next)
+      const request = { workspaceId: activeWorkspaceId, noteId: activeNote.id, preview }
+      if (preview.requiresReview) { setPropertyPreview(request); return false }
+      return await applyPropertyPreview(request)
+    } catch {
+      toast.error(t('notes.toast.updatePropertiesFailed'))
+      return false
+    }
+  }, [activeWorkspaceId, activeNote, canEditContent, flushBeforeAction, applyPropertyPreview, t])
+
   const updateScalarProperty = React.useCallback(async (path: string[], value: PropertyValue): Promise<boolean> => {
     if (!activeWorkspaceId || !activeNote || !canEditContent || !await flushBeforeAction()) return false
     const source = retainSource(contentRef.current)
@@ -3658,11 +3676,7 @@ h1,h2,h3{margin-top:1.5em}
               <NoteCoverIconChrome
                 properties={activeNote.properties}
                 disabled={!canEditContent}
-                onChange={(patch) => {
-                  const next = withNoteLibraryProperties(activeNote.properties, patch)
-                  if ('cover' in patch) void updateProperty('cover', next.cover)
-                  if ('icon' in patch) void updateProperty('icon', next.icon)
-                }}
+                onChange={(patch) => { void updateLibraryChromeProperties(patch) }}
               />
               <TiptapMarkdownEditor
                 key={activeNote.id}
@@ -3999,7 +4013,7 @@ h1,h2,h3{margin-top:1.5em}
       mode={templatesDialogMode}
       templates={noteTemplates}
       busy={templatesBusy}
-      defaultTitle={templatesDialogMode === 'save' ? activeNote?.title : createTitle}
+      defaultTitle={templatesDialogMode === 'save' ? (activeNote?.title ?? '') : ''}
       pendingReplaceId={templatesPendingReplaceId}
       onPendingReplaceHandled={() => setTemplatesPendingReplaceId(null)}
       onOpenChange={(open) => {

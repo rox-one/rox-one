@@ -24,4 +24,24 @@ describe('projectNativeNotesChanged', () => {
       principal,
     )).toBeNull()
   })
+
+  it('allows templates reason without noteId (avoids reserved-id filter)', () => {
+    const out = projectNativeNotesChanged(
+      authority as never,
+      [{ workspaceId: 'ws', reason: 'templates' }],
+      'ws',
+      principal,
+    )
+    expect(out).toEqual([{ workspaceId: 'ws', reason: 'templates' }])
+  })
+
+  it('drops events whose noteId hits reserved segments', () => {
+    expect(projectNativeNotesChanged(
+      authority as never,
+      [{ workspaceId: 'ws', reason: 'templates', noteId: 'credentials' }],
+      'ws',
+      principal,
+    )).toBeNull()
+  })
+
 })

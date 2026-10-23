@@ -18,15 +18,15 @@ export function readNoteCover(properties: Record<string, unknown> | null | undef
   const value = raw.trim()
   if (!value || value.length > 2048) return null
   // Deny SVG data URLs (scriptable); allow other sole http(s) / data:image values.
-  if (/^data:image\/svg\+xml/i.test(value)) return null
+  if (/^data:image\/svg\b/i.test(value)) return null
   if (/^https?:\/\/\S+$/i.test(value) || /^data:image\/[a-z0-9.+-]+;base64,\S+$/i.test(value) || /^data:image\/[a-z0-9.+-]+,.+/i.test(value)) {
     return value
   }
   // Reject CSS escapes (e.g. \75rl(file:///...)) that bypass the url(...) check.
   if (value.includes('\\')) return null
   if (/url\s*\(/i.test(value)) return null
-  // Reject CSS image*() functions that can smuggle urls inside gradients.
-  if (/\b(?:image|image-set|cross-fade)\s*\(/i.test(value)) return null
+  // Reject CSS image*() / element() / paint() that can smuggle urls inside gradients.
+  if (/\b(?:image|image-set|cross-fade|element|paint)\s*\(/i.test(value)) return null
   // Solid hex or url-free gradients only.
   if (/^#[0-9a-fA-F]{3,8}$/.test(value)) return value
   if (/^(linear|radial)-gradient\(/i.test(value)) return value
@@ -37,9 +37,21 @@ export function readNoteIcon(properties: Record<string, unknown> | null | undefi
   const raw = properties?.[NOTES_ICON_PROPERTY]
   if (typeof raw !== 'string') return null
   const value = raw.trim()
-  if (!value || value.length > 32) return null
+  if (!value) return null
+  // UTF-16 abuse ceiling — still allow ZWJ emoji sequences longer than 32 code units.
+  if (value.length > 128) return null
   if (/[\x00-\x1f\x7f]/.test(value)) return null
+  const graphemeCount = countGraphemes(value)
+  if (graphemeCount > 8) return null
   return value
+}
+
+function countGraphemes(value: string): number {
+  if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+    return [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(value)].length
+  }
+  // Fallback: code points (under-counts some ZWJ sequences but never rejects short ZWJ as >8).
+  return Array.from(value).length
 }
 
 export function withNoteLibraryProperties(

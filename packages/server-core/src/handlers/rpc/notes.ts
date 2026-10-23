@@ -2820,6 +2820,9 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   }, { nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.notes.CREATE_FROM_TEMPLATE, async (ctx, workspaceId: string, templateId: string, title?: string, folder?: string, operation?: NativeNoteOperation) => {
+    if (typeof templateId !== 'string' || (title != null && typeof title !== 'string') || (folder != null && typeof folder !== 'string')) {
+      throw new Error('invalid native note creation intent')
+    }
     const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: title || templateId || 'untitled' })
     if (!isClaimableLive(act)) throw new Error('note create is not live')
     if (ctx.principal) {
@@ -2873,8 +2876,9 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
       ? nativeNotesContext(deps, ctx, workspaceId, 'write').notesRoot
       : (nativeContent.assertScope(ctx, workspaceId), getWorkspaceNotesRoot(workspaceId))
     const saved = await saveNoteAsTemplateForRoot(notesRoot, input)
-    // Peers with an open templates dialog refresh on reason=templates (template id in noteId).
-    changed({ workspaceId, reason: 'templates', noteId: saved.id })
+    // Omit noteId — template ids like credentials/cookies/passkeys would be dropped by
+    // projectNativeNotesChanged's reserved-segment filter; peers refresh on reason alone.
+    changed({ workspaceId, reason: 'templates' })
     return saved
   }, { nativeAction: 'write' })
 
