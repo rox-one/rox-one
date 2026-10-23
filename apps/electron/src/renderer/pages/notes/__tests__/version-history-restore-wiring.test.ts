@@ -4,6 +4,10 @@ import { join } from 'node:path'
 
 const notesPage = readFileSync(join(import.meta.dir, '../../NotesPage.tsx'), 'utf8')
 const panel = readFileSync(join(import.meta.dir, '../VersionHistoryPanel.tsx'), 'utf8')
+const historyStore = readFileSync(
+  join(import.meta.dir, '../../../../../../../packages/server-core/src/docs/note-revision-history.ts'),
+  'utf8',
+)
 const notesRpc = readFileSync(
   join(import.meta.dir, '../../../../../../../packages/server-core/src/handlers/rpc/notes.ts'),
   'utf8',
@@ -23,13 +27,18 @@ describe('version history restore wiring', () => {
     expect(notesPage).not.toContain('onRestored={(note) => {')
   })
 
-  test('NotesPage re-resolves content after restore; resolve failure falls through to previous-OK patch', () => {
+  test('NotesPage re-resolves content after restore; resolve failure/mismatch falls through to previous-OK patch', () => {
     expect(notesPage).toContain('Prefer a fresh resolve after restore')
     expect(notesPage).toContain('restoredResolution = await window.electronAPI.resolveContent')
     expect(notesPage).toContain('restoredResolution = null')
-    expect(notesPage).toContain('never install error')
+    expect(notesPage).toContain('never block')
     expect(notesPage).toContain('previous && previous.status !== \'error\'')
-    // Must not install an error resolution after a successful restore.
+    expect(notesPage).toContain('restoredResolution.origin.nativeId === (saved.nativeId ?? saved.id)')
+    // Restore success path must not throw on authority mismatch after content already applied.
+    expect(notesPage).toContain('never block')
+    expect(notesPage).not.toContain(
+      "throw Object.assign(new Error(t('notes.content.authorityChanged')), { code: 'DOCUMENT_AUTHORITY_CHANGED' })\n            }\n            saved.sourceStoreId",
+    )
     expect(notesPage).not.toContain("restoredResolution = { status: 'error', code: 'denied' }")
   })
 
@@ -44,6 +53,12 @@ describe('version history restore wiring', () => {
     expect(panel).not.toContain('window.electronAPI.restoreNoteRevision')
     expect(panel).toContain('reload({ selectTip: true })')
     expect(panel).toContain('opts?.selectTip || !selectedId')
+  })
+
+  test('listNoteRevisions always merges early-filtered native journals', () => {
+    expect(historyStore).toContain('Always merge native tips')
+    expect(historyStore).toContain('collectNativeWriteJournals')
+    expect(historyStore).not.toContain('fromJournals.length > 0 || fromSidecar.length > 0')
   })
 
   test('notes RPC reuses the commit operationId for rememberSavedNoteRevision', () => {

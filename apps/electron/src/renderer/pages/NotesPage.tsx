@@ -1563,23 +1563,25 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
           setTagDraft(saved.tags.join(', '))
           setSaveNeedsReload(false)
           saveBlockedRef.current = false
-          if (restoredResolution && restoredResolution.status !== 'error') {
-            if (restoredResolution.origin.nativeId !== (saved.nativeId ?? saved.id)) {
-              throw Object.assign(new Error(t('notes.content.authorityChanged')), { code: 'DOCUMENT_AUTHORITY_CHANGED' })
-            }
-            saved.sourceStoreId = restoredResolution.origin.sourceStoreId
+          if (
+            restoredResolution
+            && restoredResolution.status !== 'error'
+            && restoredResolution.origin.nativeId === (saved.nativeId ?? saved.id)
+          ) {
+            const matched = restoredResolution
+            saved.sourceStoreId = matched.origin.sourceStoreId
             setContentResolution({
-              ...restoredResolution,
+              ...matched,
               content: saved.content,
-              revision: saved.revision ?? restoredResolution.revision,
+              revision: saved.revision ?? matched.revision,
               contentHash: contentHash(saved.content),
               canonicalRef: {
-                ...restoredResolution.canonicalRef,
-                revisionId: saved.revision ?? restoredResolution.canonicalRef.revisionId,
+                ...matched.canonicalRef,
+                revisionId: saved.revision ?? matched.canonicalRef.revisionId,
               },
             })
           } else {
-            // Resolve unavailable/failed after a successful restore: patch previous OK, never install error.
+            // Resolve unavailable/failed/mismatched after a successful restore: patch previous OK, never block.
             setContentResolution(previous => previous && previous.status !== 'error' ? {
               ...previous, content: saved.content, revision: saved.revision!, contentHash: contentHash(saved.content),
               canonicalRef: { ...previous.canonicalRef, revisionId: saved.revision },
