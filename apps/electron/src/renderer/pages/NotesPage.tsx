@@ -2985,7 +2985,7 @@ h1,h2,h3{margin-top:1.5em}
             capabilities={noteViewCapabilities}
             compact={toolbarWidth < 560}
           />
-          {noteView === 'standard' ? <NotesRailTools tocShown={tocShown} commentsShown={commentsShown} historyShown={false} sheet={railSheet} onOpen={setRailSheet} onCollapse={(rail) => { if (rail === 'history') setRailSheet(null); else setRailLayout({ [`${rail}Collapsed`]: true }) }} /> : null}
+          {noteView === 'standard' ? <NotesRailTools tocShown={tocShown} commentsShown={commentsShown} historyShown={false} sheet={railSheet} onOpen={setRailSheet} onCollapse={(rail) => setRailLayout({ [`${rail}Collapsed`]: true })} /> : null}
           </div>
         ) : null}
 
