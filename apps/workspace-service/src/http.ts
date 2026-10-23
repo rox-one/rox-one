@@ -9,6 +9,7 @@ import { LICENSE_ROUTES } from './modules/licenses/routes.ts'
 import { COMMAND_ROUTES } from './modules/commands/routes.ts'
 import { RULES_ROUTES } from './modules/rules/routes.ts'
 import { NOTIFY_ROUTES } from './modules/notify/routes.ts'
+import { IM_ROUTES } from './modules/im/routes.ts'
 
 export type { WorkspaceActorResolver, WorkspaceHttpOptions, WorkspaceLocalIssuer } from './routing.ts'
 
@@ -28,6 +29,8 @@ export const WORKSPACE_ROUTES: readonly WorkspaceRoute[] = [
   ...RULES_ROUTES,
   // W1-09 (#1506)
   ...NOTIFY_ROUTES,
+  // W1-15 (#2042)
+  ...IM_ROUTES,
 ]
 
 /**
