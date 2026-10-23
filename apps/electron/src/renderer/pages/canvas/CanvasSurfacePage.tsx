@@ -19,7 +19,11 @@ import {
   CREATABLE_KINDS, createEntity, createEntityLinker, createEntityRegistry, createPreviewBatcher, seedCreatedCardPreview, watchEntityChanges, deleteEntity, EntitySnapshotResolver, searchExisting, unlinkMyBoardLinks, relinkMyBoardLinks, canDeleteCardEntity, type CreatableKind,
 } from './entity-wiring'
 import { onCanvasTarget, takeCanvasTarget, type CanvasTarget } from './canvas-target'
-import { resizeRotated } from './geometry'
+import { MIN_SIZE, resizeRotated } from './geometry'
+import {
+  SNAP_THRESHOLD_PX, aabbOf, applyMarqueeSelection, collectSnapTargets, hitMarquee, marqueeAabb,
+  snapAabb, snapResizeBox, type Guide, type SnapTarget,
+} from './marquee-snap'
 import {
   isTinyStroke, lineFromEndpoints, pushStrokeSample, readPoints, scaleLocalPoints, strokeBounds,
   toPolylineAttr, toSmoothPath,
@@ -292,8 +296,9 @@ function useBoard(workspaceId: string, boardId: string) {
 
 type Drag =
   | { kind: 'pan'; sx: number; sy: number; ox: number; oy: number }
-  | { kind: 'move'; id: string; sx: number; sy: number; ox: number; oy: number; descendants: string[] }
-  | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; rotation: number; o: { x: number; y: number; w: number; h: number }; points?: number[] }
+  | { kind: 'marquee'; x0: number; y0: number; x1: number; y1: number; additive: boolean }
+  | { kind: 'move'; ids: string[]; sx: number; sy: number; origins: Record<string, { x: number; y: number }>; snapTargets: SnapTarget[] }
+  | { kind: 'resize'; id: string; corner: 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; rotation: number; o: { x: number; y: number; w: number; h: number }; points?: number[]; snapTargets: SnapTarget[] }
   | { kind: 'rotate'; id: string; cx: number; cy: number }
   | { kind: 'draw-line'; id: string; x0: number; y0: number; undoLen: number }
   | { kind: 'draw-ink'; id: string; undoLen: number; abs: number[] }
@@ -319,6 +324,10 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const assetLoadGenRef = useRef(0)
   const [assetUrls, setAssetUrls] = useState<Record<string, string>>({})
   const drag = useRef<Drag | null>(null)
+  /** Space held → empty drag pans (select-tool empty drag is marquee otherwise). Middle mouse also pans. */
+  const spaceHeld = useRef(false)
+  const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null)
+  const [guides, setGuides] = useState<Guide[]>([])
   const undo = useMemo(() => (board ? createUndoManager(board, LOCAL) : null), [board])
   useEffect(() => () => { if (undo) undo.captureTimeout = 400 }, [undo])
   const index = useMemo(() => (board ? new SpatialIndex(board) : null), [board])
@@ -514,6 +523,37 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   }
 
   useEffect(() => {
+    const onSpace = (e: KeyboardEvent) => {
+      if (e.code !== 'Space') return
+      // EventTarget may be SVG (stage) or HTML — compare as Element, not HTMLElement.
+      const node = e.target instanceof Element ? e.target : null
+      const html = node instanceof HTMLElement ? node : null
+      const tag = html?.tagName ?? (node instanceof SVGElement ? node.tagName : undefined)
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || tag === 'SELECT' || html?.isContentEditable) {
+        if (e.type === 'keyup') spaceHeld.current = false
+        return
+      }
+      // Only steal Space for pan when focus is on the stage (or document body).
+      const stage = svgRef.current
+      const onStage = !node || node === document.body || !!(stage && (node === stage || stage.contains(node)))
+      if (!onStage) { if (e.type === 'keyup') spaceHeld.current = false; return }
+      if (e.type === 'keydown') { if (!e.repeat) spaceHeld.current = true; e.preventDefault() }
+      else spaceHeld.current = false
+    }
+    const clearSpace = () => { spaceHeld.current = false }
+    window.addEventListener('keydown', onSpace)
+    window.addEventListener('keyup', onSpace)
+    window.addEventListener('blur', clearSpace)
+    document.addEventListener('visibilitychange', clearSpace)
+    return () => {
+      window.removeEventListener('keydown', onSpace)
+      window.removeEventListener('keyup', onSpace)
+      window.removeEventListener('blur', clearSpace)
+      document.removeEventListener('visibilitychange', clearSpace)
+      spaceHeld.current = false
+    }
+  }, [])
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (editing || !board || cardDelete) return
       const tag = (e.target as HTMLElement | null)?.tagName
@@ -529,7 +569,7 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
         } else if (entities[0]) requestDelete(entities[0].id)
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) undo?.redo(); else undo?.undo() }
-      if (e.key === 'Escape') { setSelectedIds([]); setTool('select'); setPicker(false) }
+      if (e.key === 'Escape') { drag.current = null; setSelectedIds([]); setTool('select'); setPicker(false); setMarquee(null); setGuides([]) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -618,32 +658,69 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
       setTool('select')
       return
     }
-    setSelectedIds([])
-    drag.current = { kind: 'pan', sx: e.clientX, sy: e.clientY, ox: view.x, oy: view.y }
+    // Pan: middle mouse or Space+drag. Otherwise rubber-band marquee (Shift = additive).
+    if (e.button === 1 || spaceHeld.current) {
+      e.preventDefault() // middle-button autoscroll
+      drag.current = { kind: 'pan', sx: e.clientX, sy: e.clientY, ox: view.x, oy: view.y }
+      e.currentTarget.setPointerCapture(e.pointerId)
+      return
+    }
+    if (e.button !== 0) return
+    const p = toWorld(e.clientX, e.clientY)
+    const additive = e.shiftKey || e.metaKey || e.ctrlKey
+    if (!additive) setSelectedIds([])
+    drag.current = { kind: 'marquee', x0: p.x, y0: p.y, x1: p.x, y1: p.y, additive }
+    setGuides([])
+    setMarquee({ x0: p.x, y0: p.y, x1: p.x, y1: p.y })
     e.currentTarget.setPointerCapture(e.pointerId)
   }
   const onObjectDown = (e: ReactPointerEvent, o: CanvasObject) => {
     if (tool !== 'select') return
+    // Middle mouse / Space+drag must pan — do not steal the event from the canvas.
+    if (e.button !== 0 || spaceHeld.current) return
     e.stopPropagation()
     const additive = e.shiftKey || e.metaKey || e.ctrlKey
     if (additive) {
       setSelectedIds(ids => ids.includes(o.id) ? ids.filter(id => id !== o.id) : [...ids, o.id])
       return // additive click does not start a move
     }
-    setSelectedIds([o.id])
+    // Keep multi-selection when dragging an already-selected object.
+    const nextIds = selectedIds.includes(o.id) ? selectedIds : [o.id]
+    setSelectedIds(nextIds)
     if (o.locked) return
-    drag.current = { kind: 'move', id: o.id, sx: e.clientX, sy: e.clientY, ox: o.x, oy: o.y, descendants: collectDescendantIds(board?.list() ?? [], o.id) }
+    const moveIds: string[] = []
+    const origins: Record<string, { x: number; y: number }> = {}
+    const list = board?.list() ?? []
+    for (const id of nextIds) {
+      const cur = board?.get(id)
+      if (!cur || cur.locked) continue
+      if (!origins[id]) { moveIds.push(id); origins[id] = { x: cur.x, y: cur.y } }
+      for (const d of collectDescendantIds(list, id)) {
+        const child = board?.get(d)
+        if (!child || origins[d]) continue
+        // Locked descendants still translate with the parent (lock blocks direct drag only).
+        moveIds.push(d)
+        origins[d] = { x: child.x, y: child.y }
+      }
+    }
+    if (!moveIds.length) return
+    // Cache snap targets once per gesture — rebuilding every move is O(n) and hurts large boards.
+    const snapTargets = collectSnapTargets(list, new Set(moveIds), true)
+    drag.current = { kind: 'move', ids: moveIds, sx: e.clientX, sy: e.clientY, origins, snapTargets }
+    setGuides([])
     svgRef.current?.setPointerCapture(e.pointerId)
   }
   const onHandleDown = (e: ReactPointerEvent, o: CanvasObject, h: 'nw' | 'ne' | 'sw' | 'se' | 'rotate') => {
     e.stopPropagation()
     if (o.locked) return
+    setGuides([])
     drag.current = h === 'rotate'
       ? { kind: 'rotate', id: o.id, cx: o.x + o.w / 2, cy: o.y + o.h / 2 }
       : {
           kind: 'resize', id: o.id, corner: h, sx: e.clientX, sy: e.clientY, rotation: o.rotation ?? 0,
           o: { x: o.x, y: o.y, w: o.w, h: o.h },
           points: (o.type === 'line' || o.type === 'ink') ? readPoints(o.props) : undefined,
+          snapTargets: collectSnapTargets(board?.list() ?? [], new Set([o.id]), true),
         }
     svgRef.current?.setPointerCapture(e.pointerId)
   }
@@ -651,26 +728,57 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
     const d = drag.current
     if (!d || !board) return
     if (d.kind === 'pan') setView(v => ({ ...v, x: d.ox + e.clientX - d.sx, y: d.oy + e.clientY - d.sy }))
+    else if (d.kind === 'marquee') {
+      const p = toWorld(e.clientX, e.clientY)
+      d.x1 = p.x; d.y1 = p.y
+      setMarquee({ x0: d.x0, y0: d.y0, x1: d.x1, y1: d.y1 })
+    }
     else if (d.kind === 'move') {
-      const nx = d.ox + (e.clientX - d.sx) / view.zoom
-      const ny = d.oy + (e.clientY - d.sy) / view.zoom
-      const cur = board.get(d.id)
-      if (!cur) return
-      const dx = nx - cur.x, dy = ny - cur.y
-      if (dx === 0 && dy === 0) return
-      // One Yjs transaction so a frame+children move is a single IPC update (not O(n) floods).
-      // Locked descendants still translate: lock blocks direct drag, not parent-driven nesting.
+      const rawDx = (e.clientX - d.sx) / view.zoom
+      const rawDy = (e.clientY - d.sy) / view.zoom
+      // Snap the union AABB of moving roots (exclude nested-only ids that are also in origins via parent).
+      const rootIds = d.ids.filter(id => {
+        const o = board.get(id)
+        return o && (o.parentId == null || !d.origins[o.parentId])
+      })
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+      for (const id of rootIds) {
+        const o0 = d.origins[id]
+        const cur = board.get(id)
+        if (!o0 || !cur) continue
+        const box = aabbOf({ x: o0.x + rawDx, y: o0.y + rawDy, w: cur.w, h: cur.h }, cur.rotation ?? 0)
+        minX = Math.min(minX, box.minX); minY = Math.min(minY, box.minY)
+        maxX = Math.max(maxX, box.maxX); maxY = Math.max(maxY, box.maxY)
+      }
+      const snapOn = !e.altKey
+      const thr = SNAP_THRESHOLD_PX / view.zoom
+      const snapped = Number.isFinite(minX)
+        ? snapAabb({ x: minX, y: minY, w: maxX - minX, h: maxY - minY }, d.snapTargets, thr, snapOn)
+        : { x: minX, y: minY, guides: [] as Guide[] }
+      const adjDx = rawDx + (Number.isFinite(minX) ? snapped.x - minX : 0)
+      const adjDy = rawDy + (Number.isFinite(minY) ? snapped.y - minY : 0)
+      setGuides(snapped.guides)
+      // One Yjs transaction so a multi-move / frame+children is a single IPC update.
       board.doc.transact(() => {
-        board.update(d.id, { x: nx, y: ny }, LOCAL)
-        for (const id of d.descendants) {
-          const o = board.get(id)
-          if (o) board.update(id, { x: o.x + dx, y: o.y + dy }, LOCAL)
+        for (const id of d.ids) {
+          const o0 = d.origins[id]
+          if (!o0) continue
+          board.update(id, { x: o0.x + adjDx, y: o0.y + adjDy }, LOCAL)
         }
       }, LOCAL)
     }
     else if (d.kind === 'resize') {
-      const minSize = d.points && d.points.length >= 2 ? 1 : undefined
-      const box = resizeRotated(d.o, d.rotation, d.corner, (e.clientX - d.sx) / view.zoom, (e.clientY - d.sy) / view.zoom, minSize)
+      const minSize = d.points && d.points.length >= 2 ? 1 : MIN_SIZE
+      let box = resizeRotated(d.o, d.rotation, d.corner, (e.clientX - d.sx) / view.zoom, (e.clientY - d.sy) / view.zoom, minSize)
+      // Snap unrotated resizes; rotated boxes keep geometry-only resize (guides would fight the local frame).
+      if (!d.rotation) {
+        const thr = SNAP_THRESHOLD_PX / view.zoom
+        const sn = snapResizeBox(d.o, box, d.snapTargets, thr, !e.altKey, minSize)
+        box = sn.box
+        setGuides(sn.guides)
+      } else {
+        setGuides([])
+      }
       if (d.points && d.points.length >= 2) {
         board.update(d.id, { ...box, props: { points: scaleLocalPoints(d.points, d.o, box) } }, LOCAL)
       } else {
@@ -696,6 +804,18 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
   const onUp = () => {
     const d = drag.current
     drag.current = null
+    setGuides([])
+    if (d?.kind === 'marquee') {
+      setMarquee(null)
+      if (!board) return
+      const rect = marqueeAabb(d.x0, d.y0, d.x1, d.y1)
+      // Tiny drag (click) with no additive already cleared selection on pointerdown.
+      const w = rect.maxX - rect.minX, h = rect.maxY - rect.minY
+      if (w < 2 / view.zoom && h < 2 / view.zoom) return
+      const hits = hitMarquee(board.list(), rect)
+      setSelectedIds(prev => applyMarqueeSelection(prev, hits, d.additive))
+      return
+    }
     if (d && (d.kind === 'draw-line' || d.kind === 'draw-ink')) {
       if (undo) undo.captureTimeout = 400
       if (!board) { undo?.stopCapturing(); setTool('select'); return }
@@ -824,6 +944,22 @@ function BoardEditor({ workspaceId, boardId, focusObjectId, onBack }: { workspac
               onOpenEntity={o => registry.get(String(o.props.kind))?.open({ kind: String(o.props.kind), id: String(o.props.entityId) })}
             />
             {selectedObj && !editing && <SelectionHandles o={selectedObj} zoom={view.zoom} onDown={(e, h) => onHandleDown(e, selectedObj, h)} />}
+            {!selectedObj && !editing && selectedObjects.map(o => (
+              <rect key={`sel-${o.id}`} data-testid="canvas-selection-multi" x={o.x} y={o.y} width={o.w} height={o.h}
+                fill="none" className="stroke-accent" strokeWidth={1 / view.zoom} pointerEvents="none"
+                transform={o.rotation ? `rotate(${o.rotation} ${o.x + o.w / 2} ${o.y + o.h / 2})` : undefined} />
+            ))}
+            {marquee && (() => {
+              const r = marqueeAabb(marquee.x0, marquee.y0, marquee.x1, marquee.y1)
+              return <rect data-testid="canvas-marquee" x={r.minX} y={r.minY} width={r.maxX - r.minX} height={r.maxY - r.minY}
+                fill="currentColor" fillOpacity={0.08} className="stroke-accent" strokeWidth={1 / view.zoom} pointerEvents="none" />
+            })()}
+            {guides.map((g, i) => g.axis === 'x'
+              ? <line key={`gx-${i}`} data-testid="canvas-guide" x1={g.world} y1={g.from} x2={g.world} y2={g.to}
+                  className="stroke-accent" strokeWidth={1 / view.zoom} strokeDasharray={`${4 / view.zoom} ${4 / view.zoom}`} pointerEvents="none" />
+              : <line key={`gy-${i}`} data-testid="canvas-guide" x1={g.from} y1={g.world} x2={g.to} y2={g.world}
+                  className="stroke-accent" strokeWidth={1 / view.zoom} strokeDasharray={`${4 / view.zoom} ${4 / view.zoom}`} pointerEvents="none" />
+            )}
           </g>
         </svg>
         {editingObj && board && <LiveTextEditor board={board} o={editingObj} view={view} placeholder={t('canvas.text.placeholder')} onDone={() => { undo?.stopCapturing(); setEditing(null) }} />}
