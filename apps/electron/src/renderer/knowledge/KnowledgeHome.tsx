@@ -402,7 +402,7 @@ export function KnowledgeHome() {
       >
         <button
           type="button"
-          className="inline-flex items-center min-h-[var(--control-hit-min)] px-3 text-xs font-medium rounded-[var(--radius-control)] bg-foreground/[0.06] hover:bg-foreground/[0.1] transition-colors duration-[var(--motion-fast)]"
+          className="inline-flex items-center min-h-[var(--control-hit-min)] px-3 text-xs font-medium rounded-[var(--radius-control)] bg-surface-hover hover:bg-surface-pressed text-text-secondary hover:text-text-primary transition-colors duration-[var(--motion-fast)]"
           onClick={() => navigate(routes.view.notes())}
           data-testid="knowledge-open-rox-notes"
         >
