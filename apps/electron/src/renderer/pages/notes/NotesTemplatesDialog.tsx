@@ -65,7 +65,7 @@ export function NotesTemplatesDialog({
                 <button
                   key={template.id}
                   type="button"
-                  className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-foreground/[0.06] ${selectedId === template.id ? 'bg-foreground/[0.08]' : ''}`}
+                  className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm hover:bg-surface-hover ${selectedId === template.id ? 'bg-surface-selected' : ''}`}
                   onClick={() => {
                     setSelectedId(template.id)
                     if (!title.trim()) setTitle(template.title)

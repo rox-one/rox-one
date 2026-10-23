@@ -29,14 +29,13 @@ export function NoteFavoriteButton({
   return (
     <button
       type="button"
-      className={cn('grid size-7 place-items-center rounded-md hover:bg-foreground/[0.08]', className)}
+      className={cn('grid size-7 place-items-center rounded-md hover:bg-surface-hover', className)}
       aria-pressed={pinned}
       aria-label={t(pinned ? 'screens.notes.unpin' : 'screens.notes.pin')}
-      title={t(pinned ? 'screens.notes.unpin' : 'screens.notes.pin')}
       data-testid="notes-favorite-toggle"
       onClick={onToggle}
     >
-      <Star className={cn('size-3.5', pinned && 'fill-current text-status-warning')} aria-hidden />
+      <Star className={cn('icon-caption', pinned && 'fill-current text-status-warning')} aria-hidden />
     </button>
   )
 }
@@ -82,20 +81,20 @@ export function NoteCoverIconChrome({
         data-testid="notes-cover"
       >
         {!cover ? (
-          <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-caption text-muted-foreground">
             {t('notes.library.coverEmpty')}
           </div>
         ) : null}
         <div className="absolute inset-x-0 bottom-1 flex justify-end gap-1 px-2">
           <Popover>
             <PopoverTrigger asChild>
-              <Button type="button" size="sm" variant="secondary" className="h-7 gap-1 px-2 text-xs" disabled={disabled} data-testid="notes-cover-picker">
-                <ImagePlus className="size-3.5" aria-hidden />
+              <Button type="button" size="sm" variant="secondary" className="h-7 gap-1 px-2 text-caption" disabled={disabled} data-testid="notes-cover-picker">
+                <ImagePlus className="icon-caption" aria-hidden />
                 {t('notes.library.cover')}
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-72 space-y-2">
-              <p className="text-xs text-muted-foreground">{t('notes.library.coverHint')}</p>
+              <p className="text-caption text-muted-foreground">{t('notes.library.coverHint')}</p>
               <div className="grid grid-cols-2 gap-2">
                 {NOTES_COVER_PRESETS.map((preset) => (
                   <button
@@ -128,12 +127,12 @@ export function NoteCoverIconChrome({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="grid size-12 place-items-center rounded-[var(--radius-control)] border border-border/50 bg-foreground/[0.03] text-2xl hover:bg-foreground/[0.06]"
+              className="grid size-12 place-items-center rounded-[var(--radius-control)] border border-border/50 bg-surface-hover/40 text-title hover:bg-surface-hover"
               aria-label={t('notes.library.icon')}
               data-testid="notes-icon-picker"
               disabled={disabled}
             >
-              {icon ?? <SmilePlus className="size-5 text-muted-foreground" aria-hidden />}
+              {icon ?? <SmilePlus className="icon-toolbar text-muted-foreground" aria-hidden />}
             </button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-64 space-y-2">
@@ -142,7 +141,7 @@ export function NoteCoverIconChrome({
                 <button
                   key={emoji}
                   type="button"
-                  className="grid size-8 place-items-center rounded-md hover:bg-foreground/[0.08]"
+                  className="grid size-8 place-items-center rounded-md hover:bg-surface-hover"
                   onClick={() => onChange({ icon: emoji })}
                 >
                   {emoji}
@@ -158,14 +157,14 @@ export function NoteCoverIconChrome({
             />
             <div className="flex justify-end gap-2">
               <Button type="button" size="sm" variant="ghost" onClick={() => onChange({ icon: null })}>
-                <X className="size-3.5" aria-hidden />
+                <X className="icon-caption" aria-hidden />
                 {t('notes.library.clear')}
               </Button>
               <Button type="button" size="sm" onClick={() => onChange({ icon: iconDraft.trim() || null })}>{t('notes.library.apply')}</Button>
             </div>
           </PopoverContent>
         </Popover>
-        <p className="text-xs text-muted-foreground">{t('notes.library.iconHint')}</p>
+        <p className="text-caption text-muted-foreground">{t('notes.library.iconHint')}</p>
       </div>
     </div>
   )

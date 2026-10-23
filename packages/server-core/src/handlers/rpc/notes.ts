@@ -1915,7 +1915,7 @@ export async function saveNoteAsTemplateForRoot(
   const filePath = join(notesRoot, TEMPLATES_DIR, `${id}.md`)
   if (!isInsidePath(join(notesRoot, TEMPLATES_DIR), filePath)) throw new Error('Invalid template id')
   await mkdir(dirname(filePath), { recursive: true })
-  const properties = { ...(input.properties ?? {}), title: input.title.trim() || titleFromId(id) }
+  const properties: Record<string, unknown> = { ...(input.properties ?? {}), title: input.title.trim() || titleFromId(id) }
   // Templates keep content identity only — drop path/runtime-ish keys.
   for (const key of ['createdAt', 'cover', 'icon']) delete properties[key]
   const content = stringifyNoteContent(input.body ?? '', properties)
