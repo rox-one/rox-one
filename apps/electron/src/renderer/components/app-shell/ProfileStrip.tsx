@@ -45,12 +45,12 @@ function RoxInkAvatarArt() {
   )
 }
 
-/** Per-plan tint for the compact plan pill (gradient + inner highlight + soft shadow). */
+/** Per-plan tone for the compact plan pill (SE surface; data-plan still distinguishes). */
 const PLAN_PILL_TONES: Record<string, string> = {
-  standard: 'from-zinc-100 to-zinc-200 text-zinc-700 ring-zinc-300/70 dark:from-zinc-700 dark:to-zinc-800 dark:text-zinc-200 dark:ring-white/10',
-  pro: 'from-sky-100 to-indigo-200 text-indigo-800 ring-indigo-300/70 dark:from-sky-500/30 dark:to-indigo-600/40 dark:text-indigo-100 dark:ring-indigo-300/20',
-  max: 'from-amber-100 to-orange-200 text-orange-800 ring-orange-300/70 dark:from-amber-400/30 dark:to-orange-600/40 dark:text-amber-100 dark:ring-amber-300/20',
-  team: 'from-emerald-100 to-teal-200 text-teal-800 ring-teal-300/70 dark:from-emerald-500/30 dark:to-teal-600/40 dark:text-emerald-100 dark:ring-emerald-300/20',
+  standard: 'bg-surface-hover text-muted-foreground ring-border',
+  pro: 'bg-surface-hover text-foreground ring-border',
+  max: 'bg-surface-hover text-foreground ring-border',
+  team: 'bg-surface-hover text-foreground ring-border',
 }
 
 function PlanPill({ plan, label }: { plan: string; label: string }) {
@@ -59,8 +59,8 @@ function PlanPill({ plan, label }: { plan: string; label: string }) {
       data-testid="profile-strip-plan"
       data-plan={plan}
       className={cn(
-        'inline-flex h-[10px] max-w-full items-center truncate rounded-full bg-gradient-to-b px-1 text-mark font-semibold uppercase leading-none tracking-wide',
-        'ring-1 ring-inset shadow-[inset_0_1px_0_rgb(255_255_255/0.55),0_1px_2px_rgb(0_0_0/0.12)] dark:shadow-[inset_0_1px_0_rgb(255_255_255/0.12),0_1px_2px_rgb(0_0_0/0.4)]',
+        'inline-flex h-[10px] max-w-full items-center truncate rounded-full px-1 text-mark font-semibold uppercase leading-none tracking-wide',
+        'ring-1 ring-inset',
         PLAN_PILL_TONES[plan] ?? PLAN_PILL_TONES.standard,
       )}
     >
