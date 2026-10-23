@@ -40,22 +40,33 @@ export interface BacklinksListProps {
   className?: string
 }
 
-/** Board title from `canvas:list` when resolve has no canvas owner yet. */
-function useCanvasListTitle(workspaceId: string | null | undefined, boardId: string): string | undefined {
-  const [title, setTitle] = React.useState<string | undefined>()
+/** One `canvas:list` per panel — board id → title (fallback when resolve has no owner yet). */
+function useCanvasBoardTitles(workspaceId: string | null | undefined): ReadonlyMap<string, string> {
+  const [titles, setTitles] = React.useState<ReadonlyMap<string, string>>(() => new Map())
   React.useEffect(() => {
-    if (!workspaceId || !boardId) return
+    if (!workspaceId) { setTitles(new Map()); return }
     const list = (window as unknown as { electronAPI?: { canvas?: { list?: (ws: string) => Promise<Array<{ id: string; title: string }>> } } }).electronAPI?.canvas?.list
     if (!list) return
     let cancelled = false
     void list(workspaceId).then((boards) => {
       if (cancelled) return
-      const hit = boards.find((b) => b.id === boardId)
-      if (hit?.title) setTitle(hit.title)
+      setTitles(new Map(boards.map((b) => [b.id, b.title])))
     }).catch(() => { /* bridge unavailable — preview/fallback covers it */ })
     return () => { cancelled = true }
-  }, [workspaceId, boardId])
-  return title
+  }, [workspaceId])
+  return titles
+}
+
+function titleOfPreview(view: EntityPreviewView | undefined): string | undefined {
+  if (!view || view.restricted || !view.title) return undefined
+  if (view.status === 'no_access' || view.status === 'tombstone' || view.status === 'unavailable') return undefined
+  return view.title
+}
+
+/** True when resolve definitively denied / removed the board — do not fall back to canvas:list. */
+function resolveDeniesTitle(view: EntityPreviewView | undefined): boolean {
+  if (!view) return false
+  return !!view.restricted || view.status === 'no_access' || view.status === 'tombstone'
 }
 
 function CanvasOnBoardRow({
@@ -63,11 +74,13 @@ function CanvasOnBoardRow({
   preview,
   previewsEnabled,
   workspaceId,
+  listTitle,
 }: {
   source: BacklinkSource
   preview?: EntityPreviewView
   previewsEnabled?: boolean
   workspaceId?: string | null
+  listTitle?: string
 }) {
   const { t } = useTranslation()
   const boardRef = canvasBacklinkBoardRef(source.link)
@@ -75,13 +88,11 @@ function CanvasOnBoardRow({
   const flagOn = useEntityPreviewsEnabled()
   const enabled = previewsEnabled ?? flagOn
   const resolved = useEntityPreview(boardRef, workspaceId, enabled)
-  const listTitle = useCanvasListTitle(workspaceId, source.link.from.id)
-  const titleOf = (view: EntityPreviewView | undefined): string | undefined => {
-    if (!view || view.restricted || !view.title) return undefined
-    if (view.status === 'no_access' || view.status === 'tombstone' || view.status === 'unavailable') return undefined
-    return view.title
-  }
-  const title = titleOf(preview) || titleOf(resolved.status === 'ready' ? resolved.preview : undefined) || listTitle || ''
+  const resolvedPreview = resolved.status === 'ready' ? resolved.preview : undefined
+  // ACL: never use canvas:list after resolve said no_access / tombstone / restricted.
+  const title = resolveDeniesTitle(preview) || resolveDeniesTitle(resolvedPreview)
+    ? ''
+    : (titleOfPreview(preview) || titleOfPreview(resolvedPreview) || listTitle || '')
   const label = formatOnBoardBacklinkLabel(t, title)
   return (
     <li className="flex min-w-0 items-center gap-2 text-sm" data-canvas-backlink="">
@@ -102,6 +113,7 @@ export function BacklinksList({ state, onRetry, onLoadMore, previews, previewsEn
   const { t } = useTranslation()
   const [expanded, setExpanded] = React.useState<Record<string, boolean>>({})
   const groups = React.useMemo(() => groupBacklinks(state.links), [state.links])
+  const boardTitles = useCanvasBoardTitles(workspaceId)
   const total = groups.reduce((sum, group) => sum + group.sources.length, 0)
   const headingId = React.useId()
 
@@ -141,6 +153,7 @@ export function BacklinksList({ state, onRetry, onLoadMore, previews, previewsEn
                     preview={previews?.[source.key]}
                     previewsEnabled={previewsEnabled}
                     workspaceId={workspaceId}
+                    listTitle={boardTitles.get(source.link.from.id)}
                   />
                 ) : (
                   <li key={source.key} className="flex min-w-0 items-center gap-2 text-sm">

@@ -54,6 +54,8 @@ export type EntitiesLinksResult =
  * the underlying LRU is additionally keyed per actor (see resolver-host).
  */
 const resolverRegistrations: Resolver[] = []
+/** Per-workspace resolvers (e.g. canvas titles must not cross workspace stores). */
+const resolverFactories: Array<(workspaceId: string) => Resolver> = []
 const hostsByWorkspace = new Map<string, DefaultResolverHost>()
 // W1-04 (#1501): the ACL gate is installed once, when the host is created; a
 // host is rebuilt only if a different runtime ACL factory registers, or if
@@ -69,6 +71,7 @@ function hostForWorkspace(workspaceId: string, acl?: EntityAclFactory): DefaultR
       if (hostsByWorkspace.get(workspaceId) === created) hostsByWorkspace.delete(workspaceId)
     })
     for (const resolver of resolverRegistrations) created.register(resolver)
+    for (const factory of resolverFactories) created.register(factory(workspaceId))
     hostsByWorkspace.set(workspaceId, created)
     hostAclFactory.set(created, acl)
     host = created
@@ -82,8 +85,18 @@ export function registerEntityResolver(resolver: Resolver): void {
   for (const host of hostsByWorkspace.values()) host.register(resolver)
 }
 
+/**
+ * Register a resolver that closes over the host workspace id. Use when previews
+ * must not cross workspace stores (canvas board titles).
+ */
+export function registerEntityResolverFactory(factory: (workspaceId: string) => Resolver): void {
+  resolverFactories.push(factory)
+  for (const [workspaceId, host] of hostsByWorkspace) host.register(factory(workspaceId))
+}
+
 export function resetEntityResolvers(): void {
   resolverRegistrations.length = 0
+  resolverFactories.length = 0
   hostsByWorkspace.clear()
 }
 
