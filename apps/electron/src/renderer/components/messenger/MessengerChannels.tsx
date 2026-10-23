@@ -557,7 +557,7 @@ function MessageThread({
               <li key={m.id} className={cn(!grouped && 'pt-1', m.replyToId && 'ms-4 border-s border-border/50 ps-3')} data-testid={m.replyToId ? 'messenger-thread-reply' : undefined}>
                 {parent ? (
                   <p className="mb-0.5 truncate text-caption text-text-muted" data-testid="messenger-reply-ref">
-                    <CornerDownRight className="me-1 inline size-3" aria-hidden />
+                    <CornerDownRight className="me-1 inline icon-status" aria-hidden />
                     {t('messenger.threads.replyTo', { name: nameOf(parent.senderId), text: parent.text.slice(0, 80) })}
                   </p>
                 ) : null}
@@ -656,10 +656,10 @@ function Composer({ placeholder, onSend, replyTo, onCancelReply }: {
     <div className="shrink-0 border-t border-border/60 px-4 py-2">
       {replyTo ? (
         <div className="mb-1.5 flex items-center gap-2 rounded-md bg-surface-raised px-2 py-1 text-caption text-text-secondary" data-testid="messenger-reply-bar">
-          <CornerDownRight className="size-3.5 shrink-0" aria-hidden />
+          <CornerDownRight className="icon-caption shrink-0" aria-hidden />
           <span className="min-w-0 flex-1 truncate">{t('messenger.threads.replyingTo', { text: replyTo.text.slice(0, 100) })}</span>
           <button type="button" className="shrink-0 text-text-muted hover:text-text-primary" aria-label={t('common.cancel')} onClick={onCancelReply}>
-            <X className="size-3.5" aria-hidden />
+            <X className="icon-caption" aria-hidden />
           </button>
         </div>
       ) : null}
@@ -667,11 +667,11 @@ function Composer({ placeholder, onSend, replyTo, onCancelReply }: {
         <ul className="mb-1.5 flex flex-wrap gap-1" data-testid="messenger-attach-chips">
           {attachments.map((a) => (
             <li key={a.id} className="flex max-w-xs items-center gap-1 rounded-md border border-border/60 bg-surface-raised px-2 py-0.5 text-caption">
-              <Paperclip className="size-3 shrink-0 text-text-muted" aria-hidden />
+              <Paperclip className="icon-status shrink-0 text-text-muted" aria-hidden />
               <span className="truncate">{a.name}</span>
               <span className="text-text-muted">{t('messenger.attachments.unavailable')}</span>
               <button type="button" aria-label={t('common.cancel')} onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== a.id))}>
-                <X className="size-3" aria-hidden />
+                <X className="icon-status" aria-hidden />
               </button>
             </li>
           ))}
