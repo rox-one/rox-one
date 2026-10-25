@@ -798,6 +798,8 @@ export interface UpdateNoteCommentInput {
   reaction?: { emoji: string }
 }
 
+export type { NoteShareAccess, NoteShareLink, NoteShareRole, NoteShareState, NoteShareUpdate } from '@rox/core/docs'
+
 /** One note version in history (list row; no body). */
 export interface NoteHistoryEntry {
   revisionId: string
@@ -954,7 +956,7 @@ export interface NoteChangedPayload {
   workspaceId: string
   /** Stable identity of a durable native invalidation; replay may deliver it again. */
   eventId?: string
-  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties' | 'comments' | 'descriptor' | 'templates'
+  reason?: 'external' | 'save' | 'create' | 'rename' | 'move' | 'delete' | 'asset' | 'properties' | 'comments' | 'share' | 'descriptor' | 'templates'
   noteId?: string
 }
 

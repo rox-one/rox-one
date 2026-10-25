@@ -1,6 +1,6 @@
 import { open, realpath, lstat, mkdir, readdir, readFile, rename, rm, stat, unlink, writeFile } from 'fs/promises'
 import { accessSync, existsSync, constants, statSync } from 'fs'
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { basename, dirname, extname, join, relative, resolve, sep } from 'path'
 import { getWorkspaceByNameOrId, isImportProvenancedRelativePath } from '@rox/shared/config'
 import { getDefaultWorkspacesDir } from '@rox/shared/workspaces'
@@ -22,7 +22,7 @@ import { listNoteRevisions, getNoteRevision, recordNoteRevision } from '../../do
 type NativeNoteWriter = (reason: MarkdownChangedEvent['reason'], changes: NativeMarkdownChange[]) => Promise<unknown>
 type NativeFolderReader = (folder: string) => Promise<NativeFolderSnapshot | null>
 import { CodedError, extractNoteTaskLines, NOTE_TASKS_MAX_IDS, type NoteTasksEntry } from '@rox/shared/protocol'
-import { previewPropertyDictionary } from '@rox/core/docs'
+import { applyNoteShareUpdate, defaultNoteShare, normalizeNoteShare, previewPropertyDictionary, resolveNoteShareAccess, type NoteShareAccess, type NoteShareState, type NoteShareUpdate } from '@rox/core/docs'
 import { parseRox2EntityId } from '@rox/core/rox2'
 import { createDescriptorResolver, FileDescriptorStore, type ContentOwner, type ContentPolicy } from '../../docs/descriptor-resolver.ts'
 import { awardXpSafe } from '@rox/shared/gamification'
@@ -95,6 +95,9 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.CREATE_COMMENT,
   RPC_CHANNELS.notes.UPDATE_COMMENT,
   RPC_CHANNELS.notes.DELETE_COMMENT,
+  RPC_CHANNELS.notes.GET_SHARE,
+  RPC_CHANNELS.notes.UPDATE_SHARE,
+  RPC_CHANNELS.notes.RESOLVE_SHARE_LINK,
   RPC_CHANNELS.notes.LIST_TEMPLATES,
   RPC_CHANNELS.notes.CREATE_FROM_TEMPLATE,
   RPC_CHANNELS.notes.SAVE_AS_TEMPLATE,
@@ -111,6 +114,7 @@ const TEMPLATE_STRIP_PROPERTY_KEYS = ['createdAt', 'cover', 'icon'] as const
 const PROJECTS_DIR = 'projects'
 const ROX_META_DIR = '.rox'
 const COMMENTS_DIR = 'comments'
+const SHARES_DIR = 'shares'
 const DAILY_TEMPLATE_FILE = 'daily.md'
 const RESERVED_WIKI_TARGET_SEGMENTS: Record<string, true> = { [ASSETS_DIR]: true, [TEMPLATES_DIR]: true }
 const FORBIDDEN_WIKI_TARGET_CHARS_RE = /[\x00-\x1f\x7f<>:"|?*[\]#]/
@@ -700,6 +704,13 @@ async function deleteNoteCommentsForRoot(notesRoot: string, noteId: string): Pro
     const filePath = await assertSafeNoteCommentsFilePath(notesRoot, safeNoteId)
     await rm(filePath, { force: true })
   })
+  try {
+    await deleteNoteShareForRoot(notesRoot, safeNoteId)
+  } catch (error) {
+    // Best effort: the note is already gone; a stale share record cannot
+    // resolve because link validation requires the note to exist.
+    console.warn('[notes] could not remove share settings on delete', error)
+  }
 }
 
 async function renameNoteCommentsForRoot(notesRoot: string, oldNoteId: string, newNoteId: string): Promise<void> {
@@ -723,6 +734,119 @@ async function renameNoteCommentsForRoot(notesRoot: string, oldNoteId: string, n
       await rm(oldPath, { force: true })
     })
   })
+  await renameNoteShareForRoot(notesRoot, oldSafeId, newSafeId)
+}
+
+// ── Docs step 6: local note share sidecars (.rox/shares/<b64 noteId>.json) ──
+
+function noteSharesDir(notesRoot: string): string {
+  return join(notesRoot, ROX_META_DIR, SHARES_DIR)
+}
+
+async function assertSafeNoteShareFilePath(notesRoot: string, noteId: string): Promise<string> {
+  const safeId = assertSafeNoteId(noteId)
+  const dir = noteSharesDir(notesRoot)
+  await ensureSafeNoteDirectory(notesRoot, dir)
+  const rootReal = await realpath(notesRoot)
+  const dirReal = await realpath(dir)
+  if (!isInsidePath(rootReal, dirReal) || dirReal === rootReal) throw new Error('Invalid note share path')
+  const filePath = join(dir, `${Buffer.from(safeId, 'utf8').toString('base64url')}.json`)
+  try {
+    if ((await lstat(filePath)).isSymbolicLink()) throw new Error('Invalid note share path')
+  } catch (error) {
+    if (!isErrnoException(error, 'ENOENT')) throw error
+  }
+  return filePath
+}
+
+async function readNoteShareFile(notesRoot: string, noteId: string): Promise<NoteShareState> {
+  const safeId = assertSafeNoteId(noteId)
+  const filePath = await assertSafeNoteShareFilePath(notesRoot, safeId)
+  let raw: string
+  try {
+    raw = await readFileNoFollow(filePath)
+  } catch (error) {
+    if (isErrnoException(error, 'ENOENT')) return defaultNoteShare(safeId)
+    throw error
+  }
+  try {
+    return normalizeNoteShare(JSON.parse(raw), safeId)
+  } catch {
+    return defaultNoteShare(safeId)
+  }
+}
+
+export async function getNoteShareForRoot(notesRoot: string, noteId: string): Promise<NoteShareState> {
+  await ensureNotesDirs(notesRoot)
+  return readNoteShareFile(notesRoot, noteId)
+}
+
+export async function updateNoteShareForRoot(notesRoot: string, noteId: string, update: NoteShareUpdate): Promise<NoteShareState> {
+  const safeId = assertSafeNoteId(noteId)
+  if (!update || typeof update !== 'object') throw new Error('Invalid share update')
+  const clean: NoteShareUpdate = {
+    ...(typeof update.enabled === 'boolean' ? { enabled: update.enabled } : {}),
+    ...(update.role !== undefined ? { role: update.role } : {}),
+    ...(update.regenerate === true ? { regenerate: true } : {}),
+  }
+  return withNoteCommentsLock(notesRoot, `share:${safeId}`, async () => {
+    await ensureNotesDirs(notesRoot)
+    if (!existsSync(notePathFromId(notesRoot, safeId))) throw new Error(`Note not found: ${safeId}`)
+    const current = await readNoteShareFile(notesRoot, safeId)
+    const next = applyNoteShareUpdate(current, clean, () => randomBytes(18).toString('base64url'), Date.now())
+    const filePath = await assertSafeNoteShareFilePath(notesRoot, safeId)
+    await writeAtomicFileNoFollow(notesRoot, filePath, `${JSON.stringify(next, null, 2)}\n`)
+    return next
+  })
+}
+
+/**
+ * Validate a share-link token for a local note. Any failure (bad id, missing
+ * note, unreadable sidecar) is a rejection; the role is the stored one.
+ */
+export async function resolveNoteShareLinkForRoot(notesRoot: string, noteId: unknown, token: unknown): Promise<NoteShareAccess> {
+  const rawId = typeof noteId === 'string' ? noteId : ''
+  let safeId: string
+  try {
+    safeId = assertSafeNoteId(rawId)
+  } catch {
+    return { ok: false, noteId: rawId, reason: 'invalid' }
+  }
+  try {
+    if (!existsSync(notePathFromId(notesRoot, safeId))) return { ok: false, noteId: safeId, reason: 'invalid' }
+    return resolveNoteShareAccess(await getNoteShareForRoot(notesRoot, safeId), token)
+  } catch {
+    return { ok: false, noteId: safeId, reason: 'invalid' }
+  }
+}
+
+async function deleteNoteShareForRoot(notesRoot: string, noteId: string): Promise<void> {
+  const safeId = assertSafeNoteId(noteId)
+  await withNoteCommentsLock(notesRoot, `share:${safeId}`, async () => {
+    await rm(await assertSafeNoteShareFilePath(notesRoot, safeId), { force: true })
+  })
+}
+
+export async function renameNoteShareForRoot(notesRoot: string, oldNoteId: string, newNoteId: string): Promise<void> {
+  const oldId = assertSafeNoteId(oldNoteId)
+  const newId = assertSafeNoteId(newNoteId)
+  if (oldId === newId) return
+  const [first, second] = [`share:${oldId}`, `share:${newId}`].sort()
+  try {
+    await withNoteCommentsLock(notesRoot, first!, () => withNoteCommentsLock(notesRoot, second!, async () => {
+      // Re-check inside both locks: a concurrent update/delete may have run.
+      const oldPath = await assertSafeNoteShareFilePath(notesRoot, oldId)
+      if (!existsSync(oldPath)) return
+      const current = await readNoteShareFile(notesRoot, oldId)
+      const moved: NoteShareState = { ...current, noteId: newId }
+      await writeAtomicFileNoFollow(notesRoot, await assertSafeNoteShareFilePath(notesRoot, newId), `${JSON.stringify(moved, null, 2)}\n`)
+      await rm(oldPath, { force: true })
+    }))
+  } catch (error) {
+    // Best effort: the note rename already succeeded; a lost share record only
+    // makes the note private again (fail closed).
+    console.warn('[notes] could not move share settings on rename', error)
+  }
 }
 
 async function listMarkdownFiles(dir: string, root = dir): Promise<string[]> {
@@ -2582,6 +2706,25 @@ function uniquifyNativeNoteRelativeId(notesRoot: string, title: string, folder?:
     changed({ workspaceId, reason: 'comments', noteId })
     return true
   })
+
+  server.handle(RPC_CHANNELS.notes.GET_SHARE, async (ctx, workspaceId: string, noteId: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
+    return getNoteShareForRoot(getWorkspaceNotesRoot(workspaceId), noteId)
+  }, { nativeAction: 'read' })
+
+  server.handle(RPC_CHANNELS.notes.UPDATE_SHARE, async (ctx, workspaceId: string, noteId: string, update: NoteShareUpdate) => {
+    // Changing share settings is a write: native principals need write scope.
+    if (ctx.principal) nativeNotesContext(deps, ctx, workspaceId, 'write')
+    else nativeContent.assertScope(ctx, workspaceId)
+    const share = await updateNoteShareForRoot(getWorkspaceNotesRoot(workspaceId), noteId, update)
+    changed({ workspaceId, reason: 'share', noteId: share.noteId })
+    return share
+  }, { nativeAction: 'write' })
+
+  server.handle(RPC_CHANNELS.notes.RESOLVE_SHARE_LINK, async (ctx, workspaceId: string, noteId: string, token: string) => {
+    nativeContent.assertScope(ctx, workspaceId)
+    return resolveNoteShareLinkForRoot(getWorkspaceNotesRoot(workspaceId), noteId, token)
+  }, { nativeAction: 'read' })
 
   server.handle(RPC_CHANNELS.notes.LIST_REVISIONS, async (ctx, workspaceId: string, noteId: string): Promise<NoteHistoryEntry[]> => {
     nativeContent.assertScope(ctx, workspaceId)

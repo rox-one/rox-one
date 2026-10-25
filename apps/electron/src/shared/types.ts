@@ -1527,6 +1527,9 @@ export interface ElectronAPI {
   createNoteComment(workspaceId: string, input: CreateNoteCommentInput): Promise<NoteCommentThread>
   updateNoteComment(workspaceId: string, input: UpdateNoteCommentInput): Promise<NoteCommentThread>
   deleteNoteComment(workspaceId: string, noteId: string, commentId: string): Promise<boolean>
+  getNoteShare(workspaceId: string, noteId: string): Promise<import('@rox/core/docs').NoteShareState>
+  updateNoteShare(workspaceId: string, noteId: string, update: import('@rox/core/docs').NoteShareUpdate): Promise<import('@rox/core/docs').NoteShareState>
+  resolveNoteShareLink(workspaceId: string, noteId: string, token: string): Promise<import('@rox/core/docs').NoteShareAccess>
   listNoteRevisions(workspaceId: string, noteId: string): Promise<NoteHistoryEntry[]>
   getNoteRevision(workspaceId: string, noteId: string, revisionId: string): Promise<NoteHistoryRevision | null>
   restoreNoteRevision(workspaceId: string, noteId: string, revisionId: string, expectedRevision: string, operationOrSourceStoreId?: NoteMutationOptions | string): Promise<NoteDocument>
@@ -3729,7 +3732,8 @@ export interface SkillsNavigationState {
  */
 export interface NotesNavigationState {
   navigator: 'notes'
-  details: { type: 'note'; noteId: string } | null
+  /** shareToken: untrusted `?share=` from a share deep link; validated by NotesPage. */
+  details: { type: 'note'; noteId: string; shareToken?: string } | null
   rightSidebar?: RightSidebarPanel
 }
 

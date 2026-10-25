@@ -13,7 +13,7 @@ import { useKnowledgeSignals } from '@/features/product-tour/adapters/knowledge/
 import { matchesNoteReceipt, notesReadCapability } from '@/features/product-tour/adapters/knowledge'
 import { capabilityErrorCode, readScopedCapability } from '@/lib/scoped-capability-read'
 import { hasNativeNotesTransport } from '@/lib/notes-capability'
-import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, LayoutTemplate, Paperclip, Pencil, Plus, Search, SquarePen, Tags, Trash2 } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, FileDown, FilePlus2, FileText, FolderPlus, LayoutTemplate, Paperclip, Pencil, Plus, Search, Share2, SquarePen, Tags, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useStore } from 'jotai'
 import { useNotesTitleKey } from '@/platform/useNotesTitleKey'
@@ -22,6 +22,7 @@ import { DndContext, type DragEndEvent, PointerSensor, useSensor, useSensors } f
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@rox/ui'
 import type { Node as PMNode } from 'prosemirror-model'
 import { RPC_CHANNELS } from '@rox/shared/protocol/channels'
+import { noteShareBlocksWrite, type NoteShareAccess } from '@rox/core/docs'
 import { applyPropertyPatch, previewPropertyPatch, previewPropertyDictionary, projectFrontmatter, retainSource, retainedSourceHash, type MarkdownCommitCommand, type PropertyDictionaryPreview, type PropertyValue } from '@rox/core/docs'
 import { parseDocument } from 'yaml'
 import type { ContentFailure, ContentResolution } from '@rox/server-core/docs/descriptor-resolver'
@@ -71,6 +72,7 @@ import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
 import { NoteCoverIconChrome, NoteFavoriteButton } from './notes/NoteLibraryChrome'
 import { NotesTemplatesDialog } from './notes/NotesTemplatesDialog'
+import { NoteShareDialog } from './notes/NoteShareDialog'
 import { patchNoteLibraryChromeContent, readNoteCover, readNoteIcon, withNoteLibraryProperties } from './notes/note-library'
 import type { NoteTemplateSummary } from '../../shared/types'
 import {
@@ -145,6 +147,8 @@ import { toErrorMessage } from '@/lib/errors'
 
 interface NotesPageProps {
   selectedNoteId: string | null
+  /** Untrusted `?share=` token from a share deep link (validated before open). */
+  shareToken?: string
 }
 
 
@@ -587,7 +591,7 @@ function SelectedNoteRecovery({ failure, address, onRetry }: {
   )
 }
 
-function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
+function NativeNotesPage({ selectedNoteId, shareToken }: NotesPageProps) {
   const shellSidebarTarget = useSidebarHandledOutside()
   const { t } = useTranslation()
   // Panel-layout mode drives which side rails this surface may render.
@@ -949,6 +953,11 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId])
   const [contentResolution, setContentResolution] = React.useState<ContentResolution | ContentFailure | null>(null)
   const [sourceInfoOpen, setSourceInfoOpen] = React.useState(false)
+  const [shareDialogOpen, setShareDialogOpen] = React.useState(false)
+  // Docs step 6: active share-link session (stored role wins; URL role ignored).
+  const [shareAccess, setShareAccess] = React.useState<NoteShareAccess | null>(null)
+  const shareAccessRef = React.useRef<NoteShareAccess | null>(null)
+  shareAccessRef.current = shareAccess
   const [committedBlockTree, setCommittedBlockTree] = React.useState<BlockTreeResult | null>(null)
   const [markerPreview, setMarkerPreview] = React.useState<{ preview: NativeMarkerMappingPreview; operationId: string } | null>(null)
   const [markerBusy, setMarkerBusy] = React.useState(false)
@@ -1008,7 +1017,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     return applied.status === 'ok' ? applied.text : null
   }, [markerPreview])
   const applyMarkers = async () => {
-    if (!markerPreview || markerBusy || !activeNote || !activeWorkspaceId) return
+    if (!markerPreview || markerBusy || !activeNote || !activeWorkspaceId || !canEditContent) return
     const command = markerPreview
     if (command.preview.ref.workspaceId !== activeWorkspaceId || dirtyRef.current
       || command.preview.sourceStoreId !== activeNote.sourceStoreId
@@ -1072,7 +1081,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
       ))}
     </div>
   )
-  const canEditContent = !readUnavailable && contentResolution?.status === 'ok' && contentResolution.capabilities.write && !saveNeedsReload
+  const shareReadOnly = activeNote ? noteShareBlocksWrite(shareAccess, activeNote.id) : false
+  const canEditContent = !readUnavailable && contentResolution?.status === 'ok' && contentResolution.capabilities.write && !saveNeedsReload && !shareReadOnly
   React.useEffect(() => { workspaceIdRef.current = activeWorkspaceId }, [activeWorkspaceId])
   const noteViewCapabilities = React.useMemo(() => defaultNoteEntityCapabilities(), [])
   const [noteView, setNoteView] = useEntityView(
@@ -1493,6 +1503,28 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [activeWorkspaceId, selectedNoteId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, nativeNotesSync, t])
 
   React.useEffect(() => {
+    if (selectedNoteId && shareToken !== undefined) {
+      // Share deep link: validate against the local share file BEFORE opening.
+      const noteId = parseNoteBlockAddress(selectedNoteId).noteId
+      const workspaceId = activeWorkspaceId
+      if (!workspaceId) return
+      let cancelled = false
+      void window.electronAPI.resolveNoteShareLink(workspaceId, noteId, shareToken)
+        .catch((): NoteShareAccess => ({ ok: false, noteId, reason: 'invalid' }))
+        .then((access) => {
+          if (cancelled) return
+          if (!access.ok) {
+            toast.error(t('notes.share.linkRejected'), { description: t(`notes.share.linkRejectedReason.${access.reason}`) })
+            // Show nothing for the target: drop the share route back to the Notes root.
+            navigate(routes.view.notes())
+            return
+          }
+          setShareAccess(access)
+          void openNote(noteId)
+        })
+      return () => { cancelled = true }
+    }
+    setShareAccess(null)
     if (selectedNoteId) {
       const noteId = parseNoteBlockAddress(selectedNoteId).noteId
       const openedDailyDate = parseDailyNoteDate(noteId)
@@ -1523,7 +1555,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     setSaveError(null)
     setContentResolution(null)
     ++openNoteRequestRef.current
-  }, [selectedNoteId, openNote, activeWorkspaceId])
+  }, [selectedNoteId, shareToken, openNote, activeWorkspaceId, t])
 
   const noteIds = React.useMemo(
     () => `${activeWorkspaceId ?? ''}:${notes.map(n => `${n.id}:${n.updatedAt}`).join(',')}`,
@@ -1556,6 +1588,8 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
   }, [nativeNotesSync, knowledgeSignals])
   const saveCurrentNote = React.useCallback(async (): Promise<boolean> => {
     if (!activeWorkspaceId || !activeNote) return true
+    // View-role share session: never call the save path.
+    if (noteShareBlocksWrite(shareAccessRef.current, activeNote.id)) return true
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current)
       saveTimerRef.current = null
@@ -1669,6 +1703,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
    */
   const restoreNoteFromHistory = React.useCallback(async (revisionId: string): Promise<NoteDocument> => {
     if (!activeWorkspaceId || !activeNote) throw new Error(t('notes.content.reloadRequired'))
+    if (noteShareBlocksWrite(shareAccessRef.current, activeNote.id)) throw new Error(t('notes.content.readOnly'))
     if (saveTimerRef.current) {
       window.clearTimeout(saveTimerRef.current)
       saveTimerRef.current = null
@@ -2045,6 +2080,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
     value: string,
   ) => {
     if (!activeWorkspaceId) return
+    if (noteShareBlocksWrite(shareAccessRef.current, noteId)) return
     if (activeNote?.id === noteId && !await flushBeforeAction()) return
     const act = soupDocumentActResult({ source: 'native', action: 'write', nativeId: noteId })
     if (!isClaimableLive(act)) return
@@ -2522,6 +2558,7 @@ function NativeNotesPage({ selectedNoteId }: NotesPageProps) {
 
   const importFiles = React.useCallback(async (files: File[] | FileList) => {
     if (!activeWorkspaceId || !activeNote || assetsUnavailable) return
+    if (noteShareBlocksWrite(shareAccessRef.current, activeNote.id)) return
     const list = Array.from(files)
     if (list.length === 0) return
     try {
@@ -2887,6 +2924,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
 
   const toggleTask = async (task: NoteTask) => {
     if (!activeWorkspaceId) return
+    if (noteShareBlocksWrite(shareAccessRef.current, task.noteId)) return
     const workspaceId = activeWorkspaceId
     const opening = openNoteRequestRef.current
     const cacheEpoch = cacheWriteEpoch()
@@ -3346,6 +3384,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
               />
             ) : null}
             {activeNote && <div className="min-w-0 truncate text-xs text-muted-foreground/60">{activeNoteStats}</div>}
+            {shareReadOnly && <span role="status" data-testid="notes-share-view-only" className="shrink-0 rounded bg-surface-hover px-2 py-0.5 text-xs text-muted-foreground">{t('notes.share.viewOnlyBadge')}</span>}
             {activeNote && <button type="button" data-testid="notes-content-authority" aria-haspopup="dialog" onClick={() => setSourceInfoOpen(true)} className="shrink-0 rounded bg-surface-hover px-2 py-0.5 text-xs text-muted-foreground hover:bg-surface-selected" title={t('notes.content.authorityHint')}>
               {contentResolution?.status === 'ok' ? t('notes.content.markdown') : t('notes.content.readOnly')}
             </button>}
@@ -3375,16 +3414,19 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
           >
             <SquarePen className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote || Boolean(assetsUnavailable)} title={t('notes.toolbar.attachAsset')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote || Boolean(assetsUnavailable) || shareReadOnly} title={t('notes.toolbar.attachAsset')}>
             <Paperclip className="h-4 w-4" />
+          </button>
+          <button type="button" className="h-7 w-7 shrink-0 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" data-testid="notes-share-open" aria-haspopup="dialog" onClick={() => setShareDialogOpen(true)} disabled={!activeNote || !activeWorkspaceId || shareReadOnly} aria-label={t('notes.toolbar.share')}>
+            <Share2 className="icon-toolbar" aria-hidden="true" />
           </button>
           <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
             <FileDown className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-surface-hover grid place-items-center" onClick={openRenameDialog} disabled={!activeNote || shareReadOnly} title={t('notes.toolbar.rename')}>
             <Pencil className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
+          <button className="h-7 w-7 rounded-[var(--radius-control)] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote || shareReadOnly} title={t('notes.toolbar.delete')}>
             <Trash2 className="h-4 w-4" />
           </button>
           <span className={cn('w-20 text-right text-xs', saveError ? 'text-destructive' : 'text-muted-foreground')} title={t('notes.save.autosaveHint')}>
@@ -3733,6 +3775,11 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
               }}
               onMouseUpCapture={syncRichWikiQuery}
               onPasteCapture={(event) => {
+                if (!canEditContent) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  return
+                }
                 if (event.clipboardData.files.length > 0) {
                   event.preventDefault()
                   event.stopPropagation()
@@ -3747,6 +3794,11 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
                 }
               }}
               onDropCapture={(event) => {
+                if (!canEditContent) {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  return
+                }
                 if (event.dataTransfer.files.length > 0) {
                   event.preventDefault()
                   event.stopPropagation()
@@ -3809,7 +3861,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
               {commentTooltip && !commentsShown ? (
                 <NotesCommentTooltip comment={{ id: 'tooltip', quote: commentTooltip.quote, body: commentTooltip.body, createdAt: 0 }} top={commentTooltip.top} left={commentTooltip.left} />
               ) : null}
-              {!commentsShown && commentDraftQuote ? (
+              {!commentsShown && commentDraftQuote && !shareReadOnly ? (
                 <NotesCommentComposer
                   className="absolute right-3 z-20"
                   top={commentComposerTop}
@@ -3827,6 +3879,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
                   onSubmit={() => {
                     const text = commentComposerBody.trim()
                     if (!text || !activeNote || !activeWorkspaceId || commentCreateBusy) return
+                    if (noteShareBlocksWrite(shareAccessRef.current, activeNote.id)) return
                     // Prefer the sidecar RPC stack (threads / resolve / reactions).
                     // Selection compose from the overlay mirrors the rail submit.
                     const requestWorkspaceId = activeWorkspaceId
@@ -3919,6 +3972,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
                   onFocusHandled={() => setFocusCommentComposer(false)}
                   createBusy={commentCreateBusy}
                   beginCreate={() => tryBeginCommentCreate(activeWorkspaceId, activeNote.id)}
+                  readOnly={shareReadOnly}
                   endCreate={endCommentCreate}
                   onClearDraft={(scope) => {
                     if (scope) clearCommentDraftAt(scope.workspaceId, scope.noteId)
@@ -3973,6 +4027,7 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
                 currentRevision={activeNote.revision ?? null}
                 width={280}
                 onRestore={(revisionId) => restoreNoteFromHistory(revisionId)}
+                readOnly={shareReadOnly}
               />
             </NotesResponsiveRail> : null}
             </div>
@@ -4089,6 +4144,13 @@ ${NOTE_PDF_TABS_REVEAL_CSS}
         </pre>
       </DialogContent>
     </Dialog>
+    <NoteShareDialog
+      open={shareDialogOpen && Boolean(activeNote)}
+      workspaceId={activeWorkspaceId ?? null}
+      noteId={activeNote?.id ?? null}
+      noteTitle={activeNote?.title}
+      onOpenChange={setShareDialogOpen}
+    />
     <NotesTemplatesDialog
       open={templatesDialogOpen}
       mode={templatesDialogMode}

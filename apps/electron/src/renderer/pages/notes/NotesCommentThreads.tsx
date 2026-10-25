@@ -65,6 +65,7 @@ export function NotesCommentThreads({
   createBusy = false,
   beginCreate,
   endCreate,
+  readOnly = false,
 }: {
   workspaceId: string
   noteId: string
@@ -91,6 +92,8 @@ export function NotesCommentThreads({
   beginCreate: () => string | null
   /** Release only the given flight token (stale finally must not unlock a newer create). */
   endCreate: (token: string) => void
+  /** View-only share session: list threads, but no create/edit/resolve/react. */
+  readOnly?: boolean
 }) {
   const { t } = useTranslation()
   const [comments, setComments] = React.useState<NoteCommentThread[]>([])
@@ -99,6 +102,8 @@ export function NotesCommentThreads({
   const [busyId, setBusyId] = React.useState<string | null>(null)
   const [localBody, setLocalBody] = React.useState('')
   const [docCompose, setDocCompose] = React.useState(false)
+  const readOnlyRef = React.useRef(readOnly)
+  readOnlyRef.current = readOnly
   const onThreadsChangeRef = React.useRef(onThreadsChange)
   onThreadsChangeRef.current = onThreadsChange
   const reloadGenerationRef = React.useRef(0)
@@ -209,6 +214,7 @@ export function NotesCommentThreads({
   }, [onClearDraft, setBody, isActiveKey])
 
   const createRoot = React.useCallback(async () => {
+    if (readOnlyRef.current) return
     const text = body.trim()
     if (!text || createBusy) return
     const quote = draftQuote.trim()
@@ -245,6 +251,7 @@ export function NotesCommentThreads({
   }, [body, draftQuote, draftAnchor, getNoteText, workspaceId, noteId, createBusy, beginCreate, endCreate, clearComposer, publishUpdate, reload, isActiveKey, t])
 
   const onCreate = React.useCallback(async (text: string, parentId?: string) => {
+    if (readOnlyRef.current) return
     const requestKey = { workspaceId, noteId }
     try {
       const created = await window.electronAPI.createNoteComment(requestKey.workspaceId, {
@@ -263,6 +270,7 @@ export function NotesCommentThreads({
   }, [workspaceId, noteId, publishUpdate, reload, isActiveKey, t])
 
   const onEdit = React.useCallback(async (id: string, nextBody: string) => {
+    if (readOnlyRef.current) return
     const requestKey = { workspaceId, noteId }
     try {
       const updated = await window.electronAPI.updateNoteComment(requestKey.workspaceId, {
@@ -280,6 +288,7 @@ export function NotesCommentThreads({
   }, [workspaceId, noteId, publishUpdate, reload, isActiveKey, t])
 
   const onDelete = React.useCallback(async (id: string) => {
+    if (readOnlyRef.current) return
     const requestKey = { workspaceId, noteId }
     try {
       await window.electronAPI.deleteNoteComment(requestKey.workspaceId, requestKey.noteId, id)
@@ -292,6 +301,7 @@ export function NotesCommentThreads({
   }, [workspaceId, noteId, publishUpdate, reload, isActiveKey, t])
 
   const onToggleReaction = React.useCallback(async (id: string, emoji: string) => {
+    if (readOnlyRef.current) return
     const requestKey = { workspaceId, noteId }
     try {
       const updated = await window.electronAPI.updateNoteComment(requestKey.workspaceId, {
@@ -308,6 +318,7 @@ export function NotesCommentThreads({
   }, [workspaceId, noteId, publishUpdate, reload, isActiveKey, t])
 
   const setResolved = React.useCallback(async (id: string, resolvedFlag: boolean) => {
+    if (readOnlyRef.current) return
     const requestKey = { workspaceId, noteId }
     setBusyId(id)
     try {
@@ -397,7 +408,7 @@ export function NotesCommentThreads({
                     onEdit={onEdit}
                     onDelete={onDelete}
                     onToggleReaction={onToggleReaction}
-                    allowReplies={!root.orphan}
+                    allowReplies={!readOnly && !root.orphan}
                     // Suppress the per-card root composer (replies still work). Empty fragment or null both suppress.
                     renderComposer={() => <></>}
                     className="gap-2"
@@ -405,7 +416,7 @@ export function NotesCommentThreads({
                   <div className="mt-1 flex flex-wrap gap-1">
                     <button
                       type="button"
-                      disabled={busyId === root.id || creating}
+                      disabled={readOnly || busyId === root.id || creating}
                       className={cn(
                         'inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs text-muted-foreground',
                         'hover:bg-surface-hover hover:text-foreground disabled:opacity-40',
@@ -437,7 +448,7 @@ export function NotesCommentThreads({
                 <p className="text-xs text-foreground line-clamp-2">{root.body}</p>
                 <button
                   type="button"
-                  disabled={busyId === root.id || creating}
+                  disabled={readOnly || busyId === root.id || creating}
                   className="mt-1 inline-flex h-6 items-center gap-1 rounded-[var(--radius-control)] px-1.5 text-xs text-muted-foreground hover:bg-surface-hover hover:text-foreground disabled:opacity-40"
                   onClick={() => void setResolved(root.id, false)}
                   aria-label={t('notes.comments.reopen')}
@@ -451,7 +462,7 @@ export function NotesCommentThreads({
         ) : null}
       </div>
 
-      {!showSelectionComposer && !showDocComposer ? (
+      {!readOnly && !showSelectionComposer && !showDocComposer ? (
         <div className="shrink-0 border-t border-border-subtle p-2">
           <button
             type="button"
@@ -468,7 +479,7 @@ export function NotesCommentThreads({
         </div>
       ) : null}
 
-      {showSelectionComposer || showDocComposer ? (
+      {!readOnly && (showSelectionComposer || showDocComposer) ? (
         <NotesCommentComposer
           className="absolute right-2 z-popover"
           top={composerTop ?? 48}

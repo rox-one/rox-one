@@ -140,6 +140,8 @@ export interface ParsedCompoundRoute {
   query?: string
   /** Developer Space focused repo (only for the `developers` navigator). */
   devSpaceRepoId?: string
+  /** Untrusted share-link token (`notes/note/<id>?share=`); validated against the vault. */
+  noteShareToken?: string
   /** Session filter (only for sessions navigator) */
   sessionFilter?: SessionFilter
   /** Source filter (only for sources navigator) */
@@ -601,9 +603,11 @@ function parseCompoundRouteSegments(route: string): ParsedCompoundRoute | null {
 
     if (segments[1] === 'note' && segments[2]) {
       // Retain nested Notes path IDs as one complete native address.
+      const noteShareToken = queryPart ? new URLSearchParams(queryPart).get('share') ?? undefined : undefined
       return {
         navigator: 'notes' as NavigatorType,
         details: { type: 'note', id: decodeURIComponent(segments.slice(2).join('/')) },
+        ...(noteShareToken ? { noteShareToken } : {}),
       }
     }
 
@@ -1555,7 +1559,7 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     }
     return {
       navigator: 'notes',
-      details: { type: 'note', noteId: compound.details.id },
+      details: { type: 'note', noteId: compound.details.id, ...(compound.noteShareToken ? { shareToken: compound.noteShareToken } : {}) },
     }
   }
 

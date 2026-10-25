@@ -894,7 +894,7 @@ const SurfaceRoutePanel = React.memo(function SurfaceRoutePanel({
   if (isNotesNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <NotesPage selectedNoteId={navState.details?.type === 'note' ? navState.details.noteId : null} />
+        <NotesPage selectedNoteId={navState.details?.type === 'note' ? navState.details.noteId : null} shareToken={navState.details?.type === 'note' ? navState.details.shareToken : undefined} />
       </Panel>
     )
   }
