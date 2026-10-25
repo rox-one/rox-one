@@ -704,7 +704,13 @@ async function deleteNoteCommentsForRoot(notesRoot: string, noteId: string): Pro
     const filePath = await assertSafeNoteCommentsFilePath(notesRoot, safeNoteId)
     await rm(filePath, { force: true })
   })
-  await deleteNoteShareForRoot(notesRoot, safeNoteId)
+  try {
+    await deleteNoteShareForRoot(notesRoot, safeNoteId)
+  } catch (error) {
+    // Best effort: the note is already gone; a stale share record cannot
+    // resolve because link validation requires the note to exist.
+    console.warn('[notes] could not remove share settings on delete', error)
+  }
 }
 
 async function renameNoteCommentsForRoot(notesRoot: string, oldNoteId: string, newNoteId: string): Promise<void> {
