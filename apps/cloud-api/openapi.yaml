@@ -21,6 +21,7 @@ security:
   - bearerAuth: []
 tags:
   - name: health
+  - name: demo
   - name: catalog
   - name: keys
   - name: account
@@ -50,6 +51,52 @@ paths:
                 properties:
                   ok:
                     const: true
+
+  /v1/demo:
+    post:
+      operationId: runDemo
+      summary: Run one command on the shared demo machine; no key is needed
+      tags: [demo]
+      security: []
+      description: |
+        The public playground behind `/playground.html`. There is no key and no
+        tenant in the request: the machine boots under one fixed demo tenant
+        whose provider credential never leaves the vault. The limits are the
+        contract: one run per address per UTC day, a 60-second machine, a
+        10-second command timeout, a command of at most 2 KB inside a body of at
+        most 8 KB. The answer carries stdout, the exit code, the price in cents
+        and the sandbox id minted by Rox; a provider id, a provider-side sandbox
+        id and any key are never returned. When the demo tenant has no usable
+        provider credential the route answers `503 demo_unavailable` and creates
+        nothing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemoRequest'
+      responses:
+        '200':
+          description: The command finished and the machine was destroyed afterwards.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DemoResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
 
   /v1/catalog:
     get:
@@ -855,6 +902,9 @@ components:
             - concurrency_exceeded
             - monthly_cap_exceeded
             - rate_limited
+            - demo_limit
+            - payload_too_large
+            - demo_unavailable
             - provider_error
         message:
           type: string
@@ -869,6 +919,39 @@ components:
       properties:
         error:
           $ref: '#/components/schemas/Error'
+
+    DemoRequest:
+      type: object
+      required: [command]
+      properties:
+        command:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          description: |
+            What to run on the demo machine. Empty, blank or longer than 2 KB is
+            `400 invalid_request`; the whole body may be at most 8 KB.
+
+    DemoResult:
+      type: object
+      description: |
+        One finished run. The machine is destroyed before this answer is sent,
+        and no provider id or key is part of it.
+      required: [stdout, stderr, exit_code, cost_cents, sandbox_id]
+      properties:
+        stdout:
+          type: string
+        stderr:
+          type: string
+        exit_code:
+          type: integer
+        cost_cents:
+          type: integer
+          minimum: 1
+          description: Price of the run at the platform rate; at least one cent.
+        sandbox_id:
+          type: string
+          description: Id minted by Rox for this one run, e.g. `sbx_…`.
 
     Catalog:
       type: object
@@ -1417,6 +1500,35 @@ components:
             $ref: '#/components/schemas/ErrorEnvelope'
     RateLimited:
       description: Too many requests for this key in the current window.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    MethodNotAllowed:
+      description: The route exists but does not take this method.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    PayloadTooLarge:
+      description: The body is larger than the route accepts; the demo takes 8 KB at most.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ServiceUnavailable:
+      description: |
+        The demo is not configured: the demo tenant has no usable provider
+        credential, so nothing was created and nothing was charged.
       headers:
         x-request-id:
           $ref: '#/components/headers/RequestId'

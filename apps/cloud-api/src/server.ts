@@ -14,6 +14,9 @@
  * - `ROX_BOOTSTRAP_BALANCE_CENTS` pays that first tenant's wallet once;
  * - `ROX_ADMIN_KEY` opens the staff panel under `/admin/`; without it the
  *   panel API answers 404 rather than inventing a default password;
+ * - `ROX_DEMO_TENANT_ID` turns on the public playground (`/playground.html`,
+ *   `POST /v1/demo`) for one tenant whose provider key pays for the runs;
+ *   without it the page is served and the route answers `demo_unavailable`;
  * - `ROX_CORS_ORIGIN` (comma-separated) allows extra browser origins; empty
  *   means same-origin only.
  *
@@ -37,6 +40,7 @@ import { capabilityUnavailable } from '../../../packages/cloud-runner/src/sandbo
 import { createAdminApp } from './admin.ts'
 import { createApp } from './app.ts'
 import type { CloudApp, DeclaredCapabilities } from './app.ts'
+import { createDemo } from './demo.ts'
 import { createRuntime, ensureBootstrapBalance, ensureBootstrapKey } from './integration.ts'
 import { createMeter } from './meter.ts'
 import { createMemoryStore, nextId } from './store.ts'
@@ -56,6 +60,7 @@ const STATIC_FILES: Readonly<Record<string, { readonly file: string; readonly ty
   '/docs.html': { file: join(SITE_DIR, 'docs.html'), type: 'text/html; charset=utf-8' },
   '/pricing.html': { file: join(SITE_DIR, 'pricing.html'), type: 'text/html; charset=utf-8' },
   '/status.html': { file: join(SITE_DIR, 'status.html'), type: 'text/html; charset=utf-8' },
+  '/playground.html': { file: join(SITE_DIR, 'playground.html'), type: 'text/html; charset=utf-8' },
   '/styles.css': { file: join(SITE_DIR, 'styles.css'), type: 'text/css; charset=utf-8' },
   '/console/': { file: join(CONSOLE_DIR, 'index.html'), type: 'text/html; charset=utf-8' },
   '/console/app.js': { file: join(CONSOLE_DIR, 'app.js'), type: 'text/javascript; charset=utf-8' },
@@ -195,12 +200,36 @@ export interface HandlerDeps {
    * customer app answers 404 for them, exactly as it did before.
    */
   readonly support?: SupportApp
+  /**
+   * The public demo front door. Absent means `/v1/demo` closes politely with
+   * `demo_unavailable` instead of falling through to the authenticated API.
+   */
+  readonly demo?: { handle(req: Request): Promise<Response> }
 }
 
 /**
- * One origin, four front doors, in this order: preflight, the static pages,
- * the support routes, then `/admin/` and everything else. Exported so the
- * routing can be exercised without binding a port.
+ * The demo is off in this deployment: the page exists, the machine does not.
+ * Answered here, before the customer app, so the visitor never sees a 404 that
+ * reads like a typo in the address.
+ */
+function demoUnavailable(): Response {
+  return new Response(
+    JSON.stringify({
+      error: {
+        type: 'service_unavailable_error',
+        code: 'demo_unavailable',
+        message: 'Пробная машина не настроена: владелец ещё не добавил ключ поставщика',
+        request_id: nextId('req_'),
+      },
+    }),
+    { status: 503, headers: { 'content-type': 'application/json; charset=utf-8' } },
+  )
+}
+
+/**
+ * One origin, five front doors, in this order: preflight, the static pages,
+ * the public demo, the support routes, then `/admin/` and everything else.
+ * Exported so the routing can be exercised without binding a port.
  */
 export function createHandler(deps: HandlerDeps): (req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
@@ -210,6 +239,11 @@ export function createHandler(deps: HandlerDeps): (req: Request) => Promise<Resp
     const page = await serveStatic(req)
     if (page !== null) return withCors(req, page)
     const { pathname } = new URL(req.url)
+    // The demo is public and lives in front of the key-authenticated routes:
+    // `app.ts` would answer 401 for `/v1/demo` and claim one key per visitor.
+    if (pathname === '/v1/demo') {
+      return withCors(req, deps.demo !== undefined ? await deps.demo.handle(req) : demoUnavailable())
+    }
     if (deps.support !== undefined) {
       // `app.ts` keeps its own route table, so the support paths are claimed
       // here before the customer app and the staff panel get the request.
@@ -306,6 +340,9 @@ function main() {
 
   let app: CloudApp
   let stopResource: (tenantId: string, sandboxId: string) => Promise<void>
+  // Shared by the customer API and the demo: one lookup, so the demo runs only
+  // while the demo tenant's own credential is present and usable.
+  let resolveProvider: (tenantId: string, providerId: string) => Promise<SandboxProvider | null>
 
   if (masterKey !== undefined && rateCentsPerHour !== undefined) {
     const runtime = createRuntime({
@@ -316,12 +353,17 @@ function main() {
       killSwitch,
       masterKey,
       rateCentsPerHour,
+      ...(process.env.ROX_MODAL_BRIDGE_URL
+        ? { modalBridgeUrl: process.env.ROX_MODAL_BRIDGE_URL.trim() }
+        : {}),
     })
 
     if (bootstrapTenantId !== undefined && startingBalanceCents !== undefined) {
       ensureBootstrapBalance(moneyStore, bootstrapTenantId, startingBalanceCents, Date.now())
       console.log(`Первый арендатор пополнен на ${startingBalanceCents} центов по ROX_BOOTSTRAP_BALANCE_CENTS`)
     }
+
+    resolveProvider = runtime.resolveProvider
 
     app = createApp({
       store,
@@ -361,9 +403,10 @@ function main() {
     )
   } else {
     const stub = createStubProvider()
+    resolveProvider = async (_tenantId, providerId) => (providerId === STUB_ID ? stub : null)
     app = createApp({
       store,
-      resolveProvider: (_tenantId, providerId) => (providerId === STUB_ID ? stub : null),
+      resolveProvider,
       listCapabilities: () => [STUB_CAPABILITIES],
       defaultProvider: STUB_ID,
     })
@@ -376,6 +419,25 @@ function main() {
       'Rox Cloud: исполнение не настроено — нужны ROX_MASTER_KEY и ROX_PLATFORM_RATE_CENTS_PER_HOUR, работает заглушка',
     )
   }
+
+  // The demo tenant is an explicit choice, never a guess: without
+  // `ROX_DEMO_TENANT_ID` the page is still served and `/v1/demo` answers
+  // `demo_unavailable`, so a pilot cannot hand out machines by accident.
+  const demoTenantId = (process.env.ROX_DEMO_TENANT_ID ?? '').trim()
+  const demo =
+    demoTenantId.length > 0
+      ? createDemo({
+          store,
+          tenantId: demoTenantId,
+          rateCentsPerHour: rateCentsPerHour ?? 0,
+          resolveProvider,
+        })
+      : undefined
+  console.log(
+    demoTenantId.length > 0
+      ? 'Rox Cloud: пробная страница включена — одна попытка с адреса в сутки'
+      : 'Rox Cloud: пробная страница выключена — задайте ROX_DEMO_TENANT_ID, чтобы включить /v1/demo',
+  )
 
   // The console shows a rising cost, so the meter must tick even when nobody
   // asks for the list. `unref` keeps the process free to exit in tests.
@@ -410,7 +472,10 @@ function main() {
     console.log('Rox Cloud: панель дежурного выключена — задайте ROX_ADMIN_KEY, чтобы включить /admin/')
   }
 
-  const server = Bun.serve({ port, fetch: createHandler({ app, admin, support }) })
+  const server = Bun.serve({
+    port,
+    fetch: createHandler({ app, admin, support, ...(demo !== undefined ? { demo } : {}) }),
+  })
   console.log(`Rox Cloud API слушает порт ${server.port}`)
   return server
 }

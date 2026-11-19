@@ -28,3 +28,11 @@ export {
   DAYTONA_PROVIDER_ID,
   createDaytonaProvider,
 } from './daytona.ts';
+
+export type { ModalPlan, ModalProviderConfig } from './modal.ts';
+
+export {
+  MODAL_DEFAULT_TIMEOUT_SEC,
+  MODAL_PROVIDER_ID,
+  createModalProvider,
+} from './modal.ts';

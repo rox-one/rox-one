@@ -30,9 +30,11 @@ import type { AuditLog, KillSwitch } from '../../../packages/cloud-ops/src/index
 import {
   DAYTONA_DEFAULT_API_URL,
   DAYTONA_DEFAULT_TOOLBOX_URL,
+  MODAL_PROVIDER_ID,
   PROVIDER_CAPABILITIES,
   PROVIDER_IDS,
   createDaytonaProvider,
+  createModalProvider,
 } from '../../../packages/providers/src/index.ts'
 import type { DeclaredCapabilities } from './app.ts'
 import { API_KEY_PREFIX, hashApiKey } from './auth.ts'
@@ -124,6 +126,8 @@ export interface RuntimeOptions {
   readonly fetch?: typeof fetch
   readonly daytonaApiUrl?: string
   readonly daytonaToolboxUrl?: string
+  /** Rox-hosted Modal bridge; when absent, Modal is not advertised. */
+  readonly modalBridgeUrl?: string
   /** Ceilings checked before a boot; zeros mean «не ограничено». */
   readonly limits?: AccountLimits
 }
@@ -238,9 +242,12 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
     const cached = providers.get(cacheKey)
     if (cached && cached.credentialId === credential.id) return cached.provider
 
-    // Only Daytona has an adapter in this slice; modal/e2b keys are stored but
-    // cannot answer requests yet, so no secret is decrypted for them.
-    if (providerId !== 'daytona') {
+    // A vendor without an adapter (or Modal without a bridge URL) stores keys
+    // but cannot answer requests, so no secret is decrypted for it.
+    const modalBridgeUrl = options.modalBridgeUrl
+    const hasAdapter =
+      providerId === 'daytona' || (providerId === 'modal' && Boolean(modalBridgeUrl))
+    if (!hasAdapter) {
       providers.delete(cacheKey)
       return null
     }
@@ -254,23 +261,40 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
       { ciphertext: stored.ciphertext, iv: stored.iv, tag: stored.tag },
       options.masterKey,
     )
-    const provider = createDaytonaProvider({
-      id: 'daytona',
-      apiUrl: options.daytonaApiUrl ?? DAYTONA_DEFAULT_API_URL,
-      toolboxUrl: options.daytonaToolboxUrl ?? DAYTONA_DEFAULT_TOOLBOX_URL,
-      apiKey,
-      fetch: options.fetch,
-      now,
-    })
+    const provider =
+      providerId === 'modal'
+        ? createModalProvider({
+            id: MODAL_PROVIDER_ID,
+            apiUrl: modalBridgeUrl as string,
+            apiKey,
+            fetch: options.fetch,
+            now,
+          })
+        : createDaytonaProvider({
+            id: 'daytona',
+            apiUrl: options.daytonaApiUrl ?? DAYTONA_DEFAULT_API_URL,
+            toolboxUrl: options.daytonaToolboxUrl ?? DAYTONA_DEFAULT_TOOLBOX_URL,
+            apiKey,
+            fetch: options.fetch,
+            now,
+          })
     providers.set(cacheKey, { credentialId: credential.id, provider })
     return provider
   }
 
   function listCapabilities(): readonly DeclaredCapabilities[] {
-    // Only vendors with a real adapter are advertised. Modal and E2B keys are
-    // accepted into the vault, but promising their machines would be a lie.
+    // Only vendors with a real adapter are advertised. Modal appears only when
+    // the bridge URL is configured, because its adapter has nothing to call
+    // otherwise; E2B keys are accepted into the vault but not advertised.
     const daytona = PROVIDER_CAPABILITIES.daytona
-    return [{ ...daytona, os: [...daytona.os], regions: [...daytona.regions] }]
+    const listed: DeclaredCapabilities[] = [
+      { ...daytona, os: [...daytona.os], regions: [...daytona.regions] },
+    ]
+    if (options.modalBridgeUrl) {
+      const modal = PROVIDER_CAPABILITIES.modal
+      listed.push({ ...modal, os: [...modal.os], regions: [...modal.regions] })
+    }
+    return listed
   }
 
   // ---------- lifecycle gates ----------

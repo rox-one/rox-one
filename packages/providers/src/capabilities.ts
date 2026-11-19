@@ -36,7 +36,9 @@ export const PROVIDER_CAPABILITIES: Readonly<Record<ProviderId, ProviderCapabili
     gpu: true,
     // Modal persists only the filesystem between runs, not process memory.
     pause: false,
-    snapshot: true,
+    // The Rox bridge has no snapshot route; filesystem snapshots are a vendor
+    // feature the bridge does not expose yet.
+    snapshot: false,
     volume: true,
     streaming: 'none',
     maxTtlSec: DAY_SEC,
