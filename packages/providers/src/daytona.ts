@@ -157,6 +157,27 @@ export function createDaytonaProvider(config: ProviderConfig): SandboxProvider {
     }
   };
 
+  const delay = (ms: number): Promise<void> => {
+    const { promise, resolve } = Promise.withResolvers<void>();
+    setTimeout(resolve, ms);
+    return promise;
+  };
+
+  /**
+   * `stop` and `destroy` are safe to repeat, so a vendor 5xx or a dropped
+   * connection earns exactly one immediate retry. A 4xx is a decision, not a
+   * hiccup, and is never retried. The second failure propagates as is.
+   */
+  const sendRepeatable = async (url: string, init: RequestInit): Promise<Response> => {
+    let first: Response;
+    try {
+      first = await send(url, init);
+    } catch {
+      return send(url, init);
+    }
+    return first.status >= 500 ? send(url, init) : first;
+  };
+
   const readJson = async (res: Response): Promise<Record<string, unknown>> => {
     let parsed: unknown;
     try {
@@ -306,7 +327,7 @@ export function createDaytonaProvider(config: ProviderConfig): SandboxProvider {
 
     async stop(id: string): Promise<void> {
       const record = requireRecord(id);
-      const res = await send(sandboxUrl(record, '/stop'), {
+      const res = await sendRepeatable(sandboxUrl(record, '/stop'), {
         method: 'POST',
         headers: authHeaders(),
       });
@@ -318,11 +339,31 @@ export function createDaytonaProvider(config: ProviderConfig): SandboxProvider {
 
     async destroy(id: string): Promise<void> {
       const record = requireRecord(id);
-      const res = await send(sandboxUrl(record), { method: 'DELETE', headers: authHeaders() });
+      let res = await sendRepeatable(sandboxUrl(record), {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+      // A stopped Daytona sandbox deletes itself; a DELETE that lands in that
+      // window answers 409. Waiting briefly and asking again turns the race
+      // into the desired end state instead of a fake provider outage.
+      for (const waitMs of [300, 700]) {
+        if (res.status !== 409) break;
+        await delay(waitMs);
+        res = await sendRepeatable(sandboxUrl(record), {
+          method: 'DELETE',
+          headers: authHeaders(),
+        });
+      }
       records.delete(id);
       // Deleting an already-gone sandbox is the desired end state.
-      if (res.status === 404) return;
-      if (!res.ok) throw httpError('destroy', res.status);
+      if (res.status === 404 || res.ok) return;
+      if (res.status === 409) {
+        throw new CloudRunnerError(
+          'Daytona ещё удаляет песочницу; повторите запрос через несколько секунд',
+          'provider_error',
+        );
+      }
+      throw httpError('destroy', res.status);
     },
   };
 }

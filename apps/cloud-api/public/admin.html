@@ -23,7 +23,7 @@
   body {
     background: var(--bg);
     color: var(--ink);
-    font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font: 13px/1.45 "Rox Mono Typeface", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
   h1 { font-size: 16px; margin: 0; letter-spacing: -0.01em; }
   h2 { font-size: 13px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
@@ -51,9 +51,13 @@
     color: var(--ink);
     min-width: 0;
   }
-  input:focus, select:focus, textarea:focus, button:focus-visible {
+  input:focus, select:focus, textarea:focus {
     outline: 2px solid rgba(31, 94, 255, 0.35);
     outline-offset: 1px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
   label { display: grid; gap: 3px; color: var(--muted); font-size: 12px; }
   .connect-screen { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
@@ -104,6 +108,13 @@
   .pill.disabled, .pill.stopped, .pill.terminal { color: var(--muted); }
   dialog { border: 1px solid var(--line); border-radius: 10px; padding: 16px; width: min(420px, 92vw); }
   dialog::backdrop { background: rgba(20, 22, 26, 0.35); }
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes dialog-pop {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: none; }
+    }
+    dialog[open] { animation: dialog-pop 120ms ease-out; }
+  }
   dialog form { display: grid; gap: 10px; }
   dialog menu { display: flex; justify-content: end; gap: 8px; margin: 0; padding: 0; }
   .empty { color: var(--muted); padding: 10px; }
@@ -350,6 +361,7 @@
         <div class="row">
           <label>Сколько записей <input name="limit" type="number" min="1" max="500" value="100"></label>
           <button type="submit">Показать</button>
+          <button type="button" id="audit-csv">Скачать CSV</button>
         </div>
       </form>
       <div class="table-wrap"><table>
@@ -449,7 +461,7 @@
   var KEY_STORE = 'rox_admin_key'
   var BASE_STORE = 'rox_admin_base'
   var STAFF_STORE = 'rox_admin_staff'
-  var state = { base: '', key: '', tab: 'overview', ticket: null }
+  var state = { base: '', key: '', tab: 'overview', ticket: null, audit: [] }
 
   function byId(id) { return document.getElementById(id) }
 
@@ -589,6 +601,46 @@
   }
 
   // ---------- panels ----------
+
+  function csvField(value) {
+    var text = value === null || value === undefined ? '' : String(value)
+    return /[",\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text
+  }
+
+  function csvDocument(header, rows) {
+    var lines = [header].concat(rows).map(function (row) {
+      return row.map(csvField).join(',')
+    })
+    return '\ufeff' + lines.join('\r\n') + '\r\n'
+  }
+
+  function downloadCsv(name, text) {
+    var blob = new Blob([text], { type: 'text/csv;charset=utf-8' })
+    var url = URL.createObjectURL(blob)
+    var link = document.createElement('a')
+    link.href = url
+    link.download = name
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    setTimeout(function () { URL.revokeObjectURL(url) }, 1000)
+  }
+
+  function downloadAudit() {
+    var month = new Date().toISOString().slice(0, 7)
+    var rows = state.audit.map(function (entry) {
+      return [
+        entry.at || '',
+        entry.actor_id || '',
+        entry.action || '',
+        entry.target_type || '',
+        entry.target_id || '',
+        entry.reason || ''
+      ]
+    })
+    downloadCsv('rox-audit-' + month + '.csv',
+      csvDocument(['at', 'actor_id', 'action', 'target_type', 'target_id', 'reason'], rows))
+  }
 
   function loadOverview() {
     return api('/admin/overview').then(function (data) {
@@ -1186,7 +1238,8 @@
     var form = byId('audit-filter')
     var limit = form.elements.limit.value.trim() || '100'
     return api('/admin/audit?limit=' + encodeURIComponent(limit)).then(function (data) {
-      var rows = data.data.map(function (entry) {
+      state.audit = Array.isArray(data.data) ? data.data : []
+      var rows = state.audit.map(function (entry) {
         var tr = document.createElement('tr')
         tr.appendChild(cell(when(entry.at)))
         tr.appendChild(cell(entry.actor_id, 'mono'))
@@ -1388,6 +1441,8 @@
     event.preventDefault()
     loadAudit().catch(function (err) { showError(describeFailure(err)) })
   })
+
+  byId('audit-csv').addEventListener('click', downloadAudit)
 
   byId('kill-form').addEventListener('submit', function (event) {
     event.preventDefault()

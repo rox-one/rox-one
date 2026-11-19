@@ -89,6 +89,19 @@ function createdThen(other: Responder): Responder {
     call.method === 'POST' && call.url.endsWith('/sandbox') ? json({ id: 'dt-1', state: 'started' }) : other(call);
 }
 
+/** Answers create with a sandbox and then plays `steps` in order, repeating the last. */
+function createdThenSteps(steps: Responder[]): Responder {
+  let index = 0;
+  return (call) => {
+    if (call.method === 'POST' && call.url.endsWith('/sandbox')) {
+      return json({ id: 'dt-1', state: 'started' });
+    }
+    const step = steps[Math.min(index, steps.length - 1)]!;
+    index += 1;
+    return step(call);
+  };
+}
+
 test('create maps every contract field and sends the bearer header', async () => {
   const { provider, calls } = setup(() => json({ id: 'dt-1', state: 'started' }));
 
@@ -326,6 +339,137 @@ test('a transport failure becomes provider_error', async () => {
   });
 
   await expectCode(() => provider.create(baseSpec), 'provider_error');
+});
+
+test('stop retries a 500 exactly once', async () => {
+  const { provider, calls } = setup(
+    createdThenSteps([
+      () => json({ message: 'boom' }, 500),
+      () => new Response(null, { status: 200 }),
+    ]),
+  );
+
+  await provider.create(baseSpec);
+  await provider.stop('sbx-1');
+
+  // create + first /stop + retried /stop, and nothing more.
+  expect(calls.length).toBe(3);
+  expect(calls.filter((call) => call.url.endsWith('/stop')).length).toBe(2);
+});
+
+test('destroy retries a 503 exactly once and forgets the sandbox', async () => {
+  const { provider, calls } = setup(
+    createdThenSteps([
+      () => new Response(null, { status: 503 }),
+      () => new Response(null, { status: 204 }),
+    ]),
+  );
+
+  await provider.create(baseSpec);
+  await provider.destroy('sbx-1');
+
+  expect(calls.length).toBe(3);
+  expect(calls.filter((call) => call.method === 'DELETE').length).toBe(2);
+
+  // The retried delete succeeded, so the id is gone without another request.
+  await expectCode(() => provider.get('sbx-1'), 'not_found');
+  expect(calls.length).toBe(3);
+});
+
+test('a 404 on destroy is not retried and still forgets the sandbox', async () => {
+  const { provider, calls } = setup(
+    createdThenSteps([() => new Response(null, { status: 404 })]),
+  );
+
+  await provider.create(baseSpec);
+  await provider.destroy('sbx-1');
+
+  expect(calls.length).toBe(2);
+  await expectCode(() => provider.get('sbx-1'), 'not_found');
+  expect(calls.length).toBe(2);
+});
+
+test('a 409 on destroy is retried after a pause and ends as success', async () => {
+  const { provider, calls } = setup(
+    createdThenSteps([
+      () => new Response(null, { status: 409 }),
+      () => new Response(null, { status: 404 }),
+    ]),
+  );
+
+  await provider.create(baseSpec);
+  await provider.destroy('sbx-1');
+
+  expect(calls.filter((call) => call.method === 'DELETE').length).toBe(2);
+  await expectCode(() => provider.get('sbx-1'), 'not_found');
+});
+
+test('a 409 that never clears explains itself and keeps the request retryable', async () => {
+  const { provider, calls } = setup(
+    createdThenSteps([() => new Response(null, { status: 409 })]),
+  );
+
+  await provider.create(baseSpec);
+
+  await expectCode(() => provider.destroy('sbx-1'), 'provider_error');
+  expect(calls.filter((call) => call.method === 'DELETE').length).toBe(3);
+});
+
+test('a rejected stop request is retried once and then succeeds', async () => {
+  const { provider, calls } = setup(
+    createdThenSteps([
+      () => {
+        throw new Error('socket closed');
+      },
+      () => new Response(null, { status: 200 }),
+    ]),
+  );
+
+  await provider.create(baseSpec);
+  await provider.stop('sbx-1');
+
+  expect(calls.length).toBe(3);
+  expect(calls.filter((call) => call.url.endsWith('/stop')).length).toBe(2);
+});
+
+test('two 5xx answers to stop surface a provider error and stop there', async () => {
+  const { provider, calls } = setup(
+    createdThenSteps([
+      () => json({ message: 'boom' }, 500),
+      () => json({ message: 'boom' }, 502),
+    ]),
+  );
+
+  await provider.create(baseSpec);
+
+  await expectCode(() => provider.stop('sbx-1'), 'provider_error');
+  expect(calls.length).toBe(3);
+});
+
+test('two rejected destroy requests surface a provider error and stop there', async () => {
+  const { provider, calls } = setup(
+    createdThenSteps([
+      () => {
+        throw new Error('socket closed');
+      },
+    ]),
+  );
+
+  await provider.create(baseSpec);
+
+  await expectCode(() => provider.destroy('sbx-1'), 'provider_error');
+  expect(calls.length).toBe(3);
+});
+
+test('get does not retry a 500', async () => {
+  const { provider, calls } = setup(
+    createdThenSteps([() => json({ message: 'boom' }, 500)]),
+  );
+
+  await provider.create(baseSpec);
+
+  await expectCode(() => provider.get('sbx-1'), 'provider_error');
+  expect(calls.length).toBe(2);
 });
 
 test('every request goes to the injected hosts only', async () => {

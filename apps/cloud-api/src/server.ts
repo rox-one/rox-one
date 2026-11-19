@@ -18,7 +18,15 @@
  *   `POST /v1/demo`) for one tenant whose provider key pays for the runs;
  *   without it the page is served and the route answers `demo_unavailable`;
  * - `ROX_CORS_ORIGIN` (comma-separated) allows extra browser origins; empty
- *   means same-origin only.
+ *   means same-origin only;
+ * - `ROX_STATE_FILE` makes the process durable: the snapshot is read back
+ *   before boot, written after every request that changed it, and a damaged
+ *   file stops the boot instead of opening an empty deployment. Without it the
+ *   state stays in memory, exactly as before.
+ *
+ * On SIGINT and SIGTERM with a state file configured, every machine that is
+ * still live is stopped (its wallet settled) and the state is saved once;
+ * a second signal, or fifteen seconds, ends the process regardless.
  *
  * Without the master key and the rate the API still answers every route: the
  * stub provider declares no operating systems and raises
@@ -34,7 +42,7 @@ import { join } from 'node:path'
 
 import { MASTER_KEY_BYTES, createMemoryKeyStore } from '../../../packages/cloud-keys/src/index.ts'
 import { createAuditLog, createKillSwitch } from '../../../packages/cloud-ops/src/index.ts'
-import { createMemoryMoneyStore } from '../../../packages/cloud-runner/src/entitlement.ts'
+import { createMemoryMoneyStore, release } from '../../../packages/cloud-runner/src/entitlement.ts'
 import type { AccountLimits } from '../../../packages/cloud-runner/src/limits.ts'
 import type { SandboxProvider } from '../../../packages/cloud-runner/src/sandbox.ts'
 import { capabilityUnavailable } from '../../../packages/cloud-runner/src/sandbox.ts'
@@ -44,6 +52,7 @@ import type { CloudApp, DeclaredCapabilities } from './app.ts'
 import { createDemo } from './demo.ts'
 import { createRuntime, ensureBootstrapBalance, ensureBootstrapKey } from './integration.ts'
 import { createMeter } from './meter.ts'
+import { applyState, loadState, saveState, snapshotState } from './persistence.ts'
 import { createMemoryStore, nextId } from './store.ts'
 import { createSupport, supportRouteKind } from './support.ts'
 import type { SupportApp } from './support.ts'
@@ -315,6 +324,11 @@ function readPort(): number {
   return port
 }
 
+/** Text of a thrown value without assuming it is an `Error`. */
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
 /**
  * Boot the process: one origin, four front doors.
  *
@@ -322,33 +336,52 @@ function readPort(): number {
  * routes, then `/admin/` and everything else. Kept out of the module body so
  * importing this file (for its static handler) never binds a port.
  */
-function main() {
+async function main() {
   const port = readPort()
 
-  const store = createMemoryStore()
+  // The state file is the only durable surface. When it is set the previous
+  // snapshot is read before any store exists, so a restart keeps tenants, key
+  // hashes, wallets, provider keys and the staff trail. A damaged file stops
+  // the boot instead of opening an empty deployment.
+  const stateFile = (process.env.ROX_STATE_FILE ?? '').trim()
+  const restored = stateFile.length > 0 ? await loadState(stateFile) : undefined
 
-  const bootstrapKey = (process.env.ROX_BOOTSTRAP_KEY ?? '').trim()
-  const bootstrapTenantName = (process.env.ROX_BOOTSTRAP_TENANT ?? '').trim() || 'Моя команда'
-  let bootstrapTenantId: string | undefined
-  if (bootstrapKey.length > 0) {
-    const boot = ensureBootstrapKey(store, { key: bootstrapKey, tenantName: bootstrapTenantName })
-    if (boot.created && boot.tenant !== undefined) {
-      bootstrapTenantId = boot.tenant.id
-      console.log(`Создан первый арендатор «${bootstrapTenantName}» по ROX_BOOTSTRAP_KEY`)
-    }
-  }
+  const store = createMemoryStore()
 
   const masterKey = readMasterKey()
   const rateCentsPerHour = readRateCentsPerHour()
   const startingBalanceCents = readStartingBalance()
   const adminKey = (process.env.ROX_ADMIN_KEY ?? '').trim()
 
-  // Persistence is in memory in this slice: a restart forgets tenants, keys,
-  // wallets and sandboxes alike.
   const keyStore = createMemoryKeyStore()
   const moneyStore = createMemoryMoneyStore()
   const audit = createAuditLog()
   const killSwitch = createKillSwitch()
+
+  const persistence =
+    stateFile.length > 0
+      ? { file: stateFile, deps: { store, moneyStore, keyStore, audit, killSwitch } }
+      : undefined
+
+  if (restored !== undefined && persistence !== undefined) {
+    applyState(restored, persistence.deps)
+    console.log(
+      `Rox Cloud: состояние восстановлено из ${stateFile} — арендаторов ${store.tenants.size}, машин ${store.sandboxes.size}`,
+    )
+  }
+
+  const bootstrapKey = (process.env.ROX_BOOTSTRAP_KEY ?? '').trim()
+  const bootstrapTenantName = (process.env.ROX_BOOTSTRAP_TENANT ?? '').trim() || 'Моя команда'
+  let bootstrapTenantId: string | undefined
+  if (bootstrapKey.length > 0) {
+    // `ensureBootstrapKey` leaves a restored store alone: it adds the first key
+    // only when no key exists yet.
+    const boot = ensureBootstrapKey(store, { key: bootstrapKey, tenantName: bootstrapTenantName })
+    if (boot.created && boot.tenant !== undefined) {
+      bootstrapTenantId = boot.tenant.id
+      console.log(`Создан первый арендатор «${bootstrapTenantName}» по ROX_BOOTSTRAP_KEY`)
+    }
+  }
 
   let app: CloudApp
   let stopResource: (tenantId: string, sandboxId: string) => Promise<void>
@@ -492,12 +525,115 @@ function main() {
     console.log('Rox Cloud: панель дежурного выключена — задайте ROX_ADMIN_KEY, чтобы включить /admin/')
   }
 
+  /**
+   * Run one write behind the chain, so two writers can never race for the same
+   * `.tmp` sibling. The chain itself always resolves: a failed write is logged
+   * and leaves `lastFingerprint` empty, so the next change tries again.
+   */
+  let lastFingerprint: string | null = null
+  let writeChain: Promise<void> = Promise.resolve()
+  const queueWrite = (work: () => Promise<void>): Promise<void> => {
+    const run = writeChain.then(work)
+    writeChain = run.catch((error: unknown) => {
+      lastFingerprint = null
+      console.error(
+        `Rox Cloud: не удалось сохранить состояние в ${persistence?.file}: ${messageOf(error)}`,
+      )
+    })
+    return run
+  }
+
+  /**
+   * Write the state after a request, and only when the snapshot actually
+   * changed. `savedAt` is the time of this snapshot, so it is blanked before
+   * the comparison — otherwise every request would look like a change.
+   */
+  const persistIfChanged = (): Promise<void> => {
+    if (persistence === undefined) return Promise.resolve()
+    return queueWrite(async () => {
+      const state = snapshotState(persistence.deps)
+      const fingerprint = JSON.stringify({ ...state, savedAt: '' })
+      if (fingerprint === lastFingerprint) return
+      await saveState(persistence.file, state)
+      lastFingerprint = fingerprint
+    }).then(
+      () => undefined,
+      // A lost write must not fail the request that produced it — the answer
+      // already reflects the in-memory state — and the chain has logged it.
+      () => undefined,
+    )
+  }
+
+  const handler = createHandler({ app, admin, support, ...(demo !== undefined ? { demo } : {}) })
+
+  if (persistence !== undefined) {
+    // Leaving a machine `running` in a file nobody can stop would strand the
+    // customer's money on a hold: on a signal every live machine is stopped
+    // through the same path a staff stop takes, which settles its wallet.
+    let signals = 0
+    const shutdown = async (signal: string): Promise<void> => {
+      signals += 1
+      if (signals > 1) {
+        console.log(`Rox Cloud: повторный ${signal} — выходим сразу`)
+        process.exit(0)
+      }
+      const watchdog = setTimeout(() => {
+        console.error('Rox Cloud: остановка не уложилась в 15 секунд — выходим принудительно')
+        process.exit(0)
+      }, 15_000)
+      watchdog.unref?.()
+      for (const record of [...store.sandboxes.values()]) {
+        if (record.state === 'stopped' || record.state === 'failed' || record.state === 'expired') {
+          continue
+        }
+        try {
+          await stopResource(record.tenantId, record.id)
+        } catch (error) {
+          record.state = 'failed'
+          const held =
+            moneyStore.getAccount(record.tenantId) === undefined
+              ? undefined
+              : moneyStore.findReservation(record.tenantId, record.id)
+          if (held !== undefined) release(moneyStore, record.tenantId, record.id, Date.now())
+          console.error(
+            `Rox Cloud: машину ${record.id} не удалось остановить при выходе — помечена как failed: ${messageOf(error)}`,
+          )
+        }
+      }
+      try {
+        await queueWrite(() => saveState(persistence.file, snapshotState(persistence.deps)))
+        console.log(`Rox Cloud: состояние сохранено в ${persistence.file}`)
+      } catch {
+        // `queueWrite` has already logged the path and the reason.
+      }
+      clearTimeout(watchdog)
+      process.exit(0)
+    }
+    process.on('SIGINT', () => {
+      void shutdown('SIGINT')
+    })
+    process.on('SIGTERM', () => {
+      void shutdown('SIGTERM')
+    })
+  }
+
   const server = Bun.serve({
     port,
-    fetch: createHandler({ app, admin, support, ...(demo !== undefined ? { demo } : {}) }),
+    fetch: async (req: Request): Promise<Response> => {
+      const response = await handler(req)
+      await persistIfChanged()
+      return response
+    },
   })
   console.log(`Rox Cloud API слушает порт ${server.port}`)
   return server
 }
 
-export const server = import.meta.main ? main() : undefined
+export const server = import.meta.main
+  ? await main().catch((error: unknown) => {
+      // A boot that cannot read its own state must not look like a healthy
+      // empty deployment: say why and exit non-zero.
+      console.error(`Rox Cloud не запустился: ${messageOf(error)}`)
+      process.exit(1)
+    })
+  : undefined

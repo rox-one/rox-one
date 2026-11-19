@@ -190,6 +190,28 @@ function sumCents(rows) {
   }, 0)
 }
 
+function csvField(value) {
+  const text = value === null || value === undefined ? '' : String(value)
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+}
+
+function csvDocument(header, rows) {
+  const lines = [header].concat(rows).map((row) => row.map(csvField).join(','))
+  return `\uFEFF${lines.join('\r\n')}\r\n`
+}
+
+function downloadCsv(name, text) {
+  const blob = new Blob([text], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = name
+  document.body.append(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
 function isNonTerminal(sandbox) {
   return !TERMINAL_STATES.has(sandbox.state)
 }
@@ -820,6 +842,23 @@ function renderInvoice() {
     .join('')
 }
 
+function invoiceCsvRows() {
+  return (state.usage || []).map((row) => {
+    const ref = String(row.ref || '')
+    const sandbox = ref ? findSandbox(ref) : null
+    const own = row.created_at !== undefined ? row.created_at : row.at
+    const at = own !== undefined ? own : sandbox ? sandbox.created_at : undefined
+    const cents = Number(row.cents)
+    const amount = Number.isFinite(cents) ? (cents / 100).toFixed(2) : ''
+    return [row.product || '', ref, amount, at || '']
+  })
+}
+
+function downloadInvoice() {
+  const month = new Date().toISOString().slice(0, 7)
+  downloadCsv(`rox-invoice-${month}.csv`, csvDocument(['product', 'ref', 'amount_usd', 'at'], invoiceCsvRows()))
+}
+
 function renderJournal() {
   const list = $('journal-list')
   list.replaceChildren()
@@ -1383,6 +1422,7 @@ function bindEvents() {
     await loadUsage()
     renderAll()
   })
+  $('invoice-csv').addEventListener('click', downloadInvoice)
 
   $('key-create').addEventListener('click', openKeyDialog)
   $('key-form').addEventListener('submit', submitCreateKey)

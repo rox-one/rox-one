@@ -47,6 +47,12 @@ export interface KillSwitch {
   isBlocked(resource: KillScope): KillRequest | null;
   /** Every request in creation order. */
   list(): KillRequest[];
+  /**
+   * Replace the requests with ones read back from disk. Ids, states and scopes
+   * are validated so a damaged file cannot make a later read crash; a bad
+   * record throws `OpsError` and leaves the current requests untouched.
+   */
+  restore(requests: readonly KillRequest[]): void;
 }
 
 /** Validate a scope and drop nothing: absent field means wildcard. */
@@ -161,6 +167,59 @@ export function createKillSwitch(options: CreateKillSwitchOptions = {}): KillSwi
     return stored.map((item) => ({ ...item, scope: { ...item.scope } }));
   }
 
+  /** One read-back record, checked hard enough that later reads cannot crash. */
+  function checkedRequest(value: KillRequest): KillRequest {
+    const id = typeof value?.id === 'string' ? value.id.trim() : '';
+    if (!id) {
+      throw new OpsError('invalid_input', 'У запроса блокировки нет идентификатора');
+    }
+    if (value.state !== 'pending' && value.state !== 'active' && value.state !== 'disabled') {
+      throw new OpsError('invalid_input', `Неизвестное состояние запроса блокировки: ${String(value.state)}`);
+    }
+    if (typeof value.enabled !== 'boolean') {
+      throw new OpsError('invalid_input', `У запроса блокировки ${id} не указано, включает он блокировку или снимает`);
+    }
+    const by = typeof value.by === 'string' ? value.by.trim() : '';
+    if (!by) {
+      throw new OpsError('invalid_input', `У запроса блокировки ${id} нет автора`);
+    }
+    const reason = typeof value.reason === 'string' ? value.reason.trim() : '';
+    if (!reason) {
+      throw new OpsError('invalid_input', `У запроса блокировки ${id} нет причины`);
+    }
+    if (typeof value.at !== 'string' || Number.isNaN(Date.parse(value.at))) {
+      throw new OpsError('invalid_input', `У запроса блокировки ${id} нет разборчивого времени`);
+    }
+    const approvedBy = value.approvedBy === undefined ? undefined : String(value.approvedBy).trim();
+    return {
+      id,
+      scope: normalizeScope(value.scope),
+      enabled: value.enabled,
+      reason,
+      by,
+      at: value.at,
+      state: value.state,
+      ...(approvedBy ? { approvedBy } : {}),
+    };
+  }
+
+  function restore(requests: readonly KillRequest[]): void {
+    if (!Array.isArray(requests)) {
+      throw new OpsError('invalid_input', 'Список запросов блокировки должен быть массивом');
+    }
+    const seen = new Set<string>();
+    const candidate = requests.map((value) => {
+      const record = checkedRequest(value);
+      if (seen.has(record.id)) {
+        throw new OpsError('invalid_input', `Запрос блокировки ${record.id} встречается дважды`);
+      }
+      seen.add(record.id);
+      return record;
+    });
+    stored.length = 0;
+    for (const record of candidate) stored.push(record);
+  }
+
   return {
     get requests(): readonly KillRequest[] {
       return stored.slice();
@@ -171,5 +230,6 @@ export function createKillSwitch(options: CreateKillSwitchOptions = {}): KillSwi
     disable,
     isBlocked,
     list,
+    restore,
   };
 }

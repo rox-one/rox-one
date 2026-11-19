@@ -59,6 +59,13 @@ export interface AuditLog {
   list(filter?: AuditFilter): AuditEntry[];
   /** Recompute every hash and every link. */
   verifyChain(): AuditChainCheck;
+  /**
+   * Replace the trail with entries read back from disk and verify every hash
+   * and link. A chain that does not verify throws `OpsError` and leaves the
+   * entries already in memory untouched, so a damaged file can never become
+   * the trail the next append extends.
+   */
+  restore(entries: readonly AuditEntry[]): AuditChainCheck;
 }
 
 /**
@@ -125,6 +132,19 @@ type HashedEntry = Omit<AuditEntry, 'hash'>;
 
 function hashEntry(entry: HashedEntry): string {
   return createHash('sha256').update(canonicalJson(entry)).digest('hex');
+}
+
+/** Walk a candidate trail and report the first entry that breaks the chain. */
+function checkChain(entries: readonly AuditEntry[]): AuditChainCheck {
+  let prevHash = GENESIS_HASH;
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index]!;
+    if (entry.prevHash !== prevHash) return { ok: false, brokenAt: index };
+    const { hash: storedHash, ...payload } = entry;
+    if (hashEntry(payload) !== storedHash) return { ok: false, brokenAt: index };
+    prevHash = entry.hash;
+  }
+  return { ok: true, count: entries.length };
 }
 
 export function createAuditLog(options: AuditLogOptions = {}): AuditLog {
@@ -210,15 +230,21 @@ export function createAuditLog(options: AuditLogOptions = {}): AuditLog {
   }
 
   function verifyChain(): AuditChainCheck {
-    let prevHash = GENESIS_HASH;
-    for (let index = 0; index < stored.length; index += 1) {
-      const entry = stored[index]!;
-      if (entry.prevHash !== prevHash) return { ok: false, brokenAt: index };
-      const { hash: storedHash, ...payload } = entry;
-      if (hashEntry(payload) !== storedHash) return { ok: false, brokenAt: index };
-      prevHash = entry.hash;
+    return checkChain(stored);
+  }
+
+  function restore(entries: readonly AuditEntry[]): AuditChainCheck {
+    const candidate = entries.map((entry) => cloneValue(entry));
+    const check = checkChain(candidate);
+    if (!check.ok) {
+      throw new OpsError(
+        'invalid_state',
+        `Цепочка аудита не сходится: запись №${check.brokenAt} повреждена или переставлена`,
+      );
     }
-    return { ok: true, count: stored.length };
+    stored.length = 0;
+    for (const entry of candidate) stored.push(entry);
+    return check;
   }
 
   return {
@@ -228,5 +254,6 @@ export function createAuditLog(options: AuditLogOptions = {}): AuditLog {
     append,
     list,
     verifyChain,
+    restore,
   };
 }
