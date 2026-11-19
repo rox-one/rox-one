@@ -39,6 +39,7 @@ const TARGETS: readonly Target[] = [
   { name: 'packages/cloud-ops', cwd: 'packages/cloud-ops', script: 'typecheck' },
   { name: 'packages/cloud-support', cwd: 'packages/cloud-support', script: 'typecheck' },
   { name: 'packages/providers', cwd: 'packages/providers', script: 'typecheck' },
+  { name: 'packages/cloud-sdk-ts', cwd: 'packages/cloud-sdk-ts', script: 'typecheck' },
   { name: 'packages/messaging-discord-worker', cwd: 'packages/messaging-discord-worker', script: 'typecheck' },
   { name: 'packages/messaging-whatsapp-worker', cwd: 'packages/messaging-whatsapp-worker', script: 'typecheck' },
   { name: 'packages/test-harness', cwd: 'packages/test-harness', script: 'typecheck' },

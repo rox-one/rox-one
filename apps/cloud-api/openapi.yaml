@@ -26,6 +26,8 @@ tags:
   - name: account
   - name: sandboxes
   - name: usage
+  - name: tickets
+  - name: status
 
 paths:
   /health:
@@ -665,6 +667,134 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
 
+  /status:
+    get:
+      operationId: getPublicStatus
+      summary: Public status page — the incidents that are happening now
+      tags: [status]
+      security: []
+      description: |
+        No key is needed. The page is deliberately narrow: the title, the public
+        summary, the severity, the status and the last update of each live
+        incident — never an id, a scope, a timeline or any tenant data. A
+        resolved incident leaves the page, so it answers with an empty list when
+        nothing is wrong.
+      responses:
+        '200':
+          description: One entry per live incident, newest first.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusPage'
+
+  /v1/tickets:
+    get:
+      operationId: listTickets
+      summary: The tenant's own tickets, newest first
+      tags: [tickets]
+      description: Any valid key may read the tickets of the tenant it belongs to; no extra scope is needed.
+      responses:
+        '200':
+          description: Every ticket of this tenant, thread included.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createTicket
+      summary: Open a support ticket
+      tags: [tickets]
+      description: |
+        The first message is authored by the tenant and the ticket starts in
+        `open`, waiting on staff. A message that carries a provider key is
+        refused whole with `secret_in_ticket`: no part of it is stored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketCreate'
+      responses:
+        '201':
+          description: The ticket was opened.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/tickets/{id}:
+    get:
+      operationId: getTicket
+      summary: One ticket of the tenant, thread included
+      tags: [tickets]
+      description: A ticket of another tenant answers 404, exactly like an unknown id.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: The ticket and its messages.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/tickets/{id}/reply:
+    post:
+      operationId: replyToTicket
+      summary: Add a customer message to the thread
+      tags: [tickets]
+      description: |
+        The ticket goes back to `open`: a customer writing always puts the ball
+        with staff. A resolved ticket refuses a reply with 409 — open a new one.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketReply'
+      responses:
+        '200':
+          description: The ticket with the new message appended.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -707,6 +837,8 @@ components:
           type: string
           enum:
             - invalid_request
+            - secret_in_ticket
+            - secret_in_record
             - idempotency_key_required
             - provider_unknown
             - capability_unavailable

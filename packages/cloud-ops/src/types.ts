@@ -39,7 +39,15 @@ export type AuditAction =
   | 'credit.grant'
   | 'impersonate.start'
   | 'killswitch.set'
-  | 'killswitch.approve';
+  | 'killswitch.approve'
+  | 'ticket.open'
+  | 'ticket.reply'
+  | 'ticket.resolve'
+  | 'incident.open'
+  | 'incident.update'
+  | 'incident.resolve'
+  | 'abuse.confirm'
+  | 'abuse.dismiss';
 
 /** What a staff member did, to what, and why. */
 export interface AuditInput {

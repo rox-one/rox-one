@@ -107,6 +107,18 @@
   dialog form { display: grid; gap: 10px; }
   dialog menu { display: flex; justify-content: end; gap: 8px; margin: 0; padding: 0; }
   .empty { color: var(--muted); padding: 10px; }
+  .bar label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+  .bar label input { width: 110px; }
+  .pill.open, .pill.investigating { color: var(--danger); border-color: #e8c4c0; background: var(--danger-bg); }
+  .pill.identified { color: #8a5a00; border-color: #e8d3a8; background: #fdf5e3; }
+  .pill.monitoring { color: var(--accent); border-color: #c5d5ff; background: #eef3ff; }
+  .pill.resolved, .pill.dismissed, .pill.none { color: var(--muted); }
+  .pill.confirmed { color: var(--ok); border-color: #bcd9c7; background: #eaf5ee; }
+  .thread { display: grid; gap: 6px; max-height: 320px; overflow: auto; }
+  .msg { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; background: #fbfbfa; }
+  .msg.staff { background: #eef3ff; border-color: #c5d5ff; }
+  .msg .who { color: var(--muted); font-size: 11px; margin-bottom: 2px; }
+  .msg .body { white-space: pre-wrap; }
 </style>
 </head>
 <body>
@@ -114,7 +126,7 @@
 <section id="connect-screen" class="connect-screen" aria-labelledby="connect-title">
   <form id="connect-form" class="connect-card" novalidate>
     <h1 id="connect-title">Rox Cloud — панель дежурного</h1>
-    <p>Арендаторы, машины, ключи поставщиков, рубильник и журнал действий.</p>
+    <p>Арендаторы, машины, ключи поставщиков, рубильник, обращения, происшествия, злоупотребления и журнал действий.</p>
     <label>Адрес API
       <input id="connect-base" name="base" type="url" autocomplete="off" spellcheck="false">
     </label>
@@ -131,6 +143,7 @@
   <div class="bar">
     <h1>Панель дежурного</h1>
     <span class="base" id="top-base"></span>
+    <label>Дежурный <input id="staff-id" type="text" autocomplete="off" spellcheck="false" placeholder="кто отвечает"></label>
     <span class="spacer"></span>
     <button type="button" id="top-refresh">Обновить</button>
     <button type="button" id="top-disconnect">Отключиться</button>
@@ -142,6 +155,9 @@
     <button type="button" role="tab" data-tab="resources" aria-selected="false">Ресурсы</button>
     <button type="button" role="tab" data-tab="credentials" aria-selected="false">Ключи поставщиков</button>
     <button type="button" role="tab" data-tab="killswitch" aria-selected="false">Рубильник</button>
+    <button type="button" role="tab" data-tab="tickets" aria-selected="false">Обращения</button>
+    <button type="button" role="tab" data-tab="incidents" aria-selected="false">Происшествия</button>
+    <button type="button" role="tab" data-tab="abuse" aria-selected="false">Злоупотребления</button>
     <button type="button" role="tab" data-tab="audit" aria-selected="false">Журнал</button>
   </div>
 
@@ -235,6 +251,90 @@
       </table></div>
     </section>
 
+    <section id="panel-tickets" role="tabpanel" aria-label="Обращения" hidden>
+      <form class="card" id="tickets-filter">
+        <div class="row">
+          <label>Состояние
+            <select name="status">
+              <option value="">любое</option>
+              <option value="open">open — ждёт дежурного</option>
+              <option value="pending">pending — ждёт клиента</option>
+              <option value="resolved">resolved — закрыт</option>
+            </select>
+          </label>
+          <button type="submit">Показать</button>
+        </div>
+      </form>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Запрос</th><th>Клиент</th><th>Тема</th><th>Состояние</th>
+          <th>Приоритет</th><th>Обновлён</th><th>Сообщений</th><th></th>
+        </tr></thead>
+        <tbody id="tickets-body"></tbody>
+      </table></div>
+      <div class="card" id="ticket-view" hidden>
+        <h2 id="ticket-view-title">Запрос</h2>
+        <div class="thread" id="ticket-thread"></div>
+        <label>Ответ клиенту <textarea id="ticket-reply" rows="3"></textarea></label>
+        <div class="row">
+          <button type="button" class="primary" id="ticket-reply-send">Ответить</button>
+          <button type="button" class="danger" id="ticket-resolve">Закрыть запрос</button>
+          <button type="button" id="ticket-collapse">Свернуть</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-incidents" role="tabpanel" aria-label="Происшествия" hidden>
+      <form class="card" id="incident-form">
+        <h2>Открыть происшествие</h2>
+        <label>Заголовок <input name="title" type="text" required placeholder="что сломано"></label>
+        <label>Публичное описание <textarea name="summary" rows="2" required placeholder="что видит клиент"></textarea></label>
+        <div class="row">
+          <label>Важность
+            <select name="severity">
+              <option value="minor">minor</option>
+              <option value="major" selected>major</option>
+              <option value="critical">critical</option>
+            </select>
+          </label>
+          <button class="primary" type="submit">Открыть</button>
+        </div>
+        <p class="muted">Публичная страница /status показывает только заголовок, описание, важность и состояние: закрытое происшествие с неё уходит.</p>
+      </form>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Инцидент</th><th>Заголовок</th><th>Важность</th><th>Состояние</th>
+          <th>Обновлён</th><th>Публичное описание</th><th></th>
+        </tr></thead>
+        <tbody id="incidents-body"></tbody>
+      </table></div>
+    </section>
+
+    <section id="panel-abuse" role="tabpanel" aria-label="Злоупотребления" hidden>
+      <form class="card" id="abuse-filter">
+        <div class="row">
+          <label>Решение
+            <select name="decision">
+              <option value="">любое</option>
+              <option value="none">none</option>
+              <option value="warn">warn</option>
+              <option value="throttle">throttle</option>
+              <option value="stop">stop</option>
+            </select>
+          </label>
+          <button type="submit">Показать</button>
+        </div>
+        <p class="muted">Запись хранит только числа замера: ни текста клиента, ни содержимого запросов.</p>
+      </form>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Запись</th><th>Клиент</th><th>Машина</th><th>Решение</th><th>Причина</th>
+          <th>Состояние</th><th>Разобрал</th><th>Когда</th><th></th>
+        </tr></thead>
+        <tbody id="abuse-body"></tbody>
+      </table></div>
+    </section>
+
     <section id="panel-audit" role="tabpanel" aria-label="Журнал" hidden>
       <form class="card" id="audit-filter">
         <div class="row">
@@ -269,7 +369,8 @@
 
   var KEY_STORE = 'rox_admin_key'
   var BASE_STORE = 'rox_admin_base'
-  var state = { base: '', key: '', tab: 'overview' }
+  var STAFF_STORE = 'rox_admin_staff'
+  var state = { base: '', key: '', tab: 'overview', ticket: null }
 
   function byId(id) { return document.getElementById(id) }
 
@@ -291,6 +392,19 @@
 
   function dropKey() {
     try { sessionStorage.removeItem(KEY_STORE) } catch (err) { /* приватный режим */ }
+  }
+
+  function loadStaff() {
+    try { return sessionStorage.getItem(STAFF_STORE) || '' } catch (err) { return '' }
+  }
+
+  function saveStaff(value) {
+    try { sessionStorage.setItem(STAFF_STORE, value) } catch (err) { /* приватный режим */ }
+  }
+
+  /** Who signs the staff writes; the API records this id in the audit trail. */
+  function staffId() {
+    return byId('staff-id').value.trim() || 'staff'
   }
 
   function showError(text) {
@@ -552,6 +666,201 @@
     })
   }
 
+  // ---------- обращения ----------
+
+  function messageNode(message) {
+    var box = document.createElement('div')
+    box.className = 'msg ' + message.author_role
+    var who = document.createElement('div')
+    who.className = 'who'
+    who.textContent = (message.author_role === 'staff'
+      ? 'дежурный ' + (message.author_id || '')
+      : 'клиент') + ' · ' + when(message.created_at)
+    var text = document.createElement('div')
+    text.className = 'body'
+    text.textContent = message.body
+    box.appendChild(who)
+    box.appendChild(text)
+    return box
+  }
+
+  function showTicket(ticket) {
+    state.ticket = ticket
+    byId('ticket-view').hidden = false
+    byId('ticket-view-title').textContent =
+      ticket.subject + ' · ' + ticket.status + ' · ' + ticket.priority + ' · ' + ticket.id
+    var thread = byId('ticket-thread')
+    thread.textContent = ''
+    ticket.messages.forEach(function (message) { thread.appendChild(messageNode(message)) })
+    var closed = ticket.status === 'resolved'
+    byId('ticket-reply').value = ''
+    byId('ticket-reply').disabled = closed
+    byId('ticket-reply-send').disabled = closed
+    byId('ticket-resolve').disabled = closed
+  }
+
+  function loadTickets() {
+    var form = byId('tickets-filter')
+    var status = form.elements.status.value
+    var suffix = status ? '?status=' + encodeURIComponent(status) : ''
+    return api('/admin/tickets' + suffix).then(function (data) {
+      var rows = data.data.map(function (ticket) {
+        var tr = document.createElement('tr')
+        tr.appendChild(cell(ticket.id, 'mono'))
+        tr.appendChild(cell(ticket.tenant_id, 'mono'))
+        tr.appendChild(cell(ticket.subject, 'wrap'))
+        tr.appendChild(cellNode(pillGate(ticket.status)))
+        tr.appendChild(cell(ticket.priority))
+        tr.appendChild(cell(when(ticket.updated_at)))
+        tr.appendChild(cell(ticket.messages.length, 'num'))
+        var actions = document.createElement('td')
+        var open = document.createElement('button')
+        open.type = 'button'
+        open.textContent = 'Открыть'
+        open.addEventListener('click', function () { showTicket(ticket) })
+        actions.appendChild(open)
+        tr.appendChild(actions)
+        return tr
+      })
+      fillTable(byId('tickets-body'), rows, 'Обращений нет')
+      if (state.ticket) {
+        var fresh = data.data.filter(function (entry) { return entry.id === state.ticket.id })[0]
+        if (fresh) showTicket(fresh)
+        else { state.ticket = null; byId('ticket-view').hidden = true }
+      }
+    })
+  }
+
+  function ticketAction(action, body) {
+    if (!state.ticket) return
+    return api('/admin/tickets/' + encodeURIComponent(state.ticket.id) + '/' + action, {
+      method: 'POST',
+      body: body
+    }).then(function () {
+      showError('')
+      loadTickets()
+    }).catch(function (err) { showError(describeFailure(err)) })
+  }
+
+  // ---------- происшествия ----------
+
+  /** Where an incident moves next; `resolved` is reached through «Закрыть». */
+  var NEXT_STATUS = {
+    investigating: 'identified',
+    identified: 'monitoring',
+    monitoring: 'resolved'
+  }
+
+  function loadIncidents() {
+    return api('/admin/incidents').then(function (data) {
+      var rows = data.data.map(function (incident) {
+        var tr = document.createElement('tr')
+        tr.appendChild(cell(incident.id, 'mono'))
+        tr.appendChild(cell(incident.title, 'wrap'))
+        tr.appendChild(cell(incident.severity))
+        tr.appendChild(cellNode(pillGate(incident.status)))
+        tr.appendChild(cell(when(incident.updated_at)))
+        tr.appendChild(cell(incident.public_summary, 'wrap'))
+        var actions = document.createElement('td')
+        if (incident.status !== 'resolved') {
+          var next = NEXT_STATUS[incident.status]
+          if (next && next !== 'resolved') {
+            var forward = document.createElement('button')
+            forward.type = 'button'
+            forward.textContent = 'Дальше: ' + next
+            forward.addEventListener('click', function () {
+              askReason('Происшествие ' + incident.id + ': ' + next, 'Что изменилось').then(function (note) {
+                if (note === null) return
+                incidentAction(incident.id, 'update', { status: next, note: note })
+              })
+            })
+            actions.appendChild(forward)
+          }
+          var close = document.createElement('button')
+          close.type = 'button'
+          close.className = 'danger'
+          close.textContent = 'Закрыть'
+          close.addEventListener('click', function () {
+            askReason('Закрыть происшествие ' + incident.id, 'Что сделано').then(function (note) {
+              if (note === null) return
+              incidentAction(incident.id, 'resolve', { note: note })
+            })
+          })
+          actions.appendChild(close)
+        }
+        tr.appendChild(actions)
+        return tr
+      })
+      fillTable(byId('incidents-body'), rows, 'Происшествий нет')
+    })
+  }
+
+  function incidentAction(id, action, body) {
+    return api('/admin/incidents/' + encodeURIComponent(id) + '/' + action, {
+      method: 'POST',
+      body: body
+    }).then(function () {
+      showError('')
+      loadIncidents()
+    }).catch(function (err) { showError(describeFailure(err)) })
+  }
+
+  // ---------- злоупотребления ----------
+
+  function loadAbuse() {
+    var form = byId('abuse-filter')
+    var decision = form.elements.decision.value
+    var suffix = decision ? '?decision=' + encodeURIComponent(decision) : ''
+    return api('/admin/abuse' + suffix).then(function (data) {
+      var rows = data.data.map(function (flag) {
+        var tr = document.createElement('tr')
+        tr.appendChild(cell(flag.id, 'mono'))
+        tr.appendChild(cell(flag.tenant_id, 'mono'))
+        tr.appendChild(cell(flag.sandbox_id, 'mono'))
+        tr.appendChild(cell(flag.decision))
+        tr.appendChild(cell(flag.reason, 'wrap'))
+        tr.appendChild(cellNode(pillGate(flag.state)))
+        tr.appendChild(cell(flag.confirmed_by || flag.dismissed_reason || '—', 'wrap'))
+        tr.appendChild(cell(when(flag.decided_at)))
+        var actions = document.createElement('td')
+        if (flag.state === 'open') {
+          var confirm = document.createElement('button')
+          confirm.type = 'button'
+          confirm.className = 'primary'
+          confirm.textContent = 'Подтвердить'
+          confirm.disabled = flag.decision === 'none'
+          confirm.addEventListener('click', function () {
+            abuseAction(flag.id, 'confirm', { staffId: staffId() })
+          })
+          actions.appendChild(confirm)
+          var dismiss = document.createElement('button')
+          dismiss.type = 'button'
+          dismiss.textContent = 'Отклонить'
+          dismiss.addEventListener('click', function () {
+            askReason('Отклонить запись ' + flag.id, 'Почему это не нарушение').then(function (reason) {
+              if (reason === null) return
+              abuseAction(flag.id, 'dismiss', { reason: reason })
+            })
+          })
+          actions.appendChild(dismiss)
+        }
+        tr.appendChild(actions)
+        return tr
+      })
+      fillTable(byId('abuse-body'), rows, 'Очередь пуста')
+    })
+  }
+
+  function abuseAction(id, action, body) {
+    return api('/admin/abuse/' + encodeURIComponent(id) + '/' + action, {
+      method: 'POST',
+      body: body
+    }).then(function () {
+      showError('')
+      loadAbuse()
+    }).catch(function (err) { showError(describeFailure(err)) })
+  }
+
   function loadAudit() {
     var form = byId('audit-filter')
     var limit = form.elements.limit.value.trim() || '100'
@@ -576,6 +885,9 @@
     resources: loadResources,
     credentials: loadCredentials,
     killswitch: loadKillswitch,
+    tickets: loadTickets,
+    incidents: loadIncidents,
+    abuse: loadAbuse,
     audit: loadAudit
   }
 
@@ -695,6 +1007,62 @@
     loadResources().catch(function (err) { showError(describeFailure(err)) })
   })
 
+  byId('tickets-filter').addEventListener('submit', function (event) {
+    event.preventDefault()
+    loadTickets().catch(function (err) { showError(describeFailure(err)) })
+  })
+
+  byId('ticket-reply-send').addEventListener('click', function () {
+    var text = byId('ticket-reply').value.trim()
+    if (!text) {
+      showError('Нужен текст ответа · код invalid_request · запрос —')
+      return
+    }
+    ticketAction('reply', { body: text, authorId: staffId() })
+  })
+
+  byId('ticket-resolve').addEventListener('click', function () {
+    ticketAction('resolve', { authorId: staffId() })
+  })
+
+  byId('ticket-collapse').addEventListener('click', function () {
+    state.ticket = null
+    byId('ticket-view').hidden = true
+  })
+
+  byId('incident-form').addEventListener('submit', function (event) {
+    event.preventDefault()
+    var form = event.target
+    var title = form.elements.title.value.trim()
+    var summary = form.elements.summary.value.trim()
+    if (!title || !summary) {
+      showError('Нужны заголовок и публичное описание · код invalid_request · запрос —')
+      return
+    }
+    api('/admin/incidents', {
+      method: 'POST',
+      body: {
+        title: title,
+        publicSummary: summary,
+        severity: form.elements.severity.value,
+        scopes: []
+      }
+    }).then(function () {
+      showError('')
+      form.reset()
+      loadIncidents()
+    }).catch(function (err) { showError(describeFailure(err)) })
+  })
+
+  byId('abuse-filter').addEventListener('submit', function (event) {
+    event.preventDefault()
+    loadAbuse().catch(function (err) { showError(describeFailure(err)) })
+  })
+
+  byId('staff-id').addEventListener('change', function () {
+    saveStaff(byId('staff-id').value.trim())
+  })
+
   byId('audit-filter').addEventListener('submit', function (event) {
     event.preventDefault()
     loadAudit().catch(function (err) { showError(describeFailure(err)) })
@@ -728,6 +1096,7 @@
   // ---------- start ----------
 
   byId('connect-base').value = loadBase()
+  byId('staff-id').value = loadStaff()
   var storedKey = loadKey()
   if (storedKey) {
     connect(byId('connect-base').value, storedKey).catch(function () {

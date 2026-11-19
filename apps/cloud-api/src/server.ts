@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 /**
- * Entry point for Rox Cloud: the customer API, the staff panel API and the two
+ * Entry point for Rox Cloud: the customer API, the staff panel API, the
+ * support front (customer tickets and the public `/status` page) and the two
  * pages that drive them, on one origin.
  *
  * Bootstrap contract:
@@ -39,6 +40,8 @@ import type { CloudApp, DeclaredCapabilities } from './app.ts'
 import { createRuntime, ensureBootstrapBalance, ensureBootstrapKey } from './integration.ts'
 import { createMeter } from './meter.ts'
 import { createMemoryStore, nextId } from './store.ts'
+import { createSupport, supportRouteKind } from './support.ts'
+import type { SupportApp } from './support.ts'
 
 const STUB_ID = 'stub'
 
@@ -182,16 +185,22 @@ function withCors(req: Request, response: Response): Response {
   return response
 }
 
-/** The two apps the one origin front door needs. */
+/** The apps the one origin front door offers. */
 export interface HandlerDeps {
   readonly app: { handle(req: Request): Promise<Response> }
   readonly admin: { handle(req: Request): Promise<Response> }
+  /**
+   * Support front: the ticket routes, the public `/status` page and the staff
+   * support routes. Absent means those paths are not served at all — the
+   * customer app answers 404 for them, exactly as it did before.
+   */
+  readonly support?: SupportApp
 }
 
 /**
- * One origin, three front doors, in this order: preflight, the two pages, then
- * `/admin/` and everything else. Exported so the routing can be exercised
- * without binding a port.
+ * One origin, four front doors, in this order: preflight, the static pages,
+ * the support routes, then `/admin/` and everything else. Exported so the
+ * routing can be exercised without binding a port.
  */
 export function createHandler(deps: HandlerDeps): (req: Request) => Promise<Response> {
   return async (req: Request): Promise<Response> => {
@@ -201,6 +210,13 @@ export function createHandler(deps: HandlerDeps): (req: Request) => Promise<Resp
     const page = await serveStatic(req)
     if (page !== null) return withCors(req, page)
     const { pathname } = new URL(req.url)
+    if (deps.support !== undefined) {
+      // `app.ts` keeps its own route table, so the support paths are claimed
+      // here before the customer app and the staff panel get the request.
+      const kind = supportRouteKind(pathname)
+      if (kind === 'staff') return withCors(req, await deps.support.adminRoutes.handle(req))
+      if (kind === 'customer') return withCors(req, await deps.support.customerRoutes.handle(req))
+    }
     const response =
       pathname === '/admin' || pathname.startsWith('/admin/')
         ? await deps.admin.handle(req)
@@ -254,11 +270,11 @@ function readPort(): number {
 }
 
 /**
- * Boot the process: one origin, three front doors.
+ * Boot the process: one origin, four front doors.
  *
- * `handle` is the whole router — preflight, then the pages, then `/admin/`
- * and everything else. Kept out of the module body so importing this file
- * (for its static handler) never binds a port.
+ * `handle` is the whole router — preflight, then the pages, then the support
+ * routes, then `/admin/` and everything else. Kept out of the module body so
+ * importing this file (for its static handler) never binds a port.
  */
 function main() {
   const port = readPort()
@@ -380,11 +396,21 @@ function main() {
     ...(adminKey.length > 0 ? { adminKey } : {}),
     stopResource,
   })
+
+  // Support shares the control-plane store (customer keys are verified there)
+  // and the same audit trail and staff key as the panel: a ticket answered in
+  // the panel and the same ticket in the customer's console are one record.
+  const support = createSupport({
+    store,
+    audit,
+    ...(adminKey.length > 0 ? { adminKey } : {}),
+  })
+
   if (adminKey.length === 0) {
     console.log('Rox Cloud: панель дежурного выключена — задайте ROX_ADMIN_KEY, чтобы включить /admin/')
   }
 
-  const server = Bun.serve({ port, fetch: createHandler({ app, admin }) })
+  const server = Bun.serve({ port, fetch: createHandler({ app, admin, support }) })
   console.log(`Rox Cloud API слушает порт ${server.port}`)
   return server
 }

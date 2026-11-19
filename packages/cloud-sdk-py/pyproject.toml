@@ -1,0 +1,15 @@
+[project]
+name = "rox-cloud"
+version = "0.1.0"
+description = "Standard-library Python client for the Rox Cloud API (BYOK sandboxes)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["rox_cloud*"]
