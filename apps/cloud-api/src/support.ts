@@ -49,6 +49,8 @@ export interface SupportApp {
   readonly adminRoutes: SupportRoutes
 }
 
+export type SupportRouteKind = 'customer' | 'staff'
+
 /**
  * Which front owns which path prefix. The front door in `server.ts` asks this
  * because `app.ts` owns its own route table and does not know these paths.
@@ -60,8 +62,6 @@ const ROUTE_PREFIXES: readonly { readonly kind: SupportRouteKind; readonly prefi
   { kind: 'customer', prefix: '/v1/tickets' },
   { kind: 'customer', prefix: '/status' },
 ]
-
-export type SupportRouteKind = 'customer' | 'staff'
 
 /**
  * Which front owns this path, or `null` when the rest of the service does.
