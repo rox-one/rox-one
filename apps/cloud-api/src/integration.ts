@@ -30,10 +30,12 @@ import type { AuditLog, KillSwitch } from '../../../packages/cloud-ops/src/index
 import {
   DAYTONA_DEFAULT_API_URL,
   DAYTONA_DEFAULT_TOOLBOX_URL,
+  E2B_DEFAULT_API_URL,
   MODAL_PROVIDER_ID,
   PROVIDER_CAPABILITIES,
   PROVIDER_IDS,
   createDaytonaProvider,
+  createE2BProvider,
   createModalProvider,
 } from '../../../packages/providers/src/index.ts'
 import type { DeclaredCapabilities } from './app.ts'
@@ -128,6 +130,10 @@ export interface RuntimeOptions {
   readonly daytonaToolboxUrl?: string
   /** Rox-hosted Modal bridge; when absent, Modal is not advertised. */
   readonly modalBridgeUrl?: string
+  /** E2B template every customer sandbox starts from; absent = no E2B. */
+  readonly e2bTemplate?: string
+  /** E2B sandbox proxy host; defaults to the public one. */
+  readonly e2bSandboxHost?: string
   /** Ceilings checked before a boot; zeros mean «не ограничено». */
   readonly limits?: AccountLimits
 }
@@ -242,11 +248,15 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
     const cached = providers.get(cacheKey)
     if (cached && cached.credentialId === credential.id) return cached.provider
 
-    // A vendor without an adapter (or Modal without a bridge URL) stores keys
-    // but cannot answer requests, so no secret is decrypted for it.
+    // A vendor without an adapter (or Modal without a bridge URL, or E2B
+    // without a template) stores keys but cannot answer requests, so no secret
+    // is decrypted for it.
     const modalBridgeUrl = options.modalBridgeUrl
+    const e2bTemplate = options.e2bTemplate
     const hasAdapter =
-      providerId === 'daytona' || (providerId === 'modal' && Boolean(modalBridgeUrl))
+      providerId === 'daytona' ||
+      (providerId === 'modal' && Boolean(modalBridgeUrl)) ||
+      (providerId === 'e2b' && Boolean(e2bTemplate))
     if (!hasAdapter) {
       providers.delete(cacheKey)
       return null
@@ -270,14 +280,24 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
             fetch: options.fetch,
             now,
           })
-        : createDaytonaProvider({
-            id: 'daytona',
-            apiUrl: options.daytonaApiUrl ?? DAYTONA_DEFAULT_API_URL,
-            toolboxUrl: options.daytonaToolboxUrl ?? DAYTONA_DEFAULT_TOOLBOX_URL,
-            apiKey,
-            fetch: options.fetch,
-            now,
-          })
+        : providerId === 'e2b'
+          ? createE2BProvider({
+              id: 'e2b',
+              apiUrl: E2B_DEFAULT_API_URL,
+              apiKey,
+              defaultTemplate: e2bTemplate as string,
+              ...(options.e2bSandboxHost ? { sandboxHost: options.e2bSandboxHost } : {}),
+              fetch: options.fetch,
+              now,
+            })
+          : createDaytonaProvider({
+              id: 'daytona',
+              apiUrl: options.daytonaApiUrl ?? DAYTONA_DEFAULT_API_URL,
+              toolboxUrl: options.daytonaToolboxUrl ?? DAYTONA_DEFAULT_TOOLBOX_URL,
+              apiKey,
+              fetch: options.fetch,
+              now,
+            })
     providers.set(cacheKey, { credentialId: credential.id, provider })
     return provider
   }
@@ -293,6 +313,10 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
     if (options.modalBridgeUrl) {
       const modal = PROVIDER_CAPABILITIES.modal
       listed.push({ ...modal, os: [...modal.os], regions: [...modal.regions] })
+    }
+    if (options.e2bTemplate) {
+      const e2b = PROVIDER_CAPABILITIES.e2b
+      listed.push({ ...e2b, os: [...e2b.os], regions: [...e2b.regions] })
     }
     return listed
   }

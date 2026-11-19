@@ -356,6 +356,12 @@ function main() {
       ...(process.env.ROX_MODAL_BRIDGE_URL
         ? { modalBridgeUrl: process.env.ROX_MODAL_BRIDGE_URL.trim() }
         : {}),
+      ...(process.env.ROX_E2B_TEMPLATE
+        ? { e2bTemplate: process.env.ROX_E2B_TEMPLATE.trim() }
+        : {}),
+      ...(process.env.ROX_E2B_SANDBOX_HOST
+        ? { e2bSandboxHost: process.env.ROX_E2B_SANDBOX_HOST.trim() }
+        : {}),
     })
 
     if (bootstrapTenantId !== undefined && startingBalanceCents !== undefined) {

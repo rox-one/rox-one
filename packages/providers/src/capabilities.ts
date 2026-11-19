@@ -48,10 +48,14 @@ export const PROVIDER_CAPABILITIES: Readonly<Record<ProviderId, ProviderCapabili
     id: 'e2b',
     os: ['linux'],
     gpu: false,
-    pause: true,
+    // The adapter stops by pausing and has no resume method, so pause is not
+    // offered as a capability a caller can ask for.
+    pause: false,
+    // `spec.snapshot` is the E2B template name; runtime snapshots are not
+    // exposed by the adapter.
     snapshot: true,
-    // Beta at the time of writing.
-    volume: true,
+    // Volumes exist in beta at E2B, but the adapter has no volume methods.
+    volume: false,
     streaming: 'sse',
     // No documented hard cap.
     maxTtlSec: 0,

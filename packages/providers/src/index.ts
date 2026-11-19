@@ -36,3 +36,14 @@ export {
   MODAL_PROVIDER_ID,
   createModalProvider,
 } from './modal.ts';
+
+export type { E2BProviderConfig } from './e2b.ts';
+
+export {
+  E2B_DEFAULT_API_URL,
+  E2B_DEFAULT_SANDBOX_HOST,
+  E2B_DEFAULT_TIMEOUT_SEC,
+  E2B_ENVD_PORT,
+  E2B_PROVIDER_ID,
+  createE2BProvider,
+} from './e2b.ts';
