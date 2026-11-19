@@ -35,6 +35,7 @@ import { join } from 'node:path'
 import { MASTER_KEY_BYTES, createMemoryKeyStore } from '../../../packages/cloud-keys/src/index.ts'
 import { createAuditLog, createKillSwitch } from '../../../packages/cloud-ops/src/index.ts'
 import { createMemoryMoneyStore } from '../../../packages/cloud-runner/src/entitlement.ts'
+import type { AccountLimits } from '../../../packages/cloud-runner/src/limits.ts'
 import type { SandboxProvider } from '../../../packages/cloud-runner/src/sandbox.ts'
 import { capabilityUnavailable } from '../../../packages/cloud-runner/src/sandbox.ts'
 import { createAdminApp } from './admin.ts'
@@ -48,6 +49,17 @@ import { createSupport, supportRouteKind } from './support.ts'
 import type { SupportApp } from './support.ts'
 
 const STUB_ID = 'stub'
+
+/**
+ * Per-account ceilings: enforced by the boot path and printed by the panel from
+ * the one object, so the two can never disagree. Zeros mean «не ограничено» —
+ * in the pilot the wallet is the only ceiling until an operator sets one.
+ */
+const ACCOUNT_LIMITS: AccountLimits = {
+  maxConcurrentSandboxes: 0,
+  maxCpuPerSandbox: 0,
+  maxMonthlyCents: 0,
+}
 
 /** Everything the panel offers. Fixed list: no path is ever built from a request. */
 const CONSOLE_DIR = join(import.meta.dir, '..', '..', 'cloud-console')
@@ -86,7 +98,7 @@ function allowedOrigins(): readonly string[] {
 }
 
 const CORS_ALLOW_HEADERS = 'authorization, content-type, idempotency-key'
-const CORS_ALLOW_METHODS = 'GET,POST,PUT,DELETE,OPTIONS'
+const CORS_ALLOW_METHODS = 'GET,POST,PUT,PATCH,DELETE,OPTIONS'
 const CORS_MAX_AGE = '600'
 
 /** Stand-in provider: honest about not being able to do anything yet. */
@@ -353,6 +365,7 @@ function main() {
       killSwitch,
       masterKey,
       rateCentsPerHour,
+      limits: ACCOUNT_LIMITS,
       ...(process.env.ROX_MODAL_BRIDGE_URL
         ? { modalBridgeUrl: process.env.ROX_MODAL_BRIDGE_URL.trim() }
         : {}),
@@ -461,6 +474,7 @@ function main() {
     moneyStore,
     audit,
     killSwitch,
+    limits: ACCOUNT_LIMITS,
     ...(adminKey.length > 0 ? { adminKey } : {}),
     stopResource,
   })

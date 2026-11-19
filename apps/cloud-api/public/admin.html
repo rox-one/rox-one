@@ -119,6 +119,16 @@
   .msg.staff { background: #eef3ff; border-color: #c5d5ff; }
   .msg .who { color: var(--muted); font-size: 11px; margin-bottom: 2px; }
   .msg .body { white-space: pre-wrap; }
+  button.link { border: none; background: none; padding: 0; color: var(--accent); text-align: left; }
+  button.link:hover { text-decoration: underline; }
+  dialog.wide { width: min(900px, 96vw); }
+  .dialog-head { display: flex; align-items: center; gap: 8px; }
+  .dialog-head .spacer { flex: 1; }
+  .dialog-body { display: grid; gap: 12px; max-height: 68vh; overflow: auto; padding-right: 2px; margin-top: 10px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+  dialog .card { padding: 10px; gap: 8px; }
+  dialog .error { border: 1px solid #f2c9c4; border-radius: 6px; margin: 8px 0 0; }
+  label.check { display: flex; align-items: center; gap: 6px; color: var(--ink); font-size: 12px; }
 </style>
 </head>
 <body>
@@ -170,7 +180,7 @@
       <div class="table-wrap"><table>
         <thead><tr>
           <th>Клиент</th><th>Идентификатор</th><th>Создан</th>
-          <th>Баланс</th><th>Резерв</th><th>Расход за месяц</th><th>Машины</th><th>Ключи</th>
+          <th>Баланс</th><th>Резерв</th><th>Расход за месяц</th><th>Машины</th><th>Ключи</th><th></th>
         </tr></thead>
         <tbody id="tenants-body"></tbody>
       </table></div>
@@ -352,6 +362,75 @@
   </main>
 </div>
 
+<dialog id="tenant-dialog" class="wide" aria-labelledby="tenant-title">
+  <div class="dialog-head">
+    <h1 id="tenant-title">Клиент</h1>
+    <span id="tenant-id" class="mono muted"></span>
+    <span class="spacer"></span>
+    <button type="button" id="tenant-close">Закрыть</button>
+  </div>
+  <p id="tenant-error" class="error" role="alert" hidden></p>
+  <div class="dialog-body">
+    <div class="stats" id="tenant-stats"></div>
+
+    <div class="grid-2">
+      <form id="tenant-credit-form" class="card" novalidate>
+        <h2>Пополнить счёт</h2>
+        <div class="row">
+          <label>Сумма, $ <input name="amount" type="text" inputmode="decimal" autocomplete="off" placeholder="10.00"></label>
+          <label>Причина <input name="reason" type="text" maxlength="200" autocomplete="off" placeholder="предоплата, тикет"></label>
+        </div>
+        <div class="row"><button class="primary" type="submit">Начислить</button></div>
+      </form>
+
+      <form id="tenant-limits-form" class="card" novalidate>
+        <h2>Ограничения клиента</h2>
+        <div class="row">
+          <label>Потолок в месяц, $ <input name="cap" type="text" inputmode="decimal" autocomplete="off" placeholder="250.00"></label>
+          <label class="check"><input name="paid" type="checkbox"> Оплаченный тариф</label>
+        </div>
+        <label>Причина <input name="reason" type="text" maxlength="200" autocomplete="off" placeholder="запрос клиента, тикет"></label>
+        <div class="row"><button class="primary" type="submit">Сохранить</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Общие потолки</h2>
+      <div class="stats" id="tenant-ceilings"></div>
+    </div>
+
+    <div class="card">
+      <h2>Машины клиента</h2>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Машина</th><th>Состояние</th><th>Провайдер</th><th>Расход</th><th>Истекает</th><th></th>
+        </tr></thead>
+        <tbody id="tenant-sandboxes"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>Движение денег</h2>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Вид</th><th>Сумма</th><th>Остаток</th><th>Основание</th><th>Когда</th>
+        </tr></thead>
+        <tbody id="tenant-ledger"></tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>Журнал по клиенту</h2>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Действие</th><th>Причина</th><th>Когда</th>
+        </tr></thead>
+        <tbody id="tenant-audit"></tbody>
+      </table></div>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="reason-dialog">
   <form method="dialog" id="reason-form">
     <h2 id="reason-title">Причина</h2>
@@ -482,6 +561,20 @@
       ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes())
   }
 
+  function statNode(value, label) {
+    var box = document.createElement('div')
+    box.className = 'stat'
+    var n = document.createElement('div')
+    n.className = 'n'
+    n.textContent = value === null || value === undefined ? '—' : String(value)
+    var l = document.createElement('div')
+    l.className = 'l'
+    l.textContent = label
+    box.appendChild(n)
+    box.appendChild(l)
+    return box
+  }
+
   function fillTable(body, rows, buildEmpty) {
     body.textContent = ''
     if (!rows.length) {
@@ -508,19 +601,7 @@
         [money(data.balance_cents_total), 'на счетах всего'],
         [data.open_kill_switches, 'открытых рубильников']
       ]
-      items.forEach(function (item) {
-        var box = document.createElement('div')
-        box.className = 'stat'
-        var n = document.createElement('div')
-        n.className = 'n'
-        n.textContent = String(item[0])
-        var l = document.createElement('div')
-        l.className = 'l'
-        l.textContent = item[1]
-        box.appendChild(n)
-        box.appendChild(l)
-        stats.appendChild(box)
-      })
+      items.forEach(function (item) { stats.appendChild(statNode(item[0], item[1])) })
     })
   }
 
@@ -528,7 +609,12 @@
     return api('/admin/tenants').then(function (data) {
       var rows = data.data.map(function (tenant) {
         var tr = document.createElement('tr')
-        tr.appendChild(cell(tenant.name))
+        var nameButton = document.createElement('button')
+        nameButton.type = 'button'
+        nameButton.className = 'link'
+        nameButton.textContent = tenant.name
+        nameButton.addEventListener('click', function () { openTenant(tenant.id) })
+        tr.appendChild(cellNode(nameButton))
         tr.appendChild(cell(tenant.id, 'mono'))
         tr.appendChild(cell(when(tenant.created_at)))
         tr.appendChild(cell(money(tenant.balance_cents), 'num'))
@@ -536,11 +622,246 @@
         tr.appendChild(cell(money(tenant.month_spent_cents), 'num'))
         tr.appendChild(cell(tenant.sandboxes, 'num'))
         tr.appendChild(cell(tenant.credentials, 'num'))
+        var actions = document.createElement('td')
+        var open = document.createElement('button')
+        open.type = 'button'
+        open.textContent = 'Открыть'
+        open.addEventListener('click', function () { openTenant(tenant.id) })
+        actions.appendChild(open)
+        tr.appendChild(actions)
         return tr
       })
       fillTable(byId('tenants-body'), rows, 'Клиентов пока нет')
     })
   }
+
+  // ---------- карточка клиента ----------
+
+  var tenantState = { id: null }
+
+  function showTenantError(text) {
+    var bar = byId('tenant-error')
+    if (!text) { bar.hidden = true; bar.textContent = ''; return }
+    bar.hidden = false
+    bar.textContent = text
+  }
+
+  /** Разбор суммы в долларах в целые центы; null — сумма не годится. */
+  function dollars(text, allowZero) {
+    var raw = String(text === undefined || text === null ? '' : text)
+      .trim().replace(/\s/g, '').replace(',', '.').replace(/^\$/, '')
+    if (!raw) return null
+    var match = /^(\d+)(?:\.(\d{0,2}))?$/.exec(raw)
+    if (!match) return null
+    var frac = match[2] === undefined ? '' : match[2]
+    while (frac.length < 2) frac += '0'
+    var cents = Number(match[1]) * 100 + Number(frac)
+    if (!isFinite(cents) || cents < 0) return null
+    if (cents === 0 && !allowZero) return null
+    return cents
+  }
+
+  function dollarsText(cents) {
+    if (typeof cents !== 'number') return ''
+    return (cents / 100).toFixed(2)
+  }
+
+  function renderTenantStats(account) {
+    var box = byId('tenant-stats')
+    box.textContent = ''
+    box.appendChild(statNode(money(account.balance_cents), 'баланс'))
+    box.appendChild(statNode(money(account.reserved_cents), 'резерв'))
+    box.appendChild(statNode(money(account.month_spent_cents), 'расход за месяц'))
+    box.appendChild(statNode(account.monthly_cap_cents ? money(account.monthly_cap_cents) : 'без потолка', 'потолок в месяц'))
+    box.appendChild(statNode(account.paid ? 'оплачен' : 'бесплатный', 'тариф'))
+  }
+
+  function renderTenantCeilings(limits) {
+    var box = byId('tenant-ceilings')
+    box.textContent = ''
+    box.appendChild(statNode(limits.max_concurrent_sandboxes, 'машин одновременно'))
+    box.appendChild(statNode(limits.max_cpu_per_sandbox, 'ядер на машину'))
+    box.appendChild(statNode(money(limits.max_monthly_cents), 'общий потолок в месяц'))
+  }
+
+  function renderTenantSandboxes(list) {
+    var rows = list.map(function (resource) {
+      var tr = document.createElement('tr')
+      tr.appendChild(cell(resource.id, 'mono'))
+      tr.appendChild(cellNode(pillGate(resource.state)))
+      tr.appendChild(cell(resource.provider))
+      tr.appendChild(cell(money(resource.cost_cents), 'num'))
+      tr.appendChild(cell(when(resource.expires_at)))
+      var actions = document.createElement('td')
+      if (resource.state !== 'stopped' && resource.state !== 'failed' && resource.state !== 'expired') {
+        var stop = document.createElement('button')
+        stop.type = 'button'
+        stop.className = 'danger'
+        stop.textContent = 'Остановить'
+        stop.addEventListener('click', function () {
+          askReason('Остановить машину ' + resource.id, 'Почему останавливаем').then(function (reason) {
+            if (reason === null) return
+            api('/admin/resources/' + encodeURIComponent(resource.id) + '/stop', {
+              method: 'POST',
+              body: { reason: reason }
+            }).then(function () {
+              showTenantError('')
+              refreshTenant()
+            }).catch(function (err) { showTenantError(describeFailure(err)) })
+          })
+        })
+        actions.appendChild(stop)
+      }
+      tr.appendChild(actions)
+      return tr
+    })
+    fillTable(byId('tenant-sandboxes'), rows, 'Машин нет')
+  }
+
+  function renderTenantLedger(list) {
+    var rows = list.map(function (entry) {
+      var tr = document.createElement('tr')
+      tr.appendChild(cell(entry.kind))
+      var amount = money(entry.amount_cents)
+      if (typeof entry.shortfall_cents === 'number' && entry.shortfall_cents > 0) {
+        amount += ' · недобор ' + money(entry.shortfall_cents)
+      }
+      tr.appendChild(cell(amount, 'num'))
+      tr.appendChild(cell(money(entry.balance_after_cents), 'num'))
+      tr.appendChild(cell(entry.ref, 'mono'))
+      tr.appendChild(cell(when(entry.at)))
+      return tr
+    })
+    fillTable(byId('tenant-ledger'), rows, 'Движения денег нет')
+  }
+
+  function renderTenantAudit(list) {
+    var rows = list.map(function (entry) {
+      var tr = document.createElement('tr')
+      tr.appendChild(cell(entry.action, 'mono'))
+      tr.appendChild(cell(entry.reason, 'wrap'))
+      tr.appendChild(cell(when(entry.at)))
+      return tr
+    })
+    fillTable(byId('tenant-audit'), rows, 'Записей журнала нет')
+  }
+
+  function renderTenant(detail) {
+    var tenant = detail.tenant || {}
+    var account = detail.account || {}
+    var limits = detail.limits || {}
+    byId('tenant-title').textContent = tenant.name || tenant.id || 'Клиент'
+    byId('tenant-id').textContent = tenant.id || ''
+    renderTenantStats(account)
+    renderTenantCeilings(limits)
+    var limitsForm = byId('tenant-limits-form')
+    limitsForm.elements.cap.value = dollarsText(account.monthly_cap_cents)
+    limitsForm.elements.paid.checked = account.paid === true
+    renderTenantSandboxes(detail.sandboxes || [])
+    renderTenantLedger(detail.ledger || [])
+    renderTenantAudit(detail.audit || [])
+  }
+
+  /** Перечитать открытую карточку, не закрывая её. */
+  function refreshTenant() {
+    if (!tenantState.id) return Promise.resolve()
+    var id = tenantState.id
+    return api('/admin/tenants/' + encodeURIComponent(id)).then(function (detail) {
+      if (tenantState.id !== id) return detail
+      renderTenant(detail)
+      return detail
+    }).catch(function (err) {
+      showTenantError(describeFailure(err))
+    })
+  }
+
+  function openTenant(id) {
+    tenantState.id = id
+    showTenantError('')
+    return api('/admin/tenants/' + encodeURIComponent(id)).then(function (detail) {
+      renderTenant(detail)
+      var dialog = byId('tenant-dialog')
+      if (!dialog.open) dialog.showModal()
+    }).catch(function (err) {
+      tenantState.id = null
+      showError(describeFailure(err))
+    })
+  }
+
+  byId('tenant-credit-form').addEventListener('submit', function (event) {
+    event.preventDefault()
+    if (!tenantState.id) return
+    var form = event.target
+    var amountCents = dollars(form.elements.amount.value, false)
+    var reason = form.elements.reason.value.trim()
+    if (amountCents === null) {
+      showTenantError('Сумма — положительное число в долларах, например 10.00 · код invalid_request · запрос —')
+      return
+    }
+    if (amountCents > 10000000) {
+      showTenantError('Сумма больше допустимых 100 000.00 $ · код invalid_request · запрос —')
+      return
+    }
+    if (!reason) {
+      showTenantError('Нужна причина начисления · код invalid_request · запрос —')
+      return
+    }
+    var button = form.querySelector('button[type="submit"]')
+    button.disabled = true
+    showTenantError('')
+    api('/admin/tenants/' + encodeURIComponent(tenantState.id) + '/credit', {
+      method: 'POST',
+      body: { amountCents: amountCents, reason: reason }
+    }).then(function () {
+      form.elements.amount.value = ''
+      form.elements.reason.value = ''
+      return refreshTenant().then(function () { return loadTenants() })
+    }).catch(function (err) {
+      showTenantError(describeFailure(err))
+    }).then(function () {
+      button.disabled = false
+    })
+  })
+
+  byId('tenant-limits-form').addEventListener('submit', function (event) {
+    event.preventDefault()
+    if (!tenantState.id) return
+    var form = event.target
+    var capCents = dollars(form.elements.cap.value, true)
+    var reason = form.elements.reason.value.trim()
+    if (capCents === null) {
+      showTenantError('Потолок — число в долларах без минуса, например 250.00 или 0 для снятия · код invalid_request · запрос —')
+      return
+    }
+    if (!reason) {
+      showTenantError('Нужна причина изменения ограничений · код invalid_request · запрос —')
+      return
+    }
+    var button = form.querySelector('button[type="submit"]')
+    button.disabled = true
+    showTenantError('')
+    api('/admin/tenants/' + encodeURIComponent(tenantState.id), {
+      method: 'PATCH',
+      body: { monthlyCapCents: capCents, paid: form.elements.paid.checked, reason: reason }
+    }).then(function () {
+      form.elements.reason.value = ''
+      return refreshTenant().then(function () { return loadTenants() })
+    }).catch(function (err) {
+      showTenantError(describeFailure(err))
+    }).then(function () {
+      button.disabled = false
+    })
+  })
+
+  byId('tenant-close').addEventListener('click', function () {
+    byId('tenant-dialog').close()
+  })
+
+  byId('tenant-dialog').addEventListener('close', function () {
+    tenantState.id = null
+    showTenantError('')
+    showError('')
+  })
 
   function loadResources() {
     var form = byId('resources-filter')

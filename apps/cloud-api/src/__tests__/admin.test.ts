@@ -16,6 +16,7 @@ import { createAuditLog, createKillSwitch } from '../../../../packages/cloud-ops
 import type { AuditLog, KillSwitch } from '../../../../packages/cloud-ops/src/index.ts'
 import { createMemoryMoneyStore } from '../../../../packages/cloud-runner/src/entitlement.ts'
 import type { MemoryMoneyStore } from '../../../../packages/cloud-runner/src/entitlement.ts'
+import type { AccountLimits } from '../../../../packages/cloud-runner/src/limits.ts'
 import type { SandboxSpec } from '../../../../packages/cloud-runner/src/sandbox.ts'
 import { createAdminApp } from '../admin.ts'
 import type { AdminApp } from '../admin.ts'
@@ -39,6 +40,12 @@ const DAYTONA_URL = 'https://daytona.test/api'
 const TOOLBOX_URL = 'https://toolbox.daytona.test'
 const DAYTONA_SECRET = 'dt_secret_value_123'
 const ADMIN_KEY = 'admin_staff_key_123'
+/** The pilot ceilings the panel prints; zeros mean «не ограничено». */
+const LIMITS: AccountLimits = {
+  maxConcurrentSandboxes: 0,
+  maxCpuPerSandbox: 0,
+  maxMonthlyCents: 0,
+}
 
 interface FakeDaytona {
   readonly calls: number
@@ -191,6 +198,7 @@ function harness(options: { readonly adminKey?: string } = {}): Harness {
     moneyStore,
     audit,
     killSwitch,
+    limits: LIMITS,
     stopResource,
     now,
     adminKey: options.adminKey,
@@ -385,6 +393,382 @@ describe('overview and tenants', () => {
     const bad = await staffCall(h, 'GET', '/admin/resources?state=exploded', { key: ADMIN_KEY })
     expect(bad.status).toBe(400)
     expect((await envelope(bad)).code).toBe('invalid_request')
+  })
+})
+
+// ============================================================
+// One tenant: wallet, ceilings, machines and both trails
+// ============================================================
+
+interface DetailBody {
+  tenant: { id: string; name: string; balance_cents: number; sandboxes: number; credentials: number; created_at: string }
+  account: {
+    paid: boolean
+    balance_cents: number
+    reserved_cents: number
+    monthly_cap_cents: number
+    month_spent_cents: number
+  }
+  limits: { max_concurrent_sandboxes: number; max_cpu_per_sandbox: number; max_monthly_cents: number }
+  sandboxes: Array<{ id: string; tenant_id: string; state: string; cost_cents: number; created_at: string }>
+  ledger: Array<{
+    id: string
+    kind: string
+    amount_cents: number
+    balance_after_cents: number
+    reserved_after_cents: number
+    ref: string
+    at: string
+    shortfall_cents?: number
+  }>
+  audit: Array<{
+    id: string
+    actor_id: string
+    action: string
+    target_type: string
+    target_id: string
+    reason: string
+    at: string
+  }>
+}
+
+async function detailCall(h: Harness, tenantId: string): Promise<{ response: Response; body: DetailBody }> {
+  const response = await staffCall(h, 'GET', `/admin/tenants/${tenantId}`, { key: ADMIN_KEY })
+  expect(response.status).toBe(200)
+  return { response, body: (await response.json()) as DetailBody }
+}
+
+describe('tenant detail', () => {
+  test('the detail carries the wallet, the ceilings, the machines and both trails', async () => {
+    const h = harness({ adminKey: ADMIN_KEY })
+    const spec: SandboxSpec = { id: 'sbx_hand_made', os: 'linux', cpu: 1, memoryGb: 1 }
+    // Stamped apart by hand: "newest first" must be a property of the answer,
+    // not of the harness clock, which stands still.
+    h.store.sandboxes.set('sbx_old', {
+      id: 'sbx_old',
+      tenantId: h.tenant.id,
+      providerId: 'daytona',
+      state: 'stopped',
+      createdAt: NOW - 60_000,
+      costCents: 3,
+      spec,
+    })
+    h.store.sandboxes.set('sbx_new', {
+      id: 'sbx_new',
+      tenantId: h.tenant.id,
+      providerId: 'daytona',
+      state: 'running',
+      createdAt: NOW,
+      costCents: 7,
+      spec,
+    })
+
+    const ledgerRow = (id: string, accountId: string, at: number): void => {
+      h.moneyStore.appendLedger({
+        id,
+        accountId,
+        kind: 'topup',
+        amountCents: 5,
+        balanceAfterCents: 500,
+        reservedAfterCents: 0,
+        ref: 'topup',
+        at,
+        counterparty: 'customer',
+        ...(id === 'led_newest' ? { shortfallCents: 7 } : {}),
+      })
+    }
+    ledgerRow('led_oldest', h.tenant.id, NOW - 3_000)
+    ledgerRow('led_middle', h.tenant.id, NOW - 2_000)
+    ledgerRow('led_newest', h.tenant.id, NOW - 1_000)
+    // Money of the neighbour must never appear on this page.
+    ledgerRow('led_other', h.other.id, NOW)
+
+    const { body } = await detailCall(h, h.tenant.id)
+
+    expect(body.tenant.id).toBe(h.tenant.id)
+    expect(body.tenant.name).toBe('Первая команда')
+    expect(body.tenant.created_at).toBe(new Date(h.tenant.createdAt).toISOString())
+    expect(body.tenant.sandboxes).toBe(2)
+    expect(body.tenant.credentials).toBe(1)
+
+    expect(body.account).toEqual({
+      paid: true,
+      balance_cents: 500,
+      reserved_cents: 0,
+      monthly_cap_cents: 0,
+      month_spent_cents: 0,
+    })
+    expect(body.limits).toEqual({
+      max_concurrent_sandboxes: 0,
+      max_cpu_per_sandbox: 0,
+      max_monthly_cents: 0,
+    })
+
+    expect(body.sandboxes.map((row) => row.id)).toEqual(['sbx_new', 'sbx_old'])
+    expect(body.sandboxes.map((row) => row.tenant_id)).toEqual([h.tenant.id, h.tenant.id])
+    expect(body.sandboxes[0]?.cost_cents).toBe(7)
+
+    expect(body.ledger.map((row) => row.id)).toEqual(['led_newest', 'led_middle', 'led_oldest'])
+    // The projection is exactly the contract: no counterparty, no account id.
+    expect(body.ledger[0]).toEqual({
+      id: 'led_newest',
+      kind: 'topup',
+      amount_cents: 5,
+      balance_after_cents: 500,
+      reserved_after_cents: 0,
+      ref: 'topup',
+      at: new Date(NOW - 1_000).toISOString(),
+      shortfall_cents: 7,
+    })
+    expect(body.audit).toEqual([])
+  })
+
+  test('the detail audit keeps only writes against this tenant, newest first', async () => {
+    const h = harness({ adminKey: ADMIN_KEY })
+    const sandboxId = await createSandbox(h)
+    await staffCall(h, 'POST', `/admin/resources/${sandboxId}/stop`, {
+      key: ADMIN_KEY,
+      body: { reason: 'остановка по тикету' },
+    })
+    await staffCall(h, 'POST', `/admin/tenants/${h.tenant.id}/credit`, {
+      key: ADMIN_KEY,
+      body: { amountCents: 25, reason: 'пополнение' },
+    })
+    await staffCall(h, 'PATCH', `/admin/tenants/${h.tenant.id}`, {
+      key: ADMIN_KEY,
+      body: { monthlyCapCents: 12_345, reason: 'потолок' },
+    })
+
+    const { body } = await detailCall(h, h.tenant.id)
+    // The stop belongs to a machine, not to the tenant: its `target_id` is the
+    // sandbox id, so the tenant page does not print it here.
+    expect(body.audit.map((row) => row.action)).toEqual(['tenant.limits', 'tenant.credit'])
+    expect(body.audit.every((row) => row.target_id === h.tenant.id)).toBe(true)
+    expect(body.audit.every((row) => row.actor_id === 'staff')).toBe(true)
+    expect(body.audit.map((row) => row.reason)).toEqual(['потолок', 'пополнение'])
+    const times = body.audit.map((row) => Date.parse(row.at))
+    expect(times).toEqual([...times].sort((a, b) => b - a))
+  })
+})
+
+describe('tenant credit', () => {
+  test('a credit raises the balance and leaves the reason in the trail', async () => {
+    const h = harness({ adminKey: ADMIN_KEY })
+
+    const response = await staffCall(h, 'POST', `/admin/tenants/${h.tenant.id}/credit`, {
+      key: ADMIN_KEY,
+      body: { amountCents: 25, reason: 'компенсация за простой' },
+    })
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as {
+      tenant: { id: string }
+      account: { paid: boolean; balance_cents: number }
+      entry: { id: string; kind: string; amount_cents: number; balance_after_cents: number; ref: string; at: string }
+    }
+    expect(body.tenant.id).toBe(h.tenant.id)
+    expect(body.account.balance_cents).toBe(525)
+    expect(body.account.paid).toBe(true)
+    expect(body.entry.kind).toBe('topup')
+    expect(body.entry.amount_cents).toBe(25)
+    expect(body.entry.balance_after_cents).toBe(525)
+    expect(body.entry.ref).toBe('topup')
+    expect(body.entry.at).toBe(new Date(NOW).toISOString())
+    expect(h.moneyStore.getAccount(h.tenant.id)?.balanceCents).toBe(525)
+
+    const rows = h.audit.list({ action: 'tenant.credit' })
+    expect(rows.length).toBe(1)
+    expect(rows[0]?.actorId).toBe('staff')
+    expect(rows[0]?.targetType).toBe('tenant')
+    expect(rows[0]?.targetId).toBe(h.tenant.id)
+    expect(rows[0]?.reason).toBe('компенсация за простой')
+
+    const { body: view } = await detailCall(h, h.tenant.id)
+    expect(view.account.balance_cents).toBe(525)
+    // Both sides of the double-entry pair, and the customer side reads first.
+    expect(view.ledger.map((row) => row.amount_cents)).toEqual([25, -25])
+    expect(view.ledger[0]?.id).toBe(body.entry.id)
+    expect(view.audit.map((row) => row.action)).toEqual(['tenant.credit'])
+  })
+
+  test('a credit to a tenant without a wallet opens one and does not claim it is paid', async () => {
+    const h = harness({ adminKey: ADMIN_KEY })
+    const third = h.store.addTenant('Третья команда')
+    expect(h.moneyStore.getAccount(third.id)).toBeUndefined()
+
+    const response = await staffCall(h, 'POST', `/admin/tenants/${third.id}/credit`, {
+      key: ADMIN_KEY,
+      body: { amountCents: 100, reason: 'первое пополнение' },
+    })
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as { account: { paid: boolean; balance_cents: number } }
+    expect(body.account.balance_cents).toBe(100)
+    // Money in is not the same decision as permission to provision.
+    expect(body.account.paid).toBe(false)
+  })
+})
+
+describe('tenant limits', () => {
+  test('a patch changes the cap and the paid flag and records what changed', async () => {
+    const h = harness({ adminKey: ADMIN_KEY })
+
+    const response = await staffCall(h, 'PATCH', `/admin/tenants/${h.tenant.id}`, {
+      key: ADMIN_KEY,
+      body: { monthlyCapCents: 12_345, paid: false, reason: 'клиент ушёл на предоплату' },
+    })
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as {
+      tenant: { id: string }
+      account: { paid: boolean; balance_cents: number; monthly_cap_cents: number; reserved_cents: number }
+    }
+    expect(body.tenant.id).toBe(h.tenant.id)
+    expect(body.account.monthly_cap_cents).toBe(12_345)
+    expect(body.account.paid).toBe(false)
+    // A limit change moves no money.
+    expect(body.account.balance_cents).toBe(500)
+    expect(body.account.reserved_cents).toBe(0)
+    expect(h.moneyStore.getAccount(h.tenant.id)).toMatchObject({
+      paid: false,
+      monthlyCapCents: 12_345,
+      balanceCents: 500,
+    })
+
+    // A patch that names only one field leaves the other as it was.
+    const second = await staffCall(h, 'PATCH', `/admin/tenants/${h.tenant.id}`, {
+      key: ADMIN_KEY,
+      body: { monthlyCapCents: 0, reason: 'потолок снят' },
+    })
+    expect(second.status).toBe(200)
+    const secondBody = (await second.json()) as { account: { paid: boolean; monthly_cap_cents: number } }
+    expect(secondBody.account.monthly_cap_cents).toBe(0)
+    expect(secondBody.account.paid).toBe(false)
+
+    const rows = h.audit.list({ action: 'tenant.limits' })
+    expect(rows.length).toBe(2)
+    expect(rows[0]?.actorId).toBe('staff')
+    expect(rows[0]?.targetId).toBe(h.tenant.id)
+    expect(rows[0]?.reason).toBe('клиент ушёл на предоплату')
+    expect(rows[1]?.reason).toBe('потолок снят')
+
+    const { body: view } = await detailCall(h, h.tenant.id)
+    expect(view.account).toMatchObject({ paid: false, monthly_cap_cents: 0 })
+    expect(view.audit.map((row) => row.action)).toEqual(['tenant.limits', 'tenant.limits'])
+  })
+
+  test('an unknown tenant answers 404 on all three routes and writes nothing', async () => {
+    const h = harness({ adminKey: ADMIN_KEY })
+    const missing = 'ten_missing'
+    const calls: Array<{ method: string; path: string; body?: unknown }> = [
+      { method: 'GET', path: `/admin/tenants/${missing}` },
+      { method: 'POST', path: `/admin/tenants/${missing}/credit`, body: { amountCents: 25, reason: 'проверка' } },
+      { method: 'PATCH', path: `/admin/tenants/${missing}`, body: { monthlyCapCents: 100, reason: 'проверка' } },
+    ]
+    for (const call of calls) {
+      const response = await staffCall(h, call.method, call.path, {
+        key: ADMIN_KEY,
+        ...(call.body === undefined ? {} : { body: call.body }),
+      })
+      expect(response.status).toBe(404)
+      expect((await envelope(response)).code).toBe('not_found')
+    }
+    expect(h.audit.list().length).toBe(0)
+  })
+
+  test('a credit with a bad amount or a bad reason changes nothing', async () => {
+    const h = harness({ adminKey: ADMIN_KEY })
+    const bodies: unknown[] = [
+      {},
+      { amountCents: 0, reason: 'ноль' },
+      { amountCents: -5, reason: 'минус' },
+      { amountCents: 1.5, reason: 'дробь' },
+      { amountCents: 10_000_001, reason: 'слишком много' },
+      { amountCents: '25', reason: 'строка вместо числа' },
+      { amountCents: 25 },
+      { amountCents: 25, reason: '   ' },
+      { amountCents: 25, reason: 'я'.repeat(201) },
+    ]
+    for (const body of bodies) {
+      const response = await staffCall(h, 'POST', `/admin/tenants/${h.tenant.id}/credit`, {
+        key: ADMIN_KEY,
+        body,
+      })
+      expect(response.status).toBe(400)
+      expect((await envelope(response)).code).toBe('invalid_request')
+    }
+    expect(h.moneyStore.getAccount(h.tenant.id)?.balanceCents).toBe(500)
+    expect(h.moneyStore.listLedger(h.tenant.id).length).toBe(0)
+    expect(h.audit.list().length).toBe(0)
+  })
+
+  test('a patch with none of the editable fields is refused', async () => {
+    const h = harness({ adminKey: ADMIN_KEY })
+    const bodies: unknown[] = [
+      {},
+      { reason: 'только причина' },
+      { monthlyCapCents: -1, reason: 'минус' },
+      { monthlyCapCents: 1.5, reason: 'дробь' },
+      { monthlyCapCents: '100', reason: 'строка' },
+      { paid: 'yes', reason: 'строка вместо флага' },
+      { monthlyCapCents: 100 },
+      { paid: true },
+    ]
+    for (const body of bodies) {
+      const response = await staffCall(h, 'PATCH', `/admin/tenants/${h.tenant.id}`, {
+        key: ADMIN_KEY,
+        body,
+      })
+      expect(response.status).toBe(400)
+      expect((await envelope(response)).code).toBe('invalid_request')
+    }
+    expect(h.moneyStore.getAccount(h.tenant.id)).toMatchObject({ paid: true, monthlyCapCents: 0 })
+    expect(h.audit.list({ action: 'tenant.limits' }).length).toBe(0)
+  })
+})
+
+describe('tenant detail and secrets', () => {
+  test('the detail never carries a provider secret or an audit chain link', async () => {
+    const h = harness({ adminKey: ADMIN_KEY })
+    await createSandbox(h)
+    await staffCall(h, 'POST', `/admin/tenants/${h.tenant.id}/credit`, {
+      key: ADMIN_KEY,
+      body: { amountCents: 25, reason: 'проверка' },
+    })
+    await staffCall(h, 'PATCH', `/admin/tenants/${h.tenant.id}`, {
+      key: ADMIN_KEY,
+      body: { monthlyCapCents: 12_345, reason: 'проверка' },
+    })
+
+    const response = await staffCall(h, 'GET', `/admin/tenants/${h.tenant.id}`, { key: ADMIN_KEY })
+    expect(response.status).toBe(200)
+    const text = await response.text()
+    const body = JSON.parse(text) as DetailBody
+    expect(text).not.toContain(DAYTONA_SECRET)
+    expect(text).not.toContain('ciphertext')
+    expect(text).not.toContain('prevHash')
+    expect(text).not.toContain('"hash"')
+    expect(text).not.toContain('counterparty')
+    // A machine's own audit row is not part of the tenant page.
+    expect(body.audit.some((row) => row.action === 'sandbox.create')).toBe(false)
+
+    const auditKeys = ['action', 'actor_id', 'at', 'id', 'reason', 'target_id', 'target_type']
+    for (const row of body.audit) expect(Object.keys(row).sort()).toEqual(auditKeys)
+    const ledgerKeys = [
+      'amount_cents',
+      'at',
+      'balance_after_cents',
+      'id',
+      'kind',
+      'ref',
+      'reserved_after_cents',
+    ]
+    for (const row of body.ledger) {
+      expect(Object.keys(row).sort()).toEqual(
+        row.shortfall_cents === undefined ? ledgerKeys : [...ledgerKeys, 'shortfall_cents'],
+      )
+    }
+
+    // The booted machine is listed, and the wallet explains where the money went.
+    expect(body.sandboxes.length).toBe(1)
+    expect(body.ledger.length).toBeGreaterThan(0)
   })
 })
 

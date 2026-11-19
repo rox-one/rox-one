@@ -87,32 +87,46 @@ function httpError(operation: string, status: number): CloudRunnerError {
   return new CloudRunnerError(`Daytona не выполнил ${operation}: HTTP ${status}`, 'provider_error');
 }
 
+/** The default Daytona snapshot's resources; larger asks need a named snapshot. */
+const DEFAULT_CPU = 1;
+const DEFAULT_MEMORY_GB = 1;
+const DEFAULT_DISK_GB = 3;
+
 /**
  * Contract spec → Daytona create body.
  *
- * Optional contract fields are omitted rather than sent as `undefined`, so
- * the vendor keeps its own defaults.
+ * Daytona's current API builds every sandbox from a snapshot (the default one
+ * when none is named) and rejects cpu/memory/disk/gpu together with it:
+ * resources are inherited from the snapshot. So the body carries no resources;
+ * a request above the default snapshot's 1 CPU / 1 GiB / 3 GiB is refused
+ * before any HTTP call instead of being silently downgraded.
  */
 function createBody(spec: SandboxSpec): Record<string, unknown> {
+  if (spec.snapshot === undefined) {
+    if (
+      Math.ceil(spec.cpu) > DEFAULT_CPU ||
+      Math.ceil(spec.memoryGb) > DEFAULT_MEMORY_GB ||
+      (spec.diskGb !== undefined && Math.ceil(spec.diskGb) > DEFAULT_DISK_GB)
+    ) {
+      throw capabilityUnavailable(
+        DAYTONA_PROVIDER_ID,
+        'resources above the default snapshot (pass a snapshot with the needed size)',
+      );
+    }
+    if (spec.gpu !== undefined) {
+      throw capabilityUnavailable(
+        DAYTONA_PROVIDER_ID,
+        'gpu without a snapshot (pass a snapshot that carries the GPU)',
+      );
+    }
+  }
   const body: Record<string, unknown> = {
-    cpu: Math.max(1, Math.ceil(spec.cpu)),
-    memory: Math.max(1, Math.ceil(spec.memoryGb)),
     autoStopInterval: DAYTONA_AUTO_STOP_MINUTES,
     autoDeleteInterval: DAYTONA_AUTO_DELETE_MINUTES,
   };
   if (spec.snapshot !== undefined) body.snapshot = spec.snapshot;
-  if (spec.diskGb !== undefined) body.disk = Math.max(1, Math.ceil(spec.diskGb));
-  if (spec.gpu !== undefined) {
-    body.gpu = Math.max(1, Math.ceil(spec.gpu.count));
-    body.gpuType = [spec.gpu.type];
-    if (spec.gpu.spot !== undefined) body.spot = spec.gpu.spot;
-  }
   if (spec.env !== undefined) body.env = spec.env;
   if (spec.metadata !== undefined) body.labels = spec.metadata;
-  // ttlSec 0 means "unbounded" in the contract, so no TTL is sent for it.
-  if (spec.ttlSec !== undefined && spec.ttlSec > 0) {
-    body.ttlMinutes = Math.max(1, Math.ceil(spec.ttlSec / 60));
-  }
   return body;
 }
 

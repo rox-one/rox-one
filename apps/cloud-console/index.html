@@ -31,6 +31,7 @@
     <nav>
       <button type="button" class="nav-item" data-view="overview">Обзор</button>
       <button type="button" class="nav-item" data-view="sandboxes">Песочницы</button>
+      <button type="button" class="nav-item" data-view="invoice">Счёт</button>
       <button type="button" class="nav-item" data-view="keys">Ключи</button>
       <button type="button" class="nav-item" data-view="providers">Поставщики</button>
       <button type="button" class="nav-item" data-view="journal">Журнал</button>
@@ -126,6 +127,34 @@
           </table>
         </div>
         <p class="hint" id="sandboxes-hint"></p>
+      </section>
+
+      <section id="view-invoice" class="view" aria-labelledby="invoice-title" hidden>
+        <div class="view-head">
+          <h1 id="invoice-title">Счёт</h1>
+          <button type="button" class="ghost" id="invoice-refresh">Обновить</button>
+        </div>
+        <div class="cards">
+          <article class="card">
+            <div class="card-label">Итого за месяц</div>
+            <div class="card-value" id="invoice-total">—</div>
+            <div class="card-note">по загруженным строкам, USD</div>
+          </article>
+        </div>
+        <div class="table-wrap first">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Продукт</th>
+                <th>Песочница</th>
+                <th>Сумма</th>
+                <th>Дата</th>
+              </tr>
+            </thead>
+            <tbody id="invoice-body"></tbody>
+          </table>
+        </div>
+        <p class="hint">Счёт закрывается с кошелька Rox: каждая строка — списание за запуск. Железо вы оплачиваете поставщику по своему ключу.</p>
       </section>
 
       <section id="view-keys" class="view" aria-labelledby="keys-title" hidden>
@@ -225,10 +254,10 @@
         </select>
       </label>
       <label>Процессор, ядра
-        <input id="create-cpu" type="number" min="1" step="1" value="2" inputmode="numeric">
+        <input id="create-cpu" type="number" min="1" step="1" value="1" inputmode="numeric">
       </label>
       <label>Память, ГБ
-        <input id="create-memory" type="number" min="1" step="0.5" value="4" inputmode="decimal">
+        <input id="create-memory" type="number" min="1" step="0.5" value="1" inputmode="decimal">
       </label>
       <label>Время жизни, сек
         <input id="create-ttl" type="number" min="30" step="30" value="3600" inputmode="numeric">
@@ -239,6 +268,7 @@
         </select>
       </label>
     </div>
+    <p class="hint">Стандартный образ Daytona даёт 1 ядро и 1 ГБ памяти. Большие размеры работают только со снимком (snapshot) у поставщика.</p>
     <p id="create-error" class="field-error" role="alert" hidden></p>
     <div class="dialog-actions">
       <button id="create-cancel" class="ghost" type="button">Отмена</button>
@@ -259,6 +289,25 @@
     </div>
   </form>
   <pre class="terminal-output" id="terminal-output">Вывод появится здесь.</pre>
+</dialog>
+
+<dialog id="files-dialog" class="dialog wide" aria-labelledby="files-title">
+  <h2 id="files-title">Файлы <code id="files-id"></code></h2>
+  <form id="files-form" novalidate>
+    <label>Путь к файлу
+      <input id="files-path" type="text" value="/home/daytona/rox.txt" autocomplete="off" spellcheck="false">
+    </label>
+    <label>Содержимое
+      <textarea id="files-content" rows="10" spellcheck="false" placeholder="Здесь появится прочитанный файл."></textarea>
+    </label>
+    <p class="hint" id="files-size">Размер: —</p>
+    <p class="files-status" id="files-status" role="status" aria-live="polite"></p>
+    <div class="dialog-actions">
+      <button id="files-close" class="ghost" type="button">Закрыть</button>
+      <button id="files-write" class="ghost" type="button">Записать</button>
+      <button id="files-read" class="primary" type="submit">Прочитать</button>
+    </div>
+  </form>
 </dialog>
 
 <dialog id="key-dialog" class="dialog" aria-labelledby="key-title">

@@ -84,12 +84,16 @@ export interface MoneyStore {
   putReservation(accountId: string, ref: string, cents: number): void;
   dropReservation(accountId: string, ref: string): void;
   nextId(): string;
+  /**
+   * Ledger rows in append order, both sides of every pair, optionally narrowed
+   * to one account. Read-only: a caller that reorders or filters the result
+   * cannot change the ledger.
+   */
+  listLedger(accountId?: string): LedgerEntry[];
 }
 
 /** In-memory store; the ledger read-back is for tests and operator views. */
-export interface MemoryMoneyStore extends MoneyStore {
-  listLedger(accountId?: string): LedgerEntry[];
-}
+export type MemoryMoneyStore = MoneyStore;
 
 export function createMemoryMoneyStore(seed: readonly Account[] = []): MemoryMoneyStore {
   const accounts = new Map<string, Account>();

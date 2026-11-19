@@ -37,6 +37,8 @@ export type AuditAction =
   | 'sandbox.stop'
   | 'sandbox.extend'
   | 'credit.grant'
+  | 'tenant.credit'
+  | 'tenant.limits'
   | 'impersonate.start'
   | 'killswitch.set'
   | 'killswitch.approve'

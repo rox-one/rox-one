@@ -12,8 +12,12 @@ const LOCAL_BASE = 'rox_cloud_base'
 const LOCAL_NAME = 'rox_cloud_name'
 const REQUEST_TIMEOUT_MS = 20000
 const POLL_MS = 5000
+const DEFAULT_FILE_PATH = '/home/daytona/rox.txt'
 
 const TERMINAL_STATES = new Set(['stopped', 'failed', 'expired'])
+const PRODUCT_LABELS = {
+  sandbox: 'Песочница',
+}
 const STATE_LABELS = {
   queued: 'в очереди',
   starting: 'запускается',
@@ -45,6 +49,7 @@ const state = {
   pollTimer: null,
   expiring: false,
   terminalSandbox: null,
+  filesSandbox: null,
 }
 
 const $ = (id) => document.getElementById(id)
@@ -151,6 +156,25 @@ function shortId(id) {
   return text.length > 14 ? `${text.slice(0, 14)}…` : text
 }
 
+function pluralForm(count, one, few, many) {
+  const mod100 = count % 100
+  const mod10 = count % 10
+  if (mod100 >= 11 && mod100 <= 14) return many
+  if (mod10 === 1) return one
+  if (mod10 >= 2 && mod10 <= 4) return few
+  return many
+}
+
+function formatBytes(size) {
+  const count = Number(size)
+  if (!Number.isFinite(count) || count < 0) return '—'
+  return `${count} ${pluralForm(count, 'байт', 'байта', 'байт')}`
+}
+
+function byteLength(text) {
+  return new TextEncoder().encode(String(text)).length
+}
+
 function sandboxCost(sandbox) {
   if (sandbox.cost_so_far_usd !== undefined && sandbox.cost_so_far_usd !== null) {
     return formatUsd(sandbox.cost_so_far_usd)
@@ -187,9 +211,26 @@ function joinUrl(base, path) {
   return `${String(base).replace(/\/+$/, '')}${path}`
 }
 
+/* An error answer is JSON, but a file route may already have handed back raw
+ * bytes, so the envelope is read out of whichever shape arrived. */
+function errorEnvelope(data) {
+  if (data && typeof data === 'object' && data.error) return data.error
+  if (typeof data === 'string' && data.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(data)
+      if (parsed && parsed.error) return parsed.error
+    } catch {
+      /* the body was a file, not an error */
+    }
+  }
+  return null
+}
+
 async function request(base, key, path, options = {}) {
   const headers = { Authorization: `Bearer ${key}` }
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json'
+  const rawBody = options.rawBody
+  if (rawBody !== undefined) headers['Content-Type'] = 'text/plain; charset=utf-8'
+  else if (options.body !== undefined) headers['Content-Type'] = 'application/json'
   if (options.idempotency) headers['Idempotency-Key'] = options.idempotency
 
   const controller = new AbortController()
@@ -199,7 +240,12 @@ async function request(base, key, path, options = {}) {
     response = await fetch(joinUrl(base, path), {
       method: options.method || 'GET',
       headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+      body:
+        rawBody !== undefined
+          ? rawBody
+          : options.body === undefined
+            ? undefined
+            : JSON.stringify(options.body),
       signal: controller.signal,
     })
   } catch {
@@ -219,16 +265,32 @@ async function request(base, key, path, options = {}) {
 
   const headerId = response.headers.get('x-request-id') || '—'
   let data = null
+  let bytes = 0
   if (response.status !== 204) {
-    try {
-      data = await response.json()
-    } catch {
-      data = null
+    if (options.parse === 'text') {
+      let buffer = null
+      try {
+        buffer = await response.arrayBuffer()
+      } catch {
+        buffer = null
+      }
+      if (buffer) {
+        bytes = buffer.byteLength
+        data = new TextDecoder().decode(buffer)
+      } else {
+        data = ''
+      }
+    } else {
+      try {
+        data = await response.json()
+      } catch {
+        data = null
+      }
     }
   }
 
   if (!response.ok) {
-    const envelope = data && data.error ? data.error : null
+    const envelope = errorEnvelope(data)
     return {
       ok: false,
       error: {
@@ -241,7 +303,7 @@ async function request(base, key, path, options = {}) {
     }
   }
 
-  return { ok: true, status: response.status, data, requestId: headerId }
+  return { ok: true, status: response.status, data, bytes, requestId: headerId }
 }
 
 async function api(path, options = {}) {
@@ -500,6 +562,7 @@ function renderAll() {
   renderSandboxes()
   renderKeys()
   renderProviders()
+  renderInvoice()
   renderJournal()
   renderCurl()
 }
@@ -601,7 +664,7 @@ function renderCurl() {
     '  -H "Authorization: Bearer $ROX_API_KEY" \\',
     '  -H "Content-Type: application/json" \\',
     '  -H "Idempotency-Key: $(uuidgen)" \\',
-    `  -d '{"os":"linux","cpu":2,"memoryGb":4,"ttlSec":60}'`,
+    `  -d '{"os":"linux","cpu":1,"memoryGb":1,"ttlSec":60}'`,
   ].join('\n')
 }
 
@@ -635,6 +698,7 @@ function renderSandboxes() {
   <td class="num">${esc(sandboxCost(sandbox))}</td>
   <td class="actions">
     <button type="button" class="ghost small" data-action="terminal" data-id="${esc(id)}">Терминал</button>
+    <button type="button" class="ghost small" data-action="files" data-id="${esc(id)}">Файлы</button>
     ${canStop ? `<button type="button" class="ghost small" data-action="stop" data-id="${esc(id)}">Остановить</button>` : ''}
     <button type="button" class="ghost small" data-action="delete" data-id="${esc(id)}">Удалить</button>
   </td>
@@ -722,6 +786,40 @@ function renderProviders() {
     .join('')
 }
 
+function renderInvoice() {
+  const body = $('invoice-body')
+  const rows = state.usage
+
+  $('invoice-total').textContent = rows ? formatMoney(sumCents(rows)) : '—'
+
+  if (!rows) {
+    body.innerHTML = '<tr><td colspan="4" class="empty">Данных пока нет.</td></tr>'
+    return
+  }
+  if (rows.length === 0) {
+    body.innerHTML = '<tr><td colspan="4" class="empty">Списаний пока нет: счёт пуст.</td></tr>'
+    return
+  }
+
+  body.innerHTML = rows
+    .map((row) => {
+      const ref = String(row.ref || '')
+      const product = PRODUCT_LABELS[row.product] || row.product
+      // Список расхода приходит без времени: строка за песочницу пишется при
+      // её создании, поэтому дату даёт карточка самой песочницы.
+      const sandbox = ref ? findSandbox(ref) : null
+      const own = row.created_at !== undefined ? row.created_at : row.at
+      const at = own !== undefined ? own : sandbox ? sandbox.created_at : undefined
+      return `<tr>
+  <td>${esc(display(product))}</td>
+  <td><code title="${esc(ref)}">${esc(ref ? shortId(ref) : '—')}</code></td>
+  <td class="num">${esc(formatMoney(row.cents))}</td>
+  <td>${esc(formatTime(at))}</td>
+</tr>`
+    })
+    .join('')
+}
+
 function renderJournal() {
   const list = $('journal-list')
   list.replaceChildren()
@@ -761,6 +859,7 @@ async function navigate(view) {
   if (!state.connected) return
   if (view === 'overview') await Promise.all([loadUsage(), loadSandboxes(), loadAccount()])
   else if (view === 'sandboxes') await loadSandboxes()
+  else if (view === 'invoice') await loadUsage()
   else if (view === 'keys') await loadKeys()
   else if (view === 'providers') await loadCredentials()
   renderAll()
@@ -909,6 +1008,103 @@ async function runTerminalCommand(event) {
     `\n\nstderr:\n${data.stderr === undefined ? '' : data.stderr}` +
     `\n\nкод выхода: ${data.exit_code === undefined ? '—' : data.exit_code}`
   addJournal(`Команда в ${shortId(sandbox.id)}: код ${data.exit_code === undefined ? '—' : data.exit_code}`, true)
+}
+
+/* ---------- files ---------- */
+
+function showFilesStatus(text, kind) {
+  const status = $('files-status')
+  status.textContent = text
+  status.classList.toggle('ok', kind === 'ok')
+  status.classList.toggle('bad', kind === 'bad')
+}
+
+function setFilesBusy(active) {
+  $('files-read').disabled = Boolean(active)
+  $('files-write').disabled = Boolean(active)
+  $('files-read').textContent = active === 'read' ? 'Читаем…' : 'Прочитать'
+  $('files-write').textContent = active === 'write' ? 'Записываем…' : 'Записать'
+}
+
+function openFiles(sandbox) {
+  state.filesSandbox = sandbox
+  $('files-id').textContent = shortId(sandbox.id)
+  $('files-path').value = DEFAULT_FILE_PATH
+  $('files-content').value = ''
+  $('files-size').textContent = 'Размер: —'
+  showFilesStatus('', '')
+  setFilesBusy(null)
+  const dialog = $('files-dialog')
+  if (!dialog.open) dialog.showModal()
+  $('files-path').focus()
+}
+
+function filesEndpoint(sandbox, path) {
+  return `/v1/sandboxes/${encodeURIComponent(sandbox.id)}/files?path=${encodeURIComponent(path)}`
+}
+
+function filesPath() {
+  const path = $('files-path').value.trim()
+  if (!path) {
+    showFilesStatus('Введите путь к файлу.', 'bad')
+    $('files-path').focus()
+    return null
+  }
+  return path
+}
+
+async function readSandboxFile() {
+  const sandbox = state.filesSandbox
+  if (!sandbox) return
+  const path = filesPath()
+  if (!path) return
+
+  setFilesBusy('read')
+  const result = await api(filesEndpoint(sandbox, path), { parse: 'text' })
+  setFilesBusy(null)
+
+  if (!result.ok) {
+    showFilesStatus(formatError(result.error), 'bad')
+    addJournal(`Файл ${path} в ${shortId(sandbox.id)} не прочитан: ${result.error.message}`, false)
+    return
+  }
+
+  const payload = result.data
+  let content = typeof payload === 'string' ? payload : ''
+  let size = Number(result.bytes) || 0
+  if (payload && typeof payload === 'object') {
+    content = typeof payload.content === 'string' ? payload.content : ''
+    const declared = Number(payload.bytes)
+    size = Number.isFinite(declared) ? declared : byteLength(content)
+  }
+
+  $('files-content').value = content
+  $('files-size').textContent = `Размер: ${formatBytes(size)}`
+  showFilesStatus(`Прочитано: ${path}`, 'ok')
+  addJournal(`Прочитан файл ${path} в ${shortId(sandbox.id)}`, true)
+}
+
+async function writeSandboxFile() {
+  const sandbox = state.filesSandbox
+  if (!sandbox) return
+  const path = filesPath()
+  if (!path) return
+  const content = $('files-content').value
+
+  setFilesBusy('write')
+  const result = await api(filesEndpoint(sandbox, path), { method: 'PUT', rawBody: content })
+  setFilesBusy(null)
+
+  if (!result.ok) {
+    showFilesStatus(formatError(result.error), 'bad')
+    addJournal(`Файл ${path} в ${shortId(sandbox.id)} не записан: ${result.error.message}`, false)
+    return
+  }
+
+  const size = byteLength(content)
+  $('files-size').textContent = `Размер: ${formatBytes(size)}`
+  showFilesStatus(`Записано: ${path}`, 'ok')
+  addJournal(`Записан файл ${path} в ${shortId(sandbox.id)}`, true)
 }
 
 /* ---------- keys ---------- */
@@ -1162,6 +1358,7 @@ function bindEvents() {
     const sandbox = findSandbox(button.dataset.id)
     if (!sandbox) return
     if (button.dataset.action === 'terminal') openTerminal(sandbox)
+    else if (button.dataset.action === 'files') openFiles(sandbox)
     else if (button.dataset.action === 'stop') stopSandbox(sandbox)
     else if (button.dataset.action === 'delete') deleteSandbox(sandbox)
   })
@@ -1170,6 +1367,21 @@ function bindEvents() {
   $('terminal-close').addEventListener('click', () => $('terminal-dialog').close())
   $('terminal-dialog').addEventListener('close', () => {
     state.terminalSandbox = null
+  })
+
+  $('files-form').addEventListener('submit', (event) => {
+    event.preventDefault()
+    readSandboxFile()
+  })
+  $('files-write').addEventListener('click', writeSandboxFile)
+  $('files-close').addEventListener('click', () => $('files-dialog').close())
+  $('files-dialog').addEventListener('close', () => {
+    state.filesSandbox = null
+  })
+
+  $('invoice-refresh').addEventListener('click', async () => {
+    await loadUsage()
+    renderAll()
   })
 
   $('key-create').addEventListener('click', openKeyDialog)

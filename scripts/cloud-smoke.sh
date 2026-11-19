@@ -72,4 +72,55 @@ echo "${TENANTS}" | grep -q '"name":"Моя команда"' || {
 }
 echo "ok   admin: sees the bootstrap tenant"
 
+expect_field() {
+  local json="$1" needle="$2" label="$3"
+  if ! printf '%s' "${json}" | grep -q "${needle}"; then
+    echo "FAIL ${label}: ${json}" >&2
+    tail -3 "${LOG}" >&2 || true
+    exit 1
+  fi
+  echo "ok   ${label}"
+}
+
+TENANT_ID=""
+if [[ "${TENANTS}" =~ \"id\":\"([^\"]+)\" ]]; then
+  TENANT_ID="${BASH_REMATCH[1]}"
+fi
+if [[ -z "${TENANT_ID}" ]]; then
+  echo "FAIL admin tenants: no tenant id in ${TENANTS}" >&2
+  exit 1
+fi
+
+DETAIL="$(curl -fsS -m 3 -H "Authorization: Bearer ${ADMIN}" "${BASE}/admin/tenants/${TENANT_ID}")"
+expect_field "${DETAIL}" "\"id\":\"${TENANT_ID}\"" "admin detail: tenant id"
+expect_field "${DETAIL}" '"paid":true' "admin detail: account is paid"
+expect_field "${DETAIL}" '"balance_cents":500' "admin detail: wallet starts at 500"
+expect_field "${DETAIL}" '"ledger":' "admin detail: ledger is present"
+expect_field "${DETAIL}" '"audit":' "admin detail: audit is present"
+
+CREDIT="$(curl -fsS -m 3 -X POST \
+  -H "Authorization: Bearer ${ADMIN}" \
+  -H 'content-type: application/json' \
+  --data '{"amountCents":25,"reason":"smoke: проверка пополнения"}' \
+  "${BASE}/admin/tenants/${TENANT_ID}/credit")"
+expect_field "${CREDIT}" '"balance_cents":525' "admin credit: balance is 525"
+expect_field "${CREDIT}" '"kind":"topup"' "admin credit: ledger row is a topup"
+
+PATCHED="$(curl -fsS -m 3 -X PATCH \
+  -H "Authorization: Bearer ${ADMIN}" \
+  -H 'content-type: application/json' \
+  --data '{"monthlyCapCents":12345,"reason":"smoke: проверка потолка"}' \
+  "${BASE}/admin/tenants/${TENANT_ID}")"
+expect_field "${PATCHED}" '"monthly_cap_cents":12345' "admin limits: cap is 12345"
+
+AFTER="$(curl -fsS -m 3 -H "Authorization: Bearer ${ADMIN}" "${BASE}/admin/tenants/${TENANT_ID}")"
+expect_field "${AFTER}" '"balance_cents":525' "admin detail: credit reached the wallet"
+expect_field "${AFTER}" '"monthly_cap_cents":12345' "admin detail: cap is stored"
+expect_field "${AFTER}" '"action":"tenant.credit"' "admin detail: credit is in the audit"
+expect_field "${AFTER}" '"action":"tenant.limits"' "admin detail: limits are in the audit"
+
+ACCOUNT_AFTER="$(curl -fsS -m 3 -H "Authorization: Bearer ${BOOT}" "${BASE}/v1/account")"
+expect_field "${ACCOUNT_AFTER}" '"balance_cents":525' "customer account: credit is visible"
+expect_field "${ACCOUNT_AFTER}" '"monthly_cap_cents":12345' "customer account: cap is visible"
+
 echo "smoke passed"

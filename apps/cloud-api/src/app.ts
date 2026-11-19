@@ -1012,7 +1012,13 @@ export function createApp(options: CloudApiOptions): CloudApp {
     const data: Record<string, unknown>[] = []
     for (const row of store.usage) {
       if (row.tenantId !== auth.tenant.id) continue
-      data.push({ ref: row.ref, product: row.product, cents: row.cents, currency: row.currency })
+      data.push({
+        ref: row.ref,
+        product: row.product,
+        cents: row.cents,
+        currency: row.currency,
+        at: new Date(row.createdAt).toISOString(),
+      })
     }
     return json(200, { object: 'list', data })
   }

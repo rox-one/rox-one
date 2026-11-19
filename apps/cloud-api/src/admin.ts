@@ -34,7 +34,9 @@ import type {
   KillSwitch,
 } from '../../../packages/cloud-ops/src/index.ts'
 import { OpsError } from '../../../packages/cloud-ops/src/index.ts'
-import type { MoneyStore } from '../../../packages/cloud-runner/src/entitlement.ts'
+import type { Account, LedgerEntry, MoneyStore } from '../../../packages/cloud-runner/src/entitlement.ts'
+import { topUp } from '../../../packages/cloud-runner/src/entitlement.ts'
+import type { AccountLimits } from '../../../packages/cloud-runner/src/limits.ts'
 import type { SandboxState } from '../../../packages/cloud-runner/src/sandbox.ts'
 import { CloudRunnerError } from '../../../packages/cloud-runner/src/types.ts'
 import type { MemoryStore, SandboxRecord, Tenant } from './store.ts'
@@ -54,6 +56,11 @@ export interface AdminOptions {
   /** Append-only staff trail. */
   readonly audit: AuditLog
   readonly killSwitch: KillSwitch
+  /**
+   * Ceilings the panel prints next to an account. The same object the runtime
+   * enforces, so the panel never advertises a limit the boot path does not use.
+   */
+  readonly limits: AccountLimits
   /**
    * Shared staff key. Absent means the panel is not configured and every
    * route answers 404 — no default key is invented.
@@ -138,6 +145,13 @@ function toAdminError(err: unknown): AdminError {
 const DEFAULT_AUDIT_LIMIT = 100
 const MAX_AUDIT_LIMIT = 500
 
+/** One staff credit: at least a cent, and never more than 100 000 dollars in cents. */
+const MAX_CREDIT_CENTS = 10_000_000
+/** The reason is free text, but a wallet row must stay readable. */
+const MAX_REASON_CHARS = 200
+/** A tenant detail shows the newest staff actions, not the whole journal. */
+const TENANT_AUDIT_LIMIT = 50
+
 /** Identities recorded by the switch. See the note at the top of the file. */
 const STAFF_ACTOR = 'staff'
 const STAFF_REQUESTER = 'staff:requester'
@@ -183,6 +197,18 @@ function requireReason(value: unknown, field: string, action: string): string {
   return value.trim()
 }
 
+/** Same rule, plus the length a wallet or limit change is allowed to carry. */
+function requireReasonUnder(value: unknown, field: string, action: string): string {
+  const reason = requireReason(value, field, action)
+  if (reason.length > MAX_REASON_CHARS) {
+    throw new AdminError(
+      'invalid_request',
+      `Поле ${field} должно быть не длиннее ${MAX_REASON_CHARS} символов, получено ${reason.length}`,
+    )
+  }
+  return reason
+}
+
 async function readJson(req: Request): Promise<Record<string, unknown>> {
   const text = await req.text()
   if (text.trim().length === 0) return {}
@@ -203,7 +229,7 @@ async function readJson(req: Request): Promise<Record<string, unknown>> {
 // ============================================================
 
 export function createAdminApp(options: AdminOptions): AdminApp {
-  const { store, keyStore, moneyStore, audit, killSwitch, adminKey, stopResource } = options
+  const { store, keyStore, moneyStore, audit, killSwitch, limits, adminKey, stopResource } = options
   const now = options.now ?? (() => Date.now())
 
   // ---------- projections ----------
@@ -294,6 +320,67 @@ export function createAdminApp(options: AdminOptions): AdminApp {
     }
   }
 
+  /**
+   * The tenant detail prints only what the panel shows: the reason and the
+   * actor, not the chain links. `hash` and `prevHash` would invite a client to
+   * verify a chain it cannot read in full.
+   */
+  function detailAuditJson(entry: {
+    id: string
+    at: string
+    actorId: string
+    action: string
+    targetType: string
+    targetId: string
+    reason: string
+  }): Record<string, unknown> {
+    return {
+      id: entry.id,
+      actor_id: entry.actorId,
+      action: entry.action,
+      target_type: entry.targetType,
+      target_id: entry.targetId,
+      reason: entry.reason,
+      at: entry.at,
+    }
+  }
+
+  /** Account view: a tenant without a wallet reads as zeros, never as an error. */
+  function accountJson(account: Account | undefined): Record<string, unknown> {
+    return {
+      paid: account?.paid ?? false,
+      balance_cents: account?.balanceCents ?? 0,
+      reserved_cents: account?.reservedCents ?? 0,
+      monthly_cap_cents: account?.monthlyCapCents ?? 0,
+      month_spent_cents: account?.monthSpentCents ?? 0,
+    }
+  }
+
+  /**
+   * One ledger row. `counterparty` stays out: the panel shows a wallet, not the
+   * double-entry bookkeeping behind it.
+   */
+  function ledgerJson(entry: LedgerEntry): Record<string, unknown> {
+    return {
+      id: entry.id,
+      kind: entry.kind,
+      amount_cents: entry.amountCents,
+      balance_after_cents: entry.balanceAfterCents,
+      reserved_after_cents: entry.reservedAfterCents,
+      ref: entry.ref,
+      at: iso(entry.at),
+      ...(entry.shortfallCents !== undefined ? { shortfall_cents: entry.shortfallCents } : {}),
+    }
+  }
+
+  function limitsJson(value: AccountLimits): Record<string, unknown> {
+    return {
+      max_concurrent_sandboxes: value.maxConcurrentSandboxes,
+      max_cpu_per_sandbox: value.maxCpuPerSandbox,
+      max_monthly_cents: value.maxMonthlyCents,
+    }
+  }
+
   // ---------- authentication ----------
 
   function requireStaff(req: Request): void {
@@ -340,6 +427,149 @@ export function createAdminApp(options: AdminOptions): AdminApp {
       .sort((a, b) => b.createdAt - a.createdAt)
       .map(tenantJson)
     return json(200, { object: 'list', data })
+  }
+
+  function requireTenant(id: string): Tenant {
+    const tenant = store.tenants.get(id)
+    if (!tenant) throw new AdminError('not_found', 'Арендатор не найден')
+    return tenant
+  }
+
+  /**
+   * A tenant can exist before its wallet does; the first staff write creates
+   * it empty. The `paid` flag is not invented here — money in is not the same
+   * decision as permission to provision, so the panel sets that one explicitly.
+   */
+  function ensureAccount(tenant: Tenant): Account {
+    const existing = moneyStore.getAccount(tenant.id)
+    if (existing !== undefined) return existing
+    const created: Account = {
+      id: tenant.id,
+      paid: false,
+      balanceCents: 0,
+      reservedCents: 0,
+      monthlyCapCents: 0,
+      monthSpentCents: 0,
+    }
+    moneyStore.saveAccount(created)
+    return created
+  }
+
+  /** One tenant as the panel reads it: wallet, ceilings, machines, money trail. */
+  function tenantDetailRoute(id: string): Response {
+    const tenant = requireTenant(id)
+    // Newest first everywhere: an operator looks at what just happened.
+    const sandboxes = store
+      .sandboxesOf(tenant.id)
+      .sort((a, b) => b.createdAt - a.createdAt || a.id.localeCompare(b.id))
+      .map(resourceJson)
+    // Newest first by time; rows written at the same instant stay in append
+    // order, so the customer side of a double-entry pair reads before its
+    // counter-entry instead of after it.
+    const ledger = [...moneyStore.listLedger(tenant.id)]
+      .sort((a, b) => b.at - a.at)
+      .map(ledgerJson)
+    const auditRows = audit
+      .list({ targetId: tenant.id, limit: TENANT_AUDIT_LIMIT })
+      .reverse()
+      .map(detailAuditJson)
+    return json(200, {
+      tenant: tenantJson(tenant),
+      account: accountJson(moneyStore.getAccount(tenant.id)),
+      limits: limitsJson(limits),
+      sandboxes,
+      ledger,
+      audit: auditRows,
+    })
+  }
+
+  /** Credit the wallet. The money goes through `topUp`, this route only guards it. */
+  async function creditRoute(id: string, req: Request): Promise<Response> {
+    const tenant = requireTenant(id)
+    const body = await readJson(req)
+    const amount = body.amountCents
+    if (typeof amount !== 'number' || !Number.isInteger(amount) || amount < 1 || amount > MAX_CREDIT_CENTS) {
+      throw new AdminError(
+        'invalid_request',
+        `Поле amountCents обязательно и должно быть целым числом центов от 1 до ${MAX_CREDIT_CENTS}`,
+      )
+    }
+    const reason = requireReasonUnder(body.reason, 'reason', 'пополнение кошелька')
+    ensureAccount(tenant)
+    const result = topUp(moneyStore, tenant.id, amount, now())
+    // The customer side of the double-entry pair: the money that came in.
+    const entry = result.entries.find((row) => row.counterparty === 'customer')
+    if (entry === undefined) {
+      throw new AdminError('provider_error', 'Кошелёк не записал пополнение')
+    }
+    audit.append({
+      actorId: STAFF_ACTOR,
+      action: 'tenant.credit',
+      targetType: 'tenant',
+      targetId: tenant.id,
+      reason,
+      details: {
+        amount_cents: amount,
+        balance_after_cents: result.account.balanceCents,
+        ledger_entry: entry.id,
+      },
+    })
+    return json(200, {
+      tenant: tenantJson(tenant),
+      account: accountJson(result.account),
+      entry: ledgerJson(entry),
+    })
+  }
+
+  /** Change the ceiling or the paid flag. The reason is required, as for every write. */
+  async function limitsRoute(id: string, req: Request): Promise<Response> {
+    const tenant = requireTenant(id)
+    const body = await readJson(req)
+    const rawCap = body.monthlyCapCents
+    const rawPaid = body.paid
+    if (rawCap === undefined && rawPaid === undefined) {
+      throw new AdminError(
+        'invalid_request',
+        'Нужно хотя бы одно поле: monthlyCapCents (целые центы не меньше нуля) или paid (true/false)',
+      )
+    }
+    let monthlyCapCents: number | undefined
+    if (rawCap !== undefined) {
+      if (typeof rawCap !== 'number' || !Number.isInteger(rawCap) || rawCap < 0) {
+        throw new AdminError(
+          'invalid_request',
+          'Поле monthlyCapCents должно быть целым числом центов не меньше нуля',
+        )
+      }
+      monthlyCapCents = rawCap
+    }
+    let paid: boolean | undefined
+    if (rawPaid !== undefined) {
+      if (typeof rawPaid !== 'boolean') {
+        throw new AdminError('invalid_request', 'Поле paid должно быть true или false')
+      }
+      paid = rawPaid
+    }
+    const reason = requireReasonUnder(body.reason, 'reason', 'изменение лимитов арендатора')
+    const base = ensureAccount(tenant)
+    const next: Account = {
+      ...base,
+      monthlyCapCents: monthlyCapCents ?? base.monthlyCapCents,
+      paid: paid ?? base.paid,
+    }
+    moneyStore.saveAccount(next)
+    audit.append({
+      actorId: STAFF_ACTOR,
+      action: 'tenant.limits',
+      targetType: 'tenant',
+      targetId: tenant.id,
+      reason,
+      details: {
+        ...(monthlyCapCents !== undefined ? { monthly_cap_cents: monthlyCapCents } : {}),
+        ...(paid !== undefined ? { paid } : {}),
+      },
+    })
+    return json(200, { tenant: tenantJson(tenant), account: accountJson(next) })
   }
 
   // ---------- resources ----------
@@ -554,6 +784,15 @@ export function createAdminApp(options: AdminOptions): AdminApp {
 
     if (segments[1] === 'resources' && segments.length === 4 && segments[3] === 'stop' && method === 'POST') {
       return stopResourceRoute(segments[2]!, req)
+    }
+
+    if (segments[1] === 'tenants' && segments.length === 3) {
+      if (method === 'GET') return tenantDetailRoute(segments[2]!)
+      if (method === 'PATCH') return limitsRoute(segments[2]!, req)
+    }
+
+    if (segments[1] === 'tenants' && segments.length === 4 && segments[3] === 'credit' && method === 'POST') {
+      return creditRoute(segments[2]!, req)
     }
 
     if (segments[1] === 'killswitch' && segments.length === 4 && method === 'POST') {

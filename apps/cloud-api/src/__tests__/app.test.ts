@@ -706,9 +706,11 @@ describe('usage', () => {
     const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'usage-1'))
     const response = await call(app, '/v1/usage', { token: secret })
     expect(response.status).toBe(200)
-    const body = await readBody<ListBody<{ ref: string; product: string; cents: number; currency: string }>>(response)
+    const body = await readBody<ListBody<{ ref: string; product: string; cents: number; currency: string; at: string }>>(response)
     expect(body.object).toBe('list')
-    expect(body.data).toEqual([{ ref: created.id, product: 'sandbox', cents: 5, currency: 'USD' }])
+    expect(body.data).toMatchObject([{ ref: created.id, product: 'sandbox', cents: 5, currency: 'USD' }])
+    expect(typeof body.data[0]!.at).toBe('string')
+    expect(Number.isNaN(Date.parse(body.data[0]!.at))).toBe(false)
   })
 
   test('usage needs billing:read', async () => {

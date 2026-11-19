@@ -108,16 +108,10 @@ test('create maps every contract field and sends the bearer header', async () =>
   expect(call.headers.Authorization).toBe('Bearer tenant-key');
   expect(call.headers['Content-Type']).toBe('application/json');
   expect(call.json).toEqual({
+    // Resources are inherited from the snapshot and must not be sent with it.
     snapshot: 'rox-base',
-    cpu: 2,
-    memory: 4,
-    disk: 10,
-    gpu: 1,
-    gpuType: ['h100'],
-    spot: true,
     env: { ROX_TENANT: 'acme' },
     labels: { tenant: 'acme' },
-    ttlMinutes: 61,
     autoStopInterval: DAYTONA_AUTO_STOP_MINUTES,
     autoDeleteInterval: DAYTONA_AUTO_DELETE_MINUTES,
   });
@@ -139,8 +133,26 @@ test('create omits what the spec did not ask for', async () => {
 
   expect(calls[0]!.json).toEqual({
     snapshot: 'rox-base',
-    cpu: 1,
-    memory: 1,
+    autoStopInterval: DAYTONA_AUTO_STOP_MINUTES,
+    autoDeleteInterval: DAYTONA_AUTO_DELETE_MINUTES,
+  });
+});
+
+test('a request above the default snapshot is refused before any request', async () => {
+  const { provider, calls } = setup(() => json({ id: 'dt-1', state: 'started' }));
+
+  await expect(
+    provider.create({ id: 'sbx-3', os: 'linux', cpu: 2, memoryGb: 4 }),
+  ).rejects.toMatchObject({ code: 'capability_unavailable' });
+  expect(calls.length).toBe(0);
+});
+
+test('a default-sized request uses the default snapshot without naming it', async () => {
+  const { provider, calls } = setup(() => json({ id: 'dt-1', state: 'started' }));
+
+  await provider.create({ id: 'sbx-4', os: 'linux', cpu: 1, memoryGb: 1 });
+
+  expect(calls[0]!.json).toEqual({
     autoStopInterval: DAYTONA_AUTO_STOP_MINUTES,
     autoDeleteInterval: DAYTONA_AUTO_DELETE_MINUTES,
   });
