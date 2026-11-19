@@ -1222,6 +1222,139 @@ components:
         currency:
           const: USD
 
+    TicketStatus:
+      type: string
+      enum: [open, pending, resolved]
+      description: |
+        Where the ticket waits: `open` on staff, `pending` on the customer,
+        `resolved` nowhere — a resolved ticket is terminal.
+
+    TicketPriority:
+      type: string
+      enum: [low, normal, high]
+
+    TicketMessage:
+      type: object
+      required: [id, object, author_role, body, created_at]
+      properties:
+        id:
+          type: string
+          pattern: '^msg_'
+        object:
+          const: ticket_message
+        author_role:
+          type: string
+          enum: [customer, staff]
+        body:
+          type: string
+          description: |
+            Plain text as it was written, or a structured body stored as JSON
+            text. A message carrying a provider key is never stored.
+        created_at:
+          type: string
+          format: date-time
+
+    Ticket:
+      type: object
+      required: [id, object, subject, status, priority, created_at, updated_at, messages]
+      properties:
+        id:
+          type: string
+          pattern: '^tkt_'
+        object:
+          const: ticket
+        subject:
+          type: string
+          minLength: 3
+          maxLength: 120
+        status:
+          $ref: '#/components/schemas/TicketStatus'
+        priority:
+          $ref: '#/components/schemas/TicketPriority'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketMessage'
+
+    TicketList:
+      type: object
+      required: [object, data]
+      properties:
+        object:
+          const: list
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ticket'
+
+    TicketCreate:
+      type: object
+      required: [subject, body]
+      properties:
+        subject:
+          type: string
+          minLength: 3
+          maxLength: 120
+          description: Short statement of the problem, trimmed before it is stored.
+        body:
+          description: |
+            First message of the thread: plain text, or an object which is
+            stored as JSON text. A field named `secret`, `token`, `password` or
+            `key`, or a key-like string, rejects the whole request.
+          oneOf:
+            - type: string
+              minLength: 1
+            - type: object
+              additionalProperties: true
+        priority:
+          $ref: '#/components/schemas/TicketPriority'
+
+    TicketReply:
+      type: object
+      required: [body]
+      properties:
+        body:
+          description: The message to append; the same rules as the opening message.
+          oneOf:
+            - type: string
+              minLength: 1
+            - type: object
+              additionalProperties: true
+
+    PublicIncident:
+      type: object
+      required: [title, public_summary, severity, status, updated_at]
+      properties:
+        title:
+          type: string
+        public_summary:
+          type: string
+        severity:
+          type: string
+          enum: [minor, major, critical]
+        status:
+          type: string
+          enum: [investigating, identified, monitoring, resolved]
+        updated_at:
+          type: string
+          format: date-time
+
+    StatusPage:
+      type: object
+      required: [incidents]
+      properties:
+        incidents:
+          type: array
+          description: Live incidents only, newest first.
+          items:
+            $ref: '#/components/schemas/PublicIncident'
+
   responses:
     BadRequest:
       description: The request body or parameters are wrong.
