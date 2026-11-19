@@ -31,8 +31,14 @@ type Target = { readonly name: string; readonly cwd: string; readonly script: st
  * The order is kept so a serial run reads the same as the old chain did.
  */
 const TARGETS: readonly Target[] = [
+  { name: 'apps/cloud-api', cwd: 'apps/cloud-api', script: 'typecheck' },
+  { name: 'apps/cloud-mcp', cwd: 'apps/cloud-mcp', script: 'typecheck' },
   { name: 'apps/cloud-gateway', cwd: 'apps/cloud-gateway', script: 'typecheck' },
   { name: 'packages/cloud-runner', cwd: 'packages/cloud-runner', script: 'typecheck' },
+  { name: 'packages/cloud-keys', cwd: 'packages/cloud-keys', script: 'typecheck' },
+  { name: 'packages/cloud-ops', cwd: 'packages/cloud-ops', script: 'typecheck' },
+  { name: 'packages/cloud-support', cwd: 'packages/cloud-support', script: 'typecheck' },
+  { name: 'packages/providers', cwd: 'packages/providers', script: 'typecheck' },
   { name: 'packages/messaging-discord-worker', cwd: 'packages/messaging-discord-worker', script: 'typecheck' },
   { name: 'packages/messaging-whatsapp-worker', cwd: 'packages/messaging-whatsapp-worker', script: 'typecheck' },
   { name: 'packages/test-harness', cwd: 'packages/test-harness', script: 'typecheck' },

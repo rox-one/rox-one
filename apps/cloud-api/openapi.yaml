@@ -1,0 +1,1170 @@
+openapi: 3.1.0
+info:
+  title: Rox Cloud API
+  version: 0.1.0
+  summary: One public contract in front of customer-owned sandbox providers (BYOK).
+  description: |
+    Rox Cloud runs in "bring your own key" mode: the customer's own credential
+    for Daytona, Modal or E2B is what actually boots a machine. This API never
+    appears as the payer and never invents a provider capability.
+
+    The tenant always comes from the presented API key, never from the request
+    body. Money is reported as integer cents plus a two-decimal dollar string.
+    Time is ISO 8601 in UTC. Every response carries `x-request-id`, and every
+    failure repeats it inside the error envelope.
+  license:
+    name: Apache-2.0
+servers:
+  - url: http://localhost:8787
+    description: Local pilot
+security:
+  - bearerAuth: []
+tags:
+  - name: health
+  - name: catalog
+  - name: keys
+  - name: account
+  - name: sandboxes
+  - name: usage
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness probe
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: The API process is up.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok]
+                properties:
+                  ok:
+                    const: true
+
+  /v1/catalog:
+    get:
+      operationId: getCatalog
+      summary: Product ids and the capability flags each provider declares
+      tags: [catalog]
+      responses:
+        '200':
+          description: Seven products plus one entry per configured provider.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Catalog'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/keys:
+    post:
+      operationId: createApiKey
+      summary: Mint an API key; the secret is returned exactly once
+      tags: [keys]
+      description: Requires the `keys:write` scope. A key can only be granted scopes its creator already holds.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scopes]
+              properties:
+                scopes:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: '#/components/schemas/Scope'
+      responses:
+        '201':
+          description: The key was created. Store the secret now; it is not retrievable later.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+    get:
+      operationId: listApiKeys
+      summary: List key metadata for the current tenant
+      tags: [keys]
+      description: Requires the `keys:write` scope. Secrets are never returned.
+      responses:
+        '200':
+          description: Key metadata only.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, data]
+                properties:
+                  object:
+                    const: list
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiKey'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /v1/keys/{id}:
+    delete:
+      operationId: deleteApiKey
+      summary: Revoke a key
+      tags: [keys]
+      description: Requires the `keys:write` scope. The key stops authenticating immediately.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '204':
+          description: The key is gone.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/account:
+    get:
+      operationId: getAccount
+      summary: Balance and month limits for the current tenant
+      tags: [account]
+      description: |
+        Any valid key may read its own tenant's account. A tenant that has never
+        topped up reads as zero rather than as an error. Money is integer cents
+        plus a two-decimal dollar string; `rate_cents_per_hour` is null when the
+        deployment has no platform fee configured.
+      responses:
+        '200':
+          description: The account.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/account/topup:
+    post:
+      operationId: topUpAccount
+      summary: Add credit to the tenant wallet
+      tags: [account]
+      description: |
+        Requires the `keys:write` scope. The first top-up is what makes a tenant
+        a paid account in this slice: there is no separate payment capture step
+        in front of it yet.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountTopUpRequest'
+      responses:
+        '200':
+          description: The account after the top-up.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /v1/provider-credentials:
+    get:
+      operationId: listProviderCredentials
+      summary: List the tenant's provider keys, metadata only
+      tags: [keys]
+      description: |
+        Requires the `keys:write` scope. The plaintext secret, ciphertext, iv and
+        tag never leave the vault, so none of them can appear here.
+      responses:
+        '200':
+          description: One entry per stored key of this tenant.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, data]
+                properties:
+                  object:
+                    const: list
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProviderCredential'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      operationId: createProviderCredential
+      summary: Add a customer-owned provider key, encrypted at rest
+      tags: [keys]
+      description: |
+        Requires the `keys:write` scope. The secret is encrypted with AES-256-GCM
+        immediately and is never stored or returned as plaintext. The first key
+        for a provider becomes `active`; later ones join as `standby`.
+        `spendCapCents` is required on purpose: a cap that defaults to zero reads
+        as "spend nothing" to the vault gate, so the caller must state it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderCredentialCreateRequest'
+      responses:
+        '201':
+          description: The stored key, metadata only.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderCredential'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: This exact key was already added for the tenant.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+
+  /v1/provider-credentials/{id}:
+    delete:
+      operationId: disableProviderCredential
+      summary: Disable a provider key
+      tags: [keys]
+      description: |
+        Requires the `keys:write` scope. The key is disabled, not erased: it stays
+        visible with status `disabled` so the panel can show what was rotated
+        away instead of a silent disappearance.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: The key after it was turned off.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderCredential'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/provider-credentials/{id}/promote:
+    post:
+      operationId: promoteProviderCredential
+      summary: Make this key the active one for its provider
+      tags: [keys]
+      description: |
+        Requires the `keys:write` scope. The tenant's other `active` key for the
+        same provider becomes `standby`, so exactly one key per provider
+        authorizes a spend.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: The promoted key.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderCredential'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/sandboxes:
+    post:
+      operationId: createSandbox
+      summary: Boot a sandbox on the tenant's own provider credential
+      tags: [sandboxes]
+      description: |
+        Requires the `sandboxes:write` scope and the `Idempotency-Key` header.
+        Repeating the same key with the same body returns the same sandbox with
+        `200`; repeating it with another body is `409`. Records live 24 hours.
+        An unknown provider id is `400 provider_unknown` with the allowed list;
+        a provider the tenant has no credential for is `400 capability_unavailable`.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: Caller-chosen key, unique per tenant.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SandboxCreateRequest'
+      responses:
+        '201':
+          description: A new sandbox was booted.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sandbox'
+        '200':
+          description: The same idempotency key and body were seen before; this is the original sandbox.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sandbox'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '402':
+          $ref: '#/components/responses/PaymentRequired'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+    get:
+      operationId: listSandboxes
+      summary: List the tenant's sandboxes
+      tags: [sandboxes]
+      description: Requires the `sandboxes:read` scope.
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: starting_after
+          in: query
+          schema:
+            type: string
+          description: Id of the last sandbox already seen.
+      responses:
+        '200':
+          description: One page of sandboxes.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, data, has_more, next_cursor]
+                properties:
+                  object:
+                    const: list
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Sandbox'
+                  has_more:
+                    type: boolean
+                  next_cursor:
+                    type: [string, 'null']
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /v1/sandboxes/{id}:
+    get:
+      operationId: getSandbox
+      summary: Read one sandbox
+      tags: [sandboxes]
+      description: Requires the `sandboxes:read` scope. Another tenant's id answers 404.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: The sandbox.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sandbox'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteSandbox
+      summary: Destroy a sandbox for good
+      tags: [sandboxes]
+      description: Requires the `sandboxes:write` scope. The provider machine is deleted, then the record is forgotten.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '204':
+          description: The sandbox is gone.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /v1/sandboxes/{id}/exec:
+    post:
+      operationId: execInSandbox
+      summary: Run a command inside a sandbox
+      tags: [sandboxes]
+      description: Requires the `sandboxes:write` scope.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [command]
+              properties:
+                command:
+                  type: string
+                  minLength: 1
+                timeoutSec:
+                  type: number
+                  exclusiveMinimum: 0
+      responses:
+        '200':
+          description: The command finished.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /v1/sandboxes/{id}/files:
+    get:
+      operationId: readSandboxFile
+      summary: Download a file as raw bytes
+      tags: [sandboxes]
+      description: Requires the `sandboxes:read` scope.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Absolute path inside the sandbox.
+      responses:
+        '200':
+          description: File contents.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                contentEncoding: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+    put:
+      operationId: writeSandboxFile
+      summary: Upload a file as raw bytes
+      tags: [sandboxes]
+      description: Requires the `sandboxes:write` scope.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              contentEncoding: binary
+      responses:
+        '204':
+          description: The file was written.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /v1/sandboxes/{id}/stop:
+    post:
+      operationId: stopSandbox
+      summary: Stop a sandbox without deleting it
+      tags: [sandboxes]
+      description: Requires the `sandboxes:write` scope.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: The sandbox is stopped.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sandbox'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /v1/usage:
+    get:
+      operationId: listUsage
+      summary: Spend attributed to the tenant's sandboxes
+      tags: [usage]
+      description: Requires the `billing:read` scope.
+      responses:
+        '200':
+          description: One row per charge, in integer cents.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, data]
+                properties:
+                  object:
+                    const: list
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UsageRow'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Send `Authorization: Bearer rox_sk_live_…`. The key's scopes decide what
+        the request may do: `sandboxes:read`, `sandboxes:write`, `keys:write`,
+        `billing:read`. A missing or unknown key is `401 authentication_required`;
+        a missing scope is `403 permission_denied`.
+
+  headers:
+    RequestId:
+      description: Request id, the same value the error envelope repeats.
+      schema:
+        type: string
+        pattern: '^req_[0-9a-f]{24}$'
+
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    Scope:
+      type: string
+      enum: [sandboxes:read, sandboxes:write, keys:write, billing:read]
+
+    Error:
+      type: object
+      required: [type, code, message, request_id]
+      properties:
+        type:
+          type: string
+          description: Error family, e.g. `authentication_error`.
+        code:
+          type: string
+          enum:
+            - invalid_request
+            - idempotency_key_required
+            - provider_unknown
+            - capability_unavailable
+            - sandbox_too_large
+            - authentication_required
+            - entitlement_required
+            - insufficient_balance
+            - budget_exceeded
+            - payment_required
+            - permission_denied
+            - not_found
+            - conflict
+            - kill_switch_active
+            - concurrency_exceeded
+            - monthly_cap_exceeded
+            - rate_limited
+            - provider_error
+        message:
+          type: string
+          description: Human-readable explanation, in Russian.
+        request_id:
+          type: string
+          pattern: '^req_[0-9a-f]{24}$'
+
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          $ref: '#/components/schemas/Error'
+
+    Catalog:
+      type: object
+      required: [object, products, providers]
+      properties:
+        object:
+          const: catalog
+        products:
+          type: array
+          description: The seven Rox Cloud products, in canonical order.
+          items:
+            type: object
+            required: [id, name, name_en]
+            properties:
+              id:
+                type: string
+                enum: [sandbox, desktop, gpu, job, deployment, volume, template]
+              name:
+                type: string
+              name_en:
+                type: string
+        providers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProviderCapabilities'
+
+    ProviderCapabilities:
+      type: object
+      description: Exactly what the caller declared for this provider; nothing is inferred.
+      required: [id, os, gpu, pause, snapshot, volume, streaming, max_ttl_sec, regions]
+      properties:
+        id:
+          type: string
+        os:
+          type: array
+          items:
+            type: string
+            enum: [linux, windows, macos]
+        gpu:
+          type: boolean
+        pause:
+          type: boolean
+        snapshot:
+          type: boolean
+        volume:
+          type: boolean
+        streaming:
+          type: string
+          enum: [sse, websocket, none]
+          description: How the vendor streams command output.
+        max_ttl_sec:
+          type: integer
+          minimum: 0
+          description: Ceiling for `ttlSec`; 0 means no documented ceiling.
+        regions:
+          type: array
+          items:
+            type: string
+
+    Account:
+      type: object
+      required:
+        - object
+        - balance_cents
+        - reserved_cents
+        - month_spent_cents
+        - monthly_cap_cents
+        - rate_cents_per_hour
+        - currency
+        - balance_usd
+      properties:
+        object:
+          const: account
+        balance_cents:
+          type: integer
+          description: Available credit, integer cents.
+        reserved_cents:
+          type: integer
+          minimum: 0
+          description: Held for running sandboxes and not yet spent.
+        month_spent_cents:
+          type: integer
+          minimum: 0
+        monthly_cap_cents:
+          type: integer
+          minimum: 0
+          description: Ceiling for the month; 0 means no cap set.
+        rate_cents_per_hour:
+          type: [integer, 'null']
+          description: Platform fee in cents per sandbox-hour; null when not configured.
+        currency:
+          const: USD
+        balance_usd:
+          type: string
+          pattern: '^\d+\.\d{2}$'
+
+    AccountTopUpRequest:
+      type: object
+      required: [amountCents]
+      properties:
+        amountCents:
+          type: integer
+          minimum: 1
+          description: Credit to add, in cents.
+
+    CredentialStatus:
+      type: string
+      enum: [active, standby, disabled, expired]
+      description: |
+        `active` authorizes spends, `standby` is a spare, `disabled` was turned
+        off by the tenant, `expired` is past its `expires_at`.
+
+    CredentialHealth:
+      type: string
+      enum: [ok, degraded, invalid, unknown]
+      description: Result of the last provider probe; `unknown` until one runs.
+
+    ProviderCredential:
+      type: object
+      description: |
+        Metadata only. The plaintext secret and the stored `ciphertext`, `iv` and
+        `tag` are never part of any response.
+      required:
+        - id
+        - object
+        - provider
+        - label
+        - fingerprint
+        - last4
+        - status
+        - spend_cap_cents
+        - regions
+        - products
+        - health
+        - created_at
+        - checked_at
+        - expires_at
+      properties:
+        id:
+          type: string
+        object:
+          const: provider_credential
+        provider:
+          type: string
+          enum: [daytona, modal, e2b]
+        label:
+          type: string
+          description: Tenant-supplied name; defaults to the provider id.
+        fingerprint:
+          type: string
+          description: sha256 hex of the secret, used to reject duplicate keys.
+        last4:
+          type: string
+          minLength: 4
+          maxLength: 4
+          description: The only secret-derived text a response ever contains.
+        status:
+          $ref: '#/components/schemas/CredentialStatus'
+        spend_cap_cents:
+          type: integer
+          minimum: 0
+          description: Per-key ceiling in cents for a single authorized spend.
+        regions:
+          type: array
+          items:
+            type: string
+        products:
+          type: array
+          items:
+            type: string
+        health:
+          $ref: '#/components/schemas/CredentialHealth'
+        created_at:
+          type: string
+          format: date-time
+        checked_at:
+          type: [string, 'null']
+          format: date-time
+        expires_at:
+          type: [string, 'null']
+          format: date-time
+
+    ProviderCredentialCreateRequest:
+      type: object
+      required: [provider, secret, spendCapCents]
+      properties:
+        provider:
+          type: string
+          enum: [daytona, modal, e2b]
+        label:
+          type: string
+        secret:
+          type: string
+          minLength: 1
+          writeOnly: true
+          description: The customer's own provider key; encrypted immediately, never stored or echoed.
+        spendCapCents:
+          type: integer
+          minimum: 0
+          description: Required, because a cap of zero means "spend nothing".
+        regions:
+          type: array
+          items:
+            type: string
+        products:
+          type: array
+          items:
+            type: string
+
+    SandboxCreateRequest:
+      type: object
+      required: [os, cpu, memoryGb]
+      properties:
+        os:
+          type: string
+          enum: [linux, windows, macos]
+        cpu:
+          type: number
+          exclusiveMinimum: 0
+        memoryGb:
+          type: number
+          exclusiveMinimum: 0
+        diskGb:
+          type: number
+          exclusiveMinimum: 0
+        gpu:
+          type: object
+          required: [type, count]
+          properties:
+            type:
+              type: string
+            count:
+              type: integer
+              minimum: 1
+            spot:
+              type: boolean
+        image:
+          type: string
+        snapshot:
+          type: string
+          description: Mutually exclusive with `image`.
+        ttlSec:
+          type: integer
+          minimum: 1
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+        provider:
+          type: string
+          description: Provider id; defaults to the API's configured default.
+
+    Sandbox:
+      type: object
+      required:
+        - id
+        - object
+        - provider
+        - state
+        - created_at
+        - expires_at
+        - cost_so_far_cents
+        - cost_so_far_usd
+        - routing_reason
+      properties:
+        id:
+          type: string
+          pattern: '^sbx_[0-9a-f]{24}$'
+        object:
+          const: sandbox
+        provider:
+          type: string
+          description: Provider id that actually served the request.
+        state:
+          type: string
+          enum: [queued, starting, running, paused, stopped, stopping, failed, expired]
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: [string, 'null']
+          format: date-time
+        cost_so_far_cents:
+          type: integer
+          minimum: 0
+        cost_so_far_usd:
+          type: string
+          pattern: '^\d+\.\d{2}$'
+        routing_reason:
+          type: [string, 'null']
+          description: Why this provider and credential were used.
+
+    ExecResult:
+      type: object
+      required: [stdout, stderr, exit_code]
+      properties:
+        stdout:
+          type: string
+        stderr:
+          type: string
+        exit_code:
+          type: integer
+
+    ApiKey:
+      type: object
+      required: [id, prefix, last4, scopes, created_at, last_used_at]
+      properties:
+        id:
+          type: string
+        prefix:
+          type: string
+          description: Always `rox_sk_live_`; safe to show.
+        last4:
+          type: string
+          minLength: 4
+          maxLength: 4
+        scopes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Scope'
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: [string, 'null']
+          format: date-time
+
+    ApiKeyCreated:
+      allOf:
+        - $ref: '#/components/schemas/ApiKey'
+        - type: object
+          required: [secret]
+          properties:
+            secret:
+              type: string
+              description: The full key. Returned once and never stored in plaintext.
+
+    UsageRow:
+      type: object
+      required: [ref, product, cents, currency]
+      properties:
+        ref:
+          type: string
+          description: What the charge points at, e.g. a sandbox id.
+        product:
+          type: string
+          enum: [sandbox, desktop, gpu, job, deployment, volume, template]
+        cents:
+          type: integer
+          minimum: 0
+        currency:
+          const: USD
+
+  responses:
+    BadRequest:
+      description: The request body or parameters are wrong.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unauthorized:
+      description: No key, or an unknown key.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Forbidden:
+      description: The key lacks the required scope.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: No such object for this tenant.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    PaymentRequired:
+      description: |
+        The wallet refuses the spend: `entitlement_required`,
+        `insufficient_balance` or `budget_exceeded`.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Conflict:
+      description: |
+        The idempotency key was already used with another body, or an account
+        limit refuses the boot: `kill_switch_active`, `concurrency_exceeded` or
+        `monthly_cap_exceeded`.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimited:
+      description: Too many requests for this key in the current window.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    BadGateway:
+      description: The provider failed or is unreachable.
+      headers:
+        x-request-id:
+          $ref: '#/components/headers/RequestId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'

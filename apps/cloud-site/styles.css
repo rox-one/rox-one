@@ -1,0 +1,706 @@
+/*
+ * Rox Cloud — public site styles.
+ *
+ * One stylesheet for four pages, no build step, no external fonts or images.
+ * Token names follow the Rox product surfaces so the site, the console and
+ * the invoice read as one product.
+ */
+
+:root {
+  --surface-page: #f7f5ef;
+  --surface-raised: #fffdf8;
+  --surface-sunken: #eeebe2;
+  --surface-code: #f2efe6;
+  --border: #e0dacd;
+  --border-strong: #c9c1b0;
+  --text: #1c1f26;
+  --text-muted: #6a6d76;
+  --accent: #2348c8;
+  --accent-soft: #e8ecfb;
+  --ok: #1a7a4a;
+  --bad: #b3362a;
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(28, 31, 38, 0.05);
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: clamp(24px, 4.6vw, 34px);
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: clamp(17px, 2.4vw, 20px);
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+li + li {
+  margin-top: 4px;
+}
+
+code,
+pre,
+kbd {
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+:not(pre) > code {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+
+.wrap {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+
+.skip:focus {
+  left: 12px;
+  top: 8px;
+  z-index: 10;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+}
+
+/* Top bar ---------------------------------------------------------------- */
+
+.topbar {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-page);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.topbar-in {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.brand span {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.nav a {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}
+
+.nav a[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Buttons ---------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 7px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:hover {
+  border-color: var(--text-muted);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #1b3aa6;
+  border-color: #1b3aa6;
+}
+
+.btn-small {
+  min-height: 28px;
+  padding: 4px 10px;
+  font-size: 12.5px;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* Hero ------------------------------------------------------------------- */
+
+.hero {
+  padding: clamp(28px, 6vw, 56px) 20px clamp(20px, 4vw, 32px);
+  border-bottom: 1px solid var(--border);
+}
+
+.hero h1 {
+  max-width: 21em;
+}
+
+.hero .sub {
+  margin-top: 12px;
+  max-width: 40em;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.hero .meta {
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* Sections --------------------------------------------------------------- */
+
+.section {
+  padding: clamp(22px, 4.4vw, 38px) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.section:last-of-type {
+  border-bottom: 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.lede {
+  margin-top: 6px;
+  max-width: 44em;
+  color: var(--text-muted);
+}
+
+/* Product grid ----------------------------------------------------------- */
+
+.grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 13px;
+  min-width: 0;
+}
+
+.card h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.card .en {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+}
+
+.card p {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Steps ------------------------------------------------------------------ */
+
+.steps {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  counter-reset: step;
+}
+
+.steps li {
+  margin: 0;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 13px;
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: "Шаг " counter(step);
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.steps p {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Code ------------------------------------------------------------------- */
+
+.code {
+  position: relative;
+  margin: 12px 0 0;
+}
+
+.code pre {
+  margin: 0;
+  padding: 12px 13px;
+  background: var(--surface-code);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
+.code .copy {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-height: 24px;
+  padding: 2px 8px;
+  font-size: 11.5px;
+  background: var(--surface-raised);
+}
+
+.code figcaption {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Notes ------------------------------------------------------------------ */
+
+.note {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.note + .note {
+  margin-top: 8px;
+}
+
+.note strong {
+  font-weight: 650;
+}
+
+.plain-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.plain-list li {
+  margin: 0;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 13px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.plain-list b {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text);
+  font-size: 13.5px;
+}
+
+/* Tables ----------------------------------------------------------------- */
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+}
+
+table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+caption {
+  caption-side: bottom;
+  padding: 8px 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: left;
+}
+
+.scroll-hint {
+  display: none;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+th {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 650;
+  white-space: nowrap;
+  background: var(--surface-sunken);
+}
+
+td code {
+  white-space: nowrap;
+}
+
+td.path {
+  white-space: nowrap;
+}
+
+.method {
+  display: inline-block;
+  min-width: 52px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Formula ---------------------------------------------------------------- */
+
+.formula {
+  margin: 0;
+  padding: 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-x: auto;
+}
+
+.example {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  padding: 12px 13px;
+  box-shadow: var(--shadow);
+}
+
+.example .tag {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid #cfd8f6;
+  border-radius: 999px;
+  padding: 1px 8px;
+  margin-bottom: 8px;
+}
+
+.example .math {
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+.small {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.measure {
+  max-width: 46em;
+}
+
+.mt-6 {
+  margin-top: 6px;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+
+.mt-12 {
+  margin-top: 12px;
+}
+
+.mt-14 {
+  margin-top: 14px;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+.mb-6 {
+  margin-bottom: 6px;
+}
+
+.split-2 {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-top: 14px;
+}
+
+/* Status ----------------------------------------------------------------- */
+
+.status-card {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow);
+  padding: 16px;
+}
+
+.status-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.status-line .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex: none;
+  align-self: center;
+}
+
+.status-line[data-state="ok"] {
+  color: var(--ok);
+}
+
+.status-line[data-state="ok"] .dot {
+  background: var(--ok);
+}
+
+.status-line[data-state="bad"] {
+  color: var(--bad);
+}
+
+.status-line[data-state="bad"] .dot {
+  background: var(--bad);
+}
+
+.status-detail {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.status-detail code {
+  white-space: nowrap;
+}
+
+/* Footer ----------------------------------------------------------------- */
+
+footer.site {
+  border-top: 1px solid var(--border);
+  padding: 18px 0 26px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+footer.site .wrap {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+footer.site nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+footer.site a {
+  color: var(--text-muted);
+}
+
+/* Narrow screens --------------------------------------------------------- */
+
+@media (min-width: 561px) {
+  .code pre {
+    padding-right: 96px;
+  }
+}
+
+@media (max-width: 560px) {
+  .wrap {
+    padding: 0 14px;
+  }
+
+  .nav {
+    width: 100%;
+    margin-left: 0;
+    gap: 10px;
+  }
+
+  .hero {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .status-line {
+    font-size: 19px;
+  }
+
+  .scroll-hint {
+    display: block;
+  }
+
+  .code pre {
+    padding-top: 38px;
+  }
+}

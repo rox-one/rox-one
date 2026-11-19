@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Rox Cloud — песочницы, видеокарты и рабочие столы для агентов</title>
+<meta name="description" content="Rox Cloud: один ключ и один счёт к вашим аккаунтам Daytona, Modal и E2B. Ключ поставщика остаётся у вас.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">К содержимому</a>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <a class="brand" href="index.html">Rox <span>Cloud</span></a>
+    <nav class="nav" aria-label="Разделы сайта">
+      <a href="docs.html">Документация</a>
+      <a href="pricing.html">Цены</a>
+      <a href="status.html">Состояние</a>
+      <a class="btn btn-small" href="/console/">Открыть консоль</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero">
+    <div class="wrap">
+      <h1>Песочницы, видеокарты и рабочие столы для агентов. Один ключ, один счёт.</h1>
+      <p class="sub">Ваш ключ Daytona, Modal или E2B остаётся у вас; Rox даёт один вход, панель и учёт.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="/console/">Открыть консоль</a>
+        <a class="btn" href="docs.html">Документация</a>
+        <a class="btn" href="pricing.html">Цены</a>
+      </div>
+      <p class="meta">Машины запускаются на вашем аккаунте поставщика. Rox не выставляет счёт за железо — только своё вознаграждение по ставке из кабинета.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <h2>Семь продуктов, один счёт</h2>
+          <p class="lede">Одни и те же слова в кабинете, в документации и в счёте. Ниже — что каждое слово значит.</p>
+        </div>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h3>Песочницы <span class="en">Sandboxes</span></h3>
+          <p>Изолированная машина на минуты или часы: выполнить код, запустить агента, собрать проект.</p>
+        </article>
+        <article class="card">
+          <h3>Рабочие столы <span class="en">Desktops</span></h3>
+          <p>Машина с экраном, мышью и клавиатурой для Linux, Windows или macOS.</p>
+        </article>
+        <article class="card">
+          <h3>Видеокарты <span class="en">GPUs</span></h3>
+          <p>Почасовая аренда видеокарты для обучения, вывода моделей и агентов.</p>
+        </article>
+        <article class="card">
+          <h3>Задания <span class="en">Jobs</span></h3>
+          <p>Пакетная работа: прогнать много задач параллельно и забрать результат.</p>
+        </article>
+        <article class="card">
+          <h3>Службы <span class="en">Deployments</span></h3>
+          <p>Постоянный адрес, который отвечает по сети и сам масштабируется.</p>
+        </article>
+        <article class="card">
+          <h3>Диски <span class="en">Volumes</span></h3>
+          <p>Постоянное хранилище, общее для нескольких машин.</p>
+        </article>
+        <article class="card">
+          <h3>Шаблоны <span class="en">Templates</span></h3>
+          <p>Образ машины из файла сборки: собрали один раз, запускаете тысячи.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <h2>Как это работает</h2>
+      <p class="lede">Три шага. Ключ поставщика хранится зашифрованным, машина запускается на вашем аккаунте.</p>
+      <ol class="steps">
+        <li>
+          <h3>Добавьте ключ поставщика</h3>
+          <p>Вставьте ключ Daytona, Modal или E2B в кабинете. Он шифруется, а в ответах видны только последние четыре символа и отпечаток.</p>
+        </li>
+        <li>
+          <h3>Создайте песочницу</h3>
+          <p>Один запрос или один пункт в панели: операционная система, ядра, память, срок жизни. Машина поднимается на вашем аккаунте.</p>
+        </li>
+        <li>
+          <h3>Смотрите расход</h3>
+          <p>Вознаграждение платформы резервируется при старте и списывается по факту остановки. Счёт за железо приходит от поставщика.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <h2>Первая машина из терминала</h2>
+      <p class="lede">Ключ Rox выдаётся в кабинете. Ответ ниже сокращён: полный набор полей описан в документации.</p>
+      <figure class="code mt-12">
+        <button class="btn copy" type="button">Копировать</button>
+        <pre><code>export ROX_API_KEY=rox_sk_live_…
+export ROX_API_URL=http://localhost:8787
+
+curl -sS -X POST "$ROX_API_URL/v1/sandboxes" \
+  -H "Authorization: Bearer $ROX_API_KEY" \
+  -H "Idempotency-Key: first-sandbox-1" \
+  -H "Content-Type: application/json" \
+  -d '{"os":"linux","cpu":2,"memoryGb":4,"ttlSec":900}'</code></pre>
+        <figcaption>Ответ: <code>id</code> вида <code>sbx_…</code>, состояние <code>running</code>, поставщик, который обслужил запрос, и время окончания.</figcaption>
+      </figure>
+      <p class="small mt-10">Дальше: <a href="docs.html">запустить команду, остановить машину и подключить MCP-сервер</a>.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <h2>Что мы не делаем</h2>
+      <p class="lede">Границы важнее обещаний: они объясняют, почему счёт разделён на две части.</p>
+      <ul class="plain-list">
+        <li><b>Не перепродаём мощность</b>Машина идёт на вашем аккаунте Daytona, Modal или E2B, и счёт за железо вы платите поставщику напрямую по своему тарифу.</li>
+        <li><b>Не храним ваш ключ в открытом виде</b>Ключ поставщика лежит зашифрованным; ни один ответ API не возвращает его целиком, в журнал он тоже не попадает.</li>
+        <li><b>Не обещаем чужие сертификаты</b>SOC 2 и HIPAA, если они есть, относятся к площадкам поставщиков, а не к Rox. Своих аттестаций Rox не заявляет.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <h2>Что уже работает</h2>
+      <p class="lede">Каталог показывает только то, что поставщик действительно умеет, а не то, что обещает его реклама.</p>
+      <div class="note"><strong>Daytona</strong> — машины запускаются сегодня. <strong>Modal и E2B</strong> — ключ можно сохранить в кабинете; запуск на них появится вместе с адаптером, и до тех пор каталог их не рекламирует.</div>
+      <p class="small mt-10">Точный список возможностей отдаёт <code>GET /v1/catalog</code>. Состояние самого API — на странице <a href="status.html">«Состояние»</a>.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Rox Cloud</span>
+    <nav aria-label="Подвал">
+      <a href="docs.html">Документация</a>
+      <a href="pricing.html">Цены</a>
+      <a href="status.html">Состояние</a>
+      <a href="/console/">Консоль</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('.code').forEach(function (figure) {
+  var button = figure.querySelector('.copy');
+  var pre = figure.querySelector('pre');
+  if (!button) return;
+  if (!pre || !navigator.clipboard) { button.hidden = true; return; }
+  button.addEventListener('click', function () {
+    navigator.clipboard.writeText(pre.innerText).then(function () {
+      button.textContent = 'Скопировано';
+      setTimeout(function () { button.textContent = 'Копировать'; }, 1500);
+    });
+  });
+});
+</script>
+</body>
+</html>

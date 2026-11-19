@@ -6,6 +6,7 @@
  * observable behavior only — state machine, artifacts, safety, events —
  * never provider internals.
  */
+import type { SandboxProvider, SandboxSpec } from './sandbox.ts';
 import type { CloudRunProvider, RunSpec, RunStatus } from './types.ts';
 import { CloudRunnerError, isActiveRunState, isTerminalRunState } from './types.ts';
 
@@ -117,7 +118,98 @@ export async function conformanceSuite(
   return results;
 }
 
+// ============================================================
+// Sandbox conformance (vendor-neutral sandbox contract)
+// ============================================================
+
+/**
+ * Executable contract for `SandboxProvider`.
+ *
+ * Six observable behaviours, no vendor internals: idempotent create, exec,
+ * file round-trip, stop, refusal after stop, destroy. Runs against any
+ * adapter, including the in-memory fake in `__tests__/sandbox-contract.test.ts`.
+ */
+export async function sandboxConformanceSuite(
+  makeProvider: () => SandboxProvider,
+  assert: AssertFn = defaultAssert,
+): Promise<ConformanceResult[]> {
+  const results: ConformanceResult[] = [];
+  const record = async (name: string, fn: () => Promise<void>): Promise<void> => {
+    try {
+      await fn();
+      results.push({ name, ok: true });
+    } catch (error) {
+      results.push({ name, ok: false, error: error instanceof Error ? error.message : String(error) });
+    }
+  };
+
+  const provider = makeProvider();
+  const spec: SandboxSpec = {
+    id: `sandbox-conformance-${Date.now().toString(36)}`,
+    os: 'linux',
+    cpu: 1,
+    memoryGb: 1,
+    env: { SUITE: 'sandbox-conformance' },
+    metadata: { suite: 'sandbox-conformance' },
+  };
+
+  await record('create with the same id is idempotent', async () => {
+    const first = await provider.create(spec);
+    const second = await provider.create(spec);
+    assert(first.id === spec.id, 'status id must equal spec.id');
+    assert(second.id === first.id, 'resubmission must return the same sandbox');
+    assert(first.provider === provider.providerId, 'provider id mismatch');
+    assert(second.state !== 'failed', `second create failed: ${second.failureReason ?? 'no reason'}`);
+  });
+
+  await record('exec returns stdout and exit code 0', async () => {
+    const result = await provider.exec(spec.id, 'echo sandbox-conformance-ok');
+    assert(result.exitCode === 0, `expected exit code 0, got ${result.exitCode}`);
+    assert(
+      result.stdout.includes('sandbox-conformance-ok'),
+      `stdout must carry command output, got: ${JSON.stringify(result.stdout)}`,
+    );
+  });
+
+  await record('write then read returns the same bytes', async () => {
+    const bytes = new TextEncoder().encode('conformance bytes\nстрока\n');
+    const path = '/workspace/conformance.txt';
+    await provider.writeFile(spec.id, path, bytes);
+    const back = await provider.readFile(spec.id, path);
+    assert(back.byteLength === bytes.byteLength, `size mismatch: ${back.byteLength} vs ${bytes.byteLength}`);
+    for (let i = 0; i < bytes.byteLength; i += 1) {
+      assert(back[i] === bytes[i], `byte ${i} differs`);
+    }
+  });
+
+  await record('stop yields a stopped sandbox', async () => {
+    await provider.stop(spec.id);
+    const status = await provider.get(spec.id);
+    assert(status.state === 'stopped', `expected stopped, got ${status.state}`);
+  });
+
+  await record('exec after stop fails', async () => {
+    await expectAnyFailure(() => provider.exec(spec.id, 'echo should-not-run'));
+  });
+
+  await record('destroy makes get fail with not_found', async () => {
+    await provider.destroy(spec.id);
+    await expectThrow(() => provider.get(spec.id), 'not_found');
+  });
+
+  return results;
+}
+
 // ----------------------------------------------------------
+
+async function expectAnyFailure(fn: () => Promise<unknown>): Promise<void> {
+  try {
+    await fn();
+  } catch {
+    return;
+  }
+  throw new Error('expected the call to fail, but it resolved');
+}
 
 async function waitFor(
   provider: CloudRunProvider,

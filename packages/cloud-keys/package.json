@@ -1,0 +1,18 @@
+{
+  "name": "@rox/cloud-keys",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "description": "Rox Cloud BYOK key vault: AES-256-GCM storage for tenant-owned Daytona, Modal and E2B keys with fingerprints, rotation and spend caps",
+  "type": "module",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {}
+}

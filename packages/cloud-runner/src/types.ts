@@ -154,7 +154,9 @@ export class CloudRunnerError extends Error {
       | 'artifact_too_large'
       | 'path_traversal'
       | 'provider_error'
-      | 'cancelled',
+      | 'cancelled'
+      | 'provider_unknown'
+      | 'capability_unavailable',
     options?: ErrorOptions,
   ) {
     super(message, options);

@@ -1,0 +1,16 @@
+{
+  "name": "@rox/cloud-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server for Rox Cloud sandboxes: create, run, read, write, list and stop with one Rox key",
+  "main": "src/index.ts",
+  "bin": {
+    "rox-cloud-mcp": "src/index.ts"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  }
+}

@@ -27,15 +27,21 @@ async function withDir<T>(fn: (dir: string) => Promise<T>): Promise<T> {
 }
 
 describe('public cloud-run registry', () => {
-  test('exposes daytona/local/native and maps retired providers to daytona', () => {
+  test('exposes daytona/local/native and rejects retired providers explicitly', () => {
     expect(isPublicCloudRunProvider('daytona')).toBe(true);
     expect(isPublicCloudRunProvider('cloudflare')).toBe(false);
     expect(isPublicCloudRunProvider('modal')).toBe(false);
     expect(isPublicCloudRunProvider('e2b')).toBe(false);
-    expect(coercePublicCloudRunProvider('cloudflare')).toBe('daytona');
-    expect(coercePublicCloudRunProvider('modal')).toBe('daytona');
-    expect(coercePublicCloudRunProvider('e2b')).toBe('daytona');
+    expect(coercePublicCloudRunProvider(undefined)).toBe('daytona');
     expect(coercePublicCloudRunProvider('local')).toBe('local');
+    for (const retired of ['cloudflare', 'modal', 'e2b']) {
+      expect(() => coercePublicCloudRunProvider(retired)).toThrow(CloudRunnerError);
+      try {
+        coercePublicCloudRunProvider(retired);
+      } catch (error) {
+        expect((error as CloudRunnerError).code).toBe('provider_unknown');
+      }
+    }
   });
 });
 
