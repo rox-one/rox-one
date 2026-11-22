@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createSignal, on } from 'solid-js'
+import { For, Show, createEffect, createMemo, createSignal, on } from 'solid-js'
 import type { JSX } from 'solid-js'
 
 import { Card, Skeleton } from '@/components'
@@ -83,9 +83,12 @@ export default function MachineAccessJournal(props: MachineAccessJournalProps): 
     }
   }
 
+  // The live stream replaces the machine object every few seconds; the journal
+  // must reload only when the id itself changes.
+  const resetKey = createMemo(() => props.sandboxId)
   createEffect(
     on(
-      () => props.sandboxId,
+      resetKey,
       () => {
         token += 1
         setRows([])

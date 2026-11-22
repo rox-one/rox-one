@@ -1,17 +1,22 @@
 import { For, Show, createEffect, createMemo, createSignal, on, onCleanup } from 'solid-js'
 import type { JSX } from 'solid-js'
 
-import { Button, Card, Dialog, Skeleton } from '@/components'
+import { Button, Card, Dialog } from '@/components'
 import { api } from '@/lib/api'
 import type { MetricsInfo, NetworkCheck, ProcessInfo } from '@/lib/api'
 import { formatBytes, formatTime } from '@/lib/format'
+import { subscribeMachine } from '@/lib/machine-channel'
+import type { MachineStreamStatus } from '@/lib/machine-channel'
+import { flip } from '@/lib/motion'
 
 import { errorText } from './components/console-ui'
 
 import './machine-panels.css'
 
-const METRICS_MS = 5000
-const PROCESSES_MS = 10000
+/** One quiet GET pair when the stream has not delivered anything for this long. */
+const SNAPSHOT_FALLBACK_MS = 4000
+/** While the stream is down, the same pair is asked this often. */
+const OFFLINE_RETRY_MS = 10_000
 const NETWORK_MS = 30000
 const TOP_PROCESSES = 8
 const HISTORY_LIMIT = 20
@@ -99,10 +104,10 @@ export interface MachineMetricsProps {
 }
 
 /**
- * What the machine is doing right now: three bars refreshed every five seconds,
- * the eight busiest processes every ten seconds, and an honest egress check
- * every thirty seconds. Each section owns its timer and its last good answer, so
- * one failed call only dims that line instead of blanking the whole card.
+ * What the machine is doing right now. The load sample and the process table
+ * arrive on the page's one live stream, so this card opens no timer of its own
+ * for them; the egress check stays on its own thirty-second rhythm, and a quiet
+ * stream falls back to two direct calls instead of a blank card.
  */
 export default function MachineMetrics(props: MachineMetricsProps): JSX.Element {
   const [info, setInfo] = createSignal<MetricsInfo | null>(null)
@@ -123,26 +128,54 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
   const [killing, setKilling] = createSignal(false)
   const [killFailure, setKillFailure] = createSignal<string | null>(null)
 
-  let metricsTimer: number | undefined
-  let processesTimer: number | undefined
   let networkTimer: number | undefined
+  let fallbackTimer: number | undefined
   let metricsToken = 0
   let processesToken = 0
   let networkToken = 0
+  /** Stream health, read by the fallback timer rather than by the card. */
+  let linkStatus: MachineStreamStatus = 'reconnecting'
+  let procListEl: HTMLDivElement | undefined
+
+  const stopFallback = (): void => {
+    if (fallbackTimer === undefined) return
+    window.clearTimeout(fallbackTimer)
+    fallbackTimer = undefined
+  }
+
+  /** Ask once after a quiet stream; keep asking only while the stream is down. */
+  const armFallback = (ms: number): void => {
+    stopFallback()
+    fallbackTimer = window.setTimeout(() => {
+      fallbackTimer = undefined
+      void loadMetrics()
+      void loadProcesses()
+      if (linkStatus !== 'streaming') armFallback(OFFLINE_RETRY_MS)
+    }, ms)
+  }
 
   const stopTimers = (): void => {
-    if (metricsTimer !== undefined) {
-      window.clearInterval(metricsTimer)
-      metricsTimer = undefined
-    }
-    if (processesTimer !== undefined) {
-      window.clearInterval(processesTimer)
-      processesTimer = undefined
-    }
     if (networkTimer !== undefined) {
       window.clearInterval(networkTimer)
       networkTimer = undefined
     }
+    stopFallback()
+  }
+
+  /**
+   * The eight busiest rows, replaced under a flip: a row that merely moved
+   * keeps the eye's place, and a new pid fades in instead of shoving the list.
+   */
+  const applyProcesses = (rows: ProcessInfo[]): void => {
+    const top = [...rows]
+      .sort((left, right) => (right.cpuPercent || 0) - (left.cpuPercent || 0))
+      .slice(0, TOP_PROCESSES)
+    const container = procListEl
+    if (container === undefined || !container.isConnected) {
+      setProcesses(top)
+      return
+    }
+    flip(container, () => setProcesses(top))
   }
 
   const loadMetrics = async (): Promise<void> => {
@@ -169,10 +202,7 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
     try {
       const rows = await api.processes(id)
       if (mine !== processesToken) return
-      const top = [...rows]
-        .sort((left, right) => (right.cpuPercent || 0) - (left.cpuPercent || 0))
-        .slice(0, TOP_PROCESSES)
-      setProcesses(top)
+      applyProcesses(rows)
       setProcessesAt(Date.now())
       setProcessesFailure(null)
     } catch (err) {
@@ -206,15 +236,20 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
     }
   }
 
+  // A new sandbox object arrives with every frame; only a new machine or a new
+  // running state resets the card. The primitive key is the whole point: the
+  // process list must not blank because the ribbon's cost moved.
+  const resetKey = createMemo(() => `${props.sandboxId}\u0000${props.enabled ? '1' : '0'}`)
   createEffect(
     on(
-      () => `${props.sandboxId}\u0000${props.enabled ? '1' : '0'}`,
+      resetKey,
       () => {
         stopTimers()
         // Answers for the previous machine or state must not paint over this one.
         metricsToken += 1
         processesToken += 1
         networkToken += 1
+        linkStatus = 'reconnecting'
         setInfo(null)
         setMetricsFailure(null)
         setMetricsLoading(false)
@@ -233,12 +268,40 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
         setMetricsLoading(true)
         setProcessesLoading(true)
         setNetworkLoading(true)
-        void loadMetrics()
-        void loadProcesses()
         void loadNetwork()
-        metricsTimer = window.setInterval(() => void loadMetrics(), METRICS_MS)
-        processesTimer = window.setInterval(() => void loadProcesses(), PROCESSES_MS)
         networkTimer = window.setInterval(() => void loadNetwork(), NETWORK_MS)
+
+        // Load and processes ride the page's single stream. A snapshot clears
+        // the fallback; a quiet one gets two direct calls instead of silence.
+        onCleanup(
+          subscribeMachine(
+            props.sandboxId,
+            (snapshot) => {
+              if (snapshot.metrics !== null) {
+                setInfo(snapshot.metrics)
+                setMetricsFailure(null)
+                setMetricsLoading(false)
+              }
+              if (snapshot.processes !== null) {
+                applyProcesses(snapshot.processes)
+                setProcessesAt(snapshot.at)
+                setProcessesFailure(null)
+                setProcessesLoading(false)
+              }
+              stopFallback()
+            },
+            (status) => {
+              linkStatus = status
+              // A stall after a good run must not leave the card frozen: while
+              // the stream is down the pair is asked directly every 10 s. A
+              // pending 4 s probe is left to fire first.
+              if (status === 'offline' && fallbackTimer === undefined) {
+                armFallback(OFFLINE_RETRY_MS)
+              }
+            },
+          ),
+        )
+        armFallback(SNAPSHOT_FALLBACK_MS)
       },
     ),
   )
@@ -267,6 +330,38 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
     if (!sample.online) return '8%'
     const share = (sample.downloadMbps / historyScale()) * 100
     return `${Math.max(10, Math.min(100, Math.round(share)))}%`
+  }
+
+  /** The last sample's time, or an honest word about the missing one. */
+  const metricsStamp = (): string => {
+    const at = info()?.at
+    if (at !== null && at !== undefined) return `Обновлено в ${formatTime(at)}`
+    return metricsLoading() ? 'Первый замер ещё не пришёл.' : 'Замера пока нет.'
+  }
+
+  const processesNote = (): string => {
+    if (processes() !== null) return 'Сейчас на машине не видно ни одного процесса.'
+    return processesLoading() ? 'Список процессов ещё не пришёл.' : 'Список процессов не получен.'
+  }
+
+  const latencyText = (): string => {
+    const check = network()
+    if (check === null || !check.online || !Number.isFinite(check.latencyMs)) return '—'
+    return `${Math.round(check.latencyMs)} мс`
+  }
+
+  const downloadText = (): string => {
+    const check = network()
+    if (check === null || !check.online || !Number.isFinite(check.downloadMbps)) return '—'
+    return `${check.downloadMbps.toFixed(1).replace('.', ',')} Мбит/с`
+  }
+
+  const networkStamp = (): string => {
+    const check = network()
+    if (check !== null) {
+      return check.at === null ? 'Время замера неизвестно' : `Обновлено в ${formatTime(check.at)}`
+    }
+    return networkLoading() ? 'Проверка связи идёт…' : 'Проверки связи ещё не было.'
   }
 
   const askKill = (process: ProcessInfo): void => {
@@ -306,7 +401,7 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
       title="Нагрузка"
       subtitle={
         props.enabled
-          ? 'Процессор, память и диск — каждые 5 секунд, процессы — каждые 10, связь — каждые 30.'
+          ? 'Процессор, память и диск — по живому потоку машины, связь — каждые 30 секунд.'
           : 'Показатели снимаются только с запущенной машины.'
       }
     >
@@ -320,41 +415,31 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
       <Show when={props.enabled}>
         <div class="mp-stack">
           <section class="mp-block" aria-label="Процессор, память и диск">
-            <Show
-              when={info()}
-              fallback={
-                <Show
-                  when={metricsLoading()}
-                  fallback={<p class="mp-note">Показатели ещё не пришли.</p>}
-                >
-                  <Skeleton lines={3} />
-                </Show>
-              }
-            >
-              {(metrics) => (
-                <div class="mp-meters">
-                  <Meter
-                    label="Процессор"
-                    value="загрузка ядер"
-                    percent={
-                      Number.isFinite(metrics().cpuPercent)
-                        ? Math.min(100, Math.max(0, metrics().cpuPercent))
-                        : null
-                    }
-                  />
-                  <Meter
-                    label="Память"
-                    value={usageText(metrics().memoryUsedKb, metrics().memoryTotalKb)}
-                    percent={usedPercent(metrics().memoryUsedKb, metrics().memoryTotalKb)}
-                  />
-                  <Meter
-                    label="Диск"
-                    value={usageText(metrics().diskUsedKb, metrics().diskTotalKb)}
-                    percent={usedPercent(metrics().diskUsedKb, metrics().diskTotalKb)}
-                  />
-                </div>
-              )}
-            </Show>
+            <div class="mp-meters">
+              <Meter
+                label="Процессор"
+                value={info() === null ? '—' : 'загрузка ядер'}
+                percent={
+                  info() === null || !Number.isFinite(info()!.cpuPercent)
+                    ? null
+                    : Math.min(100, Math.max(0, info()!.cpuPercent))
+                }
+              />
+              <Meter
+                label="Память"
+                value={
+                  info() === null ? '—' : usageText(info()!.memoryUsedKb, info()!.memoryTotalKb)
+                }
+                percent={info() === null ? null : usedPercent(info()!.memoryUsedKb, info()!.memoryTotalKb)}
+              />
+              <Meter
+                label="Диск"
+                value={
+                  info() === null ? '—' : usageText(info()!.diskUsedKb, info()!.diskTotalKb)
+                }
+                percent={info() === null ? null : usedPercent(info()!.diskUsedKb, info()!.diskTotalKb)}
+              />
+            </div>
 
             <Show when={metricsFailure() !== null}>
               <p class="mp-error-quiet" role="status">
@@ -362,9 +447,7 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
               </p>
             </Show>
 
-            <Show when={info()?.at != null && metricsFailure() === null}>
-              <p class="mp-stamp">Обновлено в {formatTime(info()?.at ?? null)}</p>
-            </Show>
+            <p class="mp-stamp">{metricsStamp()}</p>
           </section>
 
           <section class="mp-block" aria-label="Процессы">
@@ -372,27 +455,24 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
               <span class="mp-block-title">Процессы</span>
               <span class="mp-block-meta">
                 {processesAt() === null
-                  ? 'каждые 10 секунд'
+                  ? 'по живому потоку'
                   : `обновлено в ${formatTime(processesAt())}`}
               </span>
             </div>
 
-            <Show
-              when={processes()}
-              fallback={
-                <Show
-                  when={processesLoading()}
-                  fallback={<p class="mp-note">Список процессов ещё не пришёл.</p>}
-                >
-                  <Skeleton lines={4} />
-                </Show>
-              }
-            >
+            <div class="mp-proc-list">
               <Show
                 when={topProcesses().length > 0}
-                fallback={<p class="mp-note">Сейчас на машине не видно ни одного процесса.</p>}
+                fallback={<p class="mp-note mp-frame-note">{processesNote()}</p>}
               >
-                <div class="mp-proc" role="table" aria-label="Самые нагруженные процессы">
+                <div
+                  class="mp-proc"
+                  role="table"
+                  aria-label="Самые нагруженные процессы"
+                  ref={(element) => {
+                    procListEl = element
+                  }}
+                >
                   <div class="mp-proc-row mp-proc-head" role="row">
                     <span class="mp-proc-pid" role="columnheader">
                       PID
@@ -415,7 +495,7 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
                   </div>
                   <For each={topProcesses()}>
                     {(process) => (
-                      <div class="mp-proc-row" role="row">
+                      <div class="mp-proc-row" role="row" data-flip-key={String(process.pid)}>
                         <span class="mp-proc-pid" role="cell">
                           {process.pid}
                         </span>
@@ -453,7 +533,7 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
                   </For>
                 </div>
               </Show>
-            </Show>
+            </div>
 
             <Show when={processesFailure() !== null}>
               <p class="mp-error-quiet" role="status">
@@ -468,69 +548,48 @@ export default function MachineMetrics(props: MachineMetricsProps): JSX.Element 
               <span class="mp-block-meta">каждые 30 секунд</span>
             </div>
 
-            <Show
-              when={network()}
-              fallback={
-                <Show
-                  when={networkLoading()}
-                  fallback={<p class="mp-note">Проверка связи ещё не пришла.</p>}
+            <div class="mp-net">
+              <div class="mp-net-line">
+                <span
+                  class="mp-net-state"
+                  data-online={
+                    network() === null ? undefined : network()!.online ? '1' : '0'
+                  }
                 >
-                  <Skeleton lines={2} />
+                  <span class="mp-net-dot" aria-hidden="true" />
+                  {network() === null
+                    ? 'связь не проверена'
+                    : network()!.online
+                      ? 'есть связь'
+                      : 'нет связи'}
+                </span>
+                <span class="mp-net-fact">Задержка: {latencyText()}</span>
+                <span class="mp-net-fact">Скачивание: {downloadText()}</span>
+              </div>
+
+              <Show when={network()?.note}>
+                {(note) => <p class="mp-note">{readable(note())}</p>}
+              </Show>
+
+              <div class="mp-hist" aria-hidden="true" data-empty={history().length === 0 ? '1' : '0'}>
+                <For each={history()}>
+                  {(sample) => (
+                    <span
+                      class="mp-hist-bar"
+                      data-online={sample.online ? '1' : '0'}
+                      style={{ height: sampleHeight(sample) }}
+                    />
+                  )}
+                </For>
+              </div>
+
+              <div class="mp-net-foot">
+                <span class="mp-stamp">{networkStamp()}</span>
+                <Show when={historySummary() !== ''}>
+                  <span class="mp-stamp">{historySummary()}</span>
                 </Show>
-              }
-            >
-              {(check) => (
-                <div class="mp-net">
-                  <div class="mp-net-line">
-                    <span class="mp-net-state" data-online={check().online ? '1' : '0'}>
-                      <span class="mp-net-dot" aria-hidden="true" />
-                      {check().online ? 'есть связь' : 'нет связи'}
-                    </span>
-                    <span class="mp-net-fact">
-                      Задержка:{' '}
-                      {!check().online || !Number.isFinite(check().latencyMs)
-                        ? '—'
-                        : `${Math.round(check().latencyMs)} мс`}
-                    </span>
-                    <span class="mp-net-fact">
-                      Скачивание:{' '}
-                      {!check().online || !Number.isFinite(check().downloadMbps)
-                        ? '—'
-                        : `${check().downloadMbps.toFixed(1).replace('.', ',')} Мбит/с`}
-                    </span>
-                  </div>
-
-                  <Show when={check().note}>
-                    {(note) => <p class="mp-note">{readable(note())}</p>}
-                  </Show>
-
-                  <Show when={history().length > 0}>
-                    <div class="mp-hist" aria-hidden="true">
-                      <For each={history()}>
-                        {(sample) => (
-                          <span
-                            class="mp-hist-bar"
-                            data-online={sample.online ? '1' : '0'}
-                            style={{ height: sampleHeight(sample) }}
-                          />
-                        )}
-                      </For>
-                    </div>
-                  </Show>
-
-                  <div class="mp-net-foot">
-                    <span class="mp-stamp">
-                      {check().at === null
-                        ? 'Время замера неизвестно'
-                        : `Обновлено в ${formatTime(check().at)}`}
-                    </span>
-                    <Show when={historySummary() !== ''}>
-                      <span class="mp-stamp">{historySummary()}</span>
-                    </Show>
-                  </div>
-                </div>
-              )}
-            </Show>
+              </div>
+            </div>
 
             <Show when={networkFailure() !== null}>
               <p class="mp-error-quiet" role="status">

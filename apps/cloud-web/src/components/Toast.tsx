@@ -2,6 +2,7 @@ import { For, Show, createContext, createSignal, useContext } from 'solid-js'
 import type { JSX } from 'solid-js'
 
 import { Icon } from './Icon'
+import { Presence } from './Presence'
 
 export type ToastTone = 'accent' | 'success' | 'warning' | 'danger'
 
@@ -46,10 +47,26 @@ function describeError(input: unknown): { message: string; code: string | null; 
 
 export function ToastProvider(props: { children?: JSX.Element }): JSX.Element {
   const [items, setItems] = createSignal<ToastItem[]>([])
+  // A dismissed toast stays for the base step of its own fade. The set is a
+  // signal of its own, so the item keeps its identity and its DOM node.
+  const [leaving, setLeaving] = createSignal<ReadonlySet<number>>(new Set<number>())
   let nextId = 1
 
-  const dismiss = (id: number): void => {
+  const forget = (id: number): void => {
     setItems((list) => list.filter((item) => item.id !== id))
+    setLeaving((current) => {
+      if (!current.has(id)) return current
+      const next = new Set(current)
+      next.delete(id)
+      return next
+    })
+  }
+
+  const dismiss = (id: number): void => {
+    // A timer may fire after the person closed the toast; a forgotten id has
+    // nothing left to fade and must not linger in the set.
+    if (!items().some((item) => item.id === id)) return
+    setLeaving((current) => (current.has(id) ? current : new Set(current).add(id)))
   }
 
   const show = (input: ToastInput | string, tone: ToastTone = 'accent'): number => {
@@ -91,31 +108,40 @@ export function ToastProvider(props: { children?: JSX.Element }): JSX.Element {
       <div class="toast-region" aria-live="polite" aria-atomic="false">
         <For each={items()}>
           {(item) => (
-            <div class="toast" data-tone={item.tone} role="status">
-              <Icon
-                class="toast-icon"
-                name={item.tone === 'danger' ? 'shield' : item.tone === 'success' ? 'check' : 'log'}
-                size={16}
-              />
-              <div class="toast-body">
-                <div class="toast-message">{item.message}</div>
-                <Show when={item.meta !== undefined || item.requestId !== null}>
-                  <div class="toast-meta">
-                    {item.meta}
-                    {item.meta !== undefined && item.requestId !== null ? ' · ' : null}
-                    {item.requestId === null ? null : `запрос ${item.requestId}`}
-                  </div>
-                </Show>
+            <Presence
+              exiting={leaving().has(item.id)}
+              onExitEnd={() => {
+                // A toast may leave from inside its own effect; forget it on
+                // the next microtask, once that effect has finished.
+                queueMicrotask(() => forget(item.id))
+              }}
+            >
+              <div class="toast" data-tone={item.tone} role="status">
+                <Icon
+                  class="toast-icon"
+                  name={item.tone === 'danger' ? 'shield' : item.tone === 'success' ? 'check' : 'log'}
+                  size={16}
+                />
+                <div class="toast-body">
+                  <div class="toast-message">{item.message}</div>
+                  <Show when={item.meta !== undefined || item.requestId !== null}>
+                    <div class="toast-meta">
+                      {item.meta}
+                      {item.meta !== undefined && item.requestId !== null ? ' · ' : null}
+                      {item.requestId === null ? null : `запрос ${item.requestId}`}
+                    </div>
+                  </Show>
+                </div>
+                <button
+                  type="button"
+                  class="toast-close"
+                  aria-label="Закрыть сообщение"
+                  onClick={() => dismiss(item.id)}
+                >
+                  ×
+                </button>
               </div>
-              <button
-                type="button"
-                class="toast-close"
-                aria-label="Закрыть сообщение"
-                onClick={() => dismiss(item.id)}
-              >
-                ×
-              </button>
-            </div>
+            </Presence>
           )}
         </For>
       </div>

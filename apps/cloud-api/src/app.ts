@@ -550,7 +550,7 @@ function publicPreviewUrl(url: string): string {
   return `https://${PUBLIC_PREVIEW_HOST}/${match[1]}${match[2] ?? '/'}`
 }
 
-/** A vendor SSH command → Rox's gateway alias, keeping the one-time token. */
+/** A vendor SSH command → Rox's gateway alias; the token stays time-limited, not one-shot. */
 function publicSshCommand(command: string): string {
   return command.replace(/@ssh\.app\.daytona\.io(?=\s|$)/i, `@${PUBLIC_SSH_HOST}`)
 }
@@ -850,6 +850,49 @@ function parseProcessTable(stdout: string): ProcessRow[] {
     })
   }
   return rows
+}
+
+/**
+ * The console's view of a process row. The image account and the Rox account
+ * are one person in this cabinet, so the same rename applies wherever the
+ * process table is shown: `/processes` and the live machine stream.
+ */
+function processListJson(rows: readonly ProcessRow[]): Array<Record<string, unknown>> {
+  return rows.map((row) => ({
+    pid: row.pid,
+    user: row.user === 'daytona' ? 'rox' : row.user,
+    cpu_percent: row.cpuPercent,
+    memory_kb: row.memoryKb,
+    command: row.command,
+  }))
+}
+
+/** How often a watched machine is sampled, and how often a quiet stream pings. */
+const MACHINE_EVENT_INTERVAL_MS = 3_000
+const MACHINE_EVENT_PING_MS = 15_000
+/** Snapshots kept so a reconnect can replay what it missed. */
+const MACHINE_EVENT_HISTORY_LIMIT = 20
+
+/** One open `text/event-stream` reader on a channel. */
+interface MachineEventClient {
+  /** Queue one already-formatted frame; a closed reader ignores it. */
+  send(frame: string): void
+  /** Leave the channel; the last one out stops the sampler. */
+  close(): void
+}
+
+/**
+ * One sampler per machine, shared by everyone watching it. Subscribers are
+ * reference-counted: the first one starts the immediate sample, the last one
+ * to leave clears the timer, so a machine nobody watches costs nothing.
+ */
+interface MachineEventChannel {
+  readonly sandboxId: string
+  readonly record: SandboxRecord
+  readonly subscribers: Set<MachineEventClient>
+  timer?: ReturnType<typeof setTimeout>
+  sequence: number
+  readonly history: Array<{ id: number; data: string }>
 }
 
 /**
@@ -1754,14 +1797,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
     }
     return json(200, {
       object: 'list',
-      data: parseProcessTable(result.stdout).map((row) => ({
-        pid: row.pid,
-        // The image account and the Rox account are one person in this cabinet.
-        user: row.user === 'daytona' ? 'rox' : row.user,
-        cpu_percent: row.cpuPercent,
-        memory_kb: row.memoryKb,
-        command: row.command,
-      })),
+      data: processListJson(parseProcessTable(result.stdout)),
     })
   }
 
@@ -1896,7 +1932,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
   }
 
   /**
-   * A one-shot SSH command. It contains the credential, so it is answered
+   * A time-limited SSH command. It contains the credential, so it is answered
    * with `no-store` and never written to the journal: the request line names
    * the route, not the command.
    */
@@ -2014,6 +2050,14 @@ export function createApp(options: CloudApiOptions): CloudApp {
     } catch {
       throw new ApiError('provider_error', 'Машина не отдала метрики: ответ не разобран')
     }
+    return json(200, metricsJson(sample))
+  }
+
+  /**
+   * The wire shape of one metrics sample. The same function answers `/metrics`
+   * and the live machine stream, so both cards count the machine identically.
+   */
+  function metricsJson(sample: Record<string, unknown>): Record<string, unknown> {
     const kb = (field: string): number => {
       const value = sample[field]
       if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -2026,7 +2070,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
       typeof rawCpu === 'number' && Number.isFinite(rawCpu)
         ? Math.round(Math.max(0, Math.min(100, rawCpu)) * 10) / 10
         : 0
-    return json(200, {
+    return {
       object: 'metrics',
       at: iso(now()),
       cpu_percent: cpuPercent,
@@ -2034,6 +2078,245 @@ export function createApp(options: CloudApiOptions): CloudApp {
       memory_total_kb: kb('memory_total_kb'),
       disk_used_kb: kb('disk_used_kb'),
       disk_total_kb: kb('disk_total_kb'),
+    }
+  }
+
+  // ---------- one machine, live ----------
+
+  /** Watchers of one machine, keyed by its id; empty channels are removed. */
+  const eventChannels = new Map<string, MachineEventChannel>()
+
+  function channelFor(record: SandboxRecord): MachineEventChannel {
+    const existing = eventChannels.get(record.id)
+    if (existing !== undefined) return existing
+    const channel: MachineEventChannel = {
+      sandboxId: record.id,
+      record,
+      subscribers: new Set(),
+      sequence: 0,
+      history: [],
+    }
+    eventChannels.set(record.id, channel)
+    return channel
+  }
+
+  /** The customer's view of a machine at one moment; same sandbox block as GET. */
+  function machineSnapshotJson(
+    record: SandboxRecord,
+    metrics: Record<string, unknown> | null,
+    processes: Array<Record<string, unknown>> | null,
+  ): Record<string, unknown> {
+    return {
+      object: 'machine_snapshot',
+      at: iso(now()),
+      sandbox: sandboxJson(record),
+      metrics,
+      processes,
+    }
+  }
+
+  /**
+   * One snapshot for every watcher, kept in the short ring so a reconnect with
+   * `Last-Event-ID` gets what it missed before live frames resume.
+   */
+  function publishSnapshot(
+    channel: MachineEventChannel,
+    metrics: Record<string, unknown> | null,
+    processes: Array<Record<string, unknown>> | null,
+  ): void {
+    const data = JSON.stringify(machineSnapshotJson(channel.record, metrics, processes))
+    channel.sequence += 1
+    const id = channel.sequence
+    channel.history.push({ id, data })
+    if (channel.history.length > MACHINE_EVENT_HISTORY_LIMIT) channel.history.shift()
+    const frame = `id: ${id}\nevent: snapshot\ndata: ${data}\n\n`
+    for (const client of channel.subscribers) client.send(frame)
+  }
+
+  /**
+   * A failed sample is told plainly: the stream stays open and a later tick can
+   * succeed. The message names neither the vendor, a path nor a command.
+   */
+  function publishError(channel: MachineEventChannel, message: string): void {
+    const frame = `event: error\ndata: ${JSON.stringify({ message })}\n\n`
+    for (const client of channel.subscribers) client.send(frame)
+  }
+
+  /**
+   * One sample: refresh the record from the provider, then — only while the
+   * machine runs — one exec that carries the metrics pass and the process table
+   * together, split by a marker unique to this sample. The next tick is armed
+   * after this one finishes, so two samples never overlap.
+   */
+  async function sampleMachine(channel: MachineEventChannel): Promise<void> {
+    const record = channel.record
+    let provider: SandboxProvider
+    try {
+      provider = await providerForRecord(record)
+    } catch {
+      publishError(channel, 'Машина сейчас недоступна: показатели не сняты')
+      return
+    }
+    let status: SandboxStatus
+    try {
+      status = await provider.get(record.id)
+    } catch (err) {
+      if (err instanceof CloudRunnerError && err.code === 'not_found') {
+        record.state = 'failed'
+        publishError(channel, 'Машина больше не существует')
+        publishSnapshot(channel, null, null)
+        return
+      }
+      publishError(channel, 'Не удалось узнать состояние машины')
+      return
+    }
+    // The record the API serves is the same record the stream watches: a state
+    // change or a new cost is visible to GET /v1/sandboxes/:id immediately.
+    record.state = status.state
+    if (status.costSoFarUsd !== undefined) {
+      record.costCents = Math.max(0, Math.round(status.costSoFarUsd * 100))
+    }
+    if (record.state !== 'running') {
+      publishSnapshot(channel, null, null)
+      return
+    }
+    const marker = nextId('ROX_EVENT_')
+    try {
+      const result = await provider.exec(
+        record.id,
+        `echo ${base64Utf8(METRICS_SCRIPT)} | base64 -d | python3 -; echo ${marker}; ${PROCESS_LIST_COMMAND}`,
+        { timeoutMs: 20_000 },
+      )
+      if (result.exitCode !== 0) {
+        publishError(channel, 'Машина не отдала показатели')
+        return
+      }
+      const cut = result.stdout.indexOf(marker)
+      const metricsText = cut < 0 ? result.stdout : result.stdout.slice(0, cut)
+      const processText = cut < 0 ? '' : result.stdout.slice(cut + marker.length)
+      const metrics = metricsFromSample(metricsText)
+      const processes = processListJson(parseProcessTable(processText))
+      if (metrics === null) publishError(channel, 'Машина не отдала метрики')
+      publishSnapshot(channel, metrics, processes)
+    } catch {
+      publishError(channel, 'Машина не отдала показатели')
+    }
+  }
+
+  /** The last JSON line of a sample; anything else is an unreadable answer. */
+  function metricsFromSample(text: string): Record<string, unknown> | null {
+    const line = text.trim().split('\n').pop() ?? ''
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(line)
+    } catch {
+      return null
+    }
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+    try {
+      return metricsJson(parsed as Record<string, unknown>)
+    } catch {
+      return null
+    }
+  }
+
+  /** Arm the next sample; the last subscriber leaving clears it. */
+  function scheduleSample(channel: MachineEventChannel, delayMs: number): void {
+    if (channel.subscribers.size === 0 || channel.timer !== undefined) return
+    channel.timer = setTimeout(() => {
+      channel.timer = undefined
+      void sampleMachine(channel)
+        .catch(() => {})
+        .finally(() => scheduleSample(channel, MACHINE_EVENT_INTERVAL_MS))
+    }, delayMs)
+  }
+
+  /**
+   * `GET /v1/sandboxes/:id/events` — one machine's life as server-sent events.
+   * The first frame is `ready`, then a `snapshot` at once and every few seconds;
+   * a second watcher shares the same sampler instead of starting its own.
+   */
+  function machineEventsRoute(auth: VerifiedApiKey, id: string, req: Request): Response {
+    const record = sandboxFor(auth.tenant.id, id)
+    const channel = channelFor(record)
+    const encoder = new TextEncoder()
+    let subscriber: MachineEventClient | undefined
+
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        let closed = false
+        let ping: ReturnType<typeof setTimeout> | undefined
+        const stopPing = (): void => {
+          clearTimeout(ping)
+          ping = undefined
+        }
+        const close = (): void => {
+          if (closed) return
+          closed = true
+          stopPing()
+          req.signal.removeEventListener('abort', close)
+          if (subscriber !== undefined) channel.subscribers.delete(subscriber)
+          if (channel.subscribers.size === 0) {
+            clearTimeout(channel.timer)
+            channel.timer = undefined
+            if (eventChannels.get(channel.sandboxId) === channel) eventChannels.delete(channel.sandboxId)
+          }
+          try {
+            controller.close()
+          } catch {
+            // The client is already gone; closing twice is not an error.
+          }
+        }
+        const send = (frame: string): void => {
+          if (closed) return
+          try {
+            controller.enqueue(encoder.encode(frame))
+          } catch {
+            close()
+          }
+        }
+        const armPing = (): void => {
+          ping = setTimeout(() => {
+            ping = undefined
+            if (closed) return
+            send(': ping\n\n')
+            armPing()
+          }, MACHINE_EVENT_PING_MS)
+        }
+        const client: MachineEventClient = { send, close }
+        subscriber = client
+        if (req.signal.aborted) {
+          close()
+          return
+        }
+        channel.subscribers.add(client)
+        req.signal.addEventListener('abort', close)
+        armPing()
+        // `retry_ms` tells EventSource how soon to reconnect after a drop.
+        const ready = { interval_ms: MACHINE_EVENT_INTERVAL_MS, retry_ms: MACHINE_EVENT_INTERVAL_MS }
+        send(`event: ready\ndata: ${JSON.stringify(ready)}\n\n`)
+        const rawLast = req.headers.get('last-event-id')
+        const lastId = rawLast !== null && /^\d+$/.test(rawLast.trim()) ? Number(rawLast.trim()) : null
+        if (lastId !== null) {
+          for (const entry of channel.history) {
+            if (entry.id > lastId) send(`id: ${entry.id}\nevent: snapshot\ndata: ${entry.data}\n\n`)
+          }
+        }
+        // Only the first watcher starts the loop; the rest join it.
+        if (channel.subscribers.size === 1) scheduleSample(channel, 0)
+      },
+      cancel() {
+        subscriber?.close()
+      },
+    })
+
+    return new Response(stream, {
+      status: 200,
+      headers: {
+        'content-type': 'text/event-stream; charset=utf-8',
+        'cache-control': 'no-store',
+        'x-accel-buffering': 'no',
+      },
     })
   }
 
@@ -2941,6 +3224,11 @@ export function createApp(options: CloudApiOptions): CloudApp {
     }
 
     if (segments[1] === 'sandboxes') {
+      // The live stream is registered before the generic machine GET so its
+      // `events` segment can never be read as a machine id.
+      if (segments.length === 4 && segments[3] === 'events' && method === 'GET') {
+        return machineEventsRoute(requireAuth(req, 'sandboxes:read'), segments[2]!, req)
+      }
       if (segments.length === 2 && method === 'POST') {
         return createSandboxRoute(requireAuth(req, 'sandboxes:write'), req)
       }

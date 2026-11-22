@@ -6,6 +6,7 @@ import { Button, Card, Icon, Skeleton } from '@/components'
 import { api } from '@/lib/api'
 import type { NetworkInfo, PortInfo, PreviewLink, SshAccess } from '@/lib/api'
 import { formatDate, formatDuration, formatTime } from '@/lib/format'
+import { sshConnection } from '@/lib/ssh-access'
 
 import { errorText } from './components/console-ui'
 import FirstSiteWizard, { runExampleSite } from './FirstSiteWizard'
@@ -58,8 +59,9 @@ export interface MachineAccessProps {
 
 /**
  * The three ways out of a machine: its private address, a signed link to one
- * HTTP port, and a one-shot SSH command. Every secret is created on demand and
- * never stored by the console; both temporary accesses count down to the second.
+ * HTTP port, and an SSH access. Every secret is created on demand and never
+ * stored by the console; both temporary accesses count down to the second.
+ * SSH shows a stable alias, while its token stays in the file behind a click.
  */
 export default function MachineAccess(props: MachineAccessProps): JSX.Element {
   const [now, setNow] = createSignal(Date.now())
@@ -88,14 +90,22 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
   const [sshError, setSshError] = createSignal<string | null>(null)
   const [sshLoading, setSshLoading] = createSignal(false)
   const [sshCopied, setSshCopied] = createSignal(false)
+  const [aliasCopied, setAliasCopied] = createSignal(false)
+  const [configOpen, setConfigOpen] = createSignal(false)
+  const [configCopied, setConfigCopied] = createSignal(false)
+  const [rawOpen, setRawOpen] = createSignal(false)
 
   const [wizardOpen, setWizardOpen] = createSignal(false)
 
   let copyTimer: number | undefined
   let sshCopyTimer: number | undefined
+  let aliasCopyTimer: number | undefined
+  let configCopyTimer: number | undefined
   onCleanup(() => {
     window.clearTimeout(copyTimer)
     window.clearTimeout(sshCopyTimer)
+    window.clearTimeout(aliasCopyTimer)
+    window.clearTimeout(configCopyTimer)
   })
 
   const previewLeft = createMemo(() => secondsLeft(preview()?.expiresAt, now()))
@@ -108,6 +118,13 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
     const left = sshLeft()
     return left !== null && left <= 0
   }
+  // The alias is what the customer sees and types; the token lives in the
+  // connection object and only reaches the DOM through the opened file.
+  const connection = createMemo(() => {
+    const access = ssh()
+    return access === null ? null : sshConnection(access.command, props.sandboxId)
+  })
+  const aliasCommand = (): string => `ssh ${connection()?.alias ?? ''}`
 
   const loadNetwork = async (refresh = false): Promise<void> => {
     if (!props.enabled) return
@@ -156,6 +173,11 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
         setExampleLoading(false)
         setSsh(null)
         setSshError(null)
+        setConfigOpen(false)
+        setRawOpen(false)
+        setSshCopied(false)
+        setAliasCopied(false)
+        setConfigCopied(false)
         setNetwork(null)
         setNetworkError(null)
         setPorts([])
@@ -234,6 +256,12 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
     setSshLoading(true)
     setSshError(null)
     setSsh(null)
+    // A new token starts closed: only the click on «Файл доступа» reveals it.
+    setConfigOpen(false)
+    setRawOpen(false)
+    setSshCopied(false)
+    setAliasCopied(false)
+    setConfigCopied(false)
     try {
       setSsh(await api.ssh(props.sandboxId))
     } catch (failure) {
@@ -266,6 +294,33 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
       sshCopyTimer = window.setTimeout(() => setSshCopied(false), 1600)
     } catch {
       setSshError('Браузер не дал скопировать команду. Выделите её вручную.')
+    }
+  }
+
+  /** The visible line only: copying it never moves the token to the clipboard. */
+  const copyAlias = async (): Promise<void> => {
+    if (connection() === null || sshExpired()) return
+    try {
+      await navigator.clipboard.writeText(aliasCommand())
+      setAliasCopied(true)
+      window.clearTimeout(aliasCopyTimer)
+      aliasCopyTimer = window.setTimeout(() => setAliasCopied(false), 1600)
+    } catch {
+      setSshError('Браузер не дал скопировать команду. Выделите её вручную.')
+    }
+  }
+
+  /** The full config, token included: only from the opened file block. */
+  const copyConfig = async (): Promise<void> => {
+    const value = connection()
+    if (value === null || sshExpired()) return
+    try {
+      await navigator.clipboard.writeText(value.config)
+      setConfigCopied(true)
+      window.clearTimeout(configCopyTimer)
+      configCopyTimer = window.setTimeout(() => setConfigCopied(false), 1600)
+    } catch {
+      setSshError('Браузер не дал скопировать файл. Выделите его вручную.')
     }
   }
 
@@ -357,10 +412,11 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
               </Button>
             </div>
             <p class="access-note">
-              «Запустить пример» поднимает небольшой сервер на этом порту в домашнем каталоге. Или
-              запустите свой сервер в терминале, например
+              «Запустить пример» поднимает небольшой сервер на этом порту в папке <code>~/site</code>{' '}
+              и кладёт туда страницу Rox, только если <code>index.html</code> ещё нет. Или запустите
+              свой сервер в терминале, например
               {' '}
-              <code>python3 -m http.server {port()}</code>.
+              <code>python3 -m http.server {port()} --directory ~/site</code>.
             </p>
             <p class="access-note">
               Ссылка открывает этот порт по адресу <code>preview.rox.computer/&lt;подпись&gt;/</code>. Ответ 502 значит, что
@@ -500,10 +556,11 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
               Создать доступ
             </Button>
             <p class="access-note">
-              После «Создать доступ» здесь появится команда вида{' '}
-              <code>{'ssh <токен>@ssh.rox.computer'}</code>. Вы войдёте как <code>rox</code>, увидите
+              «Создать доступ» выдаёт временный ключ: он работает до указанного срока, а не один
+              раз. В терминале вы набираете короткое имя вида <code>rox-…</code>, а сам ключ лежит в
+              отдельном файле доступа. Имя только называет ключ и не заменяет его защиту: пока ключ
+              действует, его владелец входит на машину. Вы войдёте как <code>rox</code>, увидите
               приглашение <code>rox@rox-computer</code>, а домашний каталог будет <code>~</code>.
-              Одноразовая команда перестаёт работать после истечения срока.
             </p>
             <Show when={sshError() !== null}>
               <p class="access-error" role="alert">
@@ -511,23 +568,90 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
               </p>
             </Show>
             <Show when={ssh() !== null}>
-              <div class="access-ssh" classList={{ 'is-expired': sshExpired() }}>
-                <code title={ssh()?.command}>{ssh()?.command}</code>
+              <Show
+                when={connection() !== null}
+                fallback={
+                  <p class="access-note">
+                    Команда пришла в незнакомом виде: откройте её целиком и вставьте в терминал
+                    вручную.
+                  </p>
+                }
+              >
+                <div class="access-ssh" classList={{ 'is-expired': sshExpired() }}>
+                  <code>{aliasCommand()}</code>
+                  <button
+                    type="button"
+                    class="access-copy"
+                    disabled={sshExpired()}
+                    onClick={() => void copyAlias()}
+                  >
+                    {aliasCopied() ? 'Скопировано' : 'Копировать'}
+                  </button>
+                </div>
+              </Show>
+              <div class="access-disclosure-row">
+                <Show when={connection() !== null}>
+                  <button
+                    type="button"
+                    class="access-disclosure"
+                    aria-expanded={configOpen() ? 'true' : 'false'}
+                    onClick={() => setConfigOpen((value) => !value)}
+                  >
+                    Файл доступа
+                  </button>
+                </Show>
                 <button
                   type="button"
-                  class="access-copy"
-                  disabled={sshExpired()}
-                  onClick={() => void copySsh()}
+                  class="access-disclosure"
+                  aria-expanded={rawOpen() ? 'true' : 'false'}
+                  onClick={() => setRawOpen((value) => !value)}
                 >
-                  {sshCopied() ? 'Скопировано' : 'Копировать'}
+                  Показать исходную команду
                 </button>
               </div>
+              <Show when={configOpen() && connection() !== null}>
+                <pre class="access-config" classList={{ 'is-expired': sshExpired() }}>
+                  <code>{connection()?.config}</code>
+                </pre>
+                <div class="access-config-actions">
+                  <button
+                    type="button"
+                    class="access-copy"
+                    disabled={sshExpired()}
+                    onClick={() => void copyConfig()}
+                  >
+                    {configCopied() ? 'Скопировано' : 'Скопировать файл'}
+                  </button>
+                  <span class="access-note">
+                    Сохраните как <code>~/.ssh/rox/{connection()?.alias}.conf</code>, закройте права{' '}
+                    <code>chmod 600</code> и один раз добавьте в <code>~/.ssh/config</code> строку{' '}
+                    <code>Include ~/.ssh/rox/*.conf</code>.
+                  </span>
+                </div>
+              </Show>
+              <Show when={rawOpen()}>
+                <div class="access-raw" classList={{ 'is-expired': sshExpired() }}>
+                  <code>{ssh()?.command}</code>
+                  <button
+                    type="button"
+                    class="access-copy"
+                    disabled={sshExpired()}
+                    onClick={() => void copySsh()}
+                  >
+                    {sshCopied() ? 'Скопировано' : 'Копировать'}
+                  </button>
+                </div>
+                <p class="access-note">
+                  Здесь токен записан целиком — это тот же временный ключ. Для обычной работы
+                  пользуйтесь файлом доступа.
+                </p>
+              </Show>
               <p class="access-note" classList={{ 'is-expired': sshExpired() }}>
                 Действует до {formatDate(ssh()?.expiresAt ?? null)} ·{' '}
                 {remainingText(ssh()?.expiresAt ?? null, now())}.
               </p>
               <Show when={sshExpired()}>
-                <p class="access-note">Команда больше не работает. Создайте доступ заново.</p>
+                <p class="access-note">Доступ больше не работает. Создайте его заново.</p>
               </Show>
             </Show>
           </section>

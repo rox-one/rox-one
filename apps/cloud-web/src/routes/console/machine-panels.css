@@ -68,6 +68,8 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px 18px;
   min-width: 0;
+  /* Три полосы держат высоту и до первого замера, и после ошибки. */
+  min-height: 64px;
 }
 
 .mp-meter {
@@ -184,6 +186,24 @@
 }
 
 /* ---------- Процессы ---------- */
+
+/* Список процессов живёт в рамке постоянной высоты: восемь строк и шапка
+   занимают одно и то же место, поэтому новая выборка не тянет карточку. */
+.mp-proc-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 404px;
+}
+
+.mp-frame-note {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  text-align: center;
+}
 
 .mp-proc {
   display: flex;
@@ -383,11 +403,17 @@
   align-items: flex-end;
   gap: 2px;
   height: 34px;
+  min-height: 34px;
   padding: 4px 5px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-sunken);
   min-width: 0;
+}
+
+.mp-hist[data-empty="1"] {
+  background: var(--surface);
+  border-style: dashed;
 }
 
 .mp-hist-bar {

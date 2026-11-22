@@ -28,18 +28,22 @@ const AdminLogs = lazy(() => import('./routes/admin/Logs'))
 const AdminSupport = lazy(() => import('./routes/admin/Support'))
 const AdminSecurity = lazy(() => import('./routes/admin/Security'))
 
-function Root(props: { children?: JSX.Element }) {
+/**
+ * While a route chunk loads, keep the width and height a page will fill. A
+ * centred card would throw away the chrome on every lazy navigation.
+ */
+function RouteShell() {
   return (
-    <Suspense
-      fallback={
-        <div class="boot">
-          <Skeleton lines={4} />
-        </div>
-      }
-    >
-      {props.children}
-    </Suspense>
+    <div class="route-shell" aria-live="polite">
+      <span class="sr-only">Загружаем страницу</span>
+      <Skeleton lines={2} />
+      <Skeleton lines={6} />
+    </div>
   )
+}
+
+function Root(props: { children?: JSX.Element }) {
+  return <Suspense fallback={<RouteShell />}>{props.children}</Suspense>
 }
 
 function NotFound() {

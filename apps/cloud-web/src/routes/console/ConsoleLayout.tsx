@@ -1,11 +1,12 @@
 import { A } from '@solidjs/router'
 import type { RouteSectionProps } from '@solidjs/router'
-import { For, Show, createSignal } from 'solid-js'
+import { For, Show, Suspense, createEffect, createSignal, untrack } from 'solid-js'
 import type { JSX } from 'solid-js'
 
-import { Badge, Button, Icon, Skeleton } from '@/components'
+import { Badge, Button, Icon, Presence, Skeleton } from '@/components'
 import type { IconName } from '@/components'
 import { formatCents } from '@/lib/format'
+import { reveal } from '@/lib/motion'
 
 import { ConsoleSessionProvider, accountLabel, useConsoleSession } from './components/console-session'
 import { ConsoleWelcome } from './components/Welcome'
@@ -61,30 +62,46 @@ function ConsoleSurface(props: { children?: JSX.Element }) {
   const session = useConsoleSession()
   return (
     <Show
-      when={session.phase() === 'ready'}
+      when={session.phase() === 'welcome'}
       fallback={
-        <Show
-          when={session.phase() === 'welcome'}
-          fallback={
-            <div class="boot console-boot" aria-live="polite">
-              <span class="sr-only">Открываем кабинет</span>
-              <Skeleton lines={4} />
-            </div>
-          }
-        >
-          <ConsoleWelcome />
-        </Show>
+        <ConsoleFrame booting={session.phase() === 'boot'}>{props.children}</ConsoleFrame>
       }
     >
-      <ConsoleFrame>{props.children}</ConsoleFrame>
+      <ConsoleWelcome />
     </Show>
   )
 }
 
-function ConsoleFrame(props: { children?: JSX.Element }) {
+function ConsoleFrame(props: { children?: JSX.Element; booting: boolean }) {
   const session = useConsoleSession()
   const reserved = (): number => session.account()?.reserved_cents ?? 0
   const [collapsed, setCollapsed] = createSignal(readNavCollapsed())
+
+  // Only after the account is known: one reveal of the content column, then
+  // navigation inside the console never replays it.
+  let content: HTMLElement | undefined
+  let revealed = false
+  createEffect(() => {
+    if (revealed || session.phase() !== 'ready') return
+    const host = content
+    if (host === undefined) return
+    revealed = true
+    reveal(host)
+  })
+
+  // The balance alert stays through its own fade: the message is copied here,
+  // so a server answer that clears the error still has something to fade out.
+  const [alert, setAlert] = createSignal<{ message: string; requestId: string | null } | null>(null)
+  const [alertLeaving, setAlertLeaving] = createSignal(false)
+  createEffect(() => {
+    const error = session.accountError()
+    if (error !== null) {
+      setAlert({ message: error.message, requestId: error.requestId })
+      setAlertLeaving(false)
+      return
+    }
+    if (untrack(alert) !== null) setAlertLeaving(true)
+  })
 
   return (
     <div class={`app-shell console-shell${collapsed() ? ' is-nav-collapsed' : ''}`}>
@@ -177,21 +194,50 @@ function ConsoleFrame(props: { children?: JSX.Element }) {
           </div>
         </header>
 
-        <Show when={session.accountError()}>
-          {(error) => (
-            <div class="console-alert console-alert-top" role="alert">
-              <span>
-                Счёт не загрузился: {error().message}
-                {error().requestId === null ? '' : ` (запрос ${error().requestId})`}
-              </span>
-              <Button size="sm" variant="secondary" onClick={() => void session.refreshAccount()}>
-                Повторить
-              </Button>
-            </div>
+        <Show when={alert()}>
+          {(notice) => (
+            <Presence
+              exiting={alertLeaving()}
+              onExitEnd={() => {
+                setAlert(null)
+                setAlertLeaving(false)
+              }}
+            >
+              <div class="console-alert console-alert-top" role="alert">
+                <span>
+                  Счёт не загрузился: {notice().message}
+                  {notice().requestId === null ? '' : ` (запрос ${notice().requestId})`}
+                </span>
+                <Button size="sm" variant="secondary" onClick={() => void session.refreshAccount()}>
+                  Повторить
+                </Button>
+              </div>
+            </Presence>
           )}
         </Show>
 
-        <main class="app-content">{props.children}</main>
+        <main class="app-content" ref={content}>
+          <Suspense
+            fallback={
+              <div class="console-loading" aria-live="polite">
+                <span class="sr-only">Загружаем страницу</span>
+                <Skeleton lines={5} />
+              </div>
+            }
+          >
+            <Show
+              when={!props.booting}
+              fallback={
+                <div class="console-boot" aria-live="polite">
+                  <span class="sr-only">Открываем кабинет</span>
+                  <Skeleton lines={4} />
+                </div>
+              }
+            >
+              {props.children}
+            </Show>
+          </Suspense>
+        </main>
       </div>
     </div>
   )

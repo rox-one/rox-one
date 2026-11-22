@@ -311,11 +311,24 @@
   overflow-wrap: anywhere;
 }
 
+/* Первая отрисовка кабинета: каркас уже на месте, скелет — только в содержимом. */
 .console-boot {
+  display: grid;
   gap: var(--sp-4);
+  align-content: start;
+  min-height: 320px;
 }
 
-.console-boot .skeleton {
+/* Ленивый кусок маршрута грузится внутри каркаса, а не вместо него. */
+.console-loading {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+  min-height: 360px;
+}
+
+.console-boot .skeleton,
+.console-loading .skeleton {
   max-width: 420px;
 }
 

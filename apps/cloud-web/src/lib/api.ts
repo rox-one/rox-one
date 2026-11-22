@@ -124,6 +124,30 @@ function newIdempotencyKey(): string {
   return `rox-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 }
 
+/**
+ * The server's refusal, read once for both callers: the JSON body carries the
+ * code, the message and the request id; the header is the fallback id.
+ */
+async function apiErrorFromResponse(response: Response): Promise<ApiError> {
+  const text = await response.text()
+  let payload: unknown = null
+  try {
+    payload = text.trim().length === 0 ? null : JSON.parse(text)
+  } catch {
+    payload = null
+  }
+  const parsed = readErrorBody(payload)
+  const code = typeof parsed.code === 'string' ? parsed.code : `http_${response.status}`
+  const message =
+    typeof parsed.message === 'string' && parsed.message.length > 0
+      ? parsed.message
+      : `Запрос не удался (${response.status})`
+  const headerId = response.headers.get('x-request-id')
+  const requestId =
+    typeof parsed.requestId === 'string' && parsed.requestId.length > 0 ? parsed.requestId : headerId
+  return new ApiError(response.status, code, message, requestId, retryAfter(response))
+}
+
 /** ISO time from the wire, or `null` when the field is absent or unreadable. */
 function parseTime(value: unknown): number | null {
   if (typeof value !== 'string') return null
@@ -153,6 +177,32 @@ function parseSnapshot(row: unknown): SnapshotInfo {
     state: typeof item.state === 'string' ? item.state : '',
     createdAt: parseTime(item.created_at),
   }
+}
+
+/** One metrics sample; a missing counter reads as zero, never as a guess. */
+function parseMetrics(raw: Record<string, unknown>): MetricsInfo {
+  return {
+    at: parseTime(raw.at),
+    cpuPercent: typeof raw.cpu_percent === 'number' ? raw.cpu_percent : 0,
+    memoryUsedKb: typeof raw.memory_used_kb === 'number' ? raw.memory_used_kb : 0,
+    memoryTotalKb: typeof raw.memory_total_kb === 'number' ? raw.memory_total_kb : 0,
+    diskUsedKb: typeof raw.disk_used_kb === 'number' ? raw.disk_used_kb : 0,
+    diskTotalKb: typeof raw.disk_total_kb === 'number' ? raw.disk_total_kb : 0,
+  }
+}
+
+/** The process table, as both `/processes` and the live stream deliver it. */
+function parseProcessList(rows: unknown[]): ProcessInfo[] {
+  return rows.map((row) => {
+    const item = asRow(row)
+    return {
+      pid: typeof item.pid === 'number' ? item.pid : 0,
+      user: typeof item.user === 'string' ? item.user : '',
+      cpuPercent: typeof item.cpu_percent === 'number' ? item.cpu_percent : 0,
+      memoryKb: typeof item.memory_kb === 'number' ? item.memory_kb : 0,
+      command: typeof item.command === 'string' ? item.command : '',
+    }
+  })
 }
 
 /**
@@ -214,27 +264,7 @@ export async function request<T = unknown>(path: string, options: RequestOptions
     throw new ApiError(0, 'network_error', `Сервер не отвечает: ${detail}`)
   }
 
-  if (!response.ok) {
-    const text = await response.text()
-    let payload: unknown = null
-    try {
-      payload = text.trim().length === 0 ? null : JSON.parse(text)
-    } catch {
-      payload = null
-    }
-    const parsed = readErrorBody(payload)
-    const code = typeof parsed.code === 'string' ? parsed.code : `http_${response.status}`
-    const message =
-      typeof parsed.message === 'string' && parsed.message.length > 0
-        ? parsed.message
-        : `Запрос не удался (${response.status})`
-    const headerId = response.headers.get('x-request-id')
-    const requestId =
-      typeof parsed.requestId === 'string' && parsed.requestId.length > 0
-        ? parsed.requestId
-        : headerId
-    throw new ApiError(response.status, code, message, requestId, retryAfter(response))
-  }
+  if (!response.ok) throw await apiErrorFromResponse(response)
 
   if (response.status === 204 || options.parse === 'none') return undefined as T
   if (options.parse === 'blob') return (await response.blob()) as T
@@ -246,6 +276,158 @@ export async function request<T = unknown>(path: string, options: RequestOptions
     return JSON.parse(text) as T
   } catch {
     throw new ApiError(response.status, 'invalid_response', 'Ответ сервера не является JSON', response.headers.get('x-request-id'))
+  }
+}
+
+// ============================================================
+// Live machine stream
+// ============================================================
+
+/** One decoded `event:` frame; data lines join with a newline, as SSE says. */
+interface SseFrame {
+  event: string
+  data: string
+}
+
+/** The next complete frame in `buffer`, split on a blank line of either ending. */
+function nextFrame(buffer: string): { frame: string; rest: string } | null {
+  const found = /\r?\n\r?\n/.exec(buffer)
+  if (found === null) return null
+  return {
+    frame: buffer.slice(0, found.index),
+    rest: buffer.slice(found.index + found[0].length),
+  }
+}
+
+/** Field lines of one frame; comments (`: ping`) and unknown fields are dropped. */
+function parseFrame(frame: string): SseFrame | null {
+  let event = 'message'
+  const data: string[] = []
+  for (const line of frame.split(/\r?\n/)) {
+    if (line.length === 0 || line.startsWith(':')) continue
+    const colon = line.indexOf(':')
+    const field = colon < 0 ? line : line.slice(0, colon)
+    let value = colon < 0 ? '' : line.slice(colon + 1)
+    if (value.startsWith(' ')) value = value.slice(1)
+    if (field === 'event') event = value
+    else if (field === 'data') data.push(value)
+  }
+  return data.length === 0 ? null : { event, data: data.join('\n') }
+}
+
+/**
+ * One `snapshot` frame as the page knows it. A frame without a sandbox row is
+ * not a snapshot: skipping it keeps the previous card instead of blanking it.
+ */
+function parseMachineSnapshot(payload: unknown): MachineSnapshot | null {
+  const row = asRow(payload)
+  const sandbox = row.sandbox
+  if (sandbox === null || typeof sandbox !== 'object') return null
+  if (typeof asRow(sandbox).id !== 'string') return null
+  const metrics = row.metrics === null || row.metrics === undefined ? null : parseMetrics(asRow(row.metrics))
+  const processes = Array.isArray(row.processes) ? parseProcessList(row.processes) : null
+  return { at: parseTime(row.at), sandbox: parseSandbox(sandbox), metrics, processes }
+}
+
+/**
+ * `GET /v1/sandboxes/:id/events` as a stream. The key rides in the header, never
+ * in the address; a refusal is the same `ApiError` every other call raises.
+ *
+ * Resolves when the server closes the body and rejects on a dropped or refused
+ * connection, so the caller owns reconnecting. Frames are read with a buffer, so
+ * a frame split across two network chunks still parses.
+ */
+export async function streamMachine(
+  id: string,
+  handlers: MachineStreamHandlers,
+  signal: AbortSignal,
+): Promise<void> {
+  const key = getClientKey()
+  if (key.length === 0) {
+    throw new ApiError(
+      401,
+      'authentication_required',
+      'Нужен ключ API: получите гостевой доступ или введите ключ',
+    )
+  }
+
+  let response: Response
+  try {
+    response = await fetch(apiUrl(`/v1/sandboxes/${encodeURIComponent(id)}/events`), {
+      method: 'GET',
+      headers: { accept: 'text/event-stream', authorization: `Bearer ${key}` },
+      cache: 'no-store',
+      credentials: 'same-origin',
+      signal,
+    })
+  } catch (err) {
+    if (signal.aborted) throw new ApiError(0, 'request_aborted', 'Запрос отменён')
+    const detail = err instanceof Error ? err.message : String(err)
+    throw new ApiError(0, 'network_error', `Сервер не отвечает: ${detail}`)
+  }
+
+  if (!response.ok) throw await apiErrorFromResponse(response)
+
+  const type = response.headers.get('content-type') ?? ''
+  if (!type.startsWith('text/event-stream') || response.body === null) {
+    throw new ApiError(
+      0,
+      'invalid_response',
+      'Поток событий недоступен: сервер ответил не потоком',
+      response.headers.get('x-request-id'),
+    )
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  const dispatch = (frame: SseFrame): void => {
+    let payload: unknown
+    try {
+      payload = JSON.parse(frame.data)
+    } catch {
+      return
+    }
+    if (frame.event === 'ready') {
+      const row = asRow(payload)
+      handlers.ready?.({
+        intervalMs: typeof row.interval_ms === 'number' ? row.interval_ms : 0,
+        retryMs: typeof row.retry_ms === 'number' ? row.retry_ms : 0,
+      })
+      return
+    }
+    if (frame.event === 'snapshot') {
+      const snapshot = parseMachineSnapshot(payload)
+      if (snapshot !== null) handlers.snapshot?.(snapshot)
+      return
+    }
+    if (frame.event === 'error') {
+      const message = asRow(payload).message
+      handlers.error?.(
+        typeof message === 'string' && message.length > 0 ? message : 'Поток сообщил об ошибке',
+      )
+    }
+  }
+
+  try {
+    for (;;) {
+      const chunk = await reader.read()
+      if (chunk.done) break
+      buffer += decoder.decode(chunk.value, { stream: true })
+      for (;;) {
+        const next = nextFrame(buffer)
+        if (next === null) break
+        buffer = next.rest
+        const frame = parseFrame(next.frame)
+        if (frame !== null) dispatch(frame)
+      }
+    }
+  } catch (err) {
+    if (signal.aborted) throw new ApiError(0, 'request_aborted', 'Запрос отменён')
+    const detail = err instanceof Error ? err.message : String(err)
+    throw new ApiError(0, 'network_error', `Поток событий прерван: ${detail}`)
+  } finally {
+    void reader.cancel().catch(() => {})
   }
 }
 
@@ -528,6 +710,31 @@ export interface ProcessInfo {
   cpuPercent: number
   memoryKb: number
   command: string
+}
+
+/** The `ready` frame: how often the server samples and how soon to retry. */
+export interface MachineStreamReady {
+  intervalMs: number
+  retryMs: number
+}
+
+/**
+ * One moment of a watched machine: the same sandbox block as
+ * `GET /v1/sandboxes/:id`, plus the load sample and the process table when the
+ * machine is running. Both nullable fields are `null`, never invented.
+ */
+export interface MachineSnapshot {
+  at: number | null
+  sandbox: Sandbox
+  metrics: MetricsInfo | null
+  processes: ProcessInfo[] | null
+}
+
+export interface MachineStreamHandlers {
+  ready?: (ready: MachineStreamReady) => void
+  snapshot?: (snapshot: MachineSnapshot) => void
+  /** A sampler failure: the stream stays open and a later frame may succeed. */
+  error?: (message: string) => void
 }
 
 /** One command run inside the machine's persistent shell session. */
@@ -893,6 +1100,9 @@ export const api = {
 
   sandbox: async (id: string) => parseSandbox(await request<unknown>(`/v1/sandboxes/${enc(id)}`)),
 
+  /** One live stream of a machine; `machine-channel` shares it between cards. */
+  streamMachine,
+
   /** Rename the machine; an empty name clears it. */
   updateSandbox: async (id: string, input: { displayName: string }) =>
     parseSandbox(
@@ -931,32 +1141,13 @@ export const api = {
     })
   },
 
-  metrics: async (id: string): Promise<MetricsInfo> => {
-    const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/metrics`)
-    return {
-      at: parseTime(raw.at),
-      cpuPercent: typeof raw.cpu_percent === 'number' ? raw.cpu_percent : 0,
-      memoryUsedKb: typeof raw.memory_used_kb === 'number' ? raw.memory_used_kb : 0,
-      memoryTotalKb: typeof raw.memory_total_kb === 'number' ? raw.memory_total_kb : 0,
-      diskUsedKb: typeof raw.disk_used_kb === 'number' ? raw.disk_used_kb : 0,
-      diskTotalKb: typeof raw.disk_total_kb === 'number' ? raw.disk_total_kb : 0,
-    }
-  },
+  metrics: async (id: string): Promise<MetricsInfo> =>
+    parseMetrics(await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/metrics`)),
 
   /** Running processes inside the machine, as `ps` reports them. */
   processes: async (id: string): Promise<ProcessInfo[]> => {
     const raw = await request<{ data?: unknown }>(`/v1/sandboxes/${enc(id)}/processes`)
-    const rows = Array.isArray(raw.data) ? raw.data : []
-    return rows.map((row) => {
-      const item = asRow(row)
-      return {
-        pid: typeof item.pid === 'number' ? item.pid : 0,
-        user: typeof item.user === 'string' ? item.user : '',
-        cpuPercent: typeof item.cpu_percent === 'number' ? item.cpu_percent : 0,
-        memoryKb: typeof item.memory_kb === 'number' ? item.memory_kb : 0,
-        command: typeof item.command === 'string' ? item.command : '',
-      }
-    })
+    return parseProcessList(Array.isArray(raw.data) ? raw.data : [])
   },
 
   /** Stop one process; the server refuses pid 1, the session shell and the toolbox daemon. */

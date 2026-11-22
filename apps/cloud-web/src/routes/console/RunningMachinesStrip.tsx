@@ -5,6 +5,7 @@ import type { JSX } from 'solid-js'
 import { api } from '@/lib/api'
 import type { Sandbox } from '@/lib/api'
 import { formatDate, formatDuration } from '@/lib/format'
+import { flip, reveal } from '@/lib/motion'
 
 import { machineDisplayName } from './components/console-ui'
 
@@ -87,7 +88,10 @@ export default function RunningMachinesStrip(props: { currentId: string }): JSX.
 
   let disposed = false
   let inFlight = false
+  let stripEl: HTMLElement | undefined
   const probedAt = new Map<string, number>()
+  /** Cards already on screen once: only a first appearance is revealed. */
+  const seen = new Set<string>()
 
   /** Private address, egress probe and load at once; each missing answer only
    *  hides its own line, so one slow call never holds the strip. */
@@ -129,7 +133,11 @@ export default function RunningMachinesStrip(props: { currentId: string }): JSX.
     const running = listing.data
       .filter((machine) => machine.state === 'running')
       .sort((left, right) => (Date.parse(right.created_at) || 0) - (Date.parse(left.created_at) || 0))
-    setMachines(running)
+    // The last known cards stay put while a refresh is in flight; a new order
+    // arrives as a flip rather than as a jump, and a departed card is dropped.
+    const strip = stripEl
+    if (strip === undefined || machines().length === 0) setMachines(running)
+    else flip(strip, () => setMachines(running))
     setFailed(false)
     setLoading(false)
     const ids = new Set(running.map((machine) => machine.id))
@@ -168,6 +176,9 @@ export default function RunningMachinesStrip(props: { currentId: string }): JSX.
       class="running-strip"
       aria-label="Запущенные машины"
       aria-busy={loading() ? 'true' : 'false'}
+      ref={(element) => {
+        stripEl = element
+      }}
     >
       <Show
         when={!loading()}
@@ -199,6 +210,12 @@ export default function RunningMachinesStrip(props: { currentId: string }): JSX.
                   classList={{ 'is-current': current() }}
                   aria-current={current() ? 'page' : undefined}
                   title={`Открыть машину ${stripName(machine)}`}
+                  data-flip-key={machine.id}
+                  ref={(element) => {
+                    if (seen.has(machine.id)) return
+                    seen.add(machine.id)
+                    reveal(element, { distance: 4 })
+                  }}
                 >
                   <span class="running-card-name">{stripName(machine)}</span>
                   <span

@@ -1,15 +1,21 @@
 /* Полоса запущенных машин над составом: тихая, в одну строку с переносом. */
 .running-strip {
+  --running-card-h: 58px;
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
   gap: 8px;
   min-width: 0;
+  /* Место под карточки есть всегда: ни скелет, ни пустая строка не сжимают
+     полосу и не двигают состав машины под ней. */
+  min-height: var(--running-card-h);
 }
 
 .running-strip-empty {
+  display: flex;
+  align-items: center;
   margin: 0;
-  padding: 2px 2px 0;
+  padding: 0 2px;
   color: var(--muted);
   font-size: var(--text-xs);
   line-height: 1.4;
@@ -18,6 +24,7 @@
 .running-card {
   flex: 1 1 260px;
   max-width: 340px;
+  min-height: var(--running-card-h);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:

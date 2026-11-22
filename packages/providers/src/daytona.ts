@@ -549,8 +549,8 @@ export function createDaytonaProvider(config: ProviderConfig): SandboxProvider {
     },
 
     /**
-     * A one-shot SSH command. Daytona returns the whole `ssh …` line with the
-     * credential in the user name; it is handed back untouched and never
+     * A time-limited SSH command. Daytona returns the whole `ssh …` line with
+     * the credential in the user name; it is handed back untouched and never
      * logged. The gateway accepts it for the requested number of minutes.
      */
     async sshAccess(id: string, ttlSec: number): Promise<SandboxSshAccess> {

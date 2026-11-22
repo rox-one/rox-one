@@ -27,6 +27,20 @@ import type { MemoryStore, Scope, Tenant } from '../store.ts'
 
 const NOW = Date.UTC(2026, 10, 19, 12, 0, 0)
 
+/** What one streamed sample prints: a metrics line, then a `ps` table. */
+const METRICS_SAMPLE_LINE = JSON.stringify({
+  cpu_percent: 12.5,
+  memory_used_kb: 204_800,
+  memory_total_kb: 1_048_576,
+  disk_used_kb: 1_048_576,
+  disk_total_kb: 8_388_608,
+})
+/** The image account is `daytona`; the stream must rename it to `rox`. */
+const PROCESS_SAMPLE_TABLE = [
+  '  101 daytona 25.0 30720 node /srv/app.js',
+  '    7 root 1.0 4096 /sbin/init',
+].join('\n')
+
 const CAPABILITIES: DeclaredCapabilities = {
   id: 'daytona',
   os: ['linux', 'windows'],
@@ -93,6 +107,16 @@ class FakeProvider implements SandboxProvider {
     if (!this.sandboxes.has(id)) throw new CloudRunnerError('unknown sandbox', 'not_found')
     this.lastExec = { command, ...(opts?.cwd === undefined ? {} : { cwd: opts.cwd }), ...(opts?.timeoutMs === undefined ? {} : { timeoutMs: opts.timeoutMs }) }
     if (command === 'hostname -I') return { stdout: '172.20.0.33 \n', stderr: '', exitCode: 0 }
+    // The live stream asks for metrics and the process table in one exec, with
+    // a marker of its own between them; the fixture answers that exact shape.
+    const sampleMarker = /ROX_EVENT_[0-9a-f]{24}/.exec(command)?.[0]
+    if (sampleMarker !== undefined) {
+      return {
+        stdout: `${METRICS_SAMPLE_LINE}\n${sampleMarker}\n${PROCESS_SAMPLE_TABLE}\n`,
+        stderr: '',
+        exitCode: 0,
+      }
+    }
     return { stdout: `ok: ${command}`, stderr: '', exitCode: 0 }
   }
 
@@ -971,5 +995,102 @@ describe('usage', () => {
     const { app, secret } = harness({ scopes: ['sandboxes:read'] })
     const response = await call(app, '/v1/usage', { token: secret })
     expect(response.status).toBe(403)
+  })
+})
+
+// ============================================================
+// One machine, live
+// ============================================================
+
+interface StreamFrame {
+  event: string
+  data: string
+}
+
+function streamFrame(frame: string): StreamFrame {
+  const lines = frame.split('\n')
+  const read = (prefix: string): string => {
+    const line = lines.find((entry) => entry.startsWith(prefix))
+    return line === undefined ? '' : line.slice(prefix.length)
+  }
+  return { event: read('event: '), data: read('data: ') }
+}
+
+/** Read whole `event: …\ndata: …` frames until `count` of them are complete. */
+async function readFrames(reader: ReadableStreamDefaultReader<Uint8Array>, count: number): Promise<string[]> {
+  const decoder = new TextDecoder()
+  const frames: string[] = []
+  let buffer = ''
+  while (frames.length < count) {
+    const chunk = await reader.read()
+    if (chunk.done) break
+    buffer += decoder.decode(chunk.value, { stream: true })
+    let cut = buffer.indexOf('\n\n')
+    while (cut >= 0 && frames.length < count) {
+      frames.push(buffer.slice(0, cut))
+      buffer = buffer.slice(cut + 2)
+      cut = buffer.indexOf('\n\n')
+    }
+  }
+  return frames
+}
+
+describe('machine events', () => {
+  test('ready then a snapshot, and the sample never names the provider', async () => {
+    const h = harness()
+    const created = await readBody<SandboxBody>(await createSandbox(h.app, h.secret, 'events-1'))
+    // The snapshot's sandbox block is the machine GET body: same bytes, so the
+    // page can reconcile the stream with a fresh GET without a second shape.
+    const machine = await readBody<SandboxBody>(await call(h.app, `/v1/sandboxes/${created.id}`, { token: h.secret }))
+    const client = new AbortController()
+    const response = await h.app.handle(
+      new Request(`http://api.test/v1/sandboxes/${created.id}/events`, {
+        headers: { authorization: `Bearer ${h.secret}` },
+        signal: client.signal,
+      }),
+    )
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toBe('text/event-stream; charset=utf-8')
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(response.headers.get('x-accel-buffering')).toBe('no')
+
+    const reader = response.body!.getReader()
+    const frames = await readFrames(reader, 2)
+    expect(frames).toHaveLength(2)
+
+    const ready = streamFrame(frames[0]!)
+    expect(ready.event).toBe('ready')
+    expect(JSON.parse(ready.data)).toEqual({ interval_ms: 3000, retry_ms: 3000 })
+
+    const snapshot = streamFrame(frames[1]!)
+    expect(snapshot.event).toBe('snapshot')
+    const body = JSON.parse(snapshot.data) as {
+      object: string
+      at: string
+      sandbox: SandboxBody
+      metrics: Record<string, unknown>
+      processes: Array<Record<string, unknown>>
+    }
+    expect(body.object).toBe('machine_snapshot')
+    expect(body.at).toBe(new Date(NOW).toISOString())
+    expect(body.sandbox).toEqual(machine)
+    expect(body.metrics).toMatchObject({
+      object: 'metrics',
+      cpu_percent: 12.5,
+      memory_used_kb: 204_800,
+      memory_total_kb: 1_048_576,
+      disk_used_kb: 1_048_576,
+      disk_total_kb: 8_388_608,
+    })
+    expect(body.processes).toMatchObject([
+      { pid: 101, user: 'rox', cpu_percent: 25, memory_kb: 30_720, command: 'node /srv/app.js' },
+      { pid: 7, user: 'root' },
+    ])
+    // The machine called its own account `daytona`; the stream renames it and
+    // carries no vendor name, path or command of its own.
+    expect(JSON.stringify({ metrics: body.metrics, processes: body.processes })).not.toContain('daytona')
+
+    client.abort()
+    await reader.cancel().catch(() => {})
   })
 })

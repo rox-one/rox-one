@@ -17,7 +17,9 @@ export interface DialogProps {
 
 /**
  * A native modal `<dialog>`: the browser owns focus trapping, Escape and the
- * backdrop. The `open` prop is the single source of truth.
+ * backdrop. The `open` prop is the single source of truth. Opening and closing
+ * are animated by `styles/motion.css` through `@starting-style` and discrete
+ * `display`/`overlay` transitions, so `showModal()` and `close()` stay native.
  */
 export function Dialog(props: DialogProps): JSX.Element {
   let element: HTMLDialogElement | undefined

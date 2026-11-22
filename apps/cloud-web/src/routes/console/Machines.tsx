@@ -1,5 +1,5 @@
 import { A, useNavigate } from '@solidjs/router'
-import { For, Show, createEffect, createMemo, createSignal, onMount } from 'solid-js'
+import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 import type { JSX } from 'solid-js'
 
 import {
@@ -21,6 +21,7 @@ import type { SelectOption, TableColumn } from '@/components'
 import { api } from '@/lib/api'
 import type { Sandbox } from '@/lib/api'
 import { formatCents, formatDate, formatMoney, shortId } from '@/lib/format'
+import { animateNumber, flip } from '@/lib/motion'
 
 import { useConsoleSession } from './components/console-session'
 import {
@@ -125,11 +126,48 @@ export default function ConsoleMachines(): JSX.Element {
   const [acting, setActing] = createSignal<string | null>(null)
   const [actionError, setActionError] = createSignal<string | null>(null)
 
+  // The first answer builds the page; a later refresh only updates it, so the
+  // count, the toolbar and the cards stay where they are while the request flies.
+  const firstLoad = createMemo<boolean>(() => loading() && rows().length === 0)
+
+  // The results area stays put across a refresh; Motion measures the cards
+  // inside it, so a re-sort or a deleted machine moves its neighbours.
+  let listHost: HTMLDivElement | undefined
+
+  // The total counts up instead of jumping; the label around it never moves.
+  let shownTotal = 0
+  let stopTotal: (() => void) | undefined
+  const [totalText, setTotalText] = createSignal(0)
+  createEffect(() => {
+    const total = rows().length
+    const from = shownTotal
+    shownTotal = total
+    stopTotal?.()
+    stopTotal = animateNumber(from, total, {
+      onUpdate: (value) => setTotalText(Math.round(value)),
+    }).stop
+  })
+  onCleanup(() => stopTotal?.())
+
   const [view, setView] = createSignal<'cards' | 'table'>('cards')
   const [query, setQuery] = createSignal('')
   const [stateFilter, setStateFilter] = createSignal('')
   const [locationFilter, setLocationFilter] = createSignal('')
   const [group, setGroup] = createSignal<GroupKey>('')
+
+  /**
+   * Swap the list in place. Motion measures the cards before the change, so a
+   * re-sort slides them into their new order and a new card fades in. The table
+   * has no cards to match, so it updates as before.
+   */
+  const applyRows = (next: Sandbox[]): void => {
+    const host = listHost
+    if (host === undefined || !host.isConnected || view() !== 'cards') {
+      setRows(next)
+      return
+    }
+    flip(host, () => setRows(next))
+  }
 
   const [renameTarget, setRenameTarget] = createSignal<Sandbox | null>(null)
   const [renameValue, setRenameValue] = createSignal('')
@@ -155,7 +193,7 @@ export default function ConsoleMachines(): JSX.Element {
         (left, right) =>
           (Date.parse(right.created_at) || 0) - (Date.parse(left.created_at) || 0),
       )
-      setRows(sorted)
+      applyRows(sorted)
     } catch (err) {
       setFailure(errorText(err))
     } finally {
@@ -433,7 +471,7 @@ export default function ConsoleMachines(): JSX.Element {
   ]
 
   const card = (sandbox: Sandbox): JSX.Element => (
-    <article class="machine-card" aria-labelledby={`machine-${sandbox.id}-name`}>
+    <article class="machine-card" data-flip-key={sandbox.id} aria-labelledby={`machine-${sandbox.id}-name`}>
       <header class="machine-card-head">
         <div class="machine-card-id">
           <h2 class="machine-card-name">
@@ -547,16 +585,16 @@ export default function ConsoleMachines(): JSX.Element {
         }
       />
 
-      <Show when={!loading() && failure() === null && rows().length > 0}>
+      <Show when={rows().length > 0}>
         <div class="machines-count">
-          Всего {rows().length} · активны {working()}
+          Всего {totalText()} · активны {working()}
           <Show when={filtering()}>
             {' · '}показано {filtered().length}
           </Show>
         </div>
       </Show>
 
-      <Show when={!loading() && failure() === null && rows().length > 0}>
+      <Show when={rows().length > 0}>
         <div class="machines-toolbar">
           <Tabs
             items={VIEW_ITEMS}
@@ -611,90 +649,95 @@ export default function ConsoleMachines(): JSX.Element {
         )}
       </Show>
 
-      <Show
-        when={!loading()}
-        fallback={
-          <div class="machines-grid" aria-live="polite">
-            <Card>
-              <Skeleton lines={4} />
-            </Card>
-            <Card>
-              <Skeleton lines={4} />
-            </Card>
-            <Card>
-              <Skeleton lines={4} />
-            </Card>
-          </div>
-        }
-      >
+      <div class="machines-results" ref={listHost} aria-busy={loading() ? 'true' : undefined}>
         <Show
-          when={rows().length > 0}
+          when={!firstLoad()}
           fallback={
-            <Show when={failure() === null}>
+            <div class="machines-grid machines-grid-loading" aria-live="polite">
               <Card>
-                <EmptyState
-                  icon="server"
-                  title="Машин пока нет"
-                  description="Соберите состав на одном экране: пресет, образ, площадка и срок жизни. Запуск занимает минуту."
-                  action={
-                    <A href="/console" class="btn btn-primary">
-                      Выбрать продукт
-                    </A>
-                  }
-                />
+                <Skeleton lines={4} />
               </Card>
-            </Show>
+              <Card>
+                <Skeleton lines={4} />
+              </Card>
+              <Card>
+                <Skeleton lines={4} />
+              </Card>
+            </div>
           }
         >
           <Show
-            when={filtered().length > 0}
+            when={rows().length > 0}
             fallback={
-              <Card>
-                <EmptyState
-                  icon="server"
-                  title="Ничего не нашлось"
-                  description="Под поиск и фильтры не попала ни одна машина. Измените условия или сбросьте их."
-                  action={
-                    <Button variant="secondary" onClick={resetFilters}>
-                      Сбросить фильтры
-                    </Button>
-                  }
-                />
-              </Card>
+              <Show when={failure() === null}>
+                <Card>
+                  <EmptyState
+                    icon="server"
+                    title="Машин пока нет"
+                    description="Соберите состав на одном экране: пресет, образ, площадка и срок жизни. Запуск занимает минуту."
+                    action={
+                      <A href="/console" class="btn btn-primary">
+                        Выбрать продукт
+                      </A>
+                    }
+                  />
+                </Card>
+              </Show>
             }
           >
-            <For each={groups()}>
-              {(section) => (
-                <section class="machines-group" aria-label={section.label === '' ? undefined : section.label}>
-                  <Show when={section.label !== ''}>
-                    <h2 class="machines-group-head">
-                      {section.label}
-                      <span class="machines-group-count">{section.rows.length}</span>
-                    </h2>
-                  </Show>
-                  <Show
-                    when={view() === 'cards'}
-                    fallback={
-                      <Table
-                        columns={columns}
-                        rows={section.rows}
-                        rowKey={(row) => row.id}
-                        label={section.label === '' ? 'Машины' : `Машины: ${section.label}`}
-                        onRowClick={(sandbox) => navigate(`/console/machines/${sandbox.id}`)}
-                        empty={<EmptyState title="Пусто" description="Здесь пока нет машин." />}
-                      />
+            <Show
+              when={filtered().length > 0}
+              fallback={
+                <Card>
+                  <EmptyState
+                    icon="server"
+                    title="Ничего не нашлось"
+                    description="Под поиск и фильтры не попала ни одна машина. Измените условия или сбросьте их."
+                    action={
+                      <Button variant="secondary" onClick={resetFilters}>
+                        Сбросить фильтры
+                      </Button>
                     }
+                  />
+                </Card>
+              }
+            >
+              <For each={groups()}>
+                {(section) => (
+                  <section
+                    class="machines-group"
+                    aria-label={section.label === '' ? undefined : section.label}
                   >
-                    <div class="machines-grid">
-                      <For each={section.rows}>{(sandbox) => card(sandbox)}</For>
-                    </div>
-                  </Show>
-                </section>
-              )}
-            </For>
+                    <Show when={section.label !== ''}>
+                      <h2 class="machines-group-head">
+                        {section.label}
+                        <span class="machines-group-count">{section.rows.length}</span>
+                      </h2>
+                    </Show>
+                    <Show
+                      when={view() === 'cards'}
+                      fallback={
+                        <Table
+                          columns={columns}
+                          rows={section.rows}
+                          rowKey={(row) => row.id}
+                          label={section.label === '' ? 'Машины' : `Машины: ${section.label}`}
+                          onRowClick={(sandbox) => navigate(`/console/machines/${sandbox.id}`)}
+                          empty={<EmptyState title="Пусто" description="Здесь пока нет машин." />}
+                        />
+                      }
+                    >
+                      <div class="machines-grid">
+                        <For each={section.rows}>{(sandbox) => card(sandbox)}</For>
+                      </div>
+                    </Show>
+                  </section>
+                )}
+              </For>
+            </Show>
           </Show>
         </Show>
-      </Show>
+      </div>
 
       <Dialog
         open={pending() !== null}

@@ -1,12 +1,16 @@
 /* Карточка машины: одна строка состава, доступ к сети и рабочее место. */
 .machine-page {
   min-width: 0;
+  /* Высоты каркаса первой загрузки: те же коробки, что у загруженной страницы. */
+  --machine-ribbon-h: 38px;
+  --machine-extra-h: 800px;
 }
 
 .machine-ribbon {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: var(--machine-ribbon-h);
   min-width: 0;
   padding: 9px 12px;
   border: 1px solid var(--border);
@@ -90,6 +94,12 @@
   justify-content: center;
 }
 
+/* Рама рабочего места держит высоту и до первого ответа, и после него; на узком
+   экране её складывают сами панели, поэтому та же высота — только нижний предел. */
+.machine-page .machine-workspace {
+  min-height: clamp(380px, 39vh, 470px);
+}
+
 /* ---------- Панели ниже рабочего места ---------- */
 
 /* Нагрузка, снимки и журнал доступа стоят одной полосой под рабочим местом:
@@ -101,6 +111,7 @@
   align-items: start;
   gap: var(--sp-4);
   min-width: 0;
+  min-height: var(--machine-extra-h);
 }
 
 .machine-extra > * {
@@ -249,4 +260,121 @@
 .machine-notice {
   padding: 7px 8px 7px 10px;
   font-size: var(--text-sm);
+}
+
+/* ---------- Каркас первой загрузки ---------- */
+
+/* Место под машину до первого ответа: полоса состава, карточка доступа,
+   рама рабочего места и полоса панелей повторяют загруженную страницу по
+   высоте, поэтому приход данных не двигает ни одну из них. */
+.machine-page .access-grid {
+  min-height: 371px;
+}
+
+.machine-ribbon-skeleton {
+  flex-wrap: wrap;
+  overflow: hidden;
+}
+
+.shell-bar {
+  display: block;
+  flex: none;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+  animation: shell-pulse 1.6s ease-in-out infinite;
+}
+
+.shell-bar-name {
+  width: 108px;
+  height: 12px;
+}
+
+.shell-bar-short {
+  width: 46px;
+}
+
+.shell-bar-mid {
+  width: 74px;
+}
+
+.shell-bar-value {
+  width: 58px;
+}
+
+.shell-bar-title {
+  width: 84px;
+}
+
+.shell-bar-note {
+  width: 100%;
+  height: 8px;
+}
+
+.shell-bar-note-short {
+  width: 62%;
+}
+
+.shell-bar-button {
+  width: 104px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+@keyframes shell-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.machine-workspace-skeleton {
+  gap: 10px;
+  padding: 10px;
+}
+
+.workspace-skeleton-pane {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+/* Три колонки панелей — та же высота, что у полосы панелей страницы; на двух и
+   одной колонке карточки каркаса живут своей высотой, как и загруженные. */
+@media (min-width: 1181px) {
+  .machine-extra-skeleton > .card {
+    min-height: var(--machine-extra-h);
+  }
+}
+
+/* Узкий экран: рабочее место складывается в столбик, и каркас повторяет это. */
+@media (max-width: 980px) {
+  .machine-workspace-skeleton {
+    height: auto;
+  }
+
+  .workspace-skeleton-pane:nth-child(1) {
+    height: 460px;
+  }
+
+  .workspace-skeleton-pane:nth-child(2),
+  .workspace-skeleton-pane:nth-child(3) {
+    height: 340px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-bar {
+    animation: none;
+    opacity: 0.7;
+  }
 }

@@ -12,8 +12,79 @@ import './machine-panels.css'
 
 /** Where the example server writes its own words; only a diagnosis reads it. */
 const EXAMPLE_LOG = '/tmp/rox-site.log'
-/** The home directory a customer sees in the terminal and in the file browser. */
+/** The home a customer sees in the terminal: the working directory of console commands, never the site root. */
 const EXAMPLE_HOME = '/home/rox'
+/** The example site root: a folder of its own, never the whole home directory. */
+const EXAMPLE_SITE = '/home/rox/site'
+
+/**
+ * The starter page the example server shows. One self-contained file: no
+ * fonts, scripts, images or network requests, so it opens on a machine cut off
+ * from the internet, and a fluid layout keeps it readable on a phone and on a
+ * desktop. It says whose site this is and how to replace the file.
+ */
+const EXAMPLE_PAGE = `<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ваш сайт на Rox</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    padding: clamp(1.25rem, 6vw, 3.5rem) clamp(1rem, 5vw, 2.5rem);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.55;
+    color: #161a1f;
+    background: #f5f6f8;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 38rem; margin: 0 auto; }
+  .brand {
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #2f5bea;
+  }
+  .rule { width: 3rem; height: 2px; margin: 0 0 1.5rem; border: 0; background: #2f5bea; }
+  h1 { margin: 0 0 1rem; font-size: clamp(1.75rem, 7vw, 2.5rem); line-height: 1.12; }
+  p { margin: 0 0 1rem; }
+  .lede { font-size: clamp(1rem, 2.5vw, 1.125rem); color: #3c4552; }
+  .list { margin: 0 0 1.5rem; padding-left: 1.2rem; }
+  .list li { margin: 0 0 0.6rem; }
+  code {
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.35rem;
+    background: #e6e9ee;
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+  }
+  .foot { margin: 2rem 0 0; font-size: 0.875rem; color: #5e6876; }
+</style>
+</head>
+<body>
+<main>
+<p class="brand">Rox</p>
+<hr class="rule">
+<h1>Это ваш сайт на Rox</h1>
+<p class="lede">Перед вами файл <code>index.html</code> из папки <code>~/site</code> на вашей машине. Сервер отдаёт его по вашему адресу, пока вы не положите рядом свой сайт.</p>
+<ul class="list">
+<li>Откройте папку <code>~/site</code> в терминале или в файловом браузере.</li>
+<li>Замените <code>index.html</code> своим файлом: страницей, шаблоном или готовой сборкой.</li>
+<li>Добавьте рядом стили, картинки и другие файлы, которые нужны сайту.</li>
+<li>Обновите страницу в браузере: новый файл откроется сразу, перезапускать сервер не нужно.</li>
+</ul>
+<p class="foot">Страницу собрал Rox. В ней нет внешних шрифтов, скриптов и картинок, поэтому она работает без интернета.</p>
+</main>
+</body>
+</html>
+`
 
 const LISTENER_FIRST_WAIT_MS = 500
 const LISTENER_WAIT_MS = 600
@@ -38,6 +109,51 @@ export function safeMachineError(err: unknown): string {
 function portNumber(raw: string): number | null {
   const value = Number(raw.trim())
   return Number.isInteger(value) && value >= 1 && value <= 65535 ? value : null
+}
+
+/** UTF-8 bytes as base64: `btoa` alone cannot carry Cyrillic. */
+function base64Utf8(text: string): string {
+  const bytes = new TextEncoder().encode(text)
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return btoa(binary)
+}
+
+/**
+ * Creates `~/site` and writes the starter page only when it is absent, so a
+ * second click never overwrites a page the person has already replaced. The
+ * HTML travels as base64, so no quote from the page ever reaches the shell.
+ */
+function prepareSiteCommand(): string {
+  return (
+    `mkdir -p ${EXAMPLE_SITE}; ` +
+    `if [ ! -f ${EXAMPLE_SITE}/index.html ]; then ` +
+    `printf '%s' '${base64Utf8(EXAMPLE_PAGE)}' | base64 -d > ${EXAMPLE_SITE}/index.html; fi`
+  )
+}
+
+/**
+ * Stops only the example server this console used to start: its command is
+ * `python3 -m http.server <port>`, its work directory is the home and its
+ * diagnostics went to the example log. A server the person started from any
+ * other folder, or one already serving `~/site`, is left running. Missing
+ * /proc or pgrep simply means there is nothing to migrate.
+ */
+function stopLegacyExampleCommand(port: number): string {
+  return [
+    `for pid in $(pgrep -f "python3 -m http.server ${port}" 2>/dev/null); do`,
+    '  [ -e "/proc/$pid/cwd" ] || continue',
+    "  cmd=$(tr '\\000' ' ' <\"/proc/$pid/cmdline\" 2>/dev/null) || continue",
+    '  cwd=$(readlink "/proc/$pid/cwd" 2>/dev/null) || continue',
+    '  err=$(readlink "/proc/$pid/fd/2" 2>/dev/null) || continue',
+    '  case "$cmd" in *--directory*) continue ;; esac',
+    `  if [ "$cwd" = "${EXAMPLE_HOME}" ] && [ "$err" = "${EXAMPLE_LOG}" ]; then`,
+    '    kill "$pid" 2>/dev/null || true',
+    '    echo ROX_RETIRED',
+    '  fi',
+    'done',
+    'exit 0',
+  ].join('\n')
 }
 
 const delay = (ms: number): Promise<void> =>
@@ -129,21 +245,58 @@ export async function runExampleSite(input: ExampleSiteRun): Promise<ExampleSite
     return { kind: 'error', message }
   }
 
-  let listening = false
+  // First look at the port list only to refuse a port that belongs to the
+  // machine itself. Whether something serves is asked again after migration.
   try {
     const found = (await api.ports(sandboxId)).find((item) => item.port === port)
     if (found?.reserved === true) {
       return fail(`Порт ${port} занят службой самой машины: сайт на нём не открыть. Выберите другой порт.`)
     }
-    listening = found !== undefined
   } catch {
     // The port list is a hint, not a gate: starting the server still makes sense.
+  }
+
+  // Prepare the example folder before any server touches the port. The page is
+  // written only when absent: a replaced index.html survives a second click.
+  try {
+    const prepared = await api.exec(sandboxId, {
+      command: prepareSiteCommand(),
+      cwd: EXAMPLE_HOME,
+      timeoutSec: 15,
+    })
+    if (prepared.exitCode !== null && prepared.exitCode !== 0) {
+      return fail(
+        `Папка примера не подготовлена: ${safeMachineError(prepared.stderr.trim().slice(0, 200)) || 'команда вернула ошибку'}.`,
+      )
+    }
+  } catch (err) {
+    return fail(`Папка примера не подготовлена: ${safeMachineError(err)}.`)
+  }
+
+  // An older build served the whole home from this port. Retire exactly that
+  // server before the listener check; anything else on the port stays alive.
+  try {
+    const retired = await api.exec(sandboxId, {
+      command: stopLegacyExampleCommand(port),
+      cwd: EXAMPLE_HOME,
+      timeoutSec: 10,
+    })
+    if (retired.stdout.includes('ROX_RETIRED')) await delay(250)
+  } catch {
+    // No /proc and no pgrep: there is no legacy server, the new root still starts.
+  }
+
+  let listening = false
+  try {
+    listening = (await api.ports(sandboxId)).some((item) => item.port === port)
+  } catch {
+    // An unreadable list is not proof the port is free: try to start anyway.
   }
 
   if (!listening) {
     try {
       const started = await api.exec(sandboxId, {
-        command: `nohup python3 -m http.server ${port} >${EXAMPLE_LOG} 2>&1 &`,
+        command: `nohup python3 -m http.server ${port} --directory ${EXAMPLE_SITE} >${EXAMPLE_LOG} 2>&1 &`,
         cwd: EXAMPLE_HOME,
         timeoutSec: 15,
       })
@@ -220,7 +373,8 @@ export default function FirstSiteWizard(props: FirstSiteWizardProps): JSX.Elemen
   const [previewError, setPreviewError] = createSignal<string | null>(null)
   const [exampleLoading, setExampleLoading] = createSignal(false)
 
-  const exampleCommand = (): string => `python3 -m http.server ${port() || '8000'}`
+  const exampleCommand = (): string =>
+    `python3 -m http.server ${port() || '8000'} --directory ~/site`
 
   const portStatus = (): 'open' | 'closed' | 'unknown' => {
     const checked = checkedPort()
@@ -358,7 +512,9 @@ export default function FirstSiteWizard(props: FirstSiteWizardProps): JSX.Elemen
             </h3>
             <p class="mp-step-text">
               Запустите пример одной кнопкой или скопируйте команду и выполните её в терминале
-              машины. Кабинет подпишет ссылку только на уже работающий сервер.
+              машины. Пример живёт в папке <code>~/site</code>: кнопка создаёт её и кладёт
+              <code>index.html</code>, только если файла ещё нет, поэтому ваш файл не пропадёт.
+              Кабинет подпишет ссылку только на уже работающий сервер.
             </p>
             <CodeBlock code={exampleCommand()} label="Команда в терминале" />
             <div class="mp-inline">
@@ -372,7 +528,7 @@ export default function FirstSiteWizard(props: FirstSiteWizardProps): JSX.Elemen
                 Запустить пример
               </Button>
               <span class="mp-note">
-                Поднимает небольшой сервер на порту {port() || '8000'} в домашнем каталоге.
+                Поднимает небольшой сервер на порту {port() || '8000'} в папке <code>~/site</code>.
               </span>
             </div>
           </div>

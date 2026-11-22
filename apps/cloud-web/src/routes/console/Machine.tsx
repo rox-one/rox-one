@@ -1,5 +1,5 @@
 import { A, useNavigate, useParams } from '@solidjs/router'
-import { Show, createEffect, createSignal, on, onCleanup } from 'solid-js'
+import { Show, createEffect, createMemo, createSignal, on, onCleanup } from 'solid-js'
 import type { JSX } from 'solid-js'
 
 import {
@@ -18,6 +18,8 @@ import type { BadgeTone } from '@/components'
 import { ApiError, api } from '@/lib/api'
 import type { Sandbox, SandboxState } from '@/lib/api'
 import { formatCents, formatDate, formatMoney, formatTime, shortId } from '@/lib/format'
+import { subscribeMachine } from '@/lib/machine-channel'
+import type { MachineStreamStatus } from '@/lib/machine-channel'
 
 import { useConsoleSession } from './components/console-session'
 import {
@@ -40,16 +42,16 @@ import MachineWorkspace from './MachineWorkspace'
 import RunningMachinesStrip from './RunningMachinesStrip'
 import './machine.css'
 
-const POLL_MS = 5000
+/** Only a stream that has failed twice hands the page back to a slow GET. */
+const FALLBACK_MS = 15_000
+
+/** States the server can still change on its own; only those are streamed. */
+const LIVE_STATES: readonly SandboxState[] = ['queued', 'starting', 'running', 'stopping']
 
 /** The prompt is Rox's own, not the image's: it reads the same for the owner and
  * for a guest, and never repeats the machine's account or image name. */
 const PROMPT_USER = 'rox'
 const PROMPT_HOST = 'rox-computer'
-
-/** States the server can change on its own: a running machine is polled every
- * 5 s, and so is a boot or a stop that has not settled yet. */
-const POLLED_STATES: readonly SandboxState[] = ['queued', 'starting', 'running', 'stopping']
 
 /** A life span reads `1 ч` or `15 мин`; a missing one is a dash, not zero. */
 function ttlText(seconds: number | null | undefined): string {
@@ -142,6 +144,107 @@ function MachineRibbon(props: { machine: Sandbox }): JSX.Element {
   )
 }
 
+/** One placeholder of an access block: title, value, note and a button line. */
+function ShellAccessBlock(): JSX.Element {
+  return (
+    <section class="access-block" aria-hidden="true">
+      <span class="shell-bar shell-bar-title" />
+      <span class="shell-bar shell-bar-value" />
+      <span class="shell-bar shell-bar-note" />
+      <span class="shell-bar shell-bar-note shell-bar-note-short" />
+      <span class="shell-bar shell-bar-button" />
+    </section>
+  )
+}
+
+/** One empty meter: the same head, bar and note the loaded meter has. */
+function ShellMeter(): JSX.Element {
+  return (
+    <div class="mp-meter" aria-hidden="true">
+      <div class="mp-meter-head">
+        <span class="shell-bar shell-bar-short" />
+        <span class="shell-bar shell-bar-value" />
+      </div>
+      <div class="mp-bar" />
+      <span class="shell-bar shell-bar-note" />
+    </div>
+  )
+}
+
+/**
+ * The loaded page before the machine is known. Every box keeps the height of
+ * its loaded twin — the ribbon, the access card, the bench and the panel grid —
+ * so the first answer replaces the frame without moving anything.
+ */
+function MachineShellSkeleton(): JSX.Element {
+  return (
+    <>
+      <div class="machine-ribbon machine-ribbon-skeleton" aria-hidden="true">
+        <span class="shell-bar shell-bar-name" />
+        <span class="ribbon-sep" />
+        <span class="shell-bar shell-bar-short" />
+        <span class="shell-bar" />
+        <span class="ribbon-sep" />
+        <span class="shell-bar shell-bar-mid" />
+        <span class="ribbon-sep" />
+        <span class="shell-bar shell-bar-mid" />
+        <span class="shell-bar shell-bar-short" />
+        <span class="shell-bar shell-bar-short" />
+      </div>
+
+      <Card
+        title="Сеть и доступ"
+        subtitle="Внутренний адрес машины, подписанная ссылка на сайт и вход по SSH с компьютера."
+        footer={<span class="access-docs">Справка: сайт и SSH</span>}
+      >
+        <div class="access-grid">
+          <ShellAccessBlock />
+          <ShellAccessBlock />
+          <ShellAccessBlock />
+        </div>
+      </Card>
+
+      <div class="machine-workspace machine-workspace-skeleton" aria-hidden="true">
+        <span class="workspace-skeleton-pane" />
+        <span class="workspace-skeleton-pane" />
+        <span class="workspace-skeleton-pane" />
+      </div>
+
+      <div class="machine-extra machine-extra-skeleton" aria-hidden="true">
+        <Card title="Нагрузка">
+          <div class="mp-stack">
+            <section class="mp-block">
+              <div class="mp-meters">
+                <ShellMeter />
+                <ShellMeter />
+                <ShellMeter />
+              </div>
+            </section>
+            <section class="mp-block">
+              <div class="mp-block-head">
+                <span class="mp-block-title">Процессы</span>
+              </div>
+              <div class="mp-proc-list" />
+            </section>
+            <section class="mp-block">
+              <div class="mp-block-head">
+                <span class="mp-block-title">Связь</span>
+              </div>
+              <div class="mp-hist" />
+            </section>
+          </div>
+        </Card>
+        <Card title="Снимки">
+          <Skeleton lines={3} />
+        </Card>
+        <Card title="Журнал доступа">
+          <Skeleton lines={3} />
+        </Card>
+      </div>
+    </>
+  )
+}
+
 export default function ConsoleMachine(): JSX.Element {
   const params = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -163,6 +266,7 @@ export default function ConsoleMachine(): JSX.Element {
   const [renameValue, setRenameValue] = createSignal('')
   const [renaming, setRenaming] = createSignal(false)
   const [renameError, setRenameError] = createSignal<string | null>(null)
+  const [streamStatus, setStreamStatus] = createSignal<MachineStreamStatus>('reconnecting')
 
   const state = (): SandboxState | null => sandbox()?.state ?? null
   const currentLabel = (): string => {
@@ -183,7 +287,12 @@ export default function ConsoleMachine(): JSX.Element {
 
   let loadToken = 0
 
-  const load = async (initial: boolean): Promise<void> => {
+  /**
+   * One GET of the machine. `manual` is a click of «Обновить», the only case
+   * that may spin that button: a fallback tick and the retry in the notice stay
+   * quiet, so a dropped stream never turns the header into a metronome.
+   */
+  const load = async (initial: boolean, manual = false): Promise<void> => {
     const id = machineId()
     if (!initial && (loading() || refreshing())) return
     if (id.length === 0) {
@@ -195,7 +304,7 @@ export default function ConsoleMachine(): JSX.Element {
     if (initial) {
       setLoading(true)
       setLoadError(null)
-    } else {
+    } else if (manual) {
       setRefreshing(true)
     }
     try {
@@ -207,12 +316,12 @@ export default function ConsoleMachine(): JSX.Element {
     } catch (error) {
       if (token !== loadToken) return
       const text = errorText(error)
-      if (initial || sandbox() === null) setLoadError(`Не удалось получить машину: ${text}`)
+      if (sandbox() === null) setLoadError(`Не удалось получить машину: ${text}`)
       else setRefreshError(text)
     } finally {
       if (token === loadToken) {
         if (initial) setLoading(false)
-        setRefreshing(false)
+        if (manual) setRefreshing(false)
       }
     }
   }
@@ -234,31 +343,54 @@ export default function ConsoleMachine(): JSX.Element {
       setRenameValue('')
       setRenameError(null)
       setRenaming(false)
+      setStreamStatus('reconnecting')
       void load(true)
     }),
   )
 
-  // A running machine's cost and state move; a boot or a stop moves too. Refresh
-  // every 5 s in those states and stop the timer on any other state and unmount.
-  let poll: number | undefined
-  const stopPolling = (): void => {
-    if (poll !== undefined) {
-      window.clearInterval(poll)
-      poll = undefined
-    }
-  }
+  // The stream starts with the first state that can still change on its own and
+  // stops when the machine settles: one connection serves the ribbon, access,
+  // load and process cards, and a stopped machine costs the provider nothing.
+  const liveKey = createMemo(() => {
+    const current = sandbox()?.state
+    return current !== undefined && LIVE_STATES.includes(current) ? '1' : '0'
+  })
   createEffect(
-    on(
-      () => sandbox()?.state,
-      (current) => {
-        stopPolling()
-        if (current !== undefined && POLLED_STATES.includes(current)) {
-          poll = window.setInterval(() => void load(false), POLL_MS)
-        }
-      },
-    ),
+    on(liveKey, (live) => {
+      if (live !== '1') return
+      onCleanup(
+        subscribeMachine(
+          machineId(),
+          (snapshot) => {
+            // A frame is a fresher answer than any GET that is still in flight.
+            setSandbox(snapshot.sandbox)
+            setLoadError(null)
+            setRefreshError(null)
+            setLoading(false)
+          },
+          setStreamStatus,
+        ),
+      )
+    }),
   )
-  onCleanup(stopPolling)
+
+  // A stream that has failed twice hands the page to a slow GET, and a recovered
+  // stream takes it back at once. Nothing polls while the stream is healthy.
+  let fallback: number | undefined
+  const stopFallback = (): void => {
+    if (fallback === undefined) return
+    window.clearInterval(fallback)
+    fallback = undefined
+  }
+  const fallbackKey = createMemo(() => (liveKey() === '1' ? streamStatus() : ''))
+  createEffect(
+    on(fallbackKey, (status) => {
+      stopFallback()
+      if (status !== 'offline') return
+      fallback = window.setInterval(() => void load(false), FALLBACK_MS)
+    }),
+  )
+  onCleanup(stopFallback)
 
   const stopMachine = async (): Promise<void> => {
     const current = sandbox()
@@ -382,7 +514,7 @@ export default function ConsoleMachine(): JSX.Element {
               size="sm"
               loading={refreshing()}
               disabled={loading()}
-              onClick={() => void load(false)}
+              onClick={() => void load(false, true)}
             >
               Обновить
             </Button>
@@ -412,9 +544,7 @@ export default function ConsoleMachine(): JSX.Element {
       <RunningMachinesStrip currentId={machineId()} />
 
       <Show when={loading()}>
-        <Card title="Машина">
-          <Skeleton lines={7} />
-        </Card>
+        <MachineShellSkeleton />
       </Show>
 
       <Show when={!loading() && loadError() !== null && sandbox() === null}>

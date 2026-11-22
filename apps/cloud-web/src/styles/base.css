@@ -12,6 +12,8 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* A page that grows past the fold must not shift the layout sideways. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -234,11 +236,17 @@ hr {
   min-width: 0;
 }
 
-.boot {
-  min-height: 60vh;
+/* Route shell placeholder: the frame a page will fill. Also the fallback while
+   a lazy route chunk loads, so the chrome is never swapped for a boot card. */
+.route-shell {
+  width: 100%;
+  max-width: var(--width-site);
+  margin-inline: auto;
   display: grid;
-  place-items: center;
-  padding: var(--sp-8);
+  gap: var(--sp-4);
+  align-content: start;
+  padding: 24px clamp(16px, 4vw, 28px) 44px;
+  min-height: 56vh;
 }
 
 @media (prefers-reduced-motion: reduce) {

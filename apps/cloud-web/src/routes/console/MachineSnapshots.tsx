@@ -1,5 +1,5 @@
 import { useNavigate } from '@solidjs/router'
-import { For, Show, createEffect, createSignal, on } from 'solid-js'
+import { For, Show, createEffect, createMemo, createSignal, on } from 'solid-js'
 import type { JSX } from 'solid-js'
 
 import { Badge, Button, Card, Field, Skeleton } from '@/components'
@@ -92,9 +92,13 @@ export default function MachineSnapshots(props: MachineSnapshotsProps): JSX.Elem
     }
   }
 
+  // A new sandbox object arrives with every live frame; only a new machine or
+  // a new running state may clear the list. A primitive key keeps the card
+  // from re-listing snapshots every few seconds.
+  const resetKey = createMemo(() => `${props.sandboxId}\u0000${props.enabled ? '1' : '0'}`)
   createEffect(
     on(
-      () => `${props.sandboxId}\u0000${props.enabled ? '1' : '0'}`,
+      resetKey,
       () => {
         // A listing for the previous machine must not paint over this one.
         token += 1

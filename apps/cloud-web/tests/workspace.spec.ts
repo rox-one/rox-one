@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
 const SANDBOX = {
   id: 'sbx_test',
@@ -36,13 +37,16 @@ const json = (body: unknown, status = 200) => ({
   body: JSON.stringify(body),
 })
 
-test('the machine workbench keeps the terminal, files and preview usable', async ({ page }) => {
+/** The guest console as the machine page expects it, SSH access included. */
+async function seedGuest(page: Page): Promise<void> {
   await page.addInitScript(() => {
     sessionStorage.setItem('rox_cloud_key', 'rox_sk_live_test')
     sessionStorage.setItem('rox_console_guest', '1')
     sessionStorage.setItem('rox_console_guest_name', 'Гость')
   })
+}
 
+async function mockConsole(page: Page): Promise<void> {
   await page.route('**/v1/**', async (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
@@ -70,6 +74,14 @@ test('the machine workbench keeps the terminal, files and preview usable', async
     if (path === '/v1/sandboxes/sbx_test/snapshots') {
       return route.fulfill(json({ object: 'list', data: [] }))
     }
+    if (path === '/v1/sandboxes/sbx_test/ssh') {
+      return route.fulfill(json({
+        object: 'ssh_access',
+        sandbox_id: 'sbx_test',
+        command: 'ssh IVMQdJQZvaTbQf3SEhd1Q0JClD9kSP18@ssh.rox.computer',
+        expires_at: '2099-11-22T10:00:00.000Z',
+      }))
+    }
     if (path === '/v1/sandboxes/sbx_test/files/list') {
       return route.fulfill(json({ object: 'list', path: '/home/rox', data: [
         { name: '.bashrc', path: '/home/rox/.bashrc', is_dir: false, size: 12, modified_at: '2026-11-22T09:00:00.000Z' },
@@ -87,6 +99,11 @@ test('the machine workbench keeps the terminal, files and preview usable', async
     }
     return route.fulfill(json({ object: 'list', data: [] }))
   })
+}
+
+test('the machine workbench keeps the terminal, files and preview usable', async ({ page }) => {
+  await seedGuest(page)
+  await mockConsole(page)
 
   await page.goto('/console/machines/sbx_test')
   await expect(page.getByText('Сеть и доступ')).toBeVisible()
@@ -117,4 +134,22 @@ test('the machine workbench keeps the terminal, files and preview usable', async
   await expect(page.locator('.workspace-splitter').first()).toBeHidden()
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)
   expect(overflow).toBe(false)
+})
+
+test('the SSH access shows a stable alias and keeps the token out of the page', async ({ page }) => {
+  await seedGuest(page)
+  await mockConsole(page)
+
+  await page.goto('/console/machines/sbx_test')
+  await page.getByRole('button', { name: 'Создать доступ' }).click()
+
+  await expect(page.locator('.access-ssh code')).toHaveText('ssh rox-sbx_test')
+  const visible = await page.locator('body').textContent()
+  expect(visible ?? '').not.toContain('IVMQdJQZ')
+
+  // The token appears only in the file the customer opens explicitly.
+  await page.getByRole('button', { name: 'Файл доступа' }).click()
+  await expect(page.locator('.access-config')).toContainText(
+    'IVMQdJQZvaTbQf3SEhd1Q0JClD9kSP18',
+  )
 })

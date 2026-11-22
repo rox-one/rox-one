@@ -860,12 +860,14 @@ paths:
   /v1/sandboxes/{id}/ssh:
     post:
       operationId: createSandboxSshAccess
-      summary: Create a one-shot SSH command
+      summary: Create a time-limited SSH command
       tags: [sandboxes]
       description: |
-        Requires the `sandboxes:write` scope. The command carries the
-        credential, so the response is `no-store` and the console shows it
-        once. Its lifetime is capped by the machine's own expiry.
+        Requires the `sandboxes:write` scope. The line carries a time-limited
+        credential, not a one-shot code: the token works until `expires_at`,
+        capped by the machine's own expiry. The response is `no-store`, and
+        the console keeps the token out of the default page, showing a stable
+        `rox-<id>` SSH alias instead.
       parameters:
         - $ref: '#/components/parameters/PathId'
       requestBody:
