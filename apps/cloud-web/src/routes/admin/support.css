@@ -1,0 +1,231 @@
+/* Поддержка: обращения, происшествия и очередь злоупотреблений. */
+.support-page {
+  min-width: 0;
+}
+
+.support-filters-card {
+  box-shadow: none;
+}
+
+.support-filters-body {
+  padding: 12px 14px;
+}
+
+.support-filters {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: minmax(180px, 240px) auto;
+  align-items: end;
+}
+
+.support-filter-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-bottom: 1px;
+}
+
+.support-note {
+  max-width: 88ch;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.support-subject {
+  display: inline-grid;
+  gap: 1px;
+  min-width: 0;
+  max-width: 42ch;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.support-code {
+  color: var(--muted);
+  font-size: 10.5px;
+  overflow-wrap: anywhere;
+}
+
+.support-small {
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.support-when {
+  white-space: nowrap;
+}
+
+.support-summary {
+  display: inline-block;
+  max-width: 52ch;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.support-state {
+  display: inline-grid;
+  gap: 2px;
+  justify-items: start;
+}
+
+.support-reason {
+  display: inline-block;
+  max-width: 40ch;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.support-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.support-json summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: var(--text-xs);
+  font-weight: 650;
+}
+
+.support-json summary:hover {
+  text-decoration: underline;
+}
+
+.support-json pre {
+  max-height: 260px;
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  overflow: auto;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 10.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.support-error-text {
+  max-width: 90ch;
+  color: var(--ink);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.support-empty-card {
+  box-shadow: none;
+}
+
+/* ---------- Переписка в окне обращения ---------- */
+
+.support-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px 10px;
+  flex-wrap: wrap;
+}
+
+.support-thread {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.support-message {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-sunken);
+}
+
+.support-message-staff {
+  background: var(--accent-soft);
+  border-color: #c9d6ff;
+}
+
+.support-message-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.support-message-who {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.support-message-body {
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.support-reply {
+  min-width: 0;
+}
+
+.support-confirm {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--danger-soft);
+  border: 1px solid rgba(180, 35, 24, 0.24);
+  border-radius: var(--radius-sm);
+}
+
+.support-confirm-text {
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.support-confirm-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.support-incident-form {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .support-when {
+    white-space: normal;
+  }
+
+  .support-subject,
+  .support-summary,
+  .support-reason {
+    max-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .support-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .support-filter-actions .btn {
+    flex: 1 1 auto;
+  }
+}

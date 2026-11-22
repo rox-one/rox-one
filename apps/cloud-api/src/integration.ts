@@ -40,6 +40,7 @@ import {
 } from '../../../packages/providers/src/index.ts'
 import type { DeclaredCapabilities } from './app.ts'
 import { API_KEY_PREFIX, hashApiKey } from './auth.ts'
+import { createPlatformProvider } from './platform.ts'
 import type { ApiKeyRecord, MemoryStore, Tenant } from './store.ts'
 import { SCOPES, nextId } from './store.ts'
 
@@ -136,6 +137,11 @@ export interface RuntimeOptions {
   readonly e2bSandboxHost?: string
   /** Ceilings checked before a boot; zeros mean «не ограничено». */
   readonly limits?: AccountLimits
+  /**
+   * Rox's own provider for managed machines, or `null` when the deployment has
+   * no platform key. Defaults to `createPlatformProvider` from `platform.ts`.
+   */
+  readonly platformProvider?: (providerId: string) => SandboxProvider | null
 }
 
 /** The assembled pieces, for the server and for tests. */
@@ -159,6 +165,9 @@ export interface CreateGateInput {
     readonly memoryGb: number
     readonly ttlSec?: number
   }
+  /** Price this machine is sold at; absent falls back to the deployment rate. */
+  readonly rateCentsPerHour?: number
+  readonly billingMode?: 'byok' | 'managed'
 }
 
 export interface StopGateInput {
@@ -166,6 +175,8 @@ export interface StopGateInput {
   readonly sandboxId: string
   readonly startedAt: number
   readonly stoppedAt: number
+  /** The rate the record was sold at, so the settlement matches the meter. */
+  readonly rateCentsPerHour?: number
 }
 
 export interface DestroyGateInput {
@@ -176,8 +187,16 @@ export interface DestroyGateInput {
 }
 
 export interface ControlPlane {
-  /** Real provider for this tenant, or `null` when no usable credential exists. */
+  /** Real provider for this tenant's own key, or `null` when it has none. */
   resolveProvider(tenantId: string, providerId: string): Promise<SandboxProvider | null>
+  /**
+   * Provider plus who pays: the customer's key (`byok`) or Rox's platform key
+   * (`managed`). `null` means neither exists for this tenant.
+   */
+  resolveLease(
+    tenantId: string,
+    providerId: string,
+  ): Promise<{ provider: SandboxProvider; mode: 'byok' | 'managed' } | null>
   /** Vendors that actually have an adapter in this build. */
   listCapabilities(): readonly DeclaredCapabilities[]
   beforeCreate(input: CreateGateInput): Promise<void>
@@ -302,6 +321,34 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
     return provider
   }
 
+  /**
+   * Rox's platform adapter, built once per provider so its sandbox map lives
+   * as long as the process. The key never leaves `platform.ts`.
+   */
+  const platformCache = new Map<string, SandboxProvider>()
+  function platformProviderFor(providerId: string): SandboxProvider | null {
+    const cached = platformCache.get(providerId)
+    if (cached !== undefined) return cached
+    const built = (options.platformProvider ?? createPlatformProvider)(providerId)
+    if (built !== null) platformCache.set(providerId, built)
+    return built
+  }
+
+  /**
+   * Who pays for this machine. The customer's own key always wins, because a
+   * byok customer pays the provider directly; only when they have none does
+   * Rox front the machine on its platform key.
+   */
+  async function resolveLease(
+    tenantId: string,
+    providerId: string,
+  ): Promise<{ provider: SandboxProvider; mode: 'byok' | 'managed' } | null> {
+    const own = await resolveProvider(tenantId, providerId)
+    if (own !== null) return { provider: own, mode: 'byok' }
+    const managed = platformProviderFor(providerId)
+    return managed === null ? null : { provider: managed, mode: 'managed' }
+  }
+
   function listCapabilities(): readonly DeclaredCapabilities[] {
     // Only vendors with a real adapter are advertised. Modal appears only when
     // the bridge URL is configured, because its adapter has nothing to call
@@ -331,6 +378,27 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
     return count
   }
 
+  /** `0` means «не ограничено», so the tighter positive ceiling wins. */
+  function tighterCeiling(a: number, b: number): number {
+    if (a <= 0) return b
+    if (b <= 0) return a
+    return Math.min(a, b)
+  }
+
+  /**
+   * The ceiling a boot is checked against: the deployment default, narrowed by
+   * the tenant's own (a guest carries one machine and the trial balance).
+   */
+  function limitsFor(tenantId: string): AccountLimits {
+    const own = options.store.tenants.get(tenantId)?.limits
+    if (own === undefined) return limits
+    return {
+      maxConcurrentSandboxes: tighterCeiling(limits.maxConcurrentSandboxes, own.maxConcurrentSandboxes),
+      maxCpuPerSandbox: tighterCeiling(limits.maxCpuPerSandbox, own.maxCpuPerSandbox),
+      maxMonthlyCents: tighterCeiling(limits.maxMonthlyCents, own.maxMonthlyCents),
+    }
+  }
+
   async function beforeCreate(input: CreateGateInput): Promise<void> {
     const { tenantId, providerId, sandboxId, request } = input
 
@@ -348,14 +416,30 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
       throw gateError('entitlement_required')
     }
 
+    // The tenant profile owns the lifetime cap as well: a guest machine may
+    // live a day, not a month, and the refusal names the limit.
+    const maxTtlSec = options.store.tenants.get(tenantId)?.limits?.maxTtlSec
+    if (
+      request.ttlSec !== undefined &&
+      maxTtlSec !== undefined &&
+      maxTtlSec > 0 &&
+      request.ttlSec > maxTtlSec
+    ) {
+      throw new CloudRunnerError(
+        `Срок жизни ${request.ttlSec} с больше разрешённых ${maxTtlSec} с для этого клиента`,
+        'invalid_spec',
+      )
+    }
+
+    const rateCentsPerHour = input.rateCentsPerHour ?? options.rateCentsPerHour
     const ttlSec = request.ttlSec ?? DEFAULT_HOLD_TTL_SEC
     const holdCents = estimateSandboxCents({
       ttlMs: ttlSec * 1000,
-      rateCentsPerHour: options.rateCentsPerHour,
+      rateCentsPerHour,
     })
 
     const refusal = checkAccountLimits({
-      limits,
+      limits: limitsFor(tenantId),
       activeCount: activeCount(tenantId),
       requestedCpu: request.cpu,
       monthSpentCents: account.monthSpentCents,
@@ -377,6 +461,8 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
         cpu: request.cpu,
         memory_gb: request.memoryGb,
         reserved_cents: holdCents,
+        rate_cents_per_hour: rateCentsPerHour,
+        billing_mode: input.billingMode ?? 'byok',
       },
     })
   }
@@ -390,8 +476,9 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
     // so an absent hold means there is nothing to settle.
     if (account && options.moneyStore.findReservation(tenantId, sandboxId) !== undefined) {
       const elapsedMs = Math.max(0, stoppedAt - startedAt)
+      const rateCentsPerHour = input.rateCentsPerHour ?? options.rateCentsPerHour
       // A started sandbox costs at least one cent, like any metered hour.
-      chargedCents = Math.max(1, Math.ceil((elapsedMs / 3_600_000) * options.rateCentsPerHour))
+      chargedCents = Math.max(1, Math.ceil((elapsedMs / 3_600_000) * rateCentsPerHour))
       settle(options.moneyStore, tenantId, sandboxId, chargedCents, now())
     }
     options.audit.append({
@@ -400,7 +487,10 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
       targetType: 'sandbox',
       targetId: sandboxId,
       reason: 'customer request',
-      details: { charged_cents: chargedCents },
+      details: {
+        charged_cents: chargedCents,
+        rate_cents_per_hour: input.rateCentsPerHour ?? options.rateCentsPerHour,
+      },
     })
   }
 
@@ -427,7 +517,7 @@ export function createRuntime(options: RuntimeOptions): ControlPlane {
     })
   }
 
-  return { resolveProvider, listCapabilities, beforeCreate, afterStop, afterDestroy, runtime }
+  return { resolveProvider, resolveLease, listCapabilities, beforeCreate, afterStop, afterDestroy, runtime }
 }
 
 // ============================================================

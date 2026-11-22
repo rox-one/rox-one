@@ -41,7 +41,10 @@ export function generateApiKey(): GeneratedApiKey {
 
 /**
  * Resolve a presented bearer token to its tenant, or `null` when the token is
- * unknown. Stamps `lastUsedAt` on success.
+ * unknown or revoked. Stamps `lastUsedAt` on success.
+ *
+ * A revoked key is found by hash on purpose: the caller must not be able to
+ * tell «never existed» from «rotation revoked it», so both are a plain 401.
  */
 export function verifyApiKey(
   store: MemoryStore,
@@ -51,7 +54,7 @@ export function verifyApiKey(
   const secret = presented.trim()
   if (secret.length === 0) return null
   const record = store.findApiKeyByHash(hashApiKey(secret))
-  if (!record) return null
+  if (!record || record.revokedAt !== undefined) return null
   const tenant = store.tenants.get(record.tenantId)
   if (!tenant) return null
   record.lastUsedAt = now

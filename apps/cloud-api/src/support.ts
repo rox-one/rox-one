@@ -56,18 +56,19 @@ export type SupportRouteKind = 'customer' | 'staff'
  * because `app.ts` owns its own route table and does not know these paths.
  */
 const ROUTE_PREFIXES: readonly { readonly kind: SupportRouteKind; readonly prefix: string }[] = [
-  { kind: 'staff', prefix: '/admin/tickets' },
-  { kind: 'staff', prefix: '/admin/incidents' },
-  { kind: 'staff', prefix: '/admin/abuse' },
+  { kind: 'staff', prefix: '/v1/admin/tickets' },
+  { kind: 'staff', prefix: '/v1/admin/incidents' },
+  { kind: 'staff', prefix: '/v1/admin/abuse' },
   { kind: 'customer', prefix: '/v1/tickets' },
-  { kind: 'customer', prefix: '/status' },
+  { kind: 'customer', prefix: '/v1/status' },
 ]
 
 /**
  * Which front owns this path, or `null` when the rest of the service does.
  *
- * `/status` and `/v1/tickets` sit on the public origin, `/admin/…` on the staff
- * one; no other path is ever served from here.
+ * `/v1/status` and `/v1/tickets` sit on the public origin, `/v1/admin/…` on the
+ * staff one; `/status` is the site's page and `/admin/…` the panel's, so neither
+ * is claimed here.
  */
 export function supportRouteKind(pathname: string): SupportRouteKind | null {
   for (const entry of ROUTE_PREFIXES) {

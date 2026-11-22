@@ -24,7 +24,7 @@
 import { chmod, mkdir, open, readFile, rename, unlink } from 'node:fs/promises'
 import { dirname } from 'node:path'
 
-import { release } from '../../../packages/cloud-runner/src/entitlement.ts'
+import { release, settle } from '../../../packages/cloud-runner/src/entitlement.ts'
 import type {
   Account,
   LedgerEntry,
@@ -89,6 +89,11 @@ export interface PersistenceDeps {
   readonly keyStore: KeyStore
   readonly audit: AuditLog
   readonly killSwitch: KillSwitch
+  /**
+   * Deployment rate used to price a machine whose own rate was never stored.
+   * Absent means such a machine is released instead of charged.
+   */
+  readonly rateCentsPerHour?: number
 }
 
 /** States that mean the machine is already gone; anything else is drained. */
@@ -264,6 +269,9 @@ export function applyState(state: PersistedState, deps: PersistenceDeps): void {
   for (const tenant of state.core.tenants) store.tenants.set(tenant.id, structuredClone(tenant))
   for (const record of state.core.apiKeys) store.addApiKey(structuredClone(record))
   for (const record of state.core.sandboxes) {
+    // Billing fields arrived with per-machine pricing. State written before
+    // that keeps `undefined` here, and every reader falls back to the flat
+    // deployment rate and to `byok` — the mode those machines were sold in.
     store.sandboxes.set(record.id, structuredClone(record))
   }
   for (const record of state.core.idempotency) {
@@ -285,15 +293,35 @@ export function applyState(state: PersistedState, deps: PersistenceDeps): void {
   for (const record of store.sandboxes.values()) {
     if (TERMINAL_STATES[record.state]) continue
     const was = record.state
-    record.state = 'failed'
     const account = moneyStore.getAccount(record.tenantId)
     const held =
       account === undefined ? undefined : moneyStore.findReservation(record.tenantId, record.id)
     let note = 'резерва не было'
     if (held !== undefined) {
-      release(moneyStore, record.tenantId, record.id, atMs)
-      note = `резерв ${held} центов освобождён`
+      // The machine did run until the crash; its rate is known, so the elapsed
+      // span is charged through the ordinary settlement and only then the
+      // record is marked failed. An unknown rate cannot charge honestly, so the
+      // hold goes back untouched.
+      const rate = record.rateCentsPerHour ?? deps.rateCentsPerHour ?? 0
+      if (rate > 0) {
+        const elapsedMs = Math.max(0, atMs - (record.startedAt ?? record.createdAt))
+        const charged = Math.max(1, Math.ceil((elapsedMs / 3_600_000) * rate))
+        settle(moneyStore, record.tenantId, record.id, charged, atMs)
+        record.costCents = charged
+        const line = deps.store.usage.find(
+          (row) => row.tenantId === record.tenantId && row.ref === record.id,
+        )
+        if (line !== undefined) {
+          line.cents = charged
+          line.stoppedAt = atMs
+        }
+        note = `списано ${charged} центов по ставке ${rate}`
+      } else {
+        release(moneyStore, record.tenantId, record.id, atMs)
+        note = `резерв ${held} центов освобождён: ставка машины неизвестна`
+      }
     }
+    record.state = 'failed'
     console.log(
       `Rox Cloud: машина ${record.id} арендатора ${record.tenantId} была в состоянии ${was} при остановке — помечена как failed, ${note}`,
     )

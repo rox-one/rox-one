@@ -4,15 +4,16 @@
  * Two fronts live here, both fed by the tested cores in
  * `packages/cloud-support`:
  * - customer routes: `/v1/tickets…` under the tenant's own API key, plus the
- *   public `/status` view that needs no key at all;
- * - staff routes: `/admin/tickets…`, `/admin/incidents…` and `/admin/abuse…`
- *   under the shared staff key, the same one `admin.ts` accepts.
+ *   public `/v1/status` view that needs no key at all;
+ * - staff routes: `/v1/admin/tickets…`, `/v1/admin/incidents…` and
+ *   `/v1/admin/abuse…` under the shared staff key, the same one `admin.ts`
+ *   accepts. `/admin/*` itself is the panel's pages, served elsewhere.
  *
  * Three rules hold:
  * - the tenant is read from the presented key and never from a body, and
  *   another tenant's ticket answers exactly like an unknown id — 404;
- * - `/status` shows title, public summary, severity and status only: scopes,
- *   ids, timelines and tenant data never reach it;
+ * - `/v1/status` shows title, public summary, severity and status only:
+ *   scopes, ids, timelines and tenant data never reach it;
  * - every staff write leaves an audit row when a trail is wired, and every
  *   failure uses the `{error:{type, code, message, request_id}}` envelope.
  */
@@ -453,7 +454,11 @@ export function createCustomerRoutes(options: CustomerRoutesOptions): SupportRou
     const segments = url.pathname.split('/').filter((part) => part.length > 0)
     const method = req.method.toUpperCase()
 
-    if (segments.length === 1 && segments[0] === 'status' && method === 'GET') return statusRoute()
+    // `/status` is the site's own page now; the machine-readable view moved
+    // to the versioned namespace, next to the tickets it belongs with.
+    if (segments.length === 2 && segments[0] === 'v1' && segments[1] === 'status' && method === 'GET') {
+      return statusRoute()
+    }
 
     if (segments[0] !== 'v1' || segments[1] !== 'tickets') {
       throw new RouteError('not_found', 'Такого адреса нет')
@@ -663,39 +668,43 @@ export function createAdminRoutes(options: AdminRoutesOptions): SupportRoutes {
     const segments = url.pathname.split('/').filter((part) => part.length > 0)
     const method = req.method.toUpperCase()
 
-    if (segments[0] !== 'admin') throw new RouteError('not_found', 'Такого адреса нет')
+    // Staff JSON lives under `/v1/admin`, the same namespace as the rest of
+    // the panel API; `/admin/*` serves the panel pages themselves.
+    if (segments[0] !== 'v1' || segments[1] !== 'admin') {
+      throw new RouteError('not_found', 'Такого адреса нет')
+    }
     requireStaff(req)
 
-    const section = segments[1]
-    const id = segments[2]
+    const section = segments[2]
+    const id = segments[3]
 
     if (section === 'tickets') {
-      if (segments.length === 2 && method === 'GET') return listTicketsRoute(url)
-      if (segments.length === 4 && method === 'POST' && segments[3] === 'reply') {
+      if (segments.length === 3 && method === 'GET') return listTicketsRoute(url)
+      if (segments.length === 5 && method === 'POST' && segments[4] === 'reply') {
         return replyTicketRoute(id, req)
       }
-      if (segments.length === 4 && method === 'POST' && segments[3] === 'resolve') {
+      if (segments.length === 5 && method === 'POST' && segments[4] === 'resolve') {
         return resolveTicketRoute(id, req)
       }
     }
 
     if (section === 'incidents') {
-      if (segments.length === 2 && method === 'GET') return listIncidentsRoute()
-      if (segments.length === 2 && method === 'POST') return openIncidentRoute(req)
-      if (segments.length === 4 && method === 'POST' && segments[3] === 'update') {
+      if (segments.length === 3 && method === 'GET') return listIncidentsRoute()
+      if (segments.length === 3 && method === 'POST') return openIncidentRoute(req)
+      if (segments.length === 5 && method === 'POST' && segments[4] === 'update') {
         return updateIncidentRoute(id, req)
       }
-      if (segments.length === 4 && method === 'POST' && segments[3] === 'resolve') {
+      if (segments.length === 5 && method === 'POST' && segments[4] === 'resolve') {
         return resolveIncidentRoute(id, req)
       }
     }
 
     if (section === 'abuse') {
-      if (segments.length === 2 && method === 'GET') return listAbuseRoute(url)
-      if (segments.length === 4 && method === 'POST' && segments[3] === 'confirm') {
+      if (segments.length === 3 && method === 'GET') return listAbuseRoute(url)
+      if (segments.length === 5 && method === 'POST' && segments[4] === 'confirm') {
         return confirmAbuseRoute(id, req)
       }
-      if (segments.length === 4 && method === 'POST' && segments[3] === 'dismiss') {
+      if (segments.length === 5 && method === 'POST' && segments[4] === 'dismiss') {
         return dismissAbuseRoute(id, req)
       }
     }

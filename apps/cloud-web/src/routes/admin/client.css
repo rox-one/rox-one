@@ -1,0 +1,147 @@
+/* Карточка клиента. Владелец страницы: волна 2, «Панель, клиенты». */
+
+.client-page {
+  min-width: 0;
+}
+
+.client-page .page-title {
+  overflow-wrap: anywhere;
+}
+
+.client-loading {
+  padding: 12px 0;
+}
+
+.client-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.client-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.client-summary {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.client-summary .stat-value {
+  font-size: var(--text-lg);
+}
+
+.client-limits {
+  display: grid;
+  gap: 10px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin: 0;
+}
+
+.client-limits div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.client-limits dt {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.client-limits dd {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 650;
+}
+
+.client-panels {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  align-items: start;
+}
+
+.client-key,
+.client-scopes,
+.client-machine .mono {
+  overflow-wrap: anywhere;
+}
+
+.client-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.client-machine {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.client-reason {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.client-amount {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Диалоги действий ---------- */
+
+.admin-form {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.client-warn {
+  display: grid;
+  gap: 3px;
+  padding: 9px 11px;
+  background: var(--warning-soft);
+  border: 1px solid #f0d4a8;
+  border-radius: var(--radius-sm);
+  color: var(--warning);
+  font-size: var(--text-sm);
+}
+
+.client-reveal {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* The one-time secret wraps instead of scrolling the dialog sideways. */
+.client-secret .code-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.client-secret .code-body code {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.client-key {
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .client-summary {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+}

@@ -1,0 +1,105 @@
+/* Список машин кабинета. Владелец страницы: волна 2, «Кабинет, основа». */
+
+.machines-page {
+  min-width: 0;
+}
+
+.machines-count {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.machines-grid {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+
+.machine-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.machine-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.machine-card-id {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.machine-card-name {
+  font-size: var(--text-md);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.machine-card-ref {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.machine-rows {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+
+.machine-rows > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--text-sm);
+}
+
+.machine-rows dt {
+  flex: none;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.machine-rows dd {
+  min-width: 0;
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.machine-rate {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.machine-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 380px) {
+  .machine-card {
+    padding: 12px;
+  }
+
+  .machine-card-head {
+    flex-direction: column;
+    gap: 6px;
+  }
+}

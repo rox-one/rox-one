@@ -11,6 +11,7 @@ dist-server-*
 apps/electron/release
 apps/electron/resources/session-mcp-server/
 apps/electron/resources/pi-agent-server/
+apps/cloud-api/public/app/
 
 # OEM kernel binary payload (pin JSON is tracked; binaries are not)
 apps/electron/resources/oem-kernel/*

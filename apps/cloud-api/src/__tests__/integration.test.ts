@@ -16,9 +16,11 @@ import type { AuditLog, KillSwitch } from '../../../../packages/cloud-ops/src/in
 import { createMemoryMoneyStore } from '../../../../packages/cloud-runner/src/entitlement.ts'
 import type { MemoryMoneyStore } from '../../../../packages/cloud-runner/src/entitlement.ts'
 import type { AccountLimits } from '../../../../packages/cloud-runner/src/limits.ts'
+import { createAdminApp } from '../admin.ts'
 import { createApp } from '../app.ts'
 import type { CloudApp } from '../app.ts'
 import { generateApiKey, verifyApiKey } from '../auth.ts'
+import { topUp } from '../../../../packages/cloud-runner/src/entitlement.ts'
 import { createRuntime, ensureBootstrapKey } from '../integration.ts'
 import type { ControlPlane } from '../integration.ts'
 import { SCOPES, createMemoryStore, nextId } from '../store.ts'
@@ -39,6 +41,7 @@ const ALL_SCOPES: readonly Scope[] = [
   'sandboxes:write',
   'keys:write',
   'billing:read',
+  'billing:write',
 ]
 
 interface DaytonaCall {
@@ -487,16 +490,24 @@ describe('account', () => {
     expect(await errorCode(refused)).toBe('entitlement_required')
   })
 
-  test('a top-up makes the fee reservable again', async () => {
+  test('money from the staff credit makes the fee reservable again', async () => {
     const h = harness({ account: null })
     addDaytonaCredential(h)
 
-    const topup = await call(h.app, 'POST', '/v1/account/topup', {
-      secret: h.secret,
-      body: { amountCents: 250 },
+    // Money only comes from the staff side now; the harness credits through
+    // the same store call the admin route uses.
+    h.moneyStore.saveAccount({
+      id: h.tenant.id,
+      paid: true,
+      balanceCents: 0,
+      reservedCents: 0,
+      monthlyCapCents: 0,
+      monthSpentCents: 0,
     })
-    expect(topup.status).toBe(200)
-    const afterTopUp = (await topup.json()) as { balance_cents: number; balance_usd: string }
+    topUp(h.moneyStore, h.tenant.id, 250, NOW)
+
+    const account = await call(h.app, 'GET', '/v1/account', { secret: h.secret })
+    const afterTopUp = (await account.json()) as { balance_cents: number; balance_usd: string }
     expect(afterTopUp.balance_cents).toBe(250)
     expect(afterTopUp.balance_usd).toBe('2.50')
 
@@ -506,14 +517,47 @@ describe('account', () => {
     expect(h.moneyStore.findReservation(h.tenant.id, sandbox.id)).toBe(RATE_CENTS_PER_HOUR)
   })
 
-  test('a top-up of a non-integer amount is rejected with 400', async () => {
+  test('only the staff credit adds money, and it rejects bad amounts', async () => {
     const h = harness()
-    for (const amountCents of [1.5, 0, -10, '100']) {
-      const response = await call(h.app, 'POST', '/v1/account/topup', {
-        secret: h.secret,
-        body: { amountCents },
-      })
+    // The removed customer route leaves nothing to call, whatever scopes a key
+    // still carries.
+    const gone = await call(h.app, 'POST', '/v1/account/topup', {
+      secret: h.secret,
+      body: { amountCents: 250 },
+    })
+    expect(gone.status).toBe(404)
+
+    // The security boundary is the staff route: it refuses a fractional amount,
+    // nothing at all, and a negative one with 400 before the wallet is touched.
+    const ADMIN_KEY = 'integration-staff-key'
+    const admin = createAdminApp({
+      store: h.store,
+      keyStore: h.keyStore,
+      moneyStore: h.moneyStore,
+      audit: h.audit,
+      killSwitch: h.killSwitch,
+      limits: { maxConcurrentSandboxes: 0, maxCpuPerSandbox: 0, maxMonthlyCents: 0 },
+      adminKey: ADMIN_KEY,
+      stopResource: async () => undefined,
+      now: () => NOW,
+    })
+    const balanceBefore = h.moneyStore.getAccount(h.tenant.id)?.balanceCents ?? 0
+    for (const amountCents of [0, 1.5, -10]) {
+      const response = await admin.handle(
+        new Request(`http://api.test/v1/admin/tenants/${h.tenant.id}/credit`, {
+          method: 'POST',
+          headers: { authorization: `Bearer ${ADMIN_KEY}`, 'content-type': 'application/json' },
+          body: JSON.stringify({ amountCents, reason: 'проверка' }),
+        }),
+      )
       expect(response.status).toBe(400)
+    }
+    expect(h.moneyStore.getAccount(h.tenant.id)?.balanceCents ?? 0).toBe(balanceBefore)
+
+    // The wallet itself refuses what its own contract refuses: fractions and
+    // negatives. Zero is allowed there; that is why the route above is the gate.
+    for (const amountCents of [1.5, -10]) {
+      expect(() => topUp(h.moneyStore, h.tenant.id, amountCents, NOW)).toThrow()
     }
   })
 })

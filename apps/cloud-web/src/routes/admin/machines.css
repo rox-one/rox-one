@@ -1,0 +1,110 @@
+/* Машины платформы: сводка, фильтры и плотная таблица. */
+.machines-page {
+  min-width: 0;
+}
+
+.machines-stats {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.machines-filters-card {
+  box-shadow: none;
+}
+
+.machines-filters-body {
+  padding: 12px 14px;
+}
+
+.machines-filters {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: minmax(180px, 1.4fr) repeat(2, minmax(140px, 1fr)) auto;
+  align-items: end;
+}
+
+.machines-filter-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-bottom: 1px;
+}
+
+.machines-id {
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.machines-tenant {
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.machines-spec {
+  display: inline-block;
+  max-width: 34ch;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.machines-region {
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.machines-cost {
+  display: inline-grid;
+  gap: 1px;
+  justify-items: end;
+}
+
+.machines-rate {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.machines-when {
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.machines-empty-card {
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .machines-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .machines-filter-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .machines-cost {
+    justify-items: start;
+  }
+
+  .machines-when {
+    white-space: normal;
+  }
+
+  .machines-spec {
+    max-width: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .machines-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .machines-filter-actions .btn {
+    flex: 1 1 auto;
+  }
+}

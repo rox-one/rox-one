@@ -1,0 +1,94 @@
+/* Вкладка «Файлы»: чтение и запись одного текстового файла. Владелец: волна 2, «Кабинет, машина». */
+.files {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding: 14px 16px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.files-blocked {
+  padding: 7px 10px;
+  background: var(--warning-soft);
+  border: 1px solid #f0d9b5;
+  border-radius: var(--radius-sm);
+  color: var(--warning);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.files-open {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.files-open .field {
+  flex: 1 1 260px;
+}
+
+.files-open .btn {
+  margin-top: 22px;
+}
+
+.files-code .code-body {
+  max-height: 280px;
+}
+
+.files-code .code-body code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.files-save {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.files-save .textarea {
+  min-height: 160px;
+}
+
+.files-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.files-count {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.files-saved {
+  color: var(--success);
+  font-size: var(--text-xs);
+  font-weight: 650;
+}
+
+@media (max-width: 520px) {
+  .files {
+    padding: 12px;
+  }
+
+  .files-open {
+    display: grid;
+    gap: 8px;
+  }
+
+  .files-open .btn {
+    margin-top: 0;
+    justify-self: start;
+  }
+
+  .files-code .code-body {
+    max-height: 220px;
+  }
+}

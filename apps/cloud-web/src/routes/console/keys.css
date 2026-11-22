@@ -1,0 +1,100 @@
+/* Ключи клиента. Владелец страницы: волна 2, «Кабинет, основа». */
+
+.keys-page {
+  min-width: 0;
+}
+
+.keys-page .card-flush .table-wrap {
+  border: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.key-plate {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.key-tail {
+  display: inline-block;
+  margin-left: 2px;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: var(--surface-hover);
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.key-scopes {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.keys-secret {
+  display: grid;
+  gap: 10px;
+}
+
+.keys-fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.keys-fieldset legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+.scope-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease;
+}
+
+.scope-row:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-sunken);
+}
+
+.scope-row input {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.scope-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.scope-label {
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
+
+.scope-hint {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .keys-page .card-flush .table-wrap {
+    border-radius: 0;
+  }
+}

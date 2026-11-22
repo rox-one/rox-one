@@ -1,0 +1,295 @@
+/* Тёмная панель терминала поверх exec. Владелец: волна 2, «Кабинет, машина». */
+.terminal {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--terminal);
+  border: 1px solid var(--terminal-border);
+  border-radius: var(--radius-lg);
+  color: var(--terminal-ink);
+}
+
+.terminal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+  padding: 6px 8px 6px 12px;
+  background: var(--terminal-panel);
+  border-bottom: 1px solid var(--terminal-border);
+  font-size: var(--text-xs);
+}
+
+.terminal-title {
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.terminal-busy {
+  color: var(--terminal-muted);
+}
+
+.terminal-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.terminal-tool,
+.terminal-quick-command,
+.terminal-run {
+  appearance: none;
+  padding: 3px 8px;
+  border: 1px solid var(--terminal-border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--terminal-ink);
+  font: inherit;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.terminal-tool:hover:not(:disabled),
+.terminal-quick-command:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.terminal-tool[aria-pressed="true"] {
+  border-color: rgba(111, 227, 176, 0.45);
+  background: rgba(111, 227, 176, 0.16);
+  color: var(--terminal-success);
+}
+
+.terminal-tool:disabled,
+.terminal-quick-command:disabled,
+.terminal-run:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.terminal-blocked {
+  padding: 7px 12px;
+  background: rgba(255, 154, 145, 0.12);
+  border-bottom: 1px solid var(--terminal-border);
+  color: var(--terminal-danger);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.terminal-output {
+  flex: 1 1 auto;
+  min-height: 200px;
+  max-height: 420px;
+  padding: 10px 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  scrollbar-color: var(--terminal-border) transparent;
+  scrollbar-width: thin;
+}
+
+.terminal-output:focus-visible {
+  outline: 2px solid var(--terminal-success);
+  outline-offset: -2px;
+}
+
+.terminal-hint {
+  display: grid;
+  gap: 2px;
+  color: var(--terminal-muted);
+  font-size: var(--text-xs);
+}
+
+.terminal-line {
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.terminal-prompt-inline {
+  color: var(--terminal-success);
+}
+
+.terminal-line-stdout {
+  color: var(--terminal-ink);
+}
+
+.terminal-line-stderr,
+.terminal-line-error {
+  color: var(--terminal-danger);
+}
+
+.terminal-line-error {
+  font-weight: 650;
+}
+
+.terminal-line-info {
+  color: var(--terminal-muted);
+}
+
+.terminal-line-exit {
+  margin-top: 2px;
+  color: var(--terminal-muted);
+  font-size: var(--text-xs);
+}
+
+.terminal-line-exit.is-failed {
+  color: var(--terminal-danger);
+  font-weight: 650;
+}
+
+.terminal-quick {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  border-top: 1px solid var(--terminal-border);
+  background: var(--terminal);
+}
+
+.terminal-quick-label {
+  color: var(--terminal-muted);
+  font-size: var(--text-xs);
+}
+
+.terminal-quick-command {
+  color: var(--terminal-muted);
+}
+
+.terminal-quick-command:hover:not(:disabled) {
+  color: var(--terminal-ink);
+}
+
+.terminal-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 10px 8px;
+  background: var(--terminal-panel);
+  border-top: 1px solid var(--terminal-border);
+}
+
+.terminal-prompt {
+  flex: none;
+  max-width: 55%;
+  overflow: hidden;
+  color: var(--terminal-success);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--terminal-ink);
+  font: inherit;
+  font-size: var(--text-sm);
+}
+
+.terminal-input::placeholder {
+  color: var(--terminal-muted);
+}
+
+.terminal-input:focus {
+  outline: none;
+}
+
+.terminal-input:focus-visible {
+  outline: 2px solid var(--terminal-success);
+  outline-offset: 1px;
+}
+
+.terminal-input:disabled {
+  color: var(--terminal-muted);
+  cursor: not-allowed;
+}
+
+.terminal-run {
+  flex: none;
+  border-color: rgba(111, 227, 176, 0.4);
+  color: var(--terminal-success);
+}
+
+.terminal-run:hover:not(:disabled) {
+  background: rgba(111, 227, 176, 0.14);
+}
+
+/* Full screen: the panel owns the viewport; the page beneath does not scroll. */
+.terminal.terminal-full {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  border: 0;
+  border-radius: 0;
+}
+
+.terminal-full .terminal-output {
+  min-height: 0;
+  max-height: none;
+}
+
+.terminal-full-lock {
+  overflow: hidden;
+}
+
+@media (max-width: 520px) {
+  .terminal-head {
+    padding: 6px 8px;
+  }
+
+  .terminal-tools {
+    margin-left: 0;
+  }
+
+  .terminal-output {
+    min-height: 160px;
+    max-height: 320px;
+    font-size: var(--text-xs);
+  }
+
+  .terminal-input-row {
+    flex-wrap: wrap;
+  }
+
+  .terminal-prompt {
+    flex-basis: 100%;
+    max-width: 100%;
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .terminal-input {
+    flex-basis: 100%;
+  }
+
+  .terminal-run {
+    margin-left: auto;
+  }
+}
+
+/* The dark panel needs its own focus ring: the light accent ring is too dim here. */
+.terminal-tool:focus-visible,
+.terminal-quick-command:focus-visible,
+.terminal-run:focus-visible {
+  outline: 2px solid var(--terminal-success);
+  outline-offset: 1px;
+}

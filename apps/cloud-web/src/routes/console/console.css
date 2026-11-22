@@ -1,0 +1,350 @@
+/* Кабинет: ширина бокового меню, верхняя полоса, дверь входа и общие сигналы. */
+
+.console-shell {
+  --app-nav: var(--width-console-nav);
+  /* Ни одна страница кабинета не растягивает окно вбок. */
+  overflow-x: clip;
+}
+
+/* ---------- Верхняя полоса ---------- */
+
+.console-topbar {
+  align-items: center;
+  row-gap: 8px;
+}
+
+.console-topbar-id {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.console-tenant {
+  max-width: 28ch;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.console-balance {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+.console-balance-label {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-balance-value {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.console-balance-note {
+  color: var(--warning);
+  font-size: 10.5px;
+}
+
+/* ---------- Общие сигналы ---------- */
+
+.console-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid rgba(180, 35, 24, 0.3);
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+.console-alert > span {
+  flex: 1 1 220px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.console-alert-meta {
+  display: block;
+  width: 100%;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-alert-top {
+  margin: 10px clamp(16px, 3vw, 28px) 0;
+}
+
+.console-note {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.console-muted {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.console-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(168, 100, 0, 0.35);
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: var(--text-xs);
+}
+
+.console-block > span {
+  flex: 1 1 180px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.console-boot {
+  gap: var(--sp-4);
+}
+
+.console-boot .skeleton {
+  max-width: 420px;
+}
+
+/* Карточка без отступов держит таблицу внутри своих скруглений. */
+.console-shell .card-flush {
+  overflow: hidden;
+}
+
+/* ---------- Дверь входа ---------- */
+
+.console-door {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 520px at 50% -12%, #edf1ff 0%, rgba(237, 241, 255, 0) 68%),
+    var(--bg);
+}
+
+.console-door-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px clamp(16px, 4vw, 28px);
+}
+
+.console-door-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.console-door-brand:hover {
+  text-decoration: none;
+}
+
+.console-door-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: var(--text-sm);
+}
+
+.console-door-links a {
+  color: var(--muted);
+}
+
+.console-door-links a:hover {
+  color: var(--accent);
+}
+
+.console-door-main {
+  flex: 1;
+  display: grid;
+  place-items: start center;
+  padding: clamp(12px, 4vw, 40px) 16px 32px;
+}
+
+.console-door-card {
+  display: grid;
+  gap: 14px;
+  width: min(520px, 100%);
+  padding: clamp(18px, 3.4vw, 26px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.console-door-eyebrow {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.console-door-title {
+  font-size: var(--text-3xl);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.console-door-lede {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.console-door-trial {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-sunken);
+}
+
+.console-door-trial-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.console-door-points {
+  display: grid;
+  gap: 6px;
+  font-size: var(--text-sm);
+}
+
+.console-door-points li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.console-door-points .icon {
+  color: var(--success);
+}
+
+.console-door-hint {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-door-sep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-door-sep::before,
+.console-door-sep::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.console-door-form {
+  display: grid;
+  gap: 10px;
+}
+
+.console-door-note {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-door-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px clamp(16px, 4vw, 28px);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 460px) {
+  .console-door-title {
+    font-size: var(--text-2xl);
+  }
+
+  .console-tenant {
+    max-width: 16ch;
+  }
+
+  .console-balance {
+    padding: 3px 9px;
+  }
+}
+
+/* ---------- Сетка конфигуратора ---------- */
+
+.console-grid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(240px, 300px);
+  align-items: start;
+}
+
+.console-col {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+@media (max-width: 1180px) {
+  .console-grid {
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  }
+
+  .console-summary {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 860px) {
+  .console-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .console-summary {
+    grid-column: auto;
+  }
+}

@@ -28,7 +28,8 @@ export const PROVIDER_CAPABILITIES: Readonly<Record<ProviderId, ProviderCapabili
     volume: true,
     streaming: 'websocket',
     maxTtlSec: 30 * DAY_SEC,
-    regions: ['in', 'eu-central', 'eu-west', 'us-east', 'us-west'],
+    // From the live `GET /regions`: `us` is shared, `us-west-4` dedicated.
+    regions: ['us', 'us-west-4'],
   },
   modal: {
     id: 'modal',

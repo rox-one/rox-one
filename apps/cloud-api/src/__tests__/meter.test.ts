@@ -82,3 +82,20 @@ describe('meter tick', () => {
     expect(meter.tick()).toBe(0)
   })
 })
+
+describe('per-record rate', () => {
+  test('a record with its own rate is metered at it, not at the deployment rate', () => {
+    const { store, record } = seed(0)
+    store.sandboxes.set(record.id, { ...record, rateCentsPerHour: 786 })
+    const meter = createMeter({ store, rateCentsPerHour: 25, now: () => HOUR })
+    meter.tick()
+    expect(store.sandboxes.get(record.id)?.costCents).toBe(786)
+  })
+
+  test('a record without a rate keeps the old flat deployment rate', () => {
+    const { store, record } = seed(0)
+    const meter = createMeter({ store, rateCentsPerHour: 25, now: () => HOUR })
+    meter.tick()
+    expect(record.costCents).toBe(25)
+  })
+})

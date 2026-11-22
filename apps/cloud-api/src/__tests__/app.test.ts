@@ -44,6 +44,7 @@ const ALL_SCOPES: readonly Scope[] = [
   'sandboxes:write',
   'keys:write',
   'billing:read',
+  'billing:write',
 ]
 
 interface FakeSandbox {
@@ -58,6 +59,8 @@ class FakeProvider implements SandboxProvider {
   readonly created: SandboxSpec[] = []
   readonly sandboxes = new Map<string, FakeSandbox>()
   costUsd = 0.05
+  /** What the last exec was asked for, so the wire shape can be asserted. */
+  lastExec?: { command: string; cwd?: string; timeoutMs?: number }
 
   constructor(providerId = 'daytona') {
     this.providerId = providerId
@@ -82,8 +85,13 @@ class FakeProvider implements SandboxProvider {
     return { id, provider: this.providerId, state: sandbox.state, createdAt: NOW }
   }
 
-  async exec(id: string, command: string): Promise<SandboxExecResult> {
+  async exec(
+    id: string,
+    command: string,
+    opts?: { cwd?: string; timeoutMs?: number },
+  ): Promise<SandboxExecResult> {
     if (!this.sandboxes.has(id)) throw new CloudRunnerError('unknown sandbox', 'not_found')
+    this.lastExec = { command, ...(opts?.cwd === undefined ? {} : { cwd: opts.cwd }), ...(opts?.timeoutMs === undefined ? {} : { timeoutMs: opts.timeoutMs }) }
     return { stdout: `ok: ${command}`, stderr: '', exitCode: 0 }
   }
 
@@ -197,6 +205,22 @@ interface SandboxBody {
   cost_so_far_cents: number
   cost_so_far_usd: string
   routing_reason: string | null
+  spec: {
+    os: string
+    cpu: number
+    memoryGb: number
+    diskGb: number | null
+    snapshot: string | null
+    region: string | null
+    ttlSec: number | null
+  }
+  region: string | null
+  billing: {
+    mode: string
+    rate_cents_per_hour: number | null
+    retail_cents_per_hour: number | null
+    service_fee_cents_per_hour: number | null
+  }
 }
 
 interface ListBody<T> {
@@ -220,7 +244,7 @@ interface CatalogProvider {
 
 interface KeyBody {
   id: string
-  secret: string
+  api_key: string
   prefix: string
   last4: string
   scopes: string[]
@@ -332,9 +356,9 @@ describe('api keys', () => {
     })
     expect(created.status).toBe(201)
     const key = await readBody<KeyBody>(created)
-    expect(key.secret.startsWith('rox_sk_live_')).toBe(true)
+    expect(key.api_key.startsWith('rox_sk_live_')).toBe(true)
     expect(key.prefix).toBe('rox_sk_live_')
-    expect(key.last4).toBe(key.secret.slice(-4))
+    expect(key.last4).toBe(key.api_key.slice(-4))
     expect(key.scopes).toEqual(['sandboxes:read'])
     expect(key.created_at).toBe('2026-11-19T12:00:00.000Z')
 
@@ -346,9 +370,9 @@ describe('api keys', () => {
     expect(row?.prefix).toBe('rox_sk_live_')
     expect(row?.last4).toBe(key.last4)
     expect(row?.last_used_at).toBeNull()
-    expect(JSON.stringify(list)).not.toContain(key.secret)
+    expect(JSON.stringify(list)).not.toContain(key.api_key)
 
-    const usable = await call(app, '/v1/sandboxes', { token: key.secret })
+    const usable = await call(app, '/v1/sandboxes', { token: key.api_key })
     expect(usable.status).toBe(200)
   })
 
@@ -370,7 +394,7 @@ describe('api keys', () => {
     )
     const deleted = await call(app, `/v1/keys/${created.id}`, { method: 'DELETE', token: secret })
     expect(deleted.status).toBe(204)
-    const revoked = await call(app, '/v1/sandboxes', { token: created.secret })
+    const revoked = await call(app, '/v1/sandboxes', { token: created.api_key })
     expect(revoked.status).toBe(401)
   })
 })
@@ -380,20 +404,53 @@ describe('api keys', () => {
 // ============================================================
 
 describe('catalog', () => {
-  test('lists the seven products and declared provider capabilities', async () => {
+  test('lists the eight priced products and declared provider capabilities', async () => {
     const { app, secret } = harness()
     const response = await call(app, '/v1/catalog', { token: secret })
     expect(response.status).toBe(200)
-    const body = await readBody<{ products: { id: string }[]; providers: CatalogProvider[] }>(response)
+    const body = await readBody<{
+      products: {
+        id: string
+        cents_per_hour: number
+        service_fee_cents_per_hour: number
+        available: boolean
+        note: string | null
+      }[]
+      providers: CatalogProvider[]
+      managed_providers: string[]
+    }>(response)
     expect(body.products.map((product) => product.id)).toEqual([
-      'sandbox',
-      'desktop',
-      'gpu',
-      'job',
-      'deployment',
-      'volume',
-      'template',
+      'linux-start',
+      'linux-pro',
+      'linux-large',
+      'windows-start',
+      'windows-pro',
+      'windows-large',
+      'windows-xl',
+      'gpu-h100',
     ])
+    expect(body.products.map((product) => product.cents_per_hour)).toEqual([
+      20, 36, 60, 34, 56, 92, 174, 786,
+    ])
+    expect(body.products.map((product) => product.service_fee_cents_per_hour)).toEqual([
+      5, 5, 9, 5, 8, 14, 26, 118,
+    ])
+    expect(body.products.filter((product) => product.available).map((product) => product.id)).toEqual([
+      'linux-start',
+      'linux-pro',
+      'linux-large',
+    ])
+    expect(body.products.map((product) => product.note)).toEqual([
+      null,
+      null,
+      null,
+      'Класс Windows недоступен в этом аккаунте Daytona',
+      'Класс Windows недоступен в этом аккаунте Daytona',
+      'Класс Windows недоступен в этом аккаунте Daytona',
+      'Класс Windows недоступен в этом аккаунте Daytona',
+      'Нужны GPU-кредиты Daytona',
+    ])
+    expect(body.managed_providers).toEqual([])
     expect(body.providers).toHaveLength(1)
     expect(body.providers[0]).toMatchObject({
       id: 'daytona',
@@ -612,6 +669,23 @@ describe('sandbox operations', () => {
     })
   })
 
+  test('exec carries cwd and timeout_sec and answers exit_code', async () => {
+    const { app, secret, provider } = harness()
+    const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'exec-cwd'))
+    const response = await call(app, `/v1/sandboxes/${created.id}/exec`, {
+      method: 'POST',
+      token: secret,
+      body: { command: 'pwd', cwd: '/root', timeout_sec: 12 },
+    })
+    expect(response.status).toBe(200)
+    expect(await readBody<{ stdout: string; stderr: string; exit_code: number }>(response)).toEqual({
+      stdout: 'ok: pwd',
+      stderr: '',
+      exit_code: 0,
+    })
+    expect(provider.lastExec).toEqual({ command: 'pwd', cwd: '/root', timeoutMs: 12_000 })
+  })
+
   test('exec without a command is 400', async () => {
     const { app, secret } = harness()
     const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'exec-empty'))
@@ -700,17 +774,55 @@ describe('sandbox operations', () => {
 // Usage
 // ============================================================
 
+describe('money', () => {
+  test('there is no customer top-up route at all', async () => {
+    // Even a key that once carried `billing:write` finds nothing to call:
+    // money is added by staff under `/v1/admin/tenants/{id}/credit`.
+    const { app, secret } = harness({ scopes: [...ALL_SCOPES] })
+    const response = await call(app, '/v1/account/topup', {
+      method: 'POST',
+      token: secret,
+      body: { amountCents: 100 },
+    })
+    expect(response.status).toBe(404)
+    expect((await readBody<ErrorBody>(response)).error.code).toBe('not_found')
+  })
+})
+
 describe('usage', () => {
   test('usage lists money in integer cents per sandbox', async () => {
     const { app, secret } = harness()
     const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'usage-1'))
     const response = await call(app, '/v1/usage', { token: secret })
     expect(response.status).toBe(200)
-    const body = await readBody<ListBody<{ ref: string; product: string; cents: number; currency: string; at: string }>>(response)
+    const body = await readBody<
+      ListBody<{
+        ref: string
+        product: string
+        label: string | null
+        cents: number
+        currency: string
+        created_at: string
+        billing_mode: string
+      }>
+    >(response)
     expect(body.object).toBe('list')
-    expect(body.data).toMatchObject([{ ref: created.id, product: 'sandbox', cents: 5, currency: 'USD' }])
-    expect(typeof body.data[0]!.at).toBe('string')
-    expect(Number.isNaN(Date.parse(body.data[0]!.at))).toBe(false)
+    expect(body.data).toMatchObject([
+      { ref: created.id, product: 'sandbox', cents: 5, currency: 'USD', billing_mode: 'byok' },
+    ])
+    expect(typeof body.data[0]!.created_at).toBe('string')
+    expect(Number.isNaN(Date.parse(body.data[0]!.created_at))).toBe(false)
+  })
+
+  test('usage as CSV carries the invoice header', async () => {
+    const { app, secret } = harness()
+    await createSandbox(app, secret, 'usage-csv')
+    const response = await call(app, '/v1/usage?format=csv', { token: secret })
+    expect(response.status).toBe(200)
+    expect(response.headers.get('content-type')).toContain('text/csv')
+    const text = await response.text()
+    expect(text.split('\n')[0]).toContain('rate_cents_per_hour')
+    expect(text).toContain('usage')
   })
 
   test('usage needs billing:read', async () => {

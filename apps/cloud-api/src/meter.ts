@@ -1,10 +1,15 @@
 /**
- * Live platform-fee meter for Rox Cloud.
+ * Live meter for Rox Cloud.
  *
- * The customer pays their provider directly; the wallet carries only Rox's
- * fee. The meter turns elapsed wall-clock time into integer cents so the
- * console shows a rising cost instead of a blank column, and so a stop
- * settles against the same arithmetic the customer watched.
+ * A machine is priced when it is sold, not when it stops: a managed guest pays
+ * the retail price of its shape, a customer with their own provider key pays
+ * the service fee. Each record therefore carries its own `rateCentsPerHour`,
+ * and this meter reads that rate first, falling back to the deployment rate
+ * only for state written before per-record pricing existed.
+ *
+ * The meter turns elapsed wall-clock time into integer cents so the console
+ * shows a rising cost instead of a blank column, and so a stop settles against
+ * the same arithmetic the customer watched.
  *
  * Only non-terminal states accrue: once a sandbox is stopped, failed or
  * expired, its fee stays at the last value.
@@ -31,6 +36,17 @@ export function accruedCents(createdAt: number, at: number, rateCentsPerHour: nu
   return Math.max(1, Math.ceil((elapsedMs / 3_600_000) * rateCentsPerHour))
 }
 
+/**
+ * The rate one machine is metered at: its own when the record has one, the
+ * deployment rate otherwise. Old records restore as the flat rate this way.
+ */
+export function recordRateCentsPerHour(
+  record: Pick<SandboxRecord, 'rateCentsPerHour'>,
+  fallbackCentsPerHour: number,
+): number {
+  return record.rateCentsPerHour ?? fallbackCentsPerHour
+}
+
 export interface Meter {
   /** Recompute every billable sandbox; returns how many rows changed. */
   tick(): number
@@ -48,7 +64,8 @@ export function createMeter(deps: {
       let changed = 0
       for (const record of deps.store.sandboxes.values()) {
         if (!BILLABLE_STATES[record.state]) continue
-        const cents = accruedCents(record.createdAt, at, deps.rateCentsPerHour)
+        const rate = recordRateCentsPerHour(record, deps.rateCentsPerHour)
+        const cents = accruedCents(record.createdAt, at, rate)
         if (cents === record.costCents) continue
         record.costCents = cents
         const index = deps.store.usage.findIndex(

@@ -164,6 +164,52 @@ function errorText(run: () => unknown): Promise<string> {
 // ============================================================
 // Round trip
 // ============================================================
+/** Billing fields, revocation and the guest profile survive one round trip. */
+test('price, mode, region, revocation and the guest flag survive a reload', async () => {
+  const world = buildWorld({ sandboxState: 'stopped' })
+  const sandboxId = [...world.store.sandboxes.keys()][0]
+  if (sandboxId === undefined) throw new Error('фикстура без машины')
+  const record = world.store.sandboxes.get(sandboxId)
+  if (record === undefined) throw new Error('фикстура без машины')
+  world.store.sandboxes.set(sandboxId, {
+    ...record,
+    rateCentsPerHour: 36,
+    retailCentsPerHour: 36,
+    billingMode: 'managed',
+    region: 'us-west-4',
+  })
+  const key = [...world.store.apiKeys.values()][0]
+  if (key === undefined) throw new Error('фикстура без ключа')
+  world.store.apiKeys.set(key.id, { ...key, revokedAt: NOW })
+  const guest = world.store.addTenant('Гость', {
+    guest: true,
+    limits: { maxConcurrentSandboxes: 1, maxCpuPerSandbox: 16, maxMonthlyCents: 2000, maxTtlSec: 86_400 },
+  })
+
+  await saveState(file, snapshotState(world.deps))
+  const loaded = await loadState(file)
+  const after = emptyDeps()
+  applyState(loaded as PersistedState, after)
+
+  expect(after.store.sandboxes.get(sandboxId)).toMatchObject({
+    rateCentsPerHour: 36,
+    retailCentsPerHour: 36,
+    billingMode: 'managed',
+    region: 'us-west-4',
+  })
+  expect(after.store.apiKeys.get(key.id)?.revokedAt).toBe(NOW)
+  expect(verifyApiKey(after.store, world.secret)).toBeNull()
+  expect(after.store.tenants.get(guest.id)).toMatchObject({
+    guest: true,
+    limits: {
+      maxConcurrentSandboxes: 1,
+      maxCpuPerSandbox: 16,
+      maxMonthlyCents: 2000,
+      maxTtlSec: 86_400,
+    },
+  })
+})
+
 
 describe('state round trip', () => {
   test('tenants, key hashes, wallet, ledger, provider key and audit survive a reload', async () => {

@@ -27,6 +27,7 @@ import { createHash, timingSafeEqual } from 'node:crypto'
 import type { KeyStore, ProviderCredential } from '../../../packages/cloud-keys/src/index.ts'
 import { listCredentials } from '../../../packages/cloud-keys/src/index.ts'
 import type {
+  AuditAction,
   AuditLog,
   KillProvider,
   KillRequest,
@@ -39,8 +40,9 @@ import { topUp } from '../../../packages/cloud-runner/src/entitlement.ts'
 import type { AccountLimits } from '../../../packages/cloud-runner/src/limits.ts'
 import type { SandboxState } from '../../../packages/cloud-runner/src/sandbox.ts'
 import { CloudRunnerError } from '../../../packages/cloud-runner/src/types.ts'
-import type { MemoryStore, SandboxRecord, Tenant } from './store.ts'
-import { nextId } from './store.ts'
+import type { MemoryStore, ApiKeyRecord, RequestRow, SandboxRecord, Tenant } from './store.ts'
+import { REQUEST_LOG_CAPACITY, SCOPES, nextId } from './store.ts'
+import { generateApiKey } from './auth.ts'
 
 // ============================================================
 // Options
@@ -66,6 +68,17 @@ export interface AdminOptions {
    * route answers 404 — no default key is invented.
    */
   readonly adminKey?: string
+  /**
+   * Platform credentials Rox pays with, as `{provider, last4}`. Only the last
+   * four characters ever reach the panel; the key itself lives in `platform.ts`.
+   */
+  readonly platformKeys?: () => readonly { readonly provider: string; readonly last4: string | null }[]
+  /**
+   * The request journal of the front door. The orchestrator passes the ring
+   * that records every call, staff and support included; without it the panel
+   * falls back to the customer API's own ring.
+   */
+  readonly requests?: () => readonly RequestRow[]
   /** Stop one machine at its provider and settle the wallet. */
   readonly stopResource: (tenantId: string, sandboxId: string) => Promise<void>
   readonly now?: () => number
@@ -156,6 +169,13 @@ const TENANT_AUDIT_LIMIT = 50
 const STAFF_ACTOR = 'staff'
 const STAFF_REQUESTER = 'staff:requester'
 
+/**
+ * `AuditAction` is a closed union in `@rox/cloud-ops`; a key rotation is a new
+ * staff action and keeps its own name in the trail. One documented widening
+ * here, the same way the runner widens its gate codes.
+ */
+const ROTATE_KEY_ACTION = 'tenant.rotate_key' as AuditAction
+
 const KILL_PROVIDERS: readonly KillProvider[] = ['daytona', 'modal', 'e2b']
 
 const ALL_STATES: readonly SandboxState[] = [
@@ -243,6 +263,22 @@ export function createAdminApp(options: AdminOptions): AdminApp {
       created_at: iso(record.createdAt),
       expires_at: record.expiresAt === undefined ? null : iso(record.expiresAt),
       cost_cents: record.costCents,
+      region: record.region ?? record.spec.region ?? null,
+      billing_mode: record.billingMode ?? 'byok',
+      rate_cents_per_hour: record.rateCentsPerHour ?? null,
+      // The stored request, in the same shape the customer API reports, so the
+      // staff table can print cpu / memory / disk / GPU instead of «не передан».
+      spec: {
+        os: record.spec.os,
+        cpu: record.spec.cpu,
+        memoryGb: record.spec.memoryGb,
+        diskGb: record.spec.diskGb ?? null,
+        gpu: record.spec.gpu ?? null,
+        image: record.spec.image ?? null,
+        snapshot: record.spec.snapshot ?? null,
+        region: record.region ?? record.spec.region ?? null,
+        ttlSec: record.spec.ttlSec ?? null,
+      },
     }
   }
 
@@ -252,11 +288,46 @@ export function createAdminApp(options: AdminOptions): AdminApp {
       id: tenant.id,
       name: tenant.name,
       created_at: iso(tenant.createdAt),
+      guest: tenant.guest === true,
       balance_cents: account?.balanceCents ?? 0,
       reserved_cents: account?.reservedCents ?? 0,
       month_spent_cents: account?.monthSpentCents ?? 0,
+      monthly_cap_cents: account?.monthlyCapCents ?? 0,
       sandboxes: store.sandboxesOf(tenant.id).length,
       credentials: listCredentials(keyStore, tenant.id).length,
+      keys: tenantApiKeys(tenant.id).length,
+    }
+  }
+
+  /** Every key of one tenant, newest first, including the revoked ones. */
+  function tenantApiKeys(tenantId: string): ApiKeyRecord[] {
+    const rows: ApiKeyRecord[] = []
+    for (const record of store.apiKeys.values()) {
+      if (record.tenantId === tenantId) rows.push(record)
+    }
+    return rows.sort((a, b) => b.createdAt - a.createdAt || a.id.localeCompare(b.id))
+  }
+
+  /**
+   * A customer key as the panel shows it: recognition data, the wallet behind
+   * it and whether it still works. The secret and its hash stay out.
+   */
+  function apiKeyJson(record: ApiKeyRecord): Record<string, unknown> {
+    const tenant = store.tenants.get(record.tenantId)
+    const account = moneyStore.getAccount(record.tenantId)
+    return {
+      id: record.id,
+      tenant_id: record.tenantId,
+      tenant_name: tenant?.name ?? null,
+      guest: tenant?.guest === true,
+      prefix: record.prefix,
+      last4: record.last4,
+      scopes: record.scopes,
+      created_at: iso(record.createdAt),
+      last_used_at: record.lastUsedAt === undefined ? null : iso(record.lastUsedAt),
+      revoked_at: record.revokedAt === undefined ? null : iso(record.revokedAt),
+      balance_cents: account?.balanceCents ?? 0,
+      reserved_cents: account?.reservedCents ?? 0,
     }
   }
 
@@ -381,6 +452,27 @@ export function createAdminApp(options: AdminOptions): AdminApp {
     }
   }
 
+  /** `0` means «не ограничено», so the tighter positive ceiling wins. */
+  function tighterCeiling(a: number, b: number): number {
+    if (a <= 0) return b
+    if (b <= 0) return a
+    return Math.min(a, b)
+  }
+
+  /**
+   * What one tenant is actually held to: the deployment ceiling, narrowed by
+   * the tenant's own profile. The same numbers `beforeCreate` enforces.
+   */
+  function effectiveLimits(tenant: Tenant): AccountLimits {
+    const own = tenant.limits
+    if (own === undefined) return limits
+    return {
+      maxConcurrentSandboxes: tighterCeiling(limits.maxConcurrentSandboxes, own.maxConcurrentSandboxes),
+      maxCpuPerSandbox: tighterCeiling(limits.maxCpuPerSandbox, own.maxCpuPerSandbox),
+      maxMonthlyCents: tighterCeiling(limits.maxMonthlyCents, own.maxMonthlyCents),
+    }
+  }
+
   // ---------- authentication ----------
 
   function requireStaff(req: Request): void {
@@ -413,10 +505,18 @@ export function createAdminApp(options: AdminOptions): AdminApp {
     const openKillSwitches = killSwitch.list().filter((entry) => entry.state === 'active').length
     return json(200, {
       tenants: store.tenants.size,
+      guests: [...store.tenants.values()].filter((tenant) => tenant.guest === true).length,
       active_sandboxes: activeSandboxes,
       credentials,
       balance_cents_total: balanceCents,
       open_kill_switches: openKillSwitches,
+      // Last four only: the panel must show that a platform key exists, never
+      // the key itself.
+      platform_keys: (options.platformKeys?.() ?? []).map((entry) => ({
+        provider: entry.provider,
+        present: entry.last4 !== null,
+        last4: entry.last4,
+      })),
     })
   }
 
@@ -476,10 +576,11 @@ export function createAdminApp(options: AdminOptions): AdminApp {
     return json(200, {
       tenant: tenantJson(tenant),
       account: accountJson(moneyStore.getAccount(tenant.id)),
-      limits: limitsJson(limits),
+      limits: limitsJson(effectiveLimits(tenant)),
       sandboxes,
       ledger,
       audit: auditRows,
+      keys: tenantApiKeys(tenant.id).map(apiKeyJson),
     })
   }
 
@@ -521,28 +622,57 @@ export function createAdminApp(options: AdminOptions): AdminApp {
     })
   }
 
-  /** Change the ceiling or the paid flag. The reason is required, as for every write. */
+  /**
+   * Change the ceilings or the paid flag. Every write needs a reason.
+   *
+   * Concurrency, cores and the monthly cap live on the tenant profile, which
+   * `beforeCreate` reads; the monthly number is mirrored into the wallet's
+   * `monthlyCapCents` so both sides of the pilot agree. `monthlyCapCents` stays
+   * accepted as the older name for the same ceiling.
+   */
   async function limitsRoute(id: string, req: Request): Promise<Response> {
     const tenant = requireTenant(id)
     const body = await readJson(req)
     const rawCap = body.monthlyCapCents
+    const rawMonthly = body.maxMonthlyCents
     const rawPaid = body.paid
-    if (rawCap === undefined && rawPaid === undefined) {
+    const rawConcurrency = body.maxConcurrentSandboxes
+    const rawCpu = body.maxCpuPerSandbox
+    if (
+      rawCap === undefined &&
+      rawMonthly === undefined &&
+      rawPaid === undefined &&
+      rawConcurrency === undefined &&
+      rawCpu === undefined
+    ) {
       throw new AdminError(
         'invalid_request',
-        'Нужно хотя бы одно поле: monthlyCapCents (целые центы не меньше нуля) или paid (true/false)',
+        'Нужно хотя бы одно поле: maxConcurrentSandboxes, maxCpuPerSandbox, maxMonthlyCents (или monthlyCapCents) либо paid',
       )
     }
-    let monthlyCapCents: number | undefined
-    if (rawCap !== undefined) {
-      if (typeof rawCap !== 'number' || !Number.isInteger(rawCap) || rawCap < 0) {
-        throw new AdminError(
-          'invalid_request',
-          'Поле monthlyCapCents должно быть целым числом центов не меньше нуля',
-        )
+    const ceiling = (value: unknown, field: string): number => {
+      if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+        throw new AdminError('invalid_request', `Поле ${field} должно быть целым числом не меньше нуля`)
       }
-      monthlyCapCents = rawCap
+      return value
     }
+    if (rawCap !== undefined && rawMonthly !== undefined && rawCap !== rawMonthly) {
+      throw new AdminError(
+        'invalid_request',
+        'monthlyCapCents и maxMonthlyCents — одно и то же; задайте одно значение',
+      )
+    }
+    const monthly =
+      rawMonthly !== undefined
+        ? ceiling(rawMonthly, 'maxMonthlyCents')
+        : rawCap !== undefined
+          ? ceiling(rawCap, 'monthlyCapCents')
+          : undefined
+    const concurrency =
+      rawConcurrency === undefined
+        ? undefined
+        : ceiling(rawConcurrency, 'maxConcurrentSandboxes')
+    const cpu = rawCpu === undefined ? undefined : ceiling(rawCpu, 'maxCpuPerSandbox')
     let paid: boolean | undefined
     if (rawPaid !== undefined) {
       if (typeof rawPaid !== 'boolean') {
@@ -551,10 +681,25 @@ export function createAdminApp(options: AdminOptions): AdminApp {
       paid = rawPaid
     }
     const reason = requireReasonUnder(body.reason, 'reason', 'изменение лимитов арендатора')
+
+    const previous = tenant.limits
+    const profileChanged = monthly !== undefined || concurrency !== undefined || cpu !== undefined
+    if (profileChanged) {
+      store.tenants.set(tenant.id, {
+        ...tenant,
+        limits: {
+          maxConcurrentSandboxes: concurrency ?? previous?.maxConcurrentSandboxes ?? 0,
+          maxCpuPerSandbox: cpu ?? previous?.maxCpuPerSandbox ?? 0,
+          maxMonthlyCents: monthly ?? previous?.maxMonthlyCents ?? 0,
+          ...(previous?.maxTtlSec === undefined ? {} : { maxTtlSec: previous.maxTtlSec }),
+        },
+      })
+    }
+
     const base = ensureAccount(tenant)
     const next: Account = {
       ...base,
-      monthlyCapCents: monthlyCapCents ?? base.monthlyCapCents,
+      monthlyCapCents: monthly ?? base.monthlyCapCents,
       paid: paid ?? base.paid,
     }
     moneyStore.saveAccount(next)
@@ -565,11 +710,64 @@ export function createAdminApp(options: AdminOptions): AdminApp {
       targetId: tenant.id,
       reason,
       details: {
-        ...(monthlyCapCents !== undefined ? { monthly_cap_cents: monthlyCapCents } : {}),
+        ...(monthly !== undefined ? { monthly_cap_cents: monthly } : {}),
+        ...(concurrency !== undefined ? { max_concurrent_sandboxes: concurrency } : {}),
+        ...(cpu !== undefined ? { max_cpu_per_sandbox: cpu } : {}),
         ...(paid !== undefined ? { paid } : {}),
       },
     })
-    return json(200, { tenant: tenantJson(tenant), account: accountJson(next) })
+    const updated = store.tenants.get(tenant.id) ?? tenant
+    return json(200, {
+      tenant: tenantJson(updated),
+      account: accountJson(next),
+      limits: limitsJson(effectiveLimits(updated)),
+    })
+  }
+
+  /**
+   * Replace every key of one tenant with a single new one.
+   *
+   * Revoking rather than deleting keeps the trail readable — the panel shows
+   * what a rotation replaced — while authentication rejects the old secrets
+   * from this instant. The new secret appears in this response and never again.
+   */
+  async function rotateKeyRoute(id: string, req: Request): Promise<Response> {
+    const tenant = requireTenant(id)
+    const body = await readJson(req)
+    const reason = requireReasonUnder(body.reason, 'reason', 'перевыпуск ключа')
+    const at = now()
+    const revoked = store.revokeTenantKeys(tenant.id, at)
+    const generated = generateApiKey()
+    const record: ApiKeyRecord = {
+      id: nextId('key_'),
+      tenantId: tenant.id,
+      prefix: generated.prefix,
+      last4: generated.last4,
+      hash: generated.hash,
+      scopes: SCOPES,
+      createdAt: at,
+    }
+    store.addApiKey(record)
+    audit.append({
+      actorId: STAFF_ACTOR,
+      action: ROTATE_KEY_ACTION,
+      targetType: 'tenant',
+      targetId: tenant.id,
+      reason,
+      details: { revoked_keys: revoked, key_id: record.id, key_last4: record.last4 },
+    })
+    return json(200, {
+      tenant: tenantJson(tenant),
+      revoked,
+      key: {
+        id: record.id,
+        api_key: generated.secret,
+        prefix: record.prefix,
+        last4: record.last4,
+        scopes: record.scopes,
+        created_at: iso(record.createdAt),
+      },
+    })
   }
 
   // ---------- resources ----------
@@ -721,8 +919,70 @@ export function createAdminApp(options: AdminOptions): AdminApp {
     return json(200, killJson(disabled))
   }
 
+  // ---------- customer keys ----------
+
+  /** Every customer key with the wallet behind it; revoked rows stay visible. */
+  function keysRoute(url: URL): Response {
+    const tenantFilter = url.searchParams.get('tenant')
+    const data: Record<string, unknown>[] = []
+    for (const tenant of [...store.tenants.values()].sort((a, b) => a.createdAt - b.createdAt)) {
+      if (tenantFilter !== null && tenant.id !== tenantFilter) continue
+      for (const record of tenantApiKeys(tenant.id)) data.push(apiKeyJson(record))
+    }
+    return json(200, { object: 'list', data })
+  }
+
+  // ---------- request journal ----------
+
+  function requestJson(row: RequestRow): Record<string, unknown> {
+    return {
+      at: iso(row.at),
+      method: row.method,
+      path: row.path,
+      status: row.status,
+      duration_ms: row.durationMs,
+      tenant_id: row.tenantId ?? null,
+      key_last4: row.keyLast4 ?? null,
+      ip: row.ip ?? null,
+      request_id: row.requestId ?? null,
+    }
+  }
+
+  /**
+   * The newest calls first. The front door's ring is the real journal (it sees
+   * staff and support calls too); the customer API's own ring is the fallback
+   * for a deployment or test that only wired `createApp`.
+   */
+  function requestsRoute(url: URL): Response {
+    const raw = url.searchParams.get('limit')
+    let limit = DEFAULT_AUDIT_LIMIT
+    if (raw !== null) {
+      const parsed = Number(raw)
+      if (!Number.isInteger(parsed) || parsed < 1 || parsed > MAX_AUDIT_LIMIT) {
+        throw new AdminError(
+          'invalid_request',
+          `limit должен быть целым числом от 1 до ${MAX_AUDIT_LIMIT}`,
+        )
+      }
+      limit = parsed
+    }
+    const tenantFilter = url.searchParams.get('tenant')
+    const source = options.requests?.() ?? store.requests
+    const rows = source.filter((row) => tenantFilter === null || row.tenantId === tenantFilter)
+    return json(200, {
+      object: 'list',
+      capacity: REQUEST_LOG_CAPACITY,
+      data: rows.slice(-limit).reverse().map(requestJson),
+    })
+  }
+
   // ---------- audit ----------
 
+  /**
+   * The staff trail with the filters the panel offers: one tenant (the entry's
+   * `target_id`), one action, and a lower time bound. `limit` keeps the newest
+   * matches, and the answer is newest first.
+   */
   function auditRoute(url: URL): Response {
     const raw = url.searchParams.get('limit')
     let limit = DEFAULT_AUDIT_LIMIT
@@ -736,8 +996,24 @@ export function createAdminApp(options: AdminOptions): AdminApp {
       }
       limit = parsed
     }
+    const tenant = url.searchParams.get('tenant')
+    const action = url.searchParams.get('action')
+    const since = url.searchParams.get('since')
+    if (since !== null && Number.isNaN(Date.parse(since))) {
+      throw new AdminError(
+        'invalid_request',
+        'since должен быть датой в формате ISO-8601, например 2026-11-22T00:00:00Z',
+      )
+    }
     // The store returns the newest N in append order; the journal reads top-down.
-    const entries = audit.list({ limit }).reverse()
+    const entries = audit
+      .list({
+        ...(tenant === null ? {} : { targetId: tenant }),
+        ...(action === null ? {} : { action: action as AuditAction }),
+        ...(since === null ? {} : { from: since }),
+        limit,
+      })
+      .reverse()
     return json(200, { object: 'list', data: entries.map(auditJson) })
   }
 
@@ -748,11 +1024,15 @@ export function createAdminApp(options: AdminOptions): AdminApp {
     const segments = url.pathname.split('/').filter((part) => part.length > 0)
     const method = req.method.toUpperCase()
 
-    if (segments[0] !== 'admin') throw new AdminError('not_found', 'Такого адреса нет')
+    // The staff JSON API lives under `/v1/admin`, because `/admin/*` is now
+    // the staff pages the single-page app serves.
+    if (segments[0] !== 'v1' || segments[1] !== 'admin') {
+      throw new AdminError('not_found', 'Такого адреса нет')
+    }
     requireStaff(req)
 
-    if (segments.length === 2) {
-      switch (segments[1]) {
+    if (segments.length === 3) {
+      switch (segments[2]) {
         case 'overview':
           if (method === 'GET') return overviewRoute()
           break
@@ -764,6 +1044,12 @@ export function createAdminApp(options: AdminOptions): AdminApp {
           break
         case 'credentials':
           if (method === 'GET') return credentialsRoute()
+          break
+        case 'keys':
+          if (method === 'GET') return keysRoute(url)
+          break
+        case 'requests':
+          if (method === 'GET') return requestsRoute(url)
           break
         case 'killswitch':
           if (method === 'GET') return killListRoute()
@@ -782,22 +1068,23 @@ export function createAdminApp(options: AdminOptions): AdminApp {
       }
     }
 
-    if (segments[1] === 'resources' && segments.length === 4 && segments[3] === 'stop' && method === 'POST') {
-      return stopResourceRoute(segments[2]!, req)
+    if (segments[2] === 'resources' && segments.length === 5 && segments[4] === 'stop' && method === 'POST') {
+      return stopResourceRoute(segments[3]!, req)
     }
 
-    if (segments[1] === 'tenants' && segments.length === 3) {
-      if (method === 'GET') return tenantDetailRoute(segments[2]!)
-      if (method === 'PATCH') return limitsRoute(segments[2]!, req)
+    if (segments[2] === 'tenants' && segments.length === 4) {
+      if (method === 'GET') return tenantDetailRoute(segments[3]!)
+      if (method === 'PATCH') return limitsRoute(segments[3]!, req)
     }
 
-    if (segments[1] === 'tenants' && segments.length === 4 && segments[3] === 'credit' && method === 'POST') {
-      return creditRoute(segments[2]!, req)
+    if (segments[2] === 'tenants' && segments.length === 5 && method === 'POST') {
+      if (segments[4] === 'credit') return creditRoute(segments[3]!, req)
+      if (segments[4] === 'rotate-key') return rotateKeyRoute(segments[3]!, req)
     }
 
-    if (segments[1] === 'killswitch' && segments.length === 4 && method === 'POST') {
-      if (segments[3] === 'approve') return killApproveRoute(segments[2]!, req)
-      if (segments[3] === 'disable') return killDisableRoute(segments[2]!, req)
+    if (segments[2] === 'killswitch' && segments.length === 5 && method === 'POST') {
+      if (segments[4] === 'approve') return killApproveRoute(segments[3]!, req)
+      if (segments[4] === 'disable') return killDisableRoute(segments[3]!, req)
     }
 
     throw new AdminError('not_found', 'Такого адреса нет')

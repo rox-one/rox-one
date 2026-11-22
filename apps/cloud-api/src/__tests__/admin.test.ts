@@ -3,7 +3,7 @@
  *
  * Everything runs in memory against a fake Daytona endpoint: no real
  * credential, no network, no port. Two surfaces are driven through
- * `Request`/`Response` — the `/admin/` API and the one-origin front door that
+ * `Request`/`Response` — the `/v1/admin/` API and the one-origin front door that
  * also serves the pages — so the same answers the browser would get are the
  * ones asserted here.
  */
@@ -287,7 +287,7 @@ describe('staff access', () => {
   test('a request without the staff key is refused with 401', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
 
-    const anonymous = await staffCall(h, 'GET', '/admin/overview')
+    const anonymous = await staffCall(h, 'GET', '/v1/admin/overview')
     expect(anonymous.status).toBe(401)
     const error = await envelope(anonymous)
     expect(error.type).toBe('authentication_error')
@@ -295,13 +295,13 @@ describe('staff access', () => {
     expect(error.request_id.startsWith('req_')).toBe(true)
     expect(anonymous.headers.get('x-request-id')).toBe(error.request_id)
 
-    const wrong = await staffCall(h, 'GET', '/admin/overview', { key: 'not-the-key' })
+    const wrong = await staffCall(h, 'GET', '/v1/admin/overview', { key: 'not-the-key' })
     expect(wrong.status).toBe(401)
   })
 
   test('a deployment without ROX_ADMIN_KEY answers 404 on every route', async () => {
     const h = harness()
-    for (const path of ['/admin/health', '/admin/overview', '/admin/tenants', '/admin/audit']) {
+    for (const path of ['/v1/admin/health', '/v1/admin/overview', '/v1/admin/tenants', '/v1/admin/audit']) {
       const response = await staffCall(h, 'GET', path, { key: ADMIN_KEY })
       expect(response.status).toBe(404)
       expect((await envelope(response)).code).toBe('not_found')
@@ -310,7 +310,7 @@ describe('staff access', () => {
 
   test('health answers when the panel is configured', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
-    const response = await staffCall(h, 'GET', '/admin/health', { key: ADMIN_KEY })
+    const response = await staffCall(h, 'GET', '/v1/admin/health', { key: ADMIN_KEY })
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ ok: true, runtime: true })
   })
@@ -325,16 +325,18 @@ describe('overview and tenants', () => {
     const h = harness({ adminKey: ADMIN_KEY })
     await createSandbox(h)
 
-    const response = await staffCall(h, 'GET', '/admin/overview', { key: ADMIN_KEY })
+    const response = await staffCall(h, 'GET', '/v1/admin/overview', { key: ADMIN_KEY })
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
       tenants: 2,
+      guests: 0,
       // The booted machine plus the second tenant's running one.
       active_sandboxes: 2,
       credentials: 1,
       // 500 for the first tenant and 300 for the second, minus nothing yet.
       balance_cents_total: 800 - RATE_CENTS_PER_HOUR,
       open_kill_switches: 0,
+      platform_keys: [],
     })
   })
 
@@ -342,7 +344,7 @@ describe('overview and tenants', () => {
     const h = harness({ adminKey: ADMIN_KEY })
     await createSandbox(h)
 
-    const response = await staffCall(h, 'GET', '/admin/tenants', { key: ADMIN_KEY })
+    const response = await staffCall(h, 'GET', '/v1/admin/tenants', { key: ADMIN_KEY })
     expect(response.status).toBe(200)
     const body = (await response.json()) as {
       data: Array<{
@@ -374,7 +376,7 @@ describe('overview and tenants', () => {
     const h = harness({ adminKey: ADMIN_KEY })
     await createSandbox(h)
 
-    const mine = await staffCall(h, 'GET', `/admin/resources?tenant=${h.other.id}`, { key: ADMIN_KEY })
+    const mine = await staffCall(h, 'GET', `/v1/admin/resources?tenant=${h.other.id}`, { key: ADMIN_KEY })
     expect(mine.status).toBe(200)
     const body = (await mine.json()) as {
       data: Array<{ id: string; tenant_id: string; provider: string; state: string; expires_at: string | null }>
@@ -386,11 +388,11 @@ describe('overview and tenants', () => {
     expect(body.data[0]?.state).toBe('running')
     expect(body.data[0]?.expires_at).toBeNull()
 
-    const missing = await staffCall(h, 'GET', '/admin/resources?provider=modal', { key: ADMIN_KEY })
+    const missing = await staffCall(h, 'GET', '/v1/admin/resources?provider=modal', { key: ADMIN_KEY })
     const missingBody = (await missing.json()) as { data: unknown[] }
     expect(missingBody.data.length).toBe(0)
 
-    const bad = await staffCall(h, 'GET', '/admin/resources?state=exploded', { key: ADMIN_KEY })
+    const bad = await staffCall(h, 'GET', '/v1/admin/resources?state=exploded', { key: ADMIN_KEY })
     expect(bad.status).toBe(400)
     expect((await envelope(bad)).code).toBe('invalid_request')
   })
@@ -433,7 +435,7 @@ interface DetailBody {
 }
 
 async function detailCall(h: Harness, tenantId: string): Promise<{ response: Response; body: DetailBody }> {
-  const response = await staffCall(h, 'GET', `/admin/tenants/${tenantId}`, { key: ADMIN_KEY })
+  const response = await staffCall(h, 'GET', `/v1/admin/tenants/${tenantId}`, { key: ADMIN_KEY })
   expect(response.status).toBe(200)
   return { response, body: (await response.json()) as DetailBody }
 }
@@ -526,15 +528,15 @@ describe('tenant detail', () => {
   test('the detail audit keeps only writes against this tenant, newest first', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
     const sandboxId = await createSandbox(h)
-    await staffCall(h, 'POST', `/admin/resources/${sandboxId}/stop`, {
+    await staffCall(h, 'POST', `/v1/admin/resources/${sandboxId}/stop`, {
       key: ADMIN_KEY,
       body: { reason: 'остановка по тикету' },
     })
-    await staffCall(h, 'POST', `/admin/tenants/${h.tenant.id}/credit`, {
+    await staffCall(h, 'POST', `/v1/admin/tenants/${h.tenant.id}/credit`, {
       key: ADMIN_KEY,
       body: { amountCents: 25, reason: 'пополнение' },
     })
-    await staffCall(h, 'PATCH', `/admin/tenants/${h.tenant.id}`, {
+    await staffCall(h, 'PATCH', `/v1/admin/tenants/${h.tenant.id}`, {
       key: ADMIN_KEY,
       body: { monthlyCapCents: 12_345, reason: 'потолок' },
     })
@@ -555,7 +557,7 @@ describe('tenant credit', () => {
   test('a credit raises the balance and leaves the reason in the trail', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
 
-    const response = await staffCall(h, 'POST', `/admin/tenants/${h.tenant.id}/credit`, {
+    const response = await staffCall(h, 'POST', `/v1/admin/tenants/${h.tenant.id}/credit`, {
       key: ADMIN_KEY,
       body: { amountCents: 25, reason: 'компенсация за простой' },
     })
@@ -595,7 +597,7 @@ describe('tenant credit', () => {
     const third = h.store.addTenant('Третья команда')
     expect(h.moneyStore.getAccount(third.id)).toBeUndefined()
 
-    const response = await staffCall(h, 'POST', `/admin/tenants/${third.id}/credit`, {
+    const response = await staffCall(h, 'POST', `/v1/admin/tenants/${third.id}/credit`, {
       key: ADMIN_KEY,
       body: { amountCents: 100, reason: 'первое пополнение' },
     })
@@ -611,7 +613,7 @@ describe('tenant limits', () => {
   test('a patch changes the cap and the paid flag and records what changed', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
 
-    const response = await staffCall(h, 'PATCH', `/admin/tenants/${h.tenant.id}`, {
+    const response = await staffCall(h, 'PATCH', `/v1/admin/tenants/${h.tenant.id}`, {
       key: ADMIN_KEY,
       body: { monthlyCapCents: 12_345, paid: false, reason: 'клиент ушёл на предоплату' },
     })
@@ -633,7 +635,7 @@ describe('tenant limits', () => {
     })
 
     // A patch that names only one field leaves the other as it was.
-    const second = await staffCall(h, 'PATCH', `/admin/tenants/${h.tenant.id}`, {
+    const second = await staffCall(h, 'PATCH', `/v1/admin/tenants/${h.tenant.id}`, {
       key: ADMIN_KEY,
       body: { monthlyCapCents: 0, reason: 'потолок снят' },
     })
@@ -658,9 +660,9 @@ describe('tenant limits', () => {
     const h = harness({ adminKey: ADMIN_KEY })
     const missing = 'ten_missing'
     const calls: Array<{ method: string; path: string; body?: unknown }> = [
-      { method: 'GET', path: `/admin/tenants/${missing}` },
-      { method: 'POST', path: `/admin/tenants/${missing}/credit`, body: { amountCents: 25, reason: 'проверка' } },
-      { method: 'PATCH', path: `/admin/tenants/${missing}`, body: { monthlyCapCents: 100, reason: 'проверка' } },
+      { method: 'GET', path: `/v1/admin/tenants/${missing}` },
+      { method: 'POST', path: `/v1/admin/tenants/${missing}/credit`, body: { amountCents: 25, reason: 'проверка' } },
+      { method: 'PATCH', path: `/v1/admin/tenants/${missing}`, body: { monthlyCapCents: 100, reason: 'проверка' } },
     ]
     for (const call of calls) {
       const response = await staffCall(h, call.method, call.path, {
@@ -687,7 +689,7 @@ describe('tenant limits', () => {
       { amountCents: 25, reason: 'я'.repeat(201) },
     ]
     for (const body of bodies) {
-      const response = await staffCall(h, 'POST', `/admin/tenants/${h.tenant.id}/credit`, {
+      const response = await staffCall(h, 'POST', `/v1/admin/tenants/${h.tenant.id}/credit`, {
         key: ADMIN_KEY,
         body,
       })
@@ -712,7 +714,7 @@ describe('tenant limits', () => {
       { paid: true },
     ]
     for (const body of bodies) {
-      const response = await staffCall(h, 'PATCH', `/admin/tenants/${h.tenant.id}`, {
+      const response = await staffCall(h, 'PATCH', `/v1/admin/tenants/${h.tenant.id}`, {
         key: ADMIN_KEY,
         body,
       })
@@ -728,16 +730,16 @@ describe('tenant detail and secrets', () => {
   test('the detail never carries a provider secret or an audit chain link', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
     await createSandbox(h)
-    await staffCall(h, 'POST', `/admin/tenants/${h.tenant.id}/credit`, {
+    await staffCall(h, 'POST', `/v1/admin/tenants/${h.tenant.id}/credit`, {
       key: ADMIN_KEY,
       body: { amountCents: 25, reason: 'проверка' },
     })
-    await staffCall(h, 'PATCH', `/admin/tenants/${h.tenant.id}`, {
+    await staffCall(h, 'PATCH', `/v1/admin/tenants/${h.tenant.id}`, {
       key: ADMIN_KEY,
       body: { monthlyCapCents: 12_345, reason: 'проверка' },
     })
 
-    const response = await staffCall(h, 'GET', `/admin/tenants/${h.tenant.id}`, { key: ADMIN_KEY })
+    const response = await staffCall(h, 'GET', `/v1/admin/tenants/${h.tenant.id}`, { key: ADMIN_KEY })
     expect(response.status).toBe(200)
     const text = await response.text()
     const body = JSON.parse(text) as DetailBody
@@ -782,7 +784,7 @@ describe('stopping a machine', () => {
     const sandboxId = await createSandbox(h)
     const before = h.audit.list({ action: 'sandbox.stop' }).length
 
-    const refused = await staffCall(h, 'POST', `/admin/resources/${sandboxId}/stop`, {
+    const refused = await staffCall(h, 'POST', `/v1/admin/resources/${sandboxId}/stop`, {
       key: ADMIN_KEY,
       body: {},
     })
@@ -796,7 +798,7 @@ describe('stopping a machine', () => {
     const h = harness({ adminKey: ADMIN_KEY })
     const sandboxId = await createSandbox(h)
 
-    const stopped = await staffCall(h, 'POST', `/admin/resources/${sandboxId}/stop`, {
+    const stopped = await staffCall(h, 'POST', `/v1/admin/resources/${sandboxId}/stop`, {
       key: ADMIN_KEY,
       body: { reason: 'клиент просит остановить, тикет 42' },
     })
@@ -818,7 +820,7 @@ describe('stopping a machine', () => {
 
   test('a stop of an unknown machine answers 404 with the reason checked first', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
-    const missing = await staffCall(h, 'POST', '/admin/resources/sbx_missing/stop', {
+    const missing = await staffCall(h, 'POST', '/v1/admin/resources/sbx_missing/stop', {
       key: ADMIN_KEY,
       body: { reason: 'почему бы и нет' },
     })
@@ -852,7 +854,7 @@ describe('provider credentials', () => {
 
   test('the staff view never carries ciphertext, iv, tag or the secret', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
-    const response = await staffCall(h, 'GET', '/admin/credentials', { key: ADMIN_KEY })
+    const response = await staffCall(h, 'GET', '/v1/admin/credentials', { key: ADMIN_KEY })
     expect(response.status).toBe(200)
     const text = await response.text()
     expect(text).not.toContain('ciphertext')
@@ -880,7 +882,7 @@ describe('kill switch', () => {
   test('request, approve, block a boot, then disable and boot again', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
 
-    const requested = await staffCall(h, 'POST', '/admin/killswitch', {
+    const requested = await staffCall(h, 'POST', '/v1/admin/killswitch', {
       key: ADMIN_KEY,
       body: {
         scope: { provider: 'daytona', product: 'sandbox' },
@@ -894,7 +896,7 @@ describe('kill switch', () => {
     // A pending request blocks nothing yet.
     expect(h.killSwitch.isBlocked({ provider: 'daytona', product: 'sandbox' })).toBeNull()
 
-    const approved = await staffCall(h, 'POST', `/admin/killswitch/${pending.id}/approve`, {
+    const approved = await staffCall(h, 'POST', `/v1/admin/killswitch/${pending.id}/approve`, {
       key: ADMIN_KEY,
     })
     expect(approved.status).toBe(200)
@@ -908,7 +910,7 @@ describe('kill switch', () => {
     expect((await envelope(blocked)).code).toBe('kill_switch_active')
     expect(h.daytona.calls).toBe(0)
 
-    const disabled = await staffCall(h, 'POST', `/admin/killswitch/${pending.id}/disable`, {
+    const disabled = await staffCall(h, 'POST', `/v1/admin/killswitch/${pending.id}/disable`, {
       key: ADMIN_KEY,
       body: { reason: 'провайдер восстановился' },
     })
@@ -924,7 +926,7 @@ describe('kill switch', () => {
 
   test('a kill request without a reason is refused and the list stays empty', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
-    const response = await staffCall(h, 'POST', '/admin/killswitch', {
+    const response = await staffCall(h, 'POST', '/v1/admin/killswitch', {
       key: ADMIN_KEY,
       body: { scope: {}, enabled: true, reason: '   ' },
     })
@@ -938,7 +940,7 @@ describe('kill switch', () => {
     // A request made directly as `staff` cannot be approved as `staff`: the
     // switch refuses one person doing both halves.
     const direct = h.killSwitch.request({ scope: {}, enabled: true, reason: 'ручная проверка' }, 'staff')
-    const response = await staffCall(h, 'POST', `/admin/killswitch/${direct.id}/approve`, {
+    const response = await staffCall(h, 'POST', `/v1/admin/killswitch/${direct.id}/approve`, {
       key: ADMIN_KEY,
     })
     expect(response.status).toBe(409)
@@ -954,12 +956,12 @@ describe('audit journal', () => {
   test('entries come newest first and keep the reason', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
     const sandboxId = await createSandbox(h)
-    await staffCall(h, 'POST', `/admin/resources/${sandboxId}/stop`, {
+    await staffCall(h, 'POST', `/v1/admin/resources/${sandboxId}/stop`, {
       key: ADMIN_KEY,
       body: { reason: 'первая причина' },
     })
 
-    const response = await staffCall(h, 'GET', '/admin/audit?limit=50', { key: ADMIN_KEY })
+    const response = await staffCall(h, 'GET', '/v1/admin/audit?limit=50', { key: ADMIN_KEY })
     expect(response.status).toBe(200)
     const body = (await response.json()) as {
       data: Array<{ id: string; at: string; actor_id: string; action: string; target_id: string; reason: string }>
@@ -975,7 +977,7 @@ describe('audit journal', () => {
     expect(body.data[0]?.actor_id).toBe('staff')
     expect(body.data.some((entry) => entry.action === 'sandbox.create')).toBe(true)
 
-    const bad = await staffCall(h, 'GET', '/admin/audit?limit=0', { key: ADMIN_KEY })
+    const bad = await staffCall(h, 'GET', '/v1/admin/audit?limit=0', { key: ADMIN_KEY })
     expect(bad.status).toBe(400)
   })
 })
@@ -985,40 +987,57 @@ describe('audit journal', () => {
 // ============================================================
 
 describe('pages on the API origin', () => {
-  test('the marketing site is served at the root and the console stays at /console/', async () => {
+  test('the built app answers the site, the console and the panel; JSON stays JSON', async () => {
     const h = harness({ adminKey: ADMIN_KEY })
 
+    // `/` is the Solid shell; every client route returns the same document.
     const root = await h.front(new Request('https://api.test/'))
     expect(root.status).toBe(200)
     expect(root.headers.get('content-type')).toContain('text/html')
-    expect(await root.text()).toContain('Rox Cloud')
+    const shell = await root.text()
+    expect(shell).toContain('<div id="root">')
 
-    const docs = await h.front(new Request('https://api.test/docs.html'))
-    expect(docs.status).toBe(200)
-    expect(await docs.text()).toContain('Документация')
+    // Old bookmarks are redirected once to the client address.
+    const oldDocs = await h.front(new Request('https://api.test/docs.html'))
+    expect(oldDocs.status).toBe(302)
+    expect(oldDocs.headers.get('location')).toBe('/docs')
 
-    const console = await h.front(new Request('https://api.test/console/'))
-    expect(console.status).toBe(200)
-    expect(console.headers.get('content-type')).toContain('text/html')
-    expect(await console.text()).toContain('Rox Cloud')
-
-    const consoleBare = await h.front(new Request('https://api.test/console'))
-    expect(consoleBare.status).toBe(302)
-    expect(consoleBare.headers.get('location')).toBe('/console/')
-
-    for (const path of ['/console/app.js', '/console/styles.css']) {
-      const asset = await h.front(new Request(`https://api.test${path}`))
-      expect(asset.status).toBe(200)
-      expect(asset.headers.get('content-length')).not.toBeNull()
+    for (const path of ['/pricing', '/docs', '/status', '/console', '/console/machines']) {
+      const page = await h.front(new Request(`https://api.test${path}`))
+      expect(page.status).toBe(200)
+      expect(page.headers.get('content-type')).toContain('text/html')
+      expect(await page.text()).toContain('<div id="root">')
     }
 
-    const adminPage = await h.front(new Request('https://api.test/admin/'))
+    const consoleSlash = await h.front(new Request('https://api.test/console/'))
+    expect(consoleSlash.status).toBe(302)
+    expect(consoleSlash.headers.get('location')).toBe('/console')
+
+    // A fingerprinted asset named by the shell is served with a real length.
+    const assetPath = /src="(\/assets\/[^"]+\.js)"/.exec(shell)?.[1]
+    if (assetPath === undefined) throw new Error('оболочка не назвала ни одного скрипта')
+    const asset = await h.front(new Request(`https://api.test${assetPath}`))
+    expect(asset.status).toBe(200)
+    expect(asset.headers.get('content-length')).not.toBeNull()
+
+    // The panel is a page, its API is JSON.
+    const adminPage = await h.front(new Request('https://api.test/admin'))
     expect(adminPage.status).toBe(200)
     expect(adminPage.headers.get('content-type')).toContain('text/html')
-    const html = await adminPage.text()
-    expect(html).toContain('Рубильник')
-    expect(html).not.toContain('http://')
-    expect(html).not.toContain('https://')
+
+    const health = await h.front(new Request('https://api.test/health'))
+    expect(health.status).toBe(200)
+    expect(health.headers.get('content-type')).toContain('application/json')
+    expect(await health.json()).toEqual({ ok: true })
+
+    const overview = await h.front(
+      new Request('https://api.test/v1/admin/overview', {
+        headers: { authorization: `Bearer ${ADMIN_KEY}` },
+      }),
+    )
+    expect(overview.status).toBe(200)
+    expect(overview.headers.get('content-type')).toContain('application/json')
+    expect((await overview.json()) as { tenants: number }).toMatchObject({ tenants: 2 })
   })
 
   test('a path-traversal attempt never reaches the source tree', async () => {

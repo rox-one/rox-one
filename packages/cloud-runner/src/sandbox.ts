@@ -59,6 +59,11 @@ export interface SandboxSpec {
   /** Requested scratch disk in GiB; omitted = provider default. */
   diskGb?: number;
   gpu?: SandboxGpu;
+  /**
+   * Provider region the machine must run in, e.g. `us` or `us-west-4`.
+   * Omitted means the provider picks a region itself.
+   */
+  region?: string;
   /** Hard lifetime. The sandbox is reclaimed afterwards. */
   ttlSec?: number;
   /** Pause/stop after this much inactivity. */
@@ -105,6 +110,32 @@ export interface SandboxExecResult {
 }
 
 // ============================================================
+// Images
+// ============================================================
+
+/**
+ * One image a provider can boot: a Daytona snapshot, a Modal image, an E2B
+ * template. The resources belong to the image, not to the request — a
+ * provider that builds every machine from a snapshot can only offer what its
+ * snapshots carry, so the console shows these exact numbers.
+ */
+export interface ProviderImage {
+  /** Provider-side id; also what `SandboxSpec.snapshot` accepts. */
+  id: string;
+  /** Provider-side name, stable and readable. */
+  name: string;
+  /** Human label for a picker, e.g. «Linux · 2 CPU · 4 ГБ». */
+  label?: string;
+  os: SandboxOs;
+  cpu: number;
+  memoryGb: number;
+  diskGb: number;
+  gpu?: SandboxGpu;
+  /** Provider state, e.g. `active`; absent when the provider does not say. */
+  state?: string;
+}
+
+// ============================================================
 // Provider interface
 // ============================================================
 
@@ -124,6 +155,12 @@ export interface SandboxProvider {
   stop(id: string): Promise<void>;
   /** Delete for good; `get` then raises `not_found`. */
   destroy(id: string): Promise<void>;
+  /**
+   * Images this credential can boot, for the console's picker. Optional: a
+   * provider without a list route simply has no picker, and the catalog's
+   * products stand in for it.
+   */
+  listImages?(): Promise<ProviderImage[]>;
 }
 
 /** Raised by adapters when the vendor cannot do what the spec asks. */

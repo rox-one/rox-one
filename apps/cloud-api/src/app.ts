@@ -11,6 +11,7 @@
  */
 
 import type {
+  ProviderImage,
   SandboxGpu,
   SandboxOs,
   SandboxProvider,
@@ -28,13 +29,27 @@ import {
   listCredentials,
   promoteCredential,
 } from '../../../packages/cloud-keys/src/index.ts'
+import type { AuditAction, AuditLog } from '../../../packages/cloud-ops/src/index.ts'
 import type { ProviderCapabilities } from '../../../packages/providers/src/types.ts'
 import { PROVIDER_IDS } from '../../../packages/providers/src/capabilities.ts'
-import { CLOUD_PRODUCTS } from '../../../packages/ui/src/lib/product-names.ts'
+import {
+  DEFAULT_PRODUCTS,
+  gpuCentsPerHour,
+  retailCentsPerHour,
+  serviceFeeCentsPerHour,
+} from '../../../packages/cloud-pricing/src/index.ts'
 import { generateApiKey, sha256Hex, verifyApiKey } from './auth.ts'
 import type { VerifiedApiKey } from './auth.ts'
-import { createMemoryStore, isScope, nextId, SCOPES } from './store.ts'
-import type { ApiKeyRecord, MemoryStore, SandboxRecord, Scope, Tenant } from './store.ts'
+import { createMemoryStore, GUEST_SCOPES, isScope, nextId, SCOPES } from './store.ts'
+import type {
+  ApiKeyRecord,
+  BillingMode,
+  MemoryStore,
+  SandboxRecord,
+  Scope,
+  Tenant,
+  UsageRow,
+} from './store.ts'
 
 // ============================================================
 // Public options
@@ -64,6 +79,10 @@ export interface CreateHookInput {
     readonly memoryGb: number
     readonly ttlSec?: number
   }
+  /** Sold price of this machine, in integer cents per hour. */
+  readonly rateCentsPerHour?: number
+  /** Whether the wallet pays retail or only the service fee. */
+  readonly billingMode?: BillingMode
 }
 
 /** What the stop hook is told, after the provider has stopped the machine. */
@@ -73,6 +92,9 @@ export interface StopHookInput {
   readonly sandboxId: string
   readonly startedAt: number
   readonly stoppedAt: number
+  /** The rate the record was sold at, so settlement matches the meter. */
+  readonly rateCentsPerHour?: number
+  readonly billingMode?: BillingMode
 }
 
 /** What the destroy hook is told; `rolledBack` means the boot never happened. */
@@ -83,16 +105,82 @@ export interface DestroyHookInput {
   readonly rolledBack?: boolean
 }
 
+/** What one machine's hour costs, before the mode decides who pays it. */
+export interface PriceQuote {
+  /** Full price when Rox pays the provider. */
+  readonly retailCentsPerHour: number
+  /** Rox's fee when the customer pays the provider themselves. */
+  readonly serviceFeeCentsPerHour: number
+}
+
+/** The machine shape a quote is computed from. */
+export interface PriceShape {
+  readonly cpu: number
+  readonly memoryGb: number
+  readonly diskGb?: number
+  readonly gpu?: SandboxGpu
+}
+
+/** Injectable price list; production uses `DEFAULT_PRICE_SHEET`. */
+export interface PriceSheet {
+  quote(machine: PriceShape): PriceQuote
+}
+
+/**
+ * The published price list of `@rox/cloud-pricing`, wired to the API.
+ * A machine with no disk is priced without the disk term; a card adds its own
+ * cents per hour and multiplies by the card count.
+ */
+export const DEFAULT_PRICE_SHEET: PriceSheet = {
+  quote(machine) {
+    const gpu =
+      machine.gpu === undefined
+        ? undefined
+        : gpuCentsPerHour(machine.gpu.type, machine.gpu.count)
+    const retail = retailCentsPerHour({
+      cpu: machine.cpu,
+      memoryGb: machine.memoryGb,
+      ...(machine.diskGb === undefined ? {} : { diskGb: machine.diskGb }),
+      ...(gpu === undefined ? {} : { gpu }),
+    })
+    return { retailCentsPerHour: retail, serviceFeeCentsPerHour: serviceFeeCentsPerHour(retail) }
+  },
+}
+
+/** One resolved provider plus who pays for the machine. */
+export interface ProviderLease {
+  readonly provider: SandboxProvider
+  readonly mode: BillingMode
+}
+
+/** Public guest entry: off unless the deployment says otherwise. */
+export interface GuestOptions {
+  readonly enabled: boolean
+  /** Trial balance credited on signup; defaults to 2000 cents (20,00 $). */
+  readonly trialCents?: number
+  /** Sign-ups per address; defaults to five an hour. */
+  readonly rateLimit?: RateLimitOptions
+}
+
 export interface CloudApiOptions {
   readonly store?: MemoryStore
   /**
    * Per-tenant provider lookup. `null` means this tenant has no credential for
-   * that provider, which the API reports as `capability_unavailable`.
+   * that provider, unless a platform key can serve it through `resolveLease`.
    */
   readonly resolveProvider: (
     tenantId: string,
     providerId: string,
   ) => Promise<SandboxProvider | null> | SandboxProvider | null
+  /**
+   * Provider and payer for one request: the customer's own key (`byok`) or
+   * Rox's platform key (`managed`). When absent, `resolveProvider` is wrapped
+   * as `byok`, which keeps every existing caller working.
+   */
+  readonly resolveLease?: (
+    tenantId: string,
+    providerId: string,
+  ) => Promise<ProviderLease | null> | ProviderLease | null
   /** Capabilities declared by the caller. Nothing is guessed here. */
   readonly listCapabilities: () => readonly DeclaredCapabilities[]
   /** Provider id used when the request body omits `provider`. */
@@ -113,10 +201,23 @@ export interface CloudApiOptions {
   readonly keyStore?: KeyStore
   /** AES-256 key for the credential vault; required with `keyStore`. */
   readonly masterKey?: Uint8Array
-  /** Wallet ledger; enables the account routes. */
+  /** Wallet ledger; enables the account routes and the guest trial balance. */
   readonly moneyStore?: MoneyStore
-  /** Rox's platform fee in cents per sandbox-hour, echoed by the account route. */
+  /** Rox's fee in cents per sandbox-hour, echoed by the account route. */
   readonly rateCentsPerHour?: number
+  /** Retail price list; absent keeps the single flat `rateCentsPerHour`. */
+  readonly pricing?: PriceSheet
+  /** Providers Rox can pay for itself; reported by the catalog as managed. */
+  readonly managedProviders?: () => readonly string[]
+  /** Public guest sign-up; absent means the route answers `guest_disabled`. */
+  readonly guest?: GuestOptions
+  /**
+   * Client address used to count guest sign-ups. A server in front passes its
+   * own `requestIP`; without it the forwarded headers are read, then `local`.
+   */
+  readonly guestClientIp?: (req: Request) => string | undefined
+  /** Staff trail; a guest sign-up is recorded here when supplied. */
+  readonly audit?: AuditLog
   readonly now?: () => number
   readonly rateLimit?: RateLimitOptions
 }
@@ -141,6 +242,7 @@ const STATUS_BY_CODE = {
   insufficient_balance: 402,
   budget_exceeded: 402,
   permission_denied: 403,
+  guest_disabled: 403,
   not_found: 404,
   conflict: 409,
   kill_switch_active: 409,
@@ -163,6 +265,7 @@ const TYPE_BY_CODE: Record<ErrorCode, string> = {
   insufficient_balance: 'payment_error',
   budget_exceeded: 'payment_error',
   permission_denied: 'permission_error',
+  guest_disabled: 'permission_error',
   not_found: 'not_found_error',
   conflict: 'conflict_error',
   kill_switch_active: 'conflict_error',
@@ -256,6 +359,22 @@ const DEFAULT_LIMIT = 20
 const MAX_LIMIT = 100
 const DEFAULT_RATE_LIMIT: RateLimitOptions = { limit: 600, windowMs: 60_000 }
 const OS_VALUES: readonly SandboxOs[] = ['linux', 'windows', 'macos']
+/** A guest machine lives at most one day; the trial balance does not rent weeks. */
+const GUEST_MAX_TTL_SEC = 86_400
+/** Trial money and ceilings the spec fixes for a guest. */
+const GUEST_TRIAL_CENTS = 2_000
+const GUEST_LIMITS = {
+  maxConcurrentSandboxes: 1,
+  maxCpuPerSandbox: 16,
+  maxMonthlyCents: GUEST_TRIAL_CENTS,
+} as const
+const GUEST_RATE_LIMIT: RateLimitOptions = { limit: 5, windowMs: 60 * 60 * 1000 }
+/**
+ * `AuditAction` is a closed union in `@rox/cloud-ops`; a guest sign-up is a
+ * new action and keeps its own name. One documented widening, as the runner
+ * does for its gate codes.
+ */
+const GUEST_SIGNUP_ACTION = 'tenant.guest' as AuditAction
 
 function iso(ms: number): string {
   return new Date(ms).toISOString()
@@ -334,13 +453,17 @@ function optionalStringMap(value: unknown, field: string): Record<string, string
 }
 
 interface CreateRequest {
-  readonly os: SandboxOs
-  readonly cpu: number
-  readonly memoryGb: number
+  /** Product code from the catalog; its snapshot fixes the resources. */
+  readonly product?: string
+  /** os is required only when neither a product nor a snapshot is named. */
+  readonly os?: SandboxOs
+  readonly cpu?: number
+  readonly memoryGb?: number
   readonly diskGb?: number
   readonly gpu?: SandboxGpu
   readonly image?: string
   readonly snapshot?: string
+  readonly region?: string
   readonly ttlSec?: number
   readonly metadata?: Record<string, string>
   readonly provider?: string
@@ -365,30 +488,48 @@ function parseGpu(value: unknown): SandboxGpu | undefined {
 }
 
 function parseCreateRequest(body: Record<string, unknown>): CreateRequest {
-  const os = body.os
-  if (typeof os !== 'string' || !(OS_VALUES as readonly string[]).includes(os)) {
-    throw new ApiError('invalid_request', 'Поле os обязательно: linux, windows или macos')
+  const product = optionalString(body.product, 'product')
+  const snapshot = optionalString(body.snapshot, 'snapshot')
+  if (product !== undefined && snapshot !== undefined) {
+    throw new ApiError('invalid_request', 'product и snapshot взаимоисключающие: продукт уже называет снимок')
   }
-  const cpu = positiveNumber(body.cpu, 'cpu')
-  const memoryGb = positiveNumber(body.memoryGb, 'memoryGb')
+  const image = optionalString(body.image, 'image')
+  if (image !== undefined && snapshot !== undefined) {
+    throw new ApiError('invalid_request', 'image и snapshot взаимоисключающие: выберите одно')
+  }
+  // A named product or snapshot carries the resources; the caller's numbers
+  // are only a cross-check. Without either, the shape must be spelled out.
+  const named = product !== undefined || snapshot !== undefined
+  const osRaw = body.os
+  let os: SandboxOs | undefined
+  if (osRaw === undefined || osRaw === null) {
+    if (!named) throw new ApiError('invalid_request', 'Поле os обязательно: linux, windows или macos')
+  } else {
+    if (typeof osRaw !== 'string' || !(OS_VALUES as readonly string[]).includes(osRaw)) {
+      throw new ApiError('invalid_request', 'Поле os обязательно: linux, windows или macos')
+    }
+    os = osRaw as SandboxOs
+  }
+  const cpu = named ? optionalPositiveNumber(body.cpu, 'cpu') : positiveNumber(body.cpu, 'cpu')
+  const memoryGb = named
+    ? optionalPositiveNumber(body.memoryGb, 'memoryGb')
+    : positiveNumber(body.memoryGb, 'memoryGb')
   const diskGb = optionalPositiveNumber(body.diskGb, 'diskGb')
   const ttlSec = optionalPositiveNumber(body.ttlSec, 'ttlSec')
   if (ttlSec !== undefined && !Number.isInteger(ttlSec)) {
     throw new ApiError('invalid_request', 'Поле ttlSec должно быть целым числом секунд')
   }
-  const image = optionalString(body.image, 'image')
-  const snapshot = optionalString(body.snapshot, 'snapshot')
-  if (image !== undefined && snapshot !== undefined) {
-    throw new ApiError('invalid_request', 'image и snapshot взаимоисключающие: выберите одно')
-  }
+  const region = optionalString(body.region, 'region')
   return {
-    os: os as SandboxOs,
+    product,
+    os,
     cpu,
     memoryGb,
     diskGb,
     gpu: parseGpu(body.gpu),
     image,
     snapshot,
+    region,
     ttlSec,
     metadata: optionalStringMap(body.metadata, 'metadata'),
     provider: optionalString(body.provider, 'provider'),
@@ -405,8 +546,48 @@ export function createApp(options: CloudApiOptions): CloudApp {
   const rateLimit = options.rateLimit ?? DEFAULT_RATE_LIMIT
   const buckets = new Map<string, { windowStart: number; count: number }>()
   const inFlight = new Map<string, { fingerprint: string; promise: Promise<SandboxRecord> }>()
+  /** Who presented the key on this request: set by `requireAuth`, read by the journal. */
+  const authByRequest = new WeakMap<Request, { tenantId: string; keyLast4: string }>()
 
   // ---------- responses ----------
+
+  /**
+   * Who pays for this machine and what it costs. A record sold before
+   * per-machine pricing falls back to the deployment rate and to `byok`,
+   * which is exactly how it was billed then.
+   */
+  function billingJson(record: SandboxRecord): Record<string, unknown> {
+    const mode: BillingMode = record.billingMode ?? 'byok'
+    const rate = record.rateCentsPerHour ?? options.rateCentsPerHour ?? null
+    const retail = record.retailCentsPerHour ?? null
+    const fee =
+      retail === null
+        ? mode === 'byok'
+          ? rate
+          : null
+        : serviceFeeCentsPerHour(retail)
+    return {
+      mode,
+      rate_cents_per_hour: rate,
+      retail_cents_per_hour: retail,
+      service_fee_cents_per_hour: fee,
+    }
+  }
+
+  function specJson(record: SandboxRecord): Record<string, unknown> {
+    const spec = record.spec
+    return {
+      os: spec.os,
+      cpu: spec.cpu,
+      memoryGb: spec.memoryGb,
+      diskGb: spec.diskGb ?? null,
+      image: spec.image ?? null,
+      snapshot: spec.snapshot ?? null,
+      gpu: spec.gpu ?? null,
+      region: record.region ?? spec.region ?? null,
+      ttlSec: spec.ttlSec ?? null,
+    }
+  }
 
   function sandboxJson(record: SandboxRecord): Record<string, unknown> {
     return {
@@ -419,6 +600,9 @@ export function createApp(options: CloudApiOptions): CloudApp {
       cost_so_far_cents: record.costCents,
       cost_so_far_usd: (record.costCents / 100).toFixed(2),
       routing_reason: record.routingReason ?? null,
+      spec: specJson(record),
+      region: record.region ?? record.spec.region ?? null,
+      billing: billingJson(record),
     }
   }
 
@@ -430,7 +614,16 @@ export function createApp(options: CloudApiOptions): CloudApp {
       scopes: record.scopes,
       created_at: iso(record.createdAt),
       last_used_at: record.lastUsedAt === undefined ? null : iso(record.lastUsedAt),
+      revoked_at: record.revokedAt === undefined ? null : iso(record.revokedAt),
     }
+  }
+
+  /** Client address as the proxies report it, for the guest limit and the journal. */
+  function clientIp(req: Request): string | undefined {
+    const forwarded = (req.headers.get('x-forwarded-for') ?? '').split(',')[0]?.trim()
+    if (forwarded !== undefined && forwarded.length > 0) return forwarded
+    const real = (req.headers.get('x-real-ip') ?? '').trim()
+    return real.length > 0 ? real : undefined
   }
 
   // ---------- authentication ----------
@@ -447,6 +640,8 @@ export function createApp(options: CloudApiOptions): CloudApp {
       throw new ApiError('permission_denied', `Ключу не разрешено право ${scope}`)
     }
     consumeRateLimit(verified.key.id)
+    // The journal names the caller without storing the key itself.
+    authByRequest.set(req, { tenantId: verified.tenant.id, keyLast4: verified.key.last4 })
     return verified
   }
 
@@ -474,34 +669,223 @@ export function createApp(options: CloudApiOptions): CloudApp {
     return ids.length === 0 ? 'ни одного провайдера не подключено' : ids.join(', ')
   }
 
-  function enforceDeclared(declared: DeclaredCapabilities, request: CreateRequest): void {
-    if (!declared.os.includes(request.os)) {
+  /** What the machine actually is once its product or snapshot is resolved. */
+  interface ResolvedMachine {
+    os: SandboxOs
+    cpu: number
+    memoryGb: number
+    diskGb?: number
+    gpu?: SandboxGpu
+    /** Snapshot the provider boots; absent = the provider's own default. */
+    snapshot?: string
+    /** What the invoice calls this machine. */
+    label: string
+  }
+
+  /**
+   * The caller's numbers are a cross-check, never the price base: a request
+   * that says `snapshot: "daytona-gpu"` but asks for one core is refused
+   * instead of being billed as a small machine.
+   */
+  function assertMatchesRequest(request: CreateRequest, machine: ResolvedMachine): void {
+    const disagreements: string[] = []
+    if (request.os !== undefined && request.os !== machine.os) {
+      disagreements.push(`os ${request.os} вместо ${machine.os}`)
+    }
+    if (request.cpu !== undefined && Math.ceil(request.cpu) !== machine.cpu) {
+      disagreements.push(`cpu ${request.cpu} вместо ${machine.cpu}`)
+    }
+    if (request.memoryGb !== undefined && Math.ceil(request.memoryGb) !== machine.memoryGb) {
+      disagreements.push(`память ${request.memoryGb} вместо ${machine.memoryGb} ГБ`)
+    }
+    if (request.diskGb !== undefined && Math.ceil(request.diskGb) !== machine.diskGb) {
+      disagreements.push(`диск ${request.diskGb} вместо ${machine.diskGb ?? '—'} ГБ`)
+    }
+    if (request.gpu !== undefined) {
+      const sameType =
+        machine.gpu !== undefined &&
+        machine.gpu.type.trim().toLowerCase() === request.gpu.type.trim().toLowerCase()
+      const sameCount = machine.gpu !== undefined && machine.gpu.count === request.gpu.count
+      if (!sameType || !sameCount) {
+        const actual = machine.gpu === undefined ? 'без видеокарты' : `${machine.gpu.count}×${machine.gpu.type}`
+        disagreements.push(`видеокарта ${request.gpu.count}×${request.gpu.type} вместо ${actual}`)
+      }
+    }
+    if (disagreements.length > 0) {
       throw new ApiError(
-        'capability_unavailable',
-        `Провайдер «${declared.id}» не поддерживает ${request.os}`,
+        'invalid_request',
+        `Образ даёт другие ресурсы: ${disagreements.join(', ')}. Уберите поля из тела или выберите другой образ`,
       )
     }
-    if (request.gpu !== undefined && !declared.gpu) {
+  }
+
+  /** Cached live images, so a create and the picker share one vendor call. */
+  const imageCache = new Map<string, { at: number; images: ProviderImage[] }>()
+  const IMAGE_CACHE_TTL_MS = 60_000
+
+  /** Live images of one lease, or `null` when the provider cannot list them. */
+  async function imagesFor(
+    tenantId: string,
+    providerId: string,
+    lease: ProviderLease,
+  ): Promise<ProviderImage[] | null> {
+    if (lease.provider.listImages === undefined) return null
+    const cacheKey = `${tenantId}\u0000${providerId}\u0000${lease.mode}`
+    const at = now()
+    const cached = imageCache.get(cacheKey)
+    if (cached !== undefined && at - cached.at < IMAGE_CACHE_TTL_MS) return cached.images
+    const images = await lease.provider.listImages()
+    imageCache.set(cacheKey, { at, images })
+    return images
+  }
+
+  /**
+   * Turn a request into the machine it really buys: a catalog product fixes
+   * the snapshot and its resources, a named snapshot is looked up in the live
+   * list, and only a bare request trusts its own shape.
+   */
+  async function resolveMachine(
+    tenantId: string,
+    providerId: string,
+    lease: ProviderLease,
+    request: CreateRequest,
+  ): Promise<ResolvedMachine> {
+    if (request.product !== undefined) {
+      const product = DEFAULT_PRODUCTS.find((entry) => entry.id === request.product)
+      if (product === undefined) {
+        throw new ApiError(
+          'invalid_request',
+          `Неизвестный продукт «${request.product}». Доступны: ${DEFAULT_PRODUCTS.map((entry) => entry.id).join(', ')}`,
+        )
+      }
+      // The shape exists in the table, but this account cannot boot it (no
+      // Windows class, no GPU credits). Refuse with the vendor's own reason
+      // before a hold, instead of letting the provider fail after a reserve.
+      if (product.available === false) {
+        throw new ApiError(
+          'capability_unavailable',
+          product.note ?? `Продукт «${product.id}» сейчас недоступен у провайдера`,
+        )
+      }
+      const machine: ResolvedMachine = {
+        os: product.os,
+        cpu: product.cpu,
+        memoryGb: product.memoryGb,
+        diskGb: product.diskGb,
+        ...(product.gpu === undefined ? {} : { gpu: product.gpu }),
+        snapshot: product.snapshot,
+        label: product.name,
+      }
+      assertMatchesRequest(request, machine)
+      return machine
+    }
+
+    if (request.snapshot !== undefined) {
+      const images = await imagesFor(tenantId, providerId, lease)
+      if (images === null) {
+        throw new ApiError(
+          'invalid_request',
+          `Провайдер «${providerId}» не отдаёт список образов: назовите os, cpu и memoryGb вместо snapshot`,
+        )
+      }
+      const image = images.find(
+        (entry) => entry.id === request.snapshot || entry.name === request.snapshot,
+      )
+      if (image === undefined) {
+        throw new ApiError(
+          'invalid_request',
+          `Снимок «${request.snapshot}» не найден среди активных образов «${providerId}»`,
+        )
+      }
+      const machine: ResolvedMachine = {
+        os: image.os,
+        cpu: image.cpu,
+        memoryGb: image.memoryGb,
+        diskGb: image.diskGb,
+        ...(image.gpu === undefined ? {} : { gpu: image.gpu }),
+        snapshot: image.name,
+        label: image.label ?? image.name,
+      }
+      assertMatchesRequest(request, machine)
+      return machine
+    }
+
+    // The parser guarantees the shape here: without a product or a snapshot,
+    // os/cpu/memoryGb were required.
+    if (request.os === undefined || request.cpu === undefined || request.memoryGb === undefined) {
+      throw new ApiError('invalid_request', 'Поля os, cpu и memoryGb обязательны без product и snapshot')
+    }
+    return {
+      os: request.os,
+      cpu: request.cpu,
+      memoryGb: request.memoryGb,
+      ...(request.diskGb === undefined ? {} : { diskGb: request.diskGb }),
+      ...(request.gpu === undefined ? {} : { gpu: request.gpu }),
+      label: 'Песочница',
+    }
+  }
+
+  function enforceDeclared(
+    declared: DeclaredCapabilities,
+    machine: ResolvedMachine,
+    request: CreateRequest,
+  ): void {
+    if (!declared.os.includes(machine.os)) {
+      throw new ApiError(
+        'capability_unavailable',
+        `Провайдер «${declared.id}» не поддерживает ${machine.os}`,
+      )
+    }
+    if (machine.gpu !== undefined && !declared.gpu) {
       throw new ApiError('capability_unavailable', `Провайдер «${declared.id}» не даёт видеокарт`)
     }
-    if (request.snapshot !== undefined && !declared.snapshot) {
+    if (machine.snapshot !== undefined && !declared.snapshot) {
       throw new ApiError('capability_unavailable', `Провайдер «${declared.id}» не умеет снимки`)
     }
     // Same rule as `acceptTtl` in the providers package: 0 = no documented cap.
     if (request.ttlSec !== undefined && declared.maxTtlSec !== 0 && request.ttlSec > declared.maxTtlSec) {
       throw new ApiError('invalid_request', `ttlSec не может быть больше ${declared.maxTtlSec} у провайдера «${declared.id}»`)
     }
+    if (request.region !== undefined && declared.regions.length > 0 && !declared.regions.includes(request.region)) {
+      throw new ApiError(
+        'invalid_request',
+        `Площадки «${request.region}» у провайдера «${declared.id}» нет. Доступны: ${declared.regions.join(', ')}`,
+      )
+    }
+  }
+
+  /**
+   * Provider and payer for one request. Without `resolveLease` the deployment
+   * is byok-only: the customer's own credential decides, exactly as before.
+   */
+  async function leaseFor(tenantId: string, providerId: string): Promise<ProviderLease | null> {
+    if (options.resolveLease !== undefined) {
+      return (await options.resolveLease(tenantId, providerId)) ?? null
+    }
+    const provider = await options.resolveProvider(tenantId, providerId)
+    return provider === null ? null : { provider, mode: 'byok' }
+  }
+
+  /** A machine resold at this mode's price, or `undefined` without a price list. */
+  function quoteFor(machine: ResolvedMachine, mode: BillingMode): PriceQuote | undefined {
+    if (options.pricing === undefined) return undefined
+    return options.pricing.quote({
+      cpu: machine.cpu,
+      memoryGb: machine.memoryGb,
+      ...(machine.diskGb === undefined ? {} : { diskGb: machine.diskGb }),
+      ...(machine.gpu === undefined ? {} : { gpu: machine.gpu }),
+    })
   }
 
   async function providerForRecord(record: SandboxRecord): Promise<SandboxProvider> {
-    const provider = await options.resolveProvider(record.tenantId, record.providerId)
-    if (!provider) {
+    const lease = await leaseFor(record.tenantId, record.providerId)
+    if (!lease) {
       throw new ApiError(
         'capability_unavailable',
         `У арендатора больше нет ключа для провайдера «${record.providerId}»`,
       )
     }
-    return provider
+    return lease.provider
   }
 
   function sandboxFor(tenantId: string, id: string): SandboxRecord {
@@ -534,26 +918,35 @@ export function createApp(options: CloudApiOptions): CloudApp {
         `Неизвестный провайдер «${providerId || '(не указан)'}». Доступны: ${allowedProviderList()}`,
       )
     }
-    enforceDeclared(declared, request)
 
-    const provider = await options.resolveProvider(tenant.id, providerId)
-    if (!provider) {
+    const lease = await leaseFor(tenant.id, providerId)
+    if (!lease) {
       throw new ApiError(
         'capability_unavailable',
         `У арендатора нет ключа для провайдера «${providerId}»: добавьте доступ в консоли`,
       )
     }
+    const machine = await resolveMachine(tenant.id, providerId, lease, request)
+    enforceDeclared(declared, machine, request)
+
+    const quote = quoteFor(machine, lease.mode)
+    const rateCentsPerHour = quote === undefined
+      ? options.rateCentsPerHour
+      : lease.mode === 'managed'
+        ? quote.retailCentsPerHour
+        : quote.serviceFeeCentsPerHour
 
     const id = nextId('sbx_')
     const spec: SandboxSpec = {
       id,
-      os: request.os,
-      cpu: request.cpu,
-      memoryGb: request.memoryGb,
-      diskGb: request.diskGb,
-      gpu: request.gpu,
+      os: machine.os,
+      cpu: machine.cpu,
+      memoryGb: machine.memoryGb,
+      diskGb: machine.diskGb,
+      gpu: machine.gpu,
       image: request.image,
-      snapshot: request.snapshot,
+      snapshot: machine.snapshot,
+      region: request.region,
       ttlSec: request.ttlSec,
       metadata: request.metadata,
     }
@@ -564,12 +957,14 @@ export function createApp(options: CloudApiOptions): CloudApp {
       tenantId: tenant.id,
       providerId,
       sandboxId: id,
-      request: { cpu: request.cpu, memoryGb: request.memoryGb, ttlSec: request.ttlSec },
+      request: { cpu: machine.cpu, memoryGb: machine.memoryGb, ttlSec: request.ttlSec },
+      ...(rateCentsPerHour === undefined ? {} : { rateCentsPerHour }),
+      billingMode: lease.mode,
     })
 
     let status: SandboxStatus
     try {
-      status = await provider.create(spec)
+      status = await lease.provider.create(spec)
     } catch (err) {
       // Nothing booted, so a hold taken a moment ago must go back. The original
       // failure is what the caller must see, so a rollback error never masks it.
@@ -594,6 +989,10 @@ export function createApp(options: CloudApiOptions): CloudApp {
       costCents: status.costSoFarUsd === undefined ? 0 : Math.round(status.costSoFarUsd * 100),
       routingReason: status.routingReason ?? routingReason(tenant, providerId, request.provider),
       spec,
+      ...(rateCentsPerHour === undefined ? {} : { rateCentsPerHour }),
+      ...(quote === undefined ? {} : { retailCentsPerHour: quote.retailCentsPerHour }),
+      billingMode: lease.mode,
+      ...(request.region === undefined ? {} : { region: request.region }),
     }
 
     store.sandboxes.set(record.id, record)
@@ -604,14 +1003,23 @@ export function createApp(options: CloudApiOptions): CloudApp {
       sandboxId: record.id,
       createdAt: now(),
     })
+    // The invoice line is written once, at boot, and keeps the machine's
+    // composition even after the machine itself is deleted.
     store.usage.push({
       id: nextId('usage_'),
       tenantId: tenant.id,
       ref: record.id,
       product: 'sandbox',
+      label: machine.label,
+      ...(machine.snapshot === undefined ? {} : { snapshot: machine.snapshot }),
+      billingMode: lease.mode,
+      ...(rateCentsPerHour === undefined ? {} : { rateCentsPerHour }),
+      ...(quote === undefined ? {} : { retailCentsPerHour: quote.retailCentsPerHour }),
+      ...(quote === undefined ? {} : { serviceFeeCentsPerHour: quote.serviceFeeCentsPerHour }),
       cents: record.costCents,
       currency: 'USD',
       createdAt: now(),
+      ...(record.startedAt === undefined ? {} : { startedAt: record.startedAt }),
     })
     return record
   }
@@ -705,13 +1113,15 @@ export function createApp(options: CloudApiOptions): CloudApp {
     if (typeof command !== 'string' || command.trim().length === 0) {
       throw new ApiError('invalid_request', 'Поле command обязательно: что выполнить в машине')
     }
-    const timeoutSec = optionalPositiveNumber(body.timeoutSec, 'timeoutSec')
+    // Responses are snake_case throughout; the body keeps camelCase for the
+    // shape (memoryGb, ttlSec), but the command's own timer is `timeout_sec`.
+    const cwd = optionalString(body.cwd, 'cwd')
+    const timeoutSec = optionalPositiveNumber(body.timeout_sec, 'timeout_sec')
     const provider = await providerForRecord(record)
-    const result = await provider.exec(
-      record.id,
-      command,
-      timeoutSec === undefined ? undefined : { timeoutMs: timeoutSec * 1000 },
-    )
+    const result = await provider.exec(record.id, command, {
+      ...(cwd === undefined ? {} : { cwd }),
+      ...(timeoutSec === undefined ? {} : { timeoutMs: timeoutSec * 1000 }),
+    })
     return json(200, { stdout: result.stdout, stderr: result.stderr, exit_code: result.exitCode })
   }
 
@@ -753,13 +1163,29 @@ export function createApp(options: CloudApiOptions): CloudApp {
     record.state = 'stopped'
     // Metered from the moment the machine started; a record that never reported
     // a start is metered from its creation instead of from an invented time.
+    const stoppedAt = now()
     await options.afterStop?.({
       tenantId: record.tenantId,
       providerId: record.providerId,
       sandboxId: record.id,
       startedAt: record.startedAt ?? record.createdAt,
-      stoppedAt: now(),
+      stoppedAt,
+      ...(record.rateCentsPerHour === undefined ? {} : { rateCentsPerHour: record.rateCentsPerHour }),
+      ...(record.billingMode === undefined ? {} : { billingMode: record.billingMode }),
     })
+    // The invoice line closes with the same span the wallet settled: a stop
+    // updates its amount and time, and deleting the machine later keeps it.
+    const rate = record.rateCentsPerHour ?? options.rateCentsPerHour
+    if (rate !== undefined) {
+      const elapsedMs = Math.max(0, stoppedAt - (record.startedAt ?? record.createdAt))
+      record.costCents = Math.max(1, Math.ceil((elapsedMs / 3_600_000) * rate))
+    }
+    const line = store.usage.find((row) => row.tenantId === record.tenantId && row.ref === record.id)
+    if (line !== undefined) {
+      line.cents = record.costCents
+      line.stoppedAt = stoppedAt
+      if (record.startedAt !== undefined) line.startedAt = record.startedAt
+    }
     return json(200, sandboxJson(record))
   }
 
@@ -815,7 +1241,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
     store.addApiKey(record)
     return json(201, {
       id: record.id,
-      secret: generated.secret,
+      api_key: generated.secret,
       prefix: record.prefix,
       last4: record.last4,
       scopes: record.scopes,
@@ -958,41 +1384,130 @@ export function createApp(options: CloudApiOptions): CloudApp {
     return json(200, accountJson(wallet.getAccount(auth.tenant.id)))
   }
 
-  async function topUpRoute(auth: VerifiedApiKey, req: Request): Promise<Response> {
-    const wallet = requireWallet()
-    const body = await readJson(req)
-    const amount = body.amountCents
-    if (typeof amount !== 'number' || !Number.isInteger(amount) || amount <= 0) {
+  // There is deliberately no customer top-up: adding money is the staff
+  // credit under `/v1/admin/tenants/{id}/credit`. The removed route would let
+  // any key that once carried `billing:write` mint its own balance, and the
+  // stored scopes of existing keys cannot be rewritten from here.
+
+  // ---------- guest ----------
+
+  /**
+   * A trial account without registration: one tenant, one key, one trial
+   * balance. Off unless the deployment enables it, limited per address, and
+   * the tenant carries ceilings that make the trial last about a day.
+   *
+   * The response holds the only copy of the secret; nothing about the platform
+   * key behind managed machines appears here.
+   */
+  async function guestRoute(req: Request): Promise<Response> {
+    const guest = options.guest
+    if (guest === undefined || !guest.enabled) {
+      throw new ApiError('guest_disabled', 'Гостевой вход выключен: получите ключ API у дежурного')
+    }
+    const wallet = options.moneyStore
+    if (wallet === undefined) {
       throw new ApiError(
-        'invalid_request',
-        'Поле amountCents обязательно и должно быть целым числом центов больше нуля',
+        'capability_unavailable',
+        'Гостевой вход не поддерживается этой сборкой: кошелёк не подключён',
       )
     }
-    if (!wallet.getAccount(auth.tenant.id)) {
-      // In this slice a top-up is what makes an account paid: there is no
-      // separate payment capture step in front of it yet.
-      wallet.saveAccount({
-        id: auth.tenant.id,
-        paid: true,
-        balanceCents: 0,
-        reservedCents: 0,
-        monthlyCapCents: 0,
-        monthSpentCents: 0,
-      })
+
+    const perAddress = guest.rateLimit ?? GUEST_RATE_LIMIT
+    // Counted by client address, not by key: a guest is exactly the caller who
+    // has no key yet, and three sign-ups from one address is already a crowd.
+    const address = options.guestClientIp?.(req) ?? clientIp(req) ?? 'local'
+    const windowKey = `guest\u0000${address}`
+    const at = now()
+    const bucket = buckets.get(windowKey)
+    if (bucket === undefined || at - bucket.windowStart >= perAddress.windowMs) {
+      buckets.set(windowKey, { windowStart: at, count: 1 })
+    } else {
+      bucket.count += 1
+      if (bucket.count > perAddress.limit) {
+        throw new ApiError(
+          'rate_limited',
+          `Слишком много гостевых входов с одного адреса: не больше ${perAddress.limit} за ${Math.round(perAddress.windowMs / 60_000)} минут`,
+        )
+      }
     }
-    const result = topUp(wallet, auth.tenant.id, amount, now())
-    return json(200, accountJson(result.account))
+
+    const trialCents = guest.trialCents ?? GUEST_TRIAL_CENTS
+    const tenant = store.addTenant('Гость', {
+      guest: true,
+      limits: {
+        maxConcurrentSandboxes: GUEST_LIMITS.maxConcurrentSandboxes,
+        maxCpuPerSandbox: GUEST_LIMITS.maxCpuPerSandbox,
+        maxMonthlyCents: trialCents,
+        maxTtlSec: GUEST_MAX_TTL_SEC,
+      },
+    })
+    wallet.saveAccount({
+      id: tenant.id,
+      paid: true,
+      balanceCents: 0,
+      reservedCents: 0,
+      monthlyCapCents: trialCents,
+      monthSpentCents: 0,
+    })
+    const credited = topUp(wallet, tenant.id, trialCents, at)
+
+    const generated = generateApiKey()
+    const record: ApiKeyRecord = {
+      id: nextId('key_'),
+      tenantId: tenant.id,
+      prefix: generated.prefix,
+      last4: generated.last4,
+      hash: generated.hash,
+      // No keys:write and no billing:write: a trial cannot mint itself more.
+      scopes: GUEST_SCOPES,
+      createdAt: at,
+    }
+    store.addApiKey(record)
+
+    options.audit?.append({
+      actorId: 'guest',
+      action: GUEST_SIGNUP_ACTION,
+      targetType: 'tenant',
+      targetId: tenant.id,
+      reason: 'гостевой вход с сайта',
+      details: {
+        trial_cents: trialCents,
+        key_id: record.id,
+        ip: address,
+      },
+    })
+
+    return json(201, {
+      object: 'guest',
+      tenant: { id: tenant.id, name: tenant.name },
+      api_key: generated.secret,
+      balance_cents: credited.account.balanceCents,
+    })
   }
 
-  // ---------- catalog / usage ----------
+  // ---------- catalog / images ----------
 
+  /**
+   * What the site sells: the eight machines with both prices, the providers a
+   * deployment declares, and which of them Rox can pay for itself. A customer
+   * reads `cents_per_hour`; `service_fee_cents_per_hour` is the byok column.
+   */
   function catalogRoute(): Response {
     return json(200, {
       object: 'catalog',
-      products: CLOUD_PRODUCTS.map((product) => ({
+      products: DEFAULT_PRODUCTS.map((product) => ({
         id: product.id,
         name: product.name,
-        name_en: product.nameEn,
+        snapshot: product.snapshot,
+        os: product.os,
+        cpu: product.cpu,
+        memory_gb: product.memoryGb,
+        disk_gb: product.diskGb,
+        gpu: product.gpu ?? null,
+        cents_per_hour: product.centsPerHour,
+        service_fee_cents_per_hour: serviceFeeCentsPerHour(product.centsPerHour),
+        available: product.available !== false,
+        note: product.note ?? null,
       })),
       providers: options.listCapabilities().map((entry) => ({
         id: entry.id,
@@ -1005,22 +1520,169 @@ export function createApp(options: CloudApiOptions): CloudApp {
         max_ttl_sec: entry.maxTtlSec,
         regions: entry.regions,
       })),
+      managed_providers: options.managedProviders?.() ?? [],
     })
   }
 
-  function usageRoute(auth: VerifiedApiKey): Response {
-    const data: Record<string, unknown>[] = []
-    for (const row of store.usage) {
-      if (row.tenantId !== auth.tenant.id) continue
-      data.push({
-        ref: row.ref,
-        product: row.product,
-        cents: row.cents,
-        currency: row.currency,
-        at: new Date(row.createdAt).toISOString(),
+  /**
+   * Images one customer can actually boot: their own key first, the platform
+   * key when they have none. A provider without a list route, or a listing
+   * failure, is a capability answer rather than an empty list that would read
+   * as «nothing exists».
+   */
+  async function imagesRoute(auth: VerifiedApiKey, providerId: string): Promise<Response> {
+    const declared = declaredCapabilities(providerId)
+    if (!declared) {
+      throw new ApiError(
+        'provider_unknown',
+        `Неизвестный провайдер «${providerId}». Доступны: ${allowedProviderList()}`,
+      )
+    }
+    const lease = await leaseFor(auth.tenant.id, providerId)
+    if (!lease) {
+      throw new ApiError(
+        'capability_unavailable',
+        `У арендатора нет ключа для провайдера «${providerId}», и платформенного ключа нет`,
+      )
+    }
+    if (lease.provider.listImages === undefined) {
+      throw new ApiError(
+        'capability_unavailable',
+        `Провайдер «${providerId}» не отдаёт список образов: выбирайте снимок по имени`,
+      )
+    }
+    const images: ProviderImage[] = await lease.provider.listImages()
+    return json(200, {
+      object: 'list',
+      provider: providerId,
+      mode: lease.mode,
+      data: images.map((image) => ({
+        id: image.id,
+        name: image.name,
+        ...(image.label === undefined ? {} : { label: image.label }),
+        os: image.os,
+        cpu: image.cpu,
+        memoryGb: image.memoryGb,
+        diskGb: image.diskGb,
+        gpu: image.gpu ?? null,
+        state: image.state ?? 'active',
+      })),
+    })
+  }
+
+  /**
+   * The customer's own journal. A tenant never sees staff actions or another
+   * tenant's rows: an entry belongs here when it was written in the tenant's
+   * name, against the tenant, against one of its machines, or carries the
+   * tenant id in its details (the staff stop does).
+   */
+  function customerAuditRoute(auth: VerifiedApiKey, url: URL): Response {
+    const audit = options.audit
+    if (audit === undefined) return json(200, { object: 'list', data: [] })
+    const raw = url.searchParams.get('limit')
+    let limit = DEFAULT_LIMIT
+    if (raw !== null) {
+      const parsed = Number(raw)
+      if (!Number.isInteger(parsed) || parsed < 1 || parsed > MAX_LIMIT) {
+        throw new ApiError('invalid_request', `limit должен быть целым числом от 1 до ${MAX_LIMIT}`)
+      }
+      limit = parsed
+    }
+    const action = url.searchParams.get('action')
+    const since = url.searchParams.get('since')
+    if (since !== null && Number.isNaN(Date.parse(since))) {
+      throw new ApiError('invalid_request', 'since должен быть датой в формате ISO-8601')
+    }
+    const owned = new Set(store.sandboxesOf(auth.tenant.id).map((record) => record.id))
+    owned.add(auth.tenant.id)
+    // The store filters by one target id; a tenant owns several, so the shared
+    // filters run here and the ownership check is applied to every row.
+    const entries = audit
+      .list({
+        ...(action === null ? {} : { action: action as AuditAction }),
+        ...(since === null ? {} : { from: since }),
+      })
+      .filter((entry) => {
+        if (entry.actorId === `tenant:${auth.tenant.id}`) return true
+        if (owned.has(entry.targetId)) return true
+        return String(entry.details?.['tenant_id'] ?? '') === auth.tenant.id
+      })
+      .slice(-limit)
+      .reverse()
+    return json(200, {
+      object: 'list',
+      data: entries.map((entry) => ({
+        id: entry.id,
+        tenant_id: auth.tenant.id,
+        actor: entry.actorId,
+        action: entry.action,
+        target_type: entry.targetType,
+        target_id: entry.targetId,
+        reason: entry.reason,
+        at: entry.at,
+        details: entry.details ?? null,
+        // The audit chain has no HTTP request id of its own; the row id is
+        // what a person quotes, and the field stays in the shape for the UI.
+        request_id: null,
+      })),
+    })
+  }
+
+  /** One invoice line as the console and the CSV show it. */
+  function usageJson(row: UsageRow): Record<string, unknown> {
+    return {
+      id: row.id,
+      ref: row.ref,
+      product: row.product,
+      label: row.label ?? null,
+      snapshot: row.snapshot ?? null,
+      billing_mode: row.billingMode ?? 'byok',
+      rate_cents_per_hour: row.rateCentsPerHour ?? null,
+      retail_cents_per_hour: row.retailCentsPerHour ?? null,
+      service_fee_cents_per_hour: row.serviceFeeCentsPerHour ?? null,
+      cents: row.cents,
+      currency: row.currency,
+      created_at: new Date(row.createdAt).toISOString(),
+      started_at: row.startedAt === undefined ? null : new Date(row.startedAt).toISOString(),
+      stopped_at: row.stoppedAt === undefined ? null : new Date(row.stoppedAt).toISOString(),
+    }
+  }
+
+  /** CSV fields with quotes doubled, so a label with a comma stays one cell. */
+  function csvCell(value: string | number | null): string {
+    if (value === null) return ''
+    const text = String(value)
+    return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
+  }
+
+  function usageRoute(auth: VerifiedApiKey, url: URL): Response {
+    const rows = store.usage.filter((row) => row.tenantId === auth.tenant.id)
+    if (url.searchParams.get('format') === 'csv') {
+      const header = [
+        'id',
+        'ref',
+        'label',
+        'snapshot',
+        'billing_mode',
+        'rate_cents_per_hour',
+        'retail_cents_per_hour',
+        'service_fee_cents_per_hour',
+        'cents',
+        'currency',
+        'created_at',
+        'started_at',
+        'stopped_at',
+      ]
+      const lines = rows.map((row) => {
+        const view = usageJson(row)
+        return header.map((key) => csvCell(view[key] as string | number | null)).join(',')
+      })
+      return new Response([header.join(','), ...lines].join('\n'), {
+        status: 200,
+        headers: { 'content-type': 'text/csv; charset=utf-8' },
       })
     }
-    return json(200, { object: 'list', data })
+    return json(200, { object: 'list', data: rows.map(usageJson) })
   }
 
   // ---------- request routing ----------
@@ -1036,13 +1698,26 @@ export function createApp(options: CloudApiOptions): CloudApp {
 
     if (segments[0] !== 'v1') throw new ApiError('not_found', 'Такого адреса нет')
 
+    // Public: no key, because the whole point is the key it hands back.
+    if (segments.length === 2 && segments[1] === 'guest' && method === 'POST') {
+      return guestRoute(req)
+    }
+
     if (segments.length === 2 && segments[1] === 'catalog' && method === 'GET') {
       requireAuth(req)
       return catalogRoute()
     }
 
+    if (segments.length === 4 && segments[1] === 'providers' && segments[3] === 'images' && method === 'GET') {
+      return imagesRoute(requireAuth(req, 'sandboxes:read'), segments[2]!)
+    }
+
     if (segments[1] === 'usage' && segments.length === 2 && method === 'GET') {
-      return usageRoute(requireAuth(req, 'billing:read'))
+      return usageRoute(requireAuth(req, 'billing:read'), url)
+    }
+
+    if (segments[1] === 'audit' && segments.length === 2 && method === 'GET') {
+      return customerAuditRoute(requireAuth(req), url)
     }
 
     if (segments[1] === 'keys') {
@@ -1075,9 +1750,6 @@ export function createApp(options: CloudApiOptions): CloudApp {
     if (segments[1] === 'account') {
       if (segments.length === 2 && method === 'GET') {
         return accountRoute(requireAuth(req))
-      }
-      if (segments.length === 3 && segments[2] === 'topup' && method === 'POST') {
-        return topUpRoute(requireAuth(req, 'keys:write'), req)
       }
     }
 
@@ -1121,6 +1793,8 @@ export function createApp(options: CloudApiOptions): CloudApp {
     store,
     async handle(req: Request): Promise<Response> {
       const requestId = nextId('req_')
+      const startedAt = now()
+      const path = new URL(req.url).pathname
       let response: Response
       try {
         response = await route(req)
@@ -1136,6 +1810,25 @@ export function createApp(options: CloudApiOptions): CloudApp {
         })
       }
       response.headers.set('x-request-id', requestId)
+      // Bodyless by design: a staff journal an operator reads must never hold
+      // a request body or an Authorization header, only who called and how it
+      // ended. A failure to journal must not fail the call itself.
+      try {
+        const auth = authByRequest.get(req)
+        const ip = clientIp(req)
+        store.recordRequest({
+          at: startedAt,
+          method: req.method.toUpperCase(),
+          path,
+          status: response.status,
+          durationMs: Math.max(0, now() - startedAt),
+          requestId,
+          ...(auth === undefined ? {} : { tenantId: auth.tenantId, keyLast4: auth.keyLast4 }),
+          ...(ip === undefined ? {} : { ip }),
+        })
+      } catch {
+        // The journal is diagnostics; the response is the contract.
+      }
       return response
     },
   }

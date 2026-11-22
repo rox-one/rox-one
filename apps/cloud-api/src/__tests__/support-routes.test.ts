@@ -279,7 +279,7 @@ describe('staff tickets', () => {
     const ticket = await openTicket(h.support, h.first.secret)
 
     const replied = await bodyOf<TicketBody>(
-      await call(h.support.adminRoutes, `/admin/tickets/${ticket.id}/reply`, {
+      await call(h.support.adminRoutes, `/v1/admin/tickets/${ticket.id}/reply`, {
         method: 'POST',
         token: ADMIN_KEY,
         body: { body: 'Провайдер снова доступен, попробуйте запустить', authorId: 'anna' },
@@ -304,7 +304,7 @@ describe('staff tickets', () => {
     const ticket = await openTicket(h.support, h.first.secret)
 
     const resolved = await bodyOf<TicketBody>(
-      await call(h.support.adminRoutes, `/admin/tickets/${ticket.id}/resolve`, {
+      await call(h.support.adminRoutes, `/v1/admin/tickets/${ticket.id}/resolve`, {
         method: 'POST',
         token: ADMIN_KEY,
         body: { authorId: 'anna' },
@@ -326,23 +326,23 @@ describe('staff tickets', () => {
   test('the list filters by status', async () => {
     const h = harness()
     const ticket = await openTicket(h.support, h.first.secret)
-    await call(h.support.adminRoutes, `/admin/tickets/${ticket.id}/reply`, {
+    await call(h.support.adminRoutes, `/v1/admin/tickets/${ticket.id}/reply`, {
       method: 'POST',
       token: ADMIN_KEY,
       body: { body: 'Смотрим', authorId: 'anna' },
     })
 
     const pending = await bodyOf<ListBody<TicketBody>>(
-      await call(h.support.adminRoutes, '/admin/tickets?status=pending', { token: ADMIN_KEY }),
+      await call(h.support.adminRoutes, '/v1/admin/tickets?status=pending', { token: ADMIN_KEY }),
     )
     expect(pending.data.map((entry) => entry.id)).toEqual([ticket.id])
 
     const open = await bodyOf<ListBody<TicketBody>>(
-      await call(h.support.adminRoutes, '/admin/tickets?status=open', { token: ADMIN_KEY }),
+      await call(h.support.adminRoutes, '/v1/admin/tickets?status=open', { token: ADMIN_KEY }),
     )
     expect(open.data).toHaveLength(0)
 
-    const bogus = await call(h.support.adminRoutes, '/admin/tickets?status=closed', {
+    const bogus = await call(h.support.adminRoutes, '/v1/admin/tickets?status=closed', {
       token: ADMIN_KEY,
     })
     expect(bogus.status).toBe(400)
@@ -357,7 +357,7 @@ describe('staff tickets', () => {
 describe('public status page', () => {
   test('shows five fields and no tenant or incident identity', async () => {
     const h = harness()
-    await call(h.support.adminRoutes, '/admin/incidents', {
+    await call(h.support.adminRoutes, '/v1/admin/incidents', {
       method: 'POST',
       token: ADMIN_KEY,
       body: {
@@ -368,7 +368,7 @@ describe('public status page', () => {
       },
     })
 
-    const response = await call(h.support.customerRoutes, '/status')
+    const response = await call(h.support.customerRoutes, '/v1/status')
     expect(response.status).toBe(200)
     const text = await response.text()
     const page = JSON.parse(text) as StatusBody
@@ -390,7 +390,7 @@ describe('public status page', () => {
   test('an incident appears, moves forward and disappears once resolved', async () => {
     const h = harness()
     const created = await bodyOf<IncidentBody>(
-      await call(h.support.adminRoutes, '/admin/incidents', {
+      await call(h.support.adminRoutes, '/v1/admin/incidents', {
         method: 'POST',
         token: ADMIN_KEY,
         body: {
@@ -404,11 +404,11 @@ describe('public status page', () => {
     expect(created.status).toBe('investigating')
     expect(created.scopes).toEqual([])
 
-    const openPage = await bodyOf<StatusBody>(await call(h.support.customerRoutes, '/status'))
+    const openPage = await bodyOf<StatusBody>(await call(h.support.customerRoutes, '/v1/status'))
     expect(openPage.incidents).toHaveLength(1)
 
     const updated = await bodyOf<IncidentBody>(
-      await call(h.support.adminRoutes, `/admin/incidents/${created.id}/update`, {
+      await call(h.support.adminRoutes, `/v1/admin/incidents/${created.id}/update`, {
         method: 'POST',
         token: ADMIN_KEY,
         body: { status: 'identified', note: 'Причина найдена в очереди заданий' },
@@ -417,10 +417,10 @@ describe('public status page', () => {
     expect(updated.status).toBe('identified')
     expect(updated.timeline.map((entry) => entry.status)).toEqual(['investigating', 'identified'])
 
-    const movedPage = await bodyOf<StatusBody>(await call(h.support.customerRoutes, '/status'))
+    const movedPage = await bodyOf<StatusBody>(await call(h.support.customerRoutes, '/v1/status'))
     expect(movedPage.incidents[0]!.status).toBe('identified')
 
-    const backwards = await call(h.support.adminRoutes, `/admin/incidents/${created.id}/update`, {
+    const backwards = await call(h.support.adminRoutes, `/v1/admin/incidents/${created.id}/update`, {
       method: 'POST',
       token: ADMIN_KEY,
       body: { status: 'investigating', note: 'Шаг назад' },
@@ -429,7 +429,7 @@ describe('public status page', () => {
     expect((await bodyOf<ErrorBody>(backwards)).error.code).toBe('invalid_state')
 
     const resolved = await bodyOf<IncidentBody>(
-      await call(h.support.adminRoutes, `/admin/incidents/${created.id}/resolve`, {
+      await call(h.support.adminRoutes, `/v1/admin/incidents/${created.id}/resolve`, {
         method: 'POST',
         token: ADMIN_KEY,
         body: { note: 'Очередь заданий обработана, команды проходят' },
@@ -437,7 +437,7 @@ describe('public status page', () => {
     )
     expect(resolved.status).toBe('resolved')
 
-    const closedPage = await bodyOf<StatusBody>(await call(h.support.customerRoutes, '/status'))
+    const closedPage = await bodyOf<StatusBody>(await call(h.support.customerRoutes, '/v1/status'))
     expect(closedPage.incidents).toHaveLength(0)
 
     const trail = h.audit.list()
@@ -450,7 +450,7 @@ describe('public status page', () => {
 
   test('an incident record refuses a specific key as its scope', async () => {
     const h = harness()
-    const response = await call(h.support.adminRoutes, '/admin/incidents', {
+    const response = await call(h.support.adminRoutes, '/v1/admin/incidents', {
       method: 'POST',
       token: ADMIN_KEY,
       body: {
@@ -485,7 +485,7 @@ describe('abuse queue', () => {
     expect(flag.decision).toBe('stop')
 
     const confirmed = await bodyOf<AbuseBody>(
-      await call(h.support.adminRoutes, `/admin/abuse/${flag.id}/confirm`, {
+      await call(h.support.adminRoutes, `/v1/admin/abuse/${flag.id}/confirm`, {
         method: 'POST',
         token: ADMIN_KEY,
         body: { staffId: 'anna' },
@@ -500,7 +500,7 @@ describe('abuse queue', () => {
     expect(trail.map((entry) => entry.action)).toEqual(['abuse.confirm'])
     expect(trail[0]!.actorId).toBe('anna')
 
-    const again = await call(h.support.adminRoutes, `/admin/abuse/${flag.id}/confirm`, {
+    const again = await call(h.support.adminRoutes, `/v1/admin/abuse/${flag.id}/confirm`, {
       method: 'POST',
       token: ADMIN_KEY,
       body: { staffId: 'anna' },
@@ -524,7 +524,7 @@ describe('abuse queue', () => {
     expect(flag.decision).toBe('warn')
 
     const dismissed = await bodyOf<AbuseBody>(
-      await call(h.support.adminRoutes, `/admin/abuse/${flag.id}/dismiss`, {
+      await call(h.support.adminRoutes, `/v1/admin/abuse/${flag.id}/dismiss`, {
         method: 'POST',
         token: ADMIN_KEY,
         body: { reason: 'Штатная сборка, пик объяснён' },
@@ -535,16 +535,16 @@ describe('abuse queue', () => {
     expect(dismissed.confirmed_by).toBeNull()
 
     const warned = await bodyOf<ListBody<AbuseBody>>(
-      await call(h.support.adminRoutes, '/admin/abuse?decision=warn', { token: ADMIN_KEY }),
+      await call(h.support.adminRoutes, '/v1/admin/abuse?decision=warn', { token: ADMIN_KEY }),
     )
     expect(warned.data.map((entry) => entry.id)).toEqual([flag.id])
 
     const stopped = await bodyOf<ListBody<AbuseBody>>(
-      await call(h.support.adminRoutes, '/admin/abuse?decision=stop', { token: ADMIN_KEY }),
+      await call(h.support.adminRoutes, '/v1/admin/abuse?decision=stop', { token: ADMIN_KEY }),
     )
     expect(stopped.data).toHaveLength(0)
 
-    const bogus = await call(h.support.adminRoutes, '/admin/abuse?decision=ban', {
+    const bogus = await call(h.support.adminRoutes, '/v1/admin/abuse?decision=ban', {
       token: ADMIN_KEY,
     })
     expect(bogus.status).toBe(400)
@@ -558,7 +558,7 @@ describe('abuse queue', () => {
 describe('staff boundary', () => {
   test('an unconfigured panel answers 404 on every staff route', async () => {
     const h = harness({ adminKey: null })
-    for (const path of ['/admin/tickets', '/admin/incidents', '/admin/abuse']) {
+    for (const path of ['/v1/admin/tickets', '/v1/admin/incidents', '/v1/admin/abuse']) {
       const response = await call(h.support.adminRoutes, path)
       expect(response.status).toBe(404)
       const failure = await bodyOf<ErrorBody>(response)
@@ -569,10 +569,10 @@ describe('staff boundary', () => {
 
   test('a configured panel refuses a missing or a wrong key', async () => {
     const h = harness()
-    const missing = await call(h.support.adminRoutes, '/admin/tickets')
+    const missing = await call(h.support.adminRoutes, '/v1/admin/tickets')
     expect(missing.status).toBe(401)
 
-    const wrong = await call(h.support.adminRoutes, '/admin/tickets', { token: 'ne-tot-klyuch' })
+    const wrong = await call(h.support.adminRoutes, '/v1/admin/tickets', { token: 'ne-tot-klyuch' })
     expect(wrong.status).toBe(401)
     const failure = await bodyOf<ErrorBody>(wrong)
     expect(failure.error.code).toBe('authentication_required')
@@ -581,7 +581,7 @@ describe('staff boundary', () => {
 
   test('an unknown ticket and an unknown incident both answer 404', async () => {
     const h = harness()
-    const ticket = await call(h.support.adminRoutes, '/admin/tickets/tkt_missing/reply', {
+    const ticket = await call(h.support.adminRoutes, '/v1/admin/tickets/tkt_missing/reply', {
       method: 'POST',
       token: ADMIN_KEY,
       body: { body: 'Ответ', authorId: 'anna' },
@@ -589,7 +589,7 @@ describe('staff boundary', () => {
     expect(ticket.status).toBe(404)
     expect((await bodyOf<ErrorBody>(ticket)).error.code).toBe('not_found')
 
-    const incident = await call(h.support.adminRoutes, '/admin/incidents/inc_missing/resolve', {
+    const incident = await call(h.support.adminRoutes, '/v1/admin/incidents/inc_missing/resolve', {
       method: 'POST',
       token: ADMIN_KEY,
       body: { note: 'Закрываем' },
@@ -611,7 +611,7 @@ describe('front door', () => {
       support: h.support,
     })
 
-    const status = await front(new Request('http://api.test/status'))
+    const status = await front(new Request('http://api.test/v1/status'))
     expect(status.status).toBe(200)
     expect(await bodyOf<StatusBody>(status)).toEqual({ incidents: [] })
 
@@ -624,7 +624,7 @@ describe('front door', () => {
     expect((await bodyOf<ListBody<TicketBody>>(tickets)).object).toBe('list')
 
     const staffList = await front(
-      new Request('http://api.test/admin/tickets', {
+      new Request('http://api.test/v1/admin/tickets', {
         headers: { authorization: `Bearer ${ADMIN_KEY}` },
       }),
     )
@@ -634,8 +634,16 @@ describe('front door', () => {
     const elsewhere = await front(new Request('http://api.test/v1/sandboxes'))
     expect(await elsewhere.text()).toBe('app')
 
-    const panelElsewhere = await front(new Request('http://api.test/admin/overview'))
-    expect(await panelElsewhere.text()).toBe('admin')
+    // `/admin/*` is the panel page (the SPA shell), not the staff JSON API.
+    const panelPage = await front(new Request('http://api.test/admin/overview'))
+    expect(panelPage.headers.get('content-type')).toContain('text/html')
+
+    const panelApi = await front(
+      new Request('http://api.test/v1/admin/overview', {
+        headers: { authorization: `Bearer ${ADMIN_KEY}` },
+      }),
+    )
+    expect(await panelApi.text()).toBe('admin')
   })
 
   test('without a support app the support paths keep answering 404', async () => {
@@ -643,7 +651,7 @@ describe('front door', () => {
       app: { handle: async () => new Response('app', { status: 404 }) },
       admin: { handle: async () => new Response('admin', { status: 404 }) },
     })
-    expect((await front(new Request('http://api.test/status'))).status).toBe(404)
-    expect((await front(new Request('http://api.test/admin/tickets'))).status).toBe(404)
+    expect((await front(new Request('http://api.test/v1/status'))).status).toBe(404)
+    expect((await front(new Request('http://api.test/v1/admin/tickets'))).status).toBe(404)
   })
 })
