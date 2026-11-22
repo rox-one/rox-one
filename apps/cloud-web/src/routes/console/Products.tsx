@@ -20,6 +20,7 @@ import { ApiError, api } from '@/lib/api'
 import type { Catalog, GpuSpec, ProviderImage } from '@/lib/api'
 import { formatCents, formatMoney, shortId } from '@/lib/format'
 
+import { RollingText } from './components/RollingText'
 import { Stepper } from './components/Stepper'
 import { useConsoleSession } from './components/console-session'
 import { errorText, gpuName, ttlLabel } from './components/console-ui'
@@ -1197,7 +1198,7 @@ export default function ConsoleProducts(): JSX.Element {
               icon={<Icon name="play" size={15} />}
               onClick={() => void launch()}
             >
-              Запустить
+              <RollingText text="Запустить" />
             </Button>
             <p class="summary-foot">
               Остановка считает плату по фактическому времени, остаток резерва возвращается на счёт.

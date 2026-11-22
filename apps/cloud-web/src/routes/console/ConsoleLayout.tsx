@@ -1,6 +1,6 @@
 import { A } from '@solidjs/router'
 import type { RouteSectionProps } from '@solidjs/router'
-import { For, Show, Suspense, createEffect, createSignal, untrack } from 'solid-js'
+import { For, Show, Suspense, createEffect, createSignal, onCleanup, untrack } from 'solid-js'
 import type { JSX } from 'solid-js'
 
 import { Badge, Button, Icon, Presence, Skeleton } from '@/components'
@@ -9,6 +9,8 @@ import { formatCents } from '@/lib/format'
 import { reveal } from '@/lib/motion'
 
 import { ConsoleSessionProvider, accountLabel, useConsoleSession } from './components/console-session'
+import { CommandPalette } from './components/CommandPalette'
+import { CreateMenu } from './components/CreateMenu'
 import { ConsoleWelcome } from './components/Welcome'
 
 import './console.css'
@@ -76,6 +78,29 @@ function ConsoleFrame(props: { children?: JSX.Element; booting: boolean }) {
   const session = useConsoleSession()
   const reserved = (): number => session.account()?.reserved_cents ?? 0
   const [collapsed, setCollapsed] = createSignal(readNavCollapsed())
+  const [paletteOpen, setPaletteOpen] = createSignal(false)
+  let searchTrigger: HTMLButtonElement | undefined
+
+  // The palette is a dialog, so the browser restores focus to whatever held it
+  // before. The search button is where a keyboard user expects to land next.
+  const closePalette = (): void => {
+    setPaletteOpen(false)
+    queueMicrotask(() => searchTrigger?.focus())
+  }
+
+  // ⌘K and Ctrl+K open the same list; a second press closes it.
+  createEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      const isK = event.code === 'KeyK' || event.key.toLowerCase() === 'k'
+      if (!isK || (!event.metaKey && !event.ctrlKey)) return
+      if (event.altKey || event.shiftKey) return
+      event.preventDefault()
+      if (paletteOpen()) closePalette()
+      else setPaletteOpen(true)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    onCleanup(() => window.removeEventListener('keydown', onKeyDown))
+  })
 
   // Only after the account is known: one reveal of the content column, then
   // navigation inside the console never replays it.
@@ -165,7 +190,24 @@ function ConsoleFrame(props: { children?: JSX.Element; booting: boolean }) {
               </Badge>
             </Show>
           </div>
-          <div class="app-topbar-actions">
+          <div class="app-topbar-actions console-topbar-actions">
+            <button
+              ref={searchTrigger}
+              type="button"
+              class="console-search-trigger"
+              aria-label="Поиск по кабинету"
+              aria-haspopup="dialog"
+              aria-keyshortcuts="Meta+K Control+K"
+              title="Поиск по кабинету · ⌘K"
+              onClick={() => setPaletteOpen(true)}
+            >
+              <Icon name="search" size={15} />
+              <span class="console-trigger-label">Поиск</span>
+              <kbd class="console-kbd" aria-hidden="true">
+                ⌘K
+              </kbd>
+            </button>
+            <CreateMenu />
             <div class="console-balance" aria-live="polite">
               <span class="console-balance-label">Баланс</span>
               <Show
@@ -239,6 +281,8 @@ function ConsoleFrame(props: { children?: JSX.Element; booting: boolean }) {
           </Suspense>
         </main>
       </div>
+
+      <CommandPalette open={paletteOpen()} onClose={closePalette} />
     </div>
   )
 }

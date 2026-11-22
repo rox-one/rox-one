@@ -26,6 +26,7 @@ export type IconName =
   | 'plus'
   | 'pencil'
   | 'arrow'
+  | 'search'
 
 /**
  * One stroke drawing per name. Each entry is a factory: a JSX element is a real
@@ -154,6 +155,12 @@ const drawings: Record<IconName, () => JSX.Element> = {
     </>
   ),
   arrow: () => <path d="M5 12h14M13 6l6 6-6 6" />,
+  search: () => (
+    <>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m15.2 15.2 4.3 4.3" />
+    </>
+  ),
 }
 
 export interface IconProps {

@@ -617,20 +617,36 @@
   flex-wrap: wrap;
 }
 
-/* ---------- Toast ---------- */
+/* ---------- Toast stack ---------- */
 
+/*
+ * One fixed viewport in the bottom right corner. It has no height of its own:
+ * every card is pinned to the same bottom edge and moved only by a transform,
+ * so a message arriving, leaving or changing depth never reflows the page.
+ * The viewport takes no pointer events; a card re-enables them for itself.
+ */
 .toast-region {
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 80;
-  display: grid;
-  gap: 8px;
-  width: min(360px, calc(100vw - 32px));
+  width: min(380px, calc(100vw - 24px));
+  height: 0;
   pointer-events: none;
 }
 
+/*
+ * The pile: the newest card is last in the DOM and paints on top, holding the
+ * bottom edge. Each older card is lifted 10 px, shrunk 6% and faded 20% more
+ * per step, so only a readable strip of it shows. Hover or focus fans the
+ * pile out; `styles/motion.css` turns it into a plain list without motion.
+ */
 .toast {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform-origin: bottom center;
   pointer-events: auto;
   display: flex;
   align-items: flex-start;
@@ -641,7 +657,11 @@
   background: var(--surface);
   box-shadow: var(--shadow-lg);
   font-size: var(--text-sm);
-  animation: toast-in var(--dur-slow) var(--ease);
+  will-change: transform, opacity;
+  /* The first frame, before Motion moves the card: it waits just below its
+     place, slightly small and faint, and rises into the stack. */
+  opacity: 0;
+  transform: translateY(18px) scale(0.96);
 }
 
 .toast[data-tone="accent"] {
@@ -708,17 +728,6 @@
 
 .toast-close:hover {
   color: var(--ink);
-}
-
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 /* ---------- Table ---------- */

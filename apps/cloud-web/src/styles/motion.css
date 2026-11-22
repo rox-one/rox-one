@@ -56,6 +56,15 @@
   pointer-events: none;
 }
 
+/*
+ * A toast card stands on an inline transform from Motion, so the fade is the
+ * one thing forced past it: the card keeps the pose the stack gave it and
+ * disappears where it stands instead of jumping to the bottom of the pile.
+ */
+.presence[data-state="exiting"] > .toast {
+  opacity: 0 !important;
+}
+
 /* ---------- Dialog: open and close, native calls untouched ---------- */
 
 /*
@@ -125,5 +134,29 @@
     .dialog[open]::backdrop {
       opacity: 1;
     }
+  }
+
+  /*
+   * No transforms at all: the pile opens into a plain list of readable cards,
+   * newest at the bottom with a real gap between them. The viewport still sits
+   * outside the page's flow and grows upward.
+   */
+  .toast-region {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: auto;
+  }
+
+  .toast {
+    position: static;
+    opacity: 1 !important;
+    transform: none !important;
+    will-change: auto;
+  }
+
+  .presence[data-state="exiting"] > .toast {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

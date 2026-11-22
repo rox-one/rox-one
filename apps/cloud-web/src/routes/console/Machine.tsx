@@ -406,6 +406,9 @@ export default function ConsoleMachine(): JSX.Element {
       setRefreshing(false)
       setSandbox(updated)
       toast.success('Машина остановлена: плата рассчитана по фактическому времени.')
+      // The rail above the page must drop the stopped card now, not after its
+      // next 15-second refresh.
+      window.dispatchEvent(new Event('rox:sandboxes-changed'))
       void session.refreshAccount()
     } catch (error) {
       setActionError(`Не удалось остановить машину: ${errorText(error)}`)

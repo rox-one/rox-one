@@ -162,10 +162,13 @@ export default function RunningMachinesStrip(props: { currentId: string }): JSX.
     void load()
     const refresh = window.setInterval(() => void load(), REFRESH_MS)
     const tick = window.setInterval(() => setNow(Date.now()), TICK_MS)
+    const changed = (): void => void load()
+    window.addEventListener('rox:sandboxes-changed', changed)
     onCleanup(() => {
       disposed = true
       window.clearInterval(refresh)
       window.clearInterval(tick)
+      window.removeEventListener('rox:sandboxes-changed', changed)
     })
   })
 
