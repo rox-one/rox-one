@@ -121,3 +121,12 @@ apps/electron/src/main/home-fetch/shared-keys.local.ts
 
 # Boot-manifest debug sibling (scripts/boot-manifest.ts) — per-build chunk hashes, never commit
 apps/electron/src/renderer/boot-manifest.local.json
+
+# poltergeist (poltergeist.config.json is tracked)
+.poltergeist.log
+.poltergeist-build-*.log
+.watchmanconfig
+/info
+
+# Local worktrees used by agent sessions
+.worktrees/

@@ -1,0 +1,59 @@
+{
+  "version": "1.0",
+  "projectType": "node",
+  "targets": [
+    {
+      "name": "typecheck",
+      "type": "npm",
+      "packageManager": "bun",
+      "buildScript": "typecheck:all",
+      "watchPaths": [
+        "packages/**/src/**/*.ts",
+        "packages/**/src/**/*.tsx",
+        "apps/**/src/**/*.ts",
+        "apps/**/src/**/*.tsx",
+        "scripts/**/*.ts",
+        "tsconfig*.json",
+        "packages/*/tsconfig*.json",
+        "apps/*/tsconfig*.json"
+      ],
+      "settlingDelay": 1200,
+      "debounceInterval": 800,
+      "environment": {
+        "NODE_OPTIONS": "--max-old-space-size=8192"
+      }
+    },
+    {
+      "name": "shared-tests",
+      "type": "test",
+      "testCommand": "bun run test:shared:all",
+      "watchPaths": [
+        "packages/shared/src/**/*.ts",
+        "packages/shared/tests/**/*.ts"
+      ],
+      "settlingDelay": 1000,
+      "debounceInterval": 800,
+      "environment": {
+        "NODE_OPTIONS": "--max-old-space-size=8192"
+      }
+    },
+    {
+      "name": "server-bundle",
+      "type": "npm",
+      "packageManager": "bun",
+      "buildScript": "server:build",
+      "watchPaths": [
+        "packages/server/src/**/*.ts",
+        "packages/server-core/src/**/*.ts",
+        "packages/shared/src/**/*.ts",
+        "scripts/build-server.ts",
+        "scripts/build/**/*.ts"
+      ],
+      "settlingDelay": 2000,
+      "debounceInterval": 1500,
+      "environment": {
+        "NODE_OPTIONS": "--max-old-space-size=8192"
+      }
+    }
+  ]
+}
