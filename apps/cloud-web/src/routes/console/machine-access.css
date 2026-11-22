@@ -333,3 +333,112 @@
 .access-chip {
   padding: 2px 6px;
 }
+
+/* Ярлык вместо токена: строка команды, файл доступа и его копирование. */
+.access-disclosure-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.access-disclosure {
+  appearance: none;
+  padding: 2px 7px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.access-disclosure:hover {
+  background: var(--surface-hover);
+}
+
+.access-disclosure:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.access-disclosure[aria-expanded='true'] {
+  border-style: solid;
+  background: var(--surface-sunken);
+  color: var(--ink);
+}
+
+.access-config {
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--terminal);
+  color: var(--terminal-ink);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.55;
+  white-space: pre;
+}
+
+.access-config code {
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.access-config.is-expired {
+  opacity: 0.6;
+}
+
+.access-config-actions {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.access-config-actions .access-note {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.access-raw {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--terminal);
+  color: var(--terminal-ink);
+}
+
+.access-raw code {
+  flex: 1 1 160px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.access-raw .access-copy {
+  border-color: var(--terminal-border);
+  color: var(--terminal-success);
+}
+
+.access-raw.is-expired {
+  opacity: 0.6;
+}
+
+.access-raw.is-expired code {
+  text-decoration: line-through;
+}

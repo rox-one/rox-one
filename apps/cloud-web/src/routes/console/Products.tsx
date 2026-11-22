@@ -13,7 +13,6 @@ import {
   Icon,
   PageHeader,
   Select,
-  Skeleton,
   useToast,
 } from '@/components'
 import type { BadgeTone } from '@/components'
@@ -908,9 +907,9 @@ export default function ConsoleProducts(): JSX.Element {
               </Button>
             }
           >
-            <Show
-              when={imagesState() !== 'loading'}
-              fallback={<Skeleton lines={4} />}
+            <div
+              class="catalog-area"
+              aria-busy={imagesState() === 'loading' ? 'true' : undefined}
             >
               <Show
                 when={bootable().length > 0}
@@ -1044,7 +1043,7 @@ export default function ConsoleProducts(): JSX.Element {
                   </div>
                 </Field>
               </div>
-            </Show>
+            </div>
           </Card>
         </div>
 

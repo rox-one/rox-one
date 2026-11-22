@@ -644,3 +644,11 @@
 .products-page .console-summary > .card {
   top: 58px;
 }
+
+/*
+ * The catalog keeps its height while the image list loads: the presets are
+ * already drawn, so the page is never replaced by a skeleton.
+ */
+.catalog-area {
+  min-height: 320px;
+}

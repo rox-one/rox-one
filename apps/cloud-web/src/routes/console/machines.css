@@ -258,3 +258,18 @@
     gap: 6px;
   }
 }
+
+/*
+ * The results area keeps its height while a refresh is in flight and while a
+ * filter matches nothing: the page never collapses under the toolbar.
+ */
+.machines-results {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+  min-height: 280px;
+}
+
+.machines-grid-loading {
+  min-height: 280px;
+}
