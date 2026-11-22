@@ -493,3 +493,77 @@ test('every request goes to the injected hosts only', async () => {
     expect(onApi || onToolbox).toBe(true);
   }
 });
+
+test('previewUrl asks for a signed link and caps the lifetime', async () => {
+  const { provider, calls } = setup(
+    createdThen((call) =>
+      call.url.includes('/ports/8000/signed-preview-url')
+        ? json({ url: 'https://8000-dt-1.proxy.test/token' })
+        : json({}),
+    ),
+  );
+
+  await provider.create(baseSpec);
+  const preview = await provider.previewUrl!('sbx-1', 8000, 3600);
+
+  const call = calls.at(-1)!;
+  expect(call.method).toBe('GET');
+  expect(call.url).toBe(
+    'https://daytona.test/api/sandbox/dt-1/ports/8000/signed-preview-url?expiresInSeconds=3600',
+  );
+  expect(call.headers.Authorization).toBe('Bearer tenant-key');
+  expect(preview).toEqual({
+    url: 'https://8000-dt-1.proxy.test/token',
+    expiresAt: CREATED_AT + 3_600_000,
+  });
+});
+
+test('sshAccess returns the vendor command and expiry, never a made-up one', async () => {
+  const { provider, calls } = setup(
+    createdThen((call) =>
+      call.url.includes('/ssh-access?expiresInMinutes=15')
+        ? json({
+            sshCommand: 'ssh dt-token@ssh.test',
+            expiresAt: new Date(CREATED_AT + 15 * 60_000).toISOString(),
+          })
+        : json({}),
+    ),
+  );
+
+  await provider.create(baseSpec);
+  const access = await provider.sshAccess!('sbx-1', 900);
+
+  const call = calls.at(-1)!;
+  expect(call.method).toBe('POST');
+  expect(call.url).toBe('https://daytona.test/api/sandbox/dt-1/ssh-access?expiresInMinutes=15');
+  expect(access.command).toBe('ssh dt-token@ssh.test');
+  expect(access.expiresAt).toBe(CREATED_AT + 900_000);
+});
+
+test('listFiles maps names, folders, sizes and modified time', async () => {
+  const { provider, calls } = setup(
+    createdThen((call) =>
+      call.url.includes('/files?path=%2Fhome%2Fdaytona')
+        ? json([
+            { name: 'notes', path: '/home/daytona/notes', isDir: true, size: 0, modifiedAt: '2026-11-22T08:00:00Z' },
+            { name: 'hello.txt', path: '/home/daytona/hello.txt', isDir: false, size: 12 },
+          ])
+        : json({}),
+    ),
+  );
+
+  await provider.create(baseSpec);
+  const entries = await provider.listFiles!('sbx-1', '/home/daytona');
+
+  expect(calls.at(-1)!.url).toBe('https://toolbox.test/toolbox/dt-1/files?path=%2Fhome%2Fdaytona');
+  expect(entries).toEqual([
+    {
+      name: 'notes',
+      path: '/home/daytona/notes',
+      isDir: true,
+      size: 0,
+      modifiedAt: Date.parse('2026-11-22T08:00:00Z'),
+    },
+    { name: 'hello.txt', path: '/home/daytona/hello.txt', isDir: false, size: 12 },
+  ]);
+});
