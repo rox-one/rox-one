@@ -1,0 +1,162 @@
+/*
+ * Motion: the CSS half of the console's animation, imported after the
+ * components so these rules own a page's first frame, a dialog's open and
+ * close, and a node that is on its way out. Every rule has a zero-motion twin
+ * at the bottom of the file.
+ *
+ * A machine workbench's width and height never animate here: a pane that
+ * slides resizes the terminal under a person's cursor mid-command.
+ */
+
+/* ---------- Pages enter once, when they first appear ---------- */
+
+.page {
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease);
+}
+
+@starting-style {
+  .page {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* The balance alert slides down from the topbar rather than popping in. */
+.console-alert-top {
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease);
+}
+
+@starting-style {
+  .console-alert-top {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* ---------- A node on its way out (Presence) ---------- */
+
+/*
+ * The wrapper takes no room of its own: the child keeps its place in the
+ * layout until the fade ends. The child is the thing that moves.
+ */
+.presence {
+  display: contents;
+}
+
+.presence[data-state="exiting"] > * {
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease);
+  pointer-events: none;
+}
+
+/*
+ * A toast card stands on an inline transform from Motion, so the fade is the
+ * one thing forced past it: the card keeps the pose the stack gave it and
+ * disappears where it stands instead of jumping to the bottom of the pile.
+ */
+.presence[data-state="exiting"] > .toast {
+  opacity: 0 !important;
+}
+
+/* ---------- Dialog: open and close, native calls untouched ---------- */
+
+/*
+ * `display` and `overlay` are transitioned discretely: the browser keeps the
+ * dialog and its backdrop on screen for the fade, then drops them out of the
+ * top layer. A browser without allow-discrete closes as it always did.
+ */
+.dialog {
+  opacity: 0;
+  transform: translateY(4px) scale(0.98);
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease),
+    display var(--dur-base) allow-discrete,
+    overlay var(--dur-base) allow-discrete;
+}
+
+.dialog[open] {
+  opacity: 1;
+  transform: none;
+}
+
+.dialog::backdrop {
+  opacity: 0;
+  transition:
+    opacity var(--dur-base) var(--ease),
+    display var(--dur-base) allow-discrete,
+    overlay var(--dur-base) allow-discrete;
+}
+
+.dialog[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  .dialog[open] {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+
+  .dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+/* ---------- Reduced motion: no duration, no transform ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .console-alert-top,
+  .presence[data-state="exiting"] > *,
+  .dialog,
+  .dialog::backdrop {
+    transition-duration: 0ms;
+    transform: none;
+  }
+
+  /* No first frame at zero opacity: there is nothing to fade from. */
+  @starting-style {
+    .page,
+    .console-alert-top,
+    .dialog[open] {
+      opacity: 1;
+      transform: none;
+    }
+
+    .dialog[open]::backdrop {
+      opacity: 1;
+    }
+  }
+
+  /*
+   * No transforms at all: the pile opens into a plain list of readable cards,
+   * newest at the bottom with a real gap between them. The viewport still sits
+   * outside the page's flow and grows upward.
+   */
+  .toast-region {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: auto;
+  }
+
+  .toast {
+    position: static;
+    opacity: 1 !important;
+    transform: none !important;
+    will-change: auto;
+  }
+
+  .presence[data-state="exiting"] > .toast {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

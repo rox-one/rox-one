@@ -73,3 +73,32 @@ OMP запускается с `--session-dir <workspace>/sessions/<craftSessionI
 ### Domain docs
 
 Single-context: глоссарий — `CONTEXT.md` в корне, ADR — `docs/architecture/adr/`. See `docs/agents/domain.md`.
+
+## Сборка и проверки: Poltergeist
+
+Фоновый пересборщик: демон на репозиторий, который после сохранения файлов пересобирает только затронутые таргеты. Конфиг — `poltergeist.config.json` в корне.
+
+Таргеты:
+
+- `typecheck` → `bun run typecheck:all` (TSC по всему монорепо; смотреть `packages/**/src`, `apps/**/src`, `scripts/**`).
+- `shared-tests` → `bun run test:shared:all`.
+- `server-bundle` → `bun run server:build`.
+
+Правила для агентов:
+
+- Перед прогоном проверки вручную — `poltergeist status --verbose`: если таргет свежий или собирается, ждать `poltergeist wait <target>` вместо повторного запуска.
+- Красная сборка в демоне — это тот же сигнал, что и упавший `bun run typecheck:all`; читать `poltergeist logs <target> --follow`, а не гадать.
+- Перед `git rebase`, массовым переименованием и кодогенерацией — `poltergeist pause`, после — `poltergeist resume` (ручные `poltergeist build` при паузе работают).
+- Не подменять `buildCommand` под конкретную задачу. Нужной проверки нет в конфиге — сначала добавить таргет, потом делать задачу.
+- Демон на проект: `poltergeist haunt` (после `stop` его нужно поднять заново).
+- Типы таргетов: в 2.1.13 реализованы только `executable`, `app-bundle`, `npm`, `test` и `cmake-*`; `custom`, `docker`, `library`, `framework` падают с «not yet implemented» — поэтому здесь `npm` + `buildScript`.
+- `environment.NODE_OPTIONS=--max-old-space-size=8192` в конфиге обязателен: без него `apps/electron` валит tsc в SIGABRT по heap (остальные 21 пакет проходят).
+- Первая сборка запускается на первое изменение отслеживаемого файла, а не на `haunt`. Ориентиры по времени: `typecheck` ≈ 5 мин, `server-bundle` ≈ 2 мин, `shared-tests` ≈ 47 с — это фоновые прогоны, ждать их в интерактиве не нужно.
+- Строка `Status:` может показывать `❌ Failed` при успешной сборке (баг 2.1.13: так выводится сборка, идущая дольше 30 с). Истина — `Build Status:` в том же выводе, `lastBuild.status` из `poltergeist status --json` и `poltergeist logs <target>`.
+- `poltergeist status` создаёт в корне пустой файл `info` — он в `.gitignore`, удалять руками не нужно.
+
+<!-- groma:start -->
+## Groma
+
+This project uses Groma. Before you scan, inspect, or curate architecture, or change files for a Backlog task, run `groma agent-instructions` and read the guide it names for that job. When it reports a first scan, ask the user whether they want you to curate the architecture. Do not edit Groma-owned architecture files directly.
+<!-- groma:end -->

@@ -1,0 +1,18 @@
+{
+  "name": "@rox/cloud-support",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "description": "Rox Cloud customer support: ticket threads, a public incident status page and an abuse queue — dependency-free cores with no network access",
+  "type": "module",
+  "private": true,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {}
+}

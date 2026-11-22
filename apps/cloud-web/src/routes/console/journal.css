@@ -1,0 +1,45 @@
+/* Журнал кабинета. Владелец страницы: волна 2, «Кабинет, основа». */
+
+.journal-page {
+  min-width: 0;
+}
+
+.journal-filter {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.journal-page .card-flush .table-wrap {
+  border: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.journal-filter .field {
+  flex: 1 1 200px;
+  max-width: 320px;
+  min-width: 0;
+}
+
+.journal-action {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.journal-code {
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+.journal-target {
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 460px) {
+  .journal-filter .field {
+    max-width: none;
+  }
+}

@@ -1,0 +1,696 @@
+/* Панели машины: нагрузка, снимки, журнал доступа и мастер первого сайта. */
+
+/* ---------- Общая вертикаль и подписи ---------- */
+
+.mp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mp-error-quiet {
+  margin: 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--danger);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mp-ok-text,
+.mp-warn-text {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: 650;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mp-ok-text {
+  color: var(--success);
+}
+
+.mp-warn-text {
+  color: var(--warning);
+}
+
+.mp-link-button {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.mp-link-button:hover {
+  color: var(--accent-strong);
+}
+
+/* ---------- Нагрузка ---------- */
+
+.mp-meters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 18px;
+  min-width: 0;
+  /* Три полосы держат высоту и до первого замера, и после ошибки. */
+  min-height: 64px;
+}
+
+.mp-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.mp-meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-meter-label {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.mp-meter-value {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mp-bar {
+  height: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.mp-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width var(--dur-base) var(--ease);
+}
+
+.mp-bar[data-tone="warn"] .mp-bar-fill {
+  background: var(--warning);
+}
+
+.mp-bar[data-tone="danger"] .mp-bar-fill {
+  background: var(--danger);
+}
+
+.mp-bar[data-tone="unknown"] .mp-bar-fill {
+  background: var(--border-strong);
+}
+
+.mp-meter-sub {
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.mp-stamp {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Разделы внутри карточки нагрузки ---------- */
+
+.mp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-block + .mp-block {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.mp-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-block-title {
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mp-block-meta {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Процессы ---------- */
+
+/* Список процессов живёт в рамке постоянной высоты: восемь строк и шапка
+   занимают одно и то же место, поэтому новая выборка не тянет карточку. */
+.mp-proc-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 404px;
+}
+
+.mp-frame-note {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  text-align: center;
+}
+
+.mp-proc {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mp-proc-row {
+  display: grid;
+  grid-template-columns: 40px 82px 40px 48px minmax(0, 1fr);
+  grid-template-areas:
+    "pid user cpu mem kill"
+    "cmd cmd cmd cmd cmd";
+  align-items: center;
+  gap: 2px 6px;
+  min-width: 0;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.mp-proc-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.mp-proc-head {
+  grid-template-areas: "pid user cpu mem kill";
+  padding: 0 0 4px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mp-proc-head .mp-proc-pid,
+.mp-proc-head .mp-proc-user,
+.mp-proc-head .mp-proc-cpu,
+.mp-proc-head .mp-proc-mem {
+  color: var(--muted);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.mp-proc-pid {
+  grid-area: pid;
+  color: var(--muted);
+}
+
+.mp-proc-user {
+  grid-area: user;
+}
+
+.mp-proc-cpu {
+  grid-area: cpu;
+}
+
+.mp-proc-mem {
+  grid-area: mem;
+}
+
+.mp-proc-cmd {
+  grid-area: cmd;
+}
+
+.mp-proc-action {
+  grid-area: kill;
+  display: flex;
+  align-items: center;
+  justify-self: end;
+}
+
+.mp-proc-pid,
+.mp-proc-cpu,
+.mp-proc-mem {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mp-proc-cpu,
+.mp-proc-mem {
+  text-align: right;
+}
+
+.mp-proc-user {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10.5px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-proc-cmd {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-proc-kill {
+  appearance: none;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--danger);
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.mp-proc-kill:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.mp-proc-kill:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.mp-kill-cmd {
+  margin: 8px 0 0;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Связь ---------- */
+
+.mp-net {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-net-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+.mp-net-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mp-net-state[data-online="1"] {
+  color: var(--success);
+}
+
+.mp-net-state[data-online="0"] {
+  color: var(--danger);
+}
+
+.mp-net-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.mp-net-fact {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mp-hist {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 34px;
+  min-height: 34px;
+  padding: 4px 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  min-width: 0;
+}
+
+.mp-hist[data-empty="1"] {
+  background: var(--surface);
+  border-style: dashed;
+}
+
+.mp-hist-bar {
+  flex: 1 1 0;
+  max-width: 20px;
+  min-width: 0;
+  min-height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+  opacity: 0.8;
+  transition: height var(--dur-base) var(--ease);
+}
+
+.mp-hist-bar[data-online="0"] {
+  background: var(--danger);
+  opacity: 0.55;
+}
+
+.mp-net-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 10px;
+  min-width: 0;
+}
+
+/* ---------- Форма снимка и список снимков ---------- */
+
+.mp-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-form .field {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.mp-form .btn {
+  flex: none;
+}
+
+.mp-snap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.mp-snap-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+.mp-snap-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mp-snap-name {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mp-snap-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-snap-date {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mp-snap-row .btn {
+  flex: none;
+}
+
+/* ---------- Журнал доступа ---------- */
+
+.mp-log {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.mp-log-row {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.mp-log-row:first-child {
+  padding-top: 0;
+}
+
+.mp-log-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.mp-log-time {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mp-log-action {
+  min-width: 0;
+  font-size: var(--text-xs);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.mp-log-detail {
+  color: var(--muted);
+  font-size: 10.5px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Мастер первого сайта ---------- */
+
+.mp-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.mp-step {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+}
+
+.mp-step + .mp-step {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.mp-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.mp-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-step-title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 650;
+}
+
+.mp-step-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.mp-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mp-inline .field {
+  flex: none;
+}
+
+.mp-port-input {
+  width: 110px;
+}
+
+.mp-link-line {
+  margin: 0;
+  min-width: 0;
+}
+
+.mp-link {
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Узкие экраны ---------- */
+
+@media (max-width: 760px) {
+  .mp-meters {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  .mp-form {
+    align-items: stretch;
+  }
+
+  .mp-form .field {
+    flex-basis: 100%;
+  }
+
+  .mp-form .btn {
+    align-self: flex-start;
+  }
+
+  .mp-snap-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mp-snap-row .btn {
+    align-self: flex-start;
+  }
+
+  .mp-log-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .mp-log-detail {
+    grid-column: 2;
+    text-align: left;
+  }
+}

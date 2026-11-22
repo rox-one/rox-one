@@ -1,0 +1,14 @@
+{
+  "name": "@rox/cloud-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Rox Cloud public HTTP API (BYOK): one contract in front of customer-owned sandbox providers",
+  "main": "src/server.ts",
+  "scripts": {
+    "start": "bun run src/server.ts",
+    "dev": "bun run --watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  }
+}

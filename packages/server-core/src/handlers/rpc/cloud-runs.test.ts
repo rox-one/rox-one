@@ -274,7 +274,7 @@ describe('cloud-runs rpc handlers (local provider)', () => {
     }
   }, 60_000);
 
-  test('retired providers coerce to daytona; missing secret does not fall back', () => {
+  test('an unknown provider is rejected; no silent fallback and no local job', () => {
     const dir = mkdtempSync(join(tmpdir(), 'craft-cloud-runs-coerce-'));
     try {
       writeFileSync(
@@ -287,16 +287,23 @@ describe('cloud-runs rpc handlers (local provider)', () => {
         }),
       );
       const r = runScript(dir, SETUP + `
-        const cfg = await invoke(RPC_CHANNELS.cloudRuns.GET_CONFIG);
-        if (cfg.provider !== 'daytona') throw new Error('cloudflare did not coerce: ' + JSON.stringify(cfg.provider));
+        let cfgError = '';
+        try {
+          await invoke(RPC_CHANNELS.cloudRuns.GET_CONFIG);
+        } catch (e) {
+          cfgError = String(e?.message ?? e);
+        }
+        if (!/unknown cloud-run provider|provider_unknown/i.test(cfgError)) {
+          throw new Error('expected provider_unknown from GET_CONFIG, got: ' + cfgError);
+        }
         let threw = '';
         try {
           await invoke(RPC_CHANNELS.cloudRuns.SUBMIT, { sessionId: 'sess-test', topic: 'no fallback' });
         } catch (e) {
           threw = String(e?.message ?? e);
         }
-        if (!/daytona requires secret reference DAYTONA_API_KEY/i.test(threw)) {
-          throw new Error('expected daytona secret error, got: ' + threw);
+        if (!/unknown cloud-run provider|provider_unknown/i.test(threw)) {
+          throw new Error('expected provider_unknown from SUBMIT, got: ' + threw);
         }
         const { existsSync } = await import('node:fs');
         const { join } = await import('node:path');

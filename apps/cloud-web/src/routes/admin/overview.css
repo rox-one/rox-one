@@ -1,0 +1,135 @@
+/* Обзор панели. Владелец страницы: волна 2, «Панель, клиенты». */
+
+.overview-page {
+  min-width: 0;
+}
+
+.overview-loading {
+  padding: 12px 0;
+}
+
+.overview-stats {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+}
+
+.overview-stats .stat-value {
+  font-size: var(--text-lg);
+}
+
+.overview-grid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+  align-items: start;
+}
+
+.overview-side {
+  display: grid;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.overview-target {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.overview-reason {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.overview-keys {
+  display: grid;
+  gap: 8px;
+}
+
+.overview-keys li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.overview-key-name {
+  font-weight: 650;
+}
+
+.overview-note {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.overview-kill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.overview-kill-link {
+  margin-left: auto;
+  font-size: var(--text-xs);
+}
+
+.overview-links {
+  display: grid;
+  gap: 6px;
+}
+
+.overview-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+}
+
+.overview-link:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  text-decoration: none;
+}
+
+.overview-link .icon {
+  color: var(--muted);
+}
+
+.overview-link-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+@media (max-width: 980px) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .overview-side {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .overview-stats {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .overview-side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

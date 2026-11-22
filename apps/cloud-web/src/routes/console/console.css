@@ -1,0 +1,836 @@
+/* Кабинет: ширина бокового меню, верхняя полоса, дверь входа и общие сигналы. */
+
+/*
+ * Плотность кабинета живёт только в его поддереве: сайт-витрина и панель
+ * персонала остаются на общих токенах. Тело 13 px, подпись 12 px, мелкое
+ * 11 px, заголовок страницы 24 px; поля и радиусы на шаг теснее.
+ */
+.console-shell {
+  --app-nav: var(--width-console-nav);
+  --text-md: 13px;
+  --text-sm: 12px;
+  --text-xs: 11px;
+  --text-2xl: 24px;
+  --width-console-nav: 216px;
+  --content-max: 1180px;
+  --sp-4: 14px;
+  --sp-5: 18px;
+  --sp-6: 22px;
+  --radius-sm: 8px;
+  --radius-lg: 14px;
+  /* Ни одна страница кабинета не растягивает окно вбок. */
+  overflow-x: clip;
+}
+
+/* Плотность кабинета: на шаг теснее общей витрины, но не мелко для чтения. */
+.console-shell .app-content {
+  gap: 14px;
+  padding: 18px 22px 36px;
+}
+
+.console-shell .app-topbar {
+  padding: 7px 22px;
+}
+
+.console-shell .app-nav {
+  padding: 12px 8px;
+}
+
+.console-shell .app-nav-links a {
+  padding: 6px 9px;
+}
+
+.console-shell .card-head {
+  padding: 10px 14px;
+}
+
+.console-shell .card:not(.card-flush) .card-body {
+  padding: 13px 14px;
+}
+
+.console-shell .card-title {
+  font-size: 12.5px;
+}
+
+.console-shell .card-sub {
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .console-shell .app-content {
+    padding: 16px 16px 30px;
+  }
+
+  .console-shell .app-topbar {
+    padding: 7px 16px;
+  }
+}
+
+/* ---------- Боковое меню: шапка и сворачивание ---------- */
+
+.console-nav-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Марка и название делят строку с кнопкой сворачивания. */
+.console-shell .console-brand {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 2px 4px;
+  border-bottom: 0;
+}
+
+.console-brand-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.console-nav-toggle {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.console-nav-toggle:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-sunken);
+  color: var(--ink);
+}
+
+/* Стрелка смотрит в сторону, куда уедет меню. */
+.console-nav-toggle .icon {
+  transform: rotate(180deg);
+  transition: transform var(--dur-fast) ease;
+}
+
+.console-shell.is-nav-collapsed .console-nav-toggle .icon {
+  transform: none;
+}
+
+/*
+ * Свёрнутое меню — только значки. Ширина полосы меняется через ту же
+ * переменную сетки, а подписи остаются в дереве доступности (sr-only),
+ * поэтому у каждой ссылки сохраняется имя.
+ */
+@media (min-width: 901px) {
+  .console-shell.is-nav-collapsed {
+    --app-nav: 64px;
+  }
+
+  .console-shell.is-nav-collapsed .console-nav {
+    padding: 14px 8px;
+  }
+
+  .console-shell.is-nav-collapsed .console-nav-head {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .console-shell.is-nav-collapsed .console-brand {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .console-shell.is-nav-collapsed .console-brand-text {
+    display: none;
+  }
+
+  .console-shell.is-nav-collapsed .app-nav-links a {
+    justify-content: center;
+    padding: 8px 0;
+  }
+
+  .console-shell.is-nav-collapsed .console-nav-foot {
+    justify-items: center;
+    font-size: 10.5px;
+  }
+
+  .console-shell.is-nav-collapsed .console-nav-foot > span {
+    display: none;
+  }
+}
+
+/* На узком экране меню становится верхней полосой: сворачивать нечего. */
+@media (max-width: 900px) {
+  .console-nav-head {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .console-nav-toggle {
+    display: none;
+  }
+
+  /* Свёрнутость, запомненная на большом экране, здесь не прячет подписи. */
+  .console-shell .console-nav-label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+    white-space: normal;
+  }
+}
+
+/* ---------- Верхняя полоса ---------- */
+
+.console-topbar {
+  align-items: center;
+  row-gap: 8px;
+}
+
+.console-topbar-id {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.console-tenant {
+  max-width: 28ch;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.console-balance {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+.console-balance-label {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-balance-value {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.console-balance-note {
+  color: var(--warning);
+  font-size: 10.5px;
+}
+
+/* ---------- Верхняя полоса: поиск, создание, палитра ---------- */
+
+.console-topbar-actions {
+  row-gap: 6px;
+}
+
+.console-search-trigger,
+.console-create-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.console-search-trigger:hover,
+.console-search-trigger:focus-visible,
+.console-create-trigger:hover,
+.console-create-trigger[aria-expanded="true"] {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+.console-kbd {
+  flex: none;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface-sunken);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 15px;
+}
+
+.console-create {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+/*
+ * Сетка 2×2 висит под кнопкой. Привязка по левому краю держит панель в
+ * окне на любой ширине: справа от «Создать» всегда стоят баланс и выход.
+ */
+.console-create-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: min(276px, calc(100vw - 24px));
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  transform-origin: top left;
+}
+
+.console-create-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 650;
+  line-height: 1.25;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.console-create-action:hover,
+.console-create-action:focus-visible {
+  border-color: var(--border);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+
+.console-create-action .icon {
+  color: var(--muted);
+}
+
+.console-create-action:hover .icon,
+.console-create-action:focus-visible .icon {
+  color: inherit;
+}
+
+/* Палитра: один диалог на поиск, список и клавиатурную подсказку. */
+.console-palette {
+  width: min(560px, calc(100vw - 24px));
+  max-height: min(72vh, 620px);
+  margin: 11vh auto auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.console-palette[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.console-palette::backdrop {
+  background: rgba(16, 20, 24, 0.4);
+  backdrop-filter: blur(1px);
+}
+
+.console-palette-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.console-palette-search:focus-within {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.console-palette-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 3px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-md);
+  outline: none;
+}
+
+.console-palette-input::placeholder {
+  color: var(--muted);
+}
+
+.console-palette-list {
+  display: grid;
+  gap: 2px;
+  max-height: min(52vh, 420px);
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+
+.console-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.console-palette-item:hover {
+  background: var(--surface-hover);
+}
+
+.console-palette-item[data-selected="true"] {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.console-palette-item .icon {
+  flex: none;
+  color: var(--muted);
+}
+
+.console-palette-item[data-selected="true"] .icon {
+  color: inherit;
+}
+
+.console-palette-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.console-palette-hint {
+  flex: none;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-palette-item[data-selected="true"] .console-palette-hint {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.console-palette-empty {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 24px 14px;
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.console-palette-empty-hint {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-palette-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 7px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-sunken);
+  color: var(--muted);
+  font-size: 10.5px;
+}
+
+@media (max-width: 460px) {
+  .console-search-trigger,
+  .console-create-trigger {
+    padding: 0 7px;
+  }
+
+  .console-search-trigger .console-trigger-label,
+  .console-create-trigger .console-trigger-label,
+  .console-search-trigger .console-kbd {
+    display: none;
+  }
+
+  .console-palette {
+    margin-top: 8vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-search-trigger,
+  .console-create-trigger,
+  .console-create-action {
+    transition-duration: 0ms;
+  }
+
+  .console-create-panel {
+    transform: none;
+  }
+}
+
+/* ---------- Общие сигналы ---------- */
+
+.console-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid rgba(180, 35, 24, 0.3);
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+.console-alert > span {
+  flex: 1 1 220px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.console-alert-meta {
+  display: block;
+  width: 100%;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-alert-top {
+  margin: 10px clamp(16px, 3vw, 28px) 0;
+}
+
+.console-note {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.console-muted {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.console-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(168, 100, 0, 0.35);
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: var(--text-xs);
+}
+
+.console-block > span {
+  flex: 1 1 180px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Первая отрисовка кабинета: каркас уже на месте, скелет — только в содержимом. */
+.console-boot {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+  min-height: 320px;
+}
+
+/* Ленивый кусок маршрута грузится внутри каркаса, а не вместо него. */
+.console-loading {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+  min-height: 360px;
+}
+
+.console-boot .skeleton,
+.console-loading .skeleton {
+  max-width: 420px;
+}
+
+/* Карточка без отступов держит таблицу внутри своих скруглений. */
+.console-shell .card-flush {
+  overflow: hidden;
+}
+
+/* ---------- Дверь входа ---------- */
+
+.console-door {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 520px at 50% -12%, #edf1ff 0%, rgba(237, 241, 255, 0) 68%),
+    var(--bg);
+}
+
+.console-door-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px clamp(16px, 4vw, 28px);
+}
+
+.console-door-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.console-door-brand:hover {
+  text-decoration: none;
+}
+
+.console-door-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: var(--text-sm);
+}
+
+.console-door-links a {
+  color: var(--muted);
+}
+
+.console-door-links a:hover {
+  color: var(--accent);
+}
+
+.console-door-main {
+  flex: 1;
+  display: grid;
+  place-items: start center;
+  padding: clamp(12px, 4vw, 40px) 16px 32px;
+}
+
+.console-door-card {
+  display: grid;
+  gap: 14px;
+  width: min(520px, 100%);
+  padding: clamp(18px, 3.4vw, 26px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.console-door-eyebrow {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.console-door-title {
+  font-size: var(--text-3xl);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.console-door-lede {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.console-door-trial {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-sunken);
+}
+
+.console-door-trial-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.console-door-points {
+  display: grid;
+  gap: 6px;
+  font-size: var(--text-sm);
+}
+
+.console-door-points li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.console-door-points .icon {
+  color: var(--success);
+}
+
+.console-door-hint {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-door-sep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-door-sep::before,
+.console-door-sep::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.console-door-form {
+  display: grid;
+  gap: 10px;
+}
+
+.console-door-note {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.console-door-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px clamp(16px, 4vw, 28px);
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 460px) {
+  .console-door-title {
+    font-size: var(--text-2xl);
+  }
+
+  .console-tenant {
+    max-width: 16ch;
+  }
+
+  .console-balance {
+    padding: 3px 9px;
+  }
+}
+
+/* ---------- Сетка конфигуратора ---------- */
+
+.console-grid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(240px, 300px);
+  align-items: start;
+}
+
+.console-col {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+@media (max-width: 1180px) {
+  .console-grid {
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  }
+
+  .console-summary {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 860px) {
+  .console-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .console-summary {
+    grid-column: auto;
+  }
+}

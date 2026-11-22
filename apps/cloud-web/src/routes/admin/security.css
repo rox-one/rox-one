@@ -1,0 +1,148 @@
+/* Рубильник: область блокировки, подтверждение вторым дежурным и журнал. */
+.security-page {
+  min-width: 0;
+}
+
+.security-stats {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.security-explain .security-list {
+  display: grid;
+  gap: 7px;
+  max-width: 92ch;
+}
+
+.security-list li {
+  position: relative;
+  padding-left: 16px;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.security-list li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--muted);
+}
+
+.security-list strong {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.security-form {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.security-form-row {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.security-form-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.security-scope {
+  display: inline-grid;
+  gap: 1px;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.security-reason {
+  display: inline-block;
+  max-width: 44ch;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.security-who {
+  display: inline-grid;
+  gap: 1px;
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.security-small {
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.security-when {
+  white-space: nowrap;
+}
+
+.security-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.security-action {
+  display: inline-grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.security-code {
+  color: var(--muted);
+  font-size: 10.5px;
+  overflow-wrap: anywhere;
+}
+
+/* A table inside a flush card: the card owns the outer border. */
+.security-page .card-flush .table-wrap {
+  border: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: transparent;
+}
+
+.security-page .card-flush .table-wrap .table th:first-child,
+.security-page .card-flush .table-wrap .table td:first-child {
+  padding-left: 16px;
+}
+
+.security-page .card-flush .table-wrap .table th:last-child,
+.security-page .card-flush .table-wrap .table td:last-child {
+  padding-right: 16px;
+}
+
+@media (max-width: 760px) {
+  .security-when {
+    white-space: normal;
+  }
+
+  .security-reason {
+    max-width: none;
+  }
+
+  .security-page .card-flush .table-wrap .table td:first-child,
+  .security-page .card-flush .table-wrap .table td:last-child {
+    padding-inline: 12px;
+  }
+}
+
+@media (max-width: 700px) {
+  .security-form-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .security-form-actions .btn {
+    flex: 1 1 auto;
+  }
+}

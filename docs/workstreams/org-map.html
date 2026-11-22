@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rox Workstream & Talent Blueprint — 22 November 2026</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --ink: #161a1f;
+    --muted: #5e6876;
+    --line: #e2e5ea;
+    --soft: #eef1f5;
+    --int: #2f5bea;
+    --wrk: #0f8060;
+    --cld: #a86400;
+    --ent: #6b4fd8;
+    --eco: #b42318;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(22, 26, 31, .04), 0 8px 24px rgba(22, 26, 31, .04);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .page { max-width: 1440px; margin: 0 auto; padding: 32px 28px 48px; }
+  .mono { font-family: "Rox Mono Typeface", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .kicker { font-family: "Rox Mono Typeface", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  header { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 22px; }
+  h1 { margin: 6px 0 8px; font-size: 34px; line-height: 1.08; letter-spacing: -.03em; }
+  .subtitle { max-width: 760px; color: var(--muted); font-size: 15px; }
+  .stamp { text-align: right; color: var(--muted); font-size: 12px; line-height: 1.6; white-space: nowrap; }
+  .thesis {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px 20px; margin-bottom: 18px; box-shadow: var(--shadow);
+    display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: center;
+  }
+  .thesis strong { font-size: 19px; line-height: 1.3; letter-spacing: -.01em; }
+  .thesis .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .transition { background: var(--soft); border-radius: 10px; padding: 10px 12px; font-size: 12px; color: var(--muted); }
+  .transition b { display: block; color: var(--ink); font-size: 13px; margin-bottom: 2px; }
+  .demand { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 22px; }
+  .demand-card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 13px;
+    box-shadow: var(--shadow);
+  }
+  .demand-card .name { font-weight: 700; font-size: 13px; }
+  .demand-card .total { font-size: 26px; font-weight: 750; letter-spacing: -.03em; margin: 4px 0 0; }
+  .demand-card .meta { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .demand-card .signal { margin-top: 7px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 6px; }
+  .org { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; align-items: start; }
+  .division { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .division-head { padding: 14px 14px 12px; border-top: 4px solid var(--accent); }
+  .division[data-d="int"] .division-head { border-top-color: var(--int); }
+  .division[data-d="wrk"] .division-head { border-top-color: var(--wrk); }
+  .division[data-d="cld"] .division-head { border-top-color: var(--cld); }
+  .division[data-d="ent"] .division-head { border-top-color: var(--ent); }
+  .division[data-d="eco"] .division-head { border-top-color: var(--eco); }
+  .division h2 { margin: 0 0 4px; font-size: 18px; letter-spacing: -.02em; }
+  .division .mission { color: var(--muted); font-size: 12px; min-height: 36px; }
+  .division .anchor { margin-top: 8px; font-size: 10px; color: var(--muted); }
+  .groups { padding: 0 10px 12px; display: grid; gap: 9px; }
+  .group { border: 1px solid var(--line); border-radius: 10px; padding: 10px 10px 9px; background: #fbfcfd; }
+  .group h3 { margin: 0 0 3px; font-size: 12.5px; letter-spacing: -.01em; }
+  .group .outcome { font-size: 11px; color: var(--muted); margin-bottom: 7px; min-height: 30px; }
+  .task { display: flex; gap: 6px; align-items: baseline; font-size: 11px; padding: 3px 0; border-top: 1px dashed var(--line); }
+  .task:first-of-type { border-top: 0; }
+  .task .id { font-family: "Rox Mono Typeface", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9.5px; color: var(--muted); min-width: 46px; }
+  .task .title { color: var(--ink); }
+  .row-title { display: flex; justify-content: space-between; align-items: baseline; margin: 26px 0 10px; }
+  .row-title h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+  .row-title .note { color: var(--muted); font-size: 12px; }
+  .guilds { display: flex; flex-wrap: wrap; gap: 8px; }
+  .guild { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; font-size: 12px; box-shadow: var(--shadow); }
+  .guild b { font-weight: 650; }
+  .guild span { color: var(--muted); }
+  .cadence { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+  .cadence div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 12px; }
+  .cadence b { display: block; font-size: 12.5px; margin-bottom: 2px; }
+  footer { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; display: flex; justify-content: space-between; gap: 16px; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; vertical-align: 1px; }
+  @media (max-width: 1180px) {
+    .org { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .demand { grid-template-columns: repeat(3, 1fr); }
+    .thesis { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .page { padding: 20px 14px 32px; }
+    h1 { font-size: 27px; }
+    header { flex-direction: column; }
+    .stamp { text-align: left; }
+    .org, .demand, .cadence { grid-template-columns: 1fr; }
+    .thesis .two { grid-template-columns: 1fr; }
+  }
+  @media print {
+    @page { size: A3 landscape; margin: 10mm; }
+    body { background: #fff; }
+    .page { max-width: none; padding: 0; }
+    .division, .demand-card, .guild, .thesis { box-shadow: none; }
+    .org { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .demand { grid-template-columns: repeat(5, 1fr); }
+    .cadence { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div>
+      <div class="kicker">Rox · workstream & talent blueprint</div>
+      <h1>Five divisions. Fifteen groups.<br>Thirty claimable frontiers.</h1>
+      <div class="subtitle">A working org map for the next twelve months, built from the official open roles of five anchor companies and the current <span class="mono">feat/cloud-byok</span> tree.</div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--int)"></i>Intelligence</span>
+        <span><i class="dot" style="background:var(--wrk)"></i>Workspace</span>
+        <span><i class="dot" style="background:var(--cld)"></i>Cloud</span>
+        <span><i class="dot" style="background:var(--ent)"></i>Enterprise</span>
+        <span><i class="dot" style="background:var(--eco)"></i>Ecosystem</span>
+      </div>
+    </div>
+    <div class="stamp mono">22.11.2026<br>5 anchors · 7 adjacent<br>30 tasks · 14 parked<br>7 guilds</div>
+  </header>
+
+  <section class="thesis">
+    <div>
+      <div class="kicker">The thesis</div>
+      <strong>Rox sells two transitions: an idea becomes a working cloud machine, and the work stays in one durable desktop workspace.</strong>
+      <div class="subtitle" style="margin-top:6px">The org exists to make those transitions repeatable. Every division has one outcome, one shared contract and one named consumer.</div>
+    </div>
+    <div class="two">
+      <div class="transition"><b>Idea → machine</b>Catalog, price, key, sandbox, terminal, invoice.</div>
+      <div class="transition"><b>Work → workspace</b>Sessions, knowledge, documents, tools, memory.</div>
+    </div>
+  </section>
+
+  <section class="demand" aria-label="Anchor hiring demand">
+    <div class="demand-card">
+      <div class="name">OpenAI</div>
+      <div class="total">852</div>
+      <div class="meta">292 posted in 30 days · 571 in 90</div>
+      <div class="signal">Applied AI 125 · FDE 42 · Scaling 85 · Security 35</div>
+    </div>
+    <div class="demand-card">
+      <div class="name">Anthropic</div>
+      <div class="total">635</div>
+      <div class="meta">171 posted in 30 days · 391 in 90</div>
+      <div class="signal">AI R&amp;E 71 · Applied AI 70 · Security 51 · Safeguards 32</div>
+    </div>
+    <div class="demand-card">
+      <div class="name">Thinking Machines</div>
+      <div class="total">58</div>
+      <div class="meta">15 posted in 30 days · 41 in 90</div>
+      <div class="signal">Core Eng 19 · Research 14 · Research Infra 5</div>
+    </div>
+    <div class="demand-card">
+      <div class="name">Palantir</div>
+      <div class="total">308</div>
+      <div class="meta">22 posted in 30 days · 48 in 90</div>
+      <div class="signal">Dev 94 · Delta 60 · Echo 25 · InfoSec 19</div>
+    </div>
+    <div class="demand-card">
+      <div class="name">Vercel</div>
+      <div class="total">86</div>
+      <div class="meta">18 posted in 30 days · 43 in 90</div>
+      <div class="signal">Engineering 17 · Product 6 · Security R&amp;D 6</div>
+    </div>
+  </section>
+
+  <section class="org">
+
+    <article class="division" data-d="int">
+      <div class="division-head">
+        <div class="kicker">A · Intelligence</div>
+        <h2>Agent, memory, safety</h2>
+        <div class="mission">Make the agent genuinely useful, safe and measurable on real work.</div>
+        <div class="anchor">Anchors: Anthropic · OpenAI · Thinking Machines</div>
+      </div>
+      <div class="groups">
+        <div class="group">
+          <h3>Runtime &amp; Sessions</h3>
+          <div class="outcome">A turn starts, streams, tools, survives restart and fails with a typed, actionable error.</div>
+          <div class="task"><span class="id">INT-01</span><span class="title">Multimodal OMP turn</span></div>
+          <div class="task"><span class="id">INT-02</span><span class="title">First-turn proof</span></div>
+        </div>
+        <div class="group">
+          <h3>Memory, Knowledge &amp; Context</h3>
+          <div class="outcome">The agent remembers the right thing and can cite it.</div>
+          <div class="task"><span class="id">INT-03</span><span class="title">Knowledge navigation</span></div>
+          <div class="task"><span class="id">INT-04</span><span class="title">Notes rail links</span></div>
+        </div>
+        <div class="group">
+          <h3>Evals, Safety &amp; Policy</h3>
+          <div class="outcome">Regressions are caught before users see them; unsafe actions fail closed.</div>
+          <div class="task"><span class="id">INT-05</span><span class="title">Red-team suite</span></div>
+          <div class="task"><span class="id">INT-06</span><span class="title">Data-flow ledger</span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="division" data-d="wrk">
+      <div class="division-head">
+        <div class="kicker">B · Workspace</div>
+        <h2>Desktop and web surfaces</h2>
+        <div class="mission">Make Rox the best place to do knowledge work with an agent.</div>
+        <div class="anchor">Anchors: OpenAI · Vercel · Slack · Substack · Zed</div>
+      </div>
+      <div class="groups">
+        <div class="group">
+          <h3>Shell &amp; Core UX</h3>
+          <div class="outcome">A new user finds the next action without a tour; the app stays fast and accessible.</div>
+          <div class="task"><span class="id">WRK-01</span><span class="title">Real unified panels</span></div>
+          <div class="task"><span class="id">WRK-02</span><span class="title">Native a11y gate</span></div>
+        </div>
+        <div class="group">
+          <h3>Documents, Editor &amp; Canvas</h3>
+          <div class="outcome">A document, code file or canvas survives edits, conflicts and export.</div>
+          <div class="task"><span class="id">WRK-03</span><span class="title">Roadmap conflict recovery</span></div>
+          <div class="task"><span class="id">WRK-04</span><span class="title">Durable canvas artifact</span></div>
+        </div>
+        <div class="group">
+          <h3>Collaboration &amp; Communications</h3>
+          <div class="outcome">A meeting, chat or shared session produces a durable outcome.</div>
+          <div class="task"><span class="id">WRK-05</span><span class="title">Meeting-agent loop</span></div>
+          <div class="task"><span class="id">WRK-06</span><span class="title">Messaging parity</span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="division" data-d="cld">
+      <div class="division-head">
+        <div class="kicker">C · Cloud</div>
+        <h2>Sandboxes, identity, billing</h2>
+        <div class="mission">Turn agent work into durable, metered, secure machines a customer can trust.</div>
+        <div class="anchor">Anchors: Vercel · Modal · Nebius · OpenAI · Anthropic</div>
+      </div>
+      <div class="groups">
+        <div class="group">
+          <h3>Sandboxes &amp; Providers</h3>
+          <div class="outcome">A machine starts, runs, stops and bills the same way on every supported provider.</div>
+          <div class="task"><span class="id">CLD-01</span><span class="title">Provider conformance</span></div>
+          <div class="task"><span class="id">CLD-02</span><span class="title">Restart survival</span></div>
+        </div>
+        <div class="group">
+          <h3>Identity, Billing &amp; Console</h3>
+          <div class="outcome">The right person sees the right tenant, balance and invoice.</div>
+          <div class="task"><span class="id">CLD-03</span><span class="title">Account isolation</span></div>
+          <div class="task"><span class="id">CLD-04</span><span class="title">Payments &amp; reconciliation</span></div>
+        </div>
+        <div class="group">
+          <h3>Reliability, Release &amp; Security</h3>
+          <div class="outcome">The control plane survives a restart, a bad deploy and a dependency alert.</div>
+          <div class="task"><span class="id">CLD-05</span><span class="title">Durable control plane</span></div>
+          <div class="task"><span class="id">CLD-06</span><span class="title">Verified release</span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="division" data-d="ent">
+      <div class="division-head">
+        <div class="kicker">D · Enterprise</div>
+        <h2>Deploy, comply, support</h2>
+        <div class="mission">Put Rox inside a real organization and make it survive procurement and daily use.</div>
+        <div class="anchor">Anchors: Palantir · OpenAI · Anthropic · Vercel</div>
+      </div>
+      <div class="groups">
+        <div class="group">
+          <h3>Forward-Deployed Engineering</h3>
+          <div class="outcome">A design partner reaches a real workflow in two weeks and expands it.</div>
+          <div class="task"><span class="id">ENT-01</span><span class="title">First design partner</span></div>
+          <div class="task"><span class="id">ENT-02</span><span class="title">Integration adapter kit</span></div>
+        </div>
+        <div class="group">
+          <h3>Solutions, Compliance &amp; Sovereignty</h3>
+          <div class="outcome">A security questionnaire gets evidence; a deployment profile is real.</div>
+          <div class="task"><span class="id">ENT-03</span><span class="title">Security evidence pack</span></div>
+          <div class="task"><span class="id">ENT-04</span><span class="title">Deployment profile</span></div>
+        </div>
+        <div class="group">
+          <h3>Customer Success &amp; Support Ops</h3>
+          <div class="outcome">A customer gets a named owner, a response time and a fix.</div>
+          <div class="task"><span class="id">ENT-05</span><span class="title">Support SLA</span></div>
+          <div class="task"><span class="id">ENT-06</span><span class="title">Customer council</span></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="division" data-d="eco">
+      <div class="division-head">
+        <div class="kicker">E · Ecosystem</div>
+        <h2>Docs, skills, partners, community</h2>
+        <div class="mission">Make Rox extensible, legible and community-driven, so another person can succeed without the founder.</div>
+        <div class="anchor">Anchors: Vercel · Modal · Palantir · Substack · Slack · Zed</div>
+      </div>
+      <div class="groups">
+        <div class="group">
+          <h3>Developer Relations &amp; Documentation</h3>
+          <div class="outcome">A new developer ships a working Rox integration from the docs in under 15 minutes.</div>
+          <div class="task"><span class="id">ECO-01</span><span class="title">15-minute quickstart</span></div>
+          <div class="task"><span class="id">ECO-02</span><span class="title">Content engine</span></div>
+        </div>
+        <div class="group">
+          <h3>Skills Marketplace &amp; Partners</h3>
+          <div class="outcome">A skill or partner integration is verified, installable and supported.</div>
+          <div class="task"><span class="id">ECO-03</span><span class="title">Skill verification</span></div>
+          <div class="task"><span class="id">ECO-04</span><span class="title">Partner certification</span></div>
+        </div>
+        <div class="group">
+          <h3>Content, Community &amp; Education</h3>
+          <div class="outcome">A user can learn Rox from a recipe, a course or another user.</div>
+          <div class="task"><span class="id">ECO-05</span><span class="title">Ten cookbook recipes</span></div>
+          <div class="task"><span class="id">ECO-06</span><span class="title">Community feedback loop</span></div>
+        </div>
+      </div>
+    </article>
+
+  </section>
+
+  <div class="row-title">
+    <h2>Seven guilds, one output each</h2>
+    <div class="note">10–20% time · formats and gates, not code · dissolve after two empty quarters</div>
+  </div>
+  <section class="guilds">
+    <div class="guild"><b>Research</b> <span>· evals and paper club</span></div>
+    <div class="guild"><b>Design</b> <span>· critique and design system</span></div>
+    <div class="guild"><b>Security</b> <span>· threat model and red team</span></div>
+    <div class="guild"><b>Developer Experience</b> <span>· docs and SDK examples</span></div>
+    <div class="guild"><b>Customer Council</b> <span>· design partners</span></div>
+    <div class="guild"><b>Open Source Office</b> <span>· licenses and upstream</span></div>
+    <div class="guild"><b>Talent</b> <span>· scorecards and onboarding</span></div>
+  </section>
+
+  <div class="row-title">
+    <h2>The operating rhythm</h2>
+    <div class="note">the board shows a queue, not a wish list</div>
+  </div>
+  <section class="cadence">
+    <div><b>Weekly frontier review</b>30 min · one metric, one blocker, one decision.</div>
+    <div><b>Weekly demo</b>45 min · one accepted task with evidence, one returned task with a gap.</div>
+    <div><b>Monthly strategy</b>90 min · demand refresh, hiring, kill list, budget.</div>
+    <div><b>Quarterly re-org</b>2 h · groups graduate, merge or dissolve; five divisions stay.</div>
+  </section>
+
+  <footer>
+    <div>Sources: official job boards read 22.11.2026; Rox tree <span class="mono">feat/cloud-byok</span>; blueprint and task board in <span class="mono">docs/workstreams/</span>.</div>
+    <div class="mono">validate: python3 docs/workstreams/validate_blueprint.py</div>
+  </footer>
+
+</main>
+</body>
+</html>

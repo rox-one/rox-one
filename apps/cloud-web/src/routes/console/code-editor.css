@@ -1,0 +1,171 @@
+/*
+ * Код в инспекторе: номера строк, подсветка и правка.
+ *
+ * Одна сетка метрик для подсветки, поля ввода и колонки номеров. Строки
+ * считаются в пикселях, поэтому все три слоя совпадают построчно, а не
+ * «примерно».
+ */
+.code-surface {
+  --code-size: 11px;
+  --code-line: 17px;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--code-size);
+  line-height: var(--code-line);
+  tab-size: 2;
+}
+
+.code-gutter {
+  flex: 0 0 auto;
+  min-width: 34px;
+  padding: 8px 6px 8px 8px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  overflow: hidden;
+  text-align: right;
+  user-select: none;
+}
+
+.code-gutter pre {
+  margin: 0;
+  font: inherit;
+  line-height: var(--code-line);
+  text-align: right;
+  white-space: pre;
+}
+
+.code-lines {
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  font: inherit;
+  line-height: var(--code-line);
+  white-space: pre;
+  tab-size: inherit;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.code-view .code-lines {
+  flex: 1 1 auto;
+}
+
+/* Правка: поле ввода лежит поверх подсвеченной копии того же текста. */
+.code-editor {
+  min-height: 220px;
+  overflow: hidden;
+}
+
+.code-editor-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.code-editor-highlight,
+.code-editor-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 0;
+  font: inherit;
+  line-height: var(--code-line);
+  white-space: pre;
+  tab-size: 2;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.code-editor-highlight {
+  overflow: hidden;
+  pointer-events: none;
+  background: transparent;
+}
+
+.code-editor-input {
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: transparent;
+  caret-color: var(--ink);
+  -webkit-text-fill-color: transparent;
+  resize: none;
+  outline: none;
+}
+
+.code-editor-input::selection {
+  background: rgba(47, 91, 234, 0.24);
+  color: transparent;
+}
+
+.code-editor:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.code-editor.is-disabled {
+  opacity: 0.72;
+}
+
+.code-editor.is-disabled .code-editor-input {
+  caret-color: transparent;
+}
+
+/* Цвета токенов: только цвет, чтобы ширина знаков совпадала с полем ввода. */
+.tok-comment {
+  color: #7b8695;
+}
+
+.tok-string {
+  color: #1d7a4f;
+}
+
+.tok-number {
+  color: #a8560a;
+}
+
+.tok-keyword {
+  color: var(--accent-ink);
+}
+
+.tok-type {
+  color: #7a3fb8;
+}
+
+.tok-func {
+  color: #1e46c9;
+}
+
+.tok-prop {
+  color: #a03a62;
+}
+
+.tok-flag {
+  color: var(--warning);
+}
+
+.tok-punct,
+.tok-op {
+  color: #5e6876;
+}
+
+@media (max-width: 520px) {
+  .code-surface {
+    --code-size: 10.5px;
+  }
+
+  .code-gutter {
+    min-width: 26px;
+    padding: 8px 4px;
+  }
+}

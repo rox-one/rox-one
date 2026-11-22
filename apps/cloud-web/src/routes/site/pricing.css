@@ -1,0 +1,433 @@
+/* Страница цен: таблица, формула, режимы оплаты, пробный счёт и списание. */
+
+.pricing-page {
+  min-width: 0;
+}
+
+/* ---------- Price table ---------- */
+
+.price-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.price-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.price-table caption {
+  caption-side: top;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.price-table th,
+.price-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.price-table thead th {
+  background: var(--surface-sunken);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.price-table tbody tr:last-child th,
+.price-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.price-table tbody tr:hover {
+  background: #fbfcfe;
+}
+
+.price-table tbody tr.is-request {
+  background: #fcfcfd;
+}
+
+.price-table tbody tr.is-request:hover {
+  background: #fafbfd;
+}
+
+.price-table tbody tr.is-request .price-name {
+  color: var(--muted);
+}
+
+.price-table th[scope="row"] {
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.price-name {
+  display: block;
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.price-os {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  white-space: normal;
+}
+
+.price-image {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.price-request {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--warning-soft);
+  color: #8a5200;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.price-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.price-table .num strong {
+  font-weight: 700;
+}
+
+.price-unit {
+  margin-left: 2px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.price-gpu {
+  color: var(--accent-ink);
+}
+
+.price-action {
+  width: 1%;
+  text-align: right;
+}
+
+.price-table .price-action .btn {
+  white-space: nowrap;
+}
+
+/* ---------- Formula ---------- */
+
+.formula-example {
+  display: grid;
+  gap: 4px;
+  padding: 13px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--success);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.formula-example-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.formula-math {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.formula-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Managed vs own key ---------- */
+
+.modes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.mode-card {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.mode-card--accent {
+  border-color: #cfd9f6;
+  background: linear-gradient(180deg, #f6f8ff 0%, var(--surface) 100%);
+}
+
+.mode-title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.mode-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}
+
+.mode-tag {
+  justify-self: start;
+  margin: 2px 0 0;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: 650;
+}
+
+.mode-card--accent .mode-tag {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+/* ---------- Trial ---------- */
+
+.trial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
+.trial-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid #cfd9f6;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f6f8ff 0%, var(--surface) 70%);
+  min-width: 0;
+}
+
+.trial-card--plain {
+  border-color: var(--border);
+  background: var(--surface-sunken);
+}
+
+.trial-amount {
+  margin: 0;
+  color: var(--accent-ink);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.trial-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.trial-title {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.trial-fine {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-strong);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.55;
+}
+
+/* ---------- Billing flow ---------- */
+
+.billing-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.billing-step {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.billing-number {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: var(--surface-hover);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.billing-step p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Narrow: each row becomes a card ---------- */
+
+@media (max-width: 820px) {
+  .price-table-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .price-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .price-table caption {
+    display: block;
+    padding: 0 0 8px;
+    border: 0;
+  }
+
+  .price-table thead {
+    display: none;
+  }
+
+  .price-table tbody {
+    display: grid;
+    gap: 8px;
+  }
+
+  .price-table tbody tr {
+    display: grid;
+    gap: 7px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .price-table tbody tr:hover {
+    background: var(--surface);
+  }
+
+  .price-table tbody th,
+  .price-table tbody td {
+    display: block;
+    width: auto;
+    padding: 0;
+    border: 0;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .price-table th[scope="row"] {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .price-name {
+    font-size: var(--text-md);
+    font-weight: 700;
+  }
+
+  .price-os {
+    margin: 0;
+    text-align: right;
+  }
+
+  .price-table td[data-label]::before {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--muted);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    content: attr(data-label);
+  }
+
+  .price-table td.num {
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .price-table .price-action {
+    width: auto;
+    padding-top: 2px;
+  }
+
+  .price-table .price-action .btn {
+    width: 100%;
+  }
+
+  .price-table .price-action::before {
+    display: none;
+  }
+}

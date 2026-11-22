@@ -1,0 +1,317 @@
+/* Браузер файлов машины: каталоги раскрываются, файл уходит в инспектор. */
+.files {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.files-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 6px 10px 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.files-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--text-xs);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.files-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.files-tool {
+  appearance: none;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.files-tool:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--ink);
+  border-color: var(--border-strong, var(--border));
+}
+
+.files-tool:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.files-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-sunken, var(--surface));
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.files-crumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.files-crumb {
+  appearance: none;
+  padding: 1px 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.files-crumb:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+.files-crumb:disabled {
+  cursor: default;
+}
+
+.files-crumb-sep {
+  color: var(--border-strong, var(--muted));
+  font-size: var(--text-xs);
+}
+
+.files-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.input.files-search {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  min-height: 26px;
+  padding: 3px 8px;
+  font-size: var(--text-xs);
+}
+
+.select.files-sort {
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 26px;
+  padding: 2px 24px 2px 6px;
+  background-color: var(--surface-sunken, var(--surface));
+  background-position: right 6px center;
+  font-size: var(--text-xs);
+}
+
+.files-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 4px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.files-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  border-radius: 7px;
+}
+
+.files-item.is-selected {
+  background: var(--accent-soft, var(--surface-hover));
+  color: var(--accent-ink, var(--ink));
+}
+
+.files-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 7px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-xs);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.files-row:hover {
+  background: var(--surface-hover);
+}
+
+.files-item.is-selected .files-row {
+  background: transparent;
+  color: var(--accent-ink, var(--ink));
+}
+
+.files-row-icon {
+  display: inline-flex;
+  color: var(--muted);
+}
+
+.files-item.is-selected .files-row-icon {
+  color: var(--accent, var(--ink));
+}
+
+/* Deleting is a second action on the row, so it appears on hover and focus. */
+.files-row-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-right: 3px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.files-item:hover .files-row-delete,
+.files-item:focus-within .files-row-delete,
+.files-item.is-selected .files-row-delete {
+  opacity: 1;
+}
+
+.files-row-delete:hover {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.files-row-delete:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.files-hidden-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft, var(--surface-hover));
+  color: var(--accent-ink, var(--ink));
+}
+
+.files-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.files-meta {
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.files-blocked {
+  margin: 8px;
+  padding: 7px 10px;
+  background: var(--warning-soft);
+  border: 1px solid #f0d9b5;
+  border-radius: var(--radius-sm);
+  color: var(--warning);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.files-error {
+  margin: 4px 8px 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+/* The confirmation dialog has its own padding and gap. */
+.files .dialog-body .files-error {
+  margin: 0;
+}
+
+.files-skeleton {
+  padding: 8px;
+}
+
+/* Touch screens have no hover, so the delete action must stay visible. */
+@media (hover: none) {
+  .files-row-delete {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 980px) {
+  .files {
+    max-height: 360px;
+  }
+}
+
+@media (max-width: 520px) {
+  .files-filter {
+    flex-wrap: wrap;
+  }
+
+  .input.files-search {
+    flex-basis: 100%;
+  }
+
+  .files-row-delete {
+    opacity: 1;
+  }
+}

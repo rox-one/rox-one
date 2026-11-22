@@ -1,0 +1,279 @@
+/* Документация: содержание, шаги и таблица ошибок. */
+
+.docs-page {
+  min-width: 0;
+}
+
+.docs-layout {
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  gap: var(--sp-6);
+  align-items: start;
+  min-width: 0;
+}
+
+.docs-toc {
+  position: sticky;
+  top: 84px;
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.docs-toc-title {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.docs-toc a {
+  padding: 5px 7px;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.docs-toc a:hover {
+  background: var(--surface-hover);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.docs-main {
+  display: grid;
+  gap: 28px;
+  min-width: 0;
+}
+
+.docs-section {
+  min-width: 0;
+  scroll-margin-top: 84px;
+}
+
+.docs-section .site-title code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--surface-hover);
+  color: var(--ink);
+  font-size: 0.9em;
+}
+
+.docs-section .site-lede code,
+.docs-step-text code,
+.docs-section .site-list code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--surface-hover);
+  color: var(--ink);
+  font-size: 0.94em;
+}
+
+.docs-section .code-block {
+  max-width: 100%;
+}
+
+/* ---------- Numbered quick start ---------- */
+
+.docs-steps {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.docs-step {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.docs-step-number {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.docs-step-title {
+  margin: 0 0 2px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.docs-step-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.docs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+/* ---------- Error table ---------- */
+
+.error-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.error-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.error-table caption {
+  caption-side: top;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.error-table th,
+.error-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.error-table thead th {
+  background: var(--surface-sunken);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.error-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.error-table tbody tr:hover {
+  background: #fbfcfe;
+}
+
+.error-table td code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--surface-hover);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.error-status {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 1000px) {
+  .docs-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .docs-toc {
+    position: static;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 130px), 1fr));
+    gap: 2px;
+  }
+
+  .docs-toc-title {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .error-table-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .error-table {
+    display: block;
+    min-width: 0;
+  }
+
+  .error-table caption {
+    display: block;
+    padding: 0 0 8px;
+    border: 0;
+  }
+
+  .error-table thead {
+    display: none;
+  }
+
+  .error-table tbody {
+    display: grid;
+    gap: 7px;
+  }
+
+  .error-table tbody tr {
+    display: grid;
+    gap: 5px;
+    padding: 11px 12px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--surface);
+  }
+
+  .error-table tbody tr:hover {
+    background: var(--surface);
+  }
+
+  .error-table tbody td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .error-table tbody td[data-label]::before {
+    display: block;
+    margin-bottom: 1px;
+    color: var(--muted);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    content: attr(data-label);
+  }
+}

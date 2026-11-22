@@ -1,0 +1,362 @@
+{
+  "capturedAt": "2026-11-22",
+  "source": "official company job boards",
+  "method": "Public postings, not unique headcount. Department counts from the company taxonomy or board department endpoint. Recency from first_published/publishedAt/createdAt. Title-level role-family classification is directional.",
+  "anchorCompanies": [
+    "OpenAI",
+    "Anthropic",
+    "Thinking Machines",
+    "Palantir",
+    "Vercel"
+  ],
+  "adjacentCompanies": [
+    "Modal",
+    "Nebius",
+    "Slack",
+    "Substack",
+    "Zed",
+    "SpaceX",
+    "Terafab"
+  ],
+  "roleFamilyCrossCheck": {
+    "anchorPostings": 1939,
+    "families": [
+      {
+        "name": "Forward-deployed and solutions",
+        "postings": 343,
+        "share": 0.177
+      },
+      {
+        "name": "Infrastructure and SRE",
+        "postings": 241,
+        "share": 0.124
+      },
+      {
+        "name": "Product engineering",
+        "postings": 226,
+        "share": 0.117
+      },
+      {
+        "name": "Security, trust and policy",
+        "postings": 177,
+        "share": 0.091
+      },
+      {
+        "name": "Research",
+        "postings": 120,
+        "share": 0.062
+      },
+      {
+        "name": "Product management and design",
+        "postings": 71,
+        "share": 0.037
+      },
+      {
+        "name": "Data and analytics",
+        "postings": 36,
+        "share": 0.019
+      },
+      {
+        "name": "Developer relations, docs and education",
+        "postings": 22,
+        "share": 0.011
+      },
+      {
+        "name": "GTM, operations and other",
+        "postings": 703,
+        "share": 0.362
+      }
+    ]
+  },
+  "companies": {
+    "OpenAI": {
+      "board": "https://openai.com/careers/ (Ashby board openai)",
+      "total": 852,
+      "last30": 292,
+      "last90": 571,
+      "departments": {
+        "Go To Market": 199,
+        "Applied AI": 125,
+        "Scaling": 85,
+        "Research": 57,
+        "User Operations": 55,
+        "Marketing": 45,
+        "Forward Deployed Engineering": 42,
+        "Security": 35,
+        "People": 24,
+        "Finance": 24,
+        "Consumer Devices": 19,
+        "Robotics": 17,
+        "OpenAI for Gov": 14,
+        "Data Science": 13,
+        "Legal": 13,
+        "Technical Program Management": 13
+      },
+      "examples": [
+        "Forward Deployed Software Engineer",
+        "Applied AI Architect",
+        "Research Engineer",
+        "Software Engineer, Agent Infrastructure",
+        "Security Engineer, Application Security"
+      ]
+    },
+    "Anthropic": {
+      "board": "https://www.anthropic.com/careers (Greenhouse board anthropic)",
+      "total": 635,
+      "last30": 171,
+      "last90": 391,
+      "departments": {
+        "Sales": 122,
+        "AI Research & Engineering": 71,
+        "Applied AI": 70,
+        "Engineering & Design - Product": 53,
+        "Security": 51,
+        "Finance": 40,
+        "Software Engineering - Infrastructure": 39,
+        "Safeguards (Trust & Safety)": 32,
+        "Compute": 25,
+        "Technical Program Management": 24,
+        "Product Management, Support, & Operations": 17,
+        "Legal": 17,
+        "People": 16,
+        "Marketing & Brand": 16,
+        "Public Policy": 14,
+        "Data Science & Analytics": 10,
+        "Public Benefit": 7,
+        "Communications": 6,
+        "Technical Education": 3,
+        "Hardware": 2
+      },
+      "examples": [
+        "Applied AI Architect",
+        "AI Outcomes Manager",
+        "Safeguards Engineer",
+        "Software Engineer, Infrastructure",
+        "Research Engineer"
+      ]
+    },
+    "Thinking Machines": {
+      "board": "https://jobs.ashbyhq.com/ThinkingMachines",
+      "total": 58,
+      "last30": 15,
+      "last90": 41,
+      "departments": {
+        "Core Engineering": 19,
+        "Research": 14,
+        "Operations": 7,
+        "Research Infrastructure (ML Infrastructure and Training Stack)": 5,
+        "Security & IT": 5,
+        "Product Management": 4,
+        "Policy": 2,
+        "Design": 1,
+        "Finance": 1
+      },
+      "examples": [
+        "Software Engineer, Sandboxing",
+        "Research, General Agents",
+        "Research Engineer, Infrastructure, Inference",
+        "Site Reliability Engineer, Post Training",
+        "Product Manager"
+      ]
+    },
+    "Palantir": {
+      "board": "https://www.palantir.com/careers/ (Lever board palantir)",
+      "total": 308,
+      "last30": 22,
+      "last90": 48,
+      "departments": {
+        "Dev": 94,
+        "Delta": 60,
+        "Echo": 25,
+        "Legal": 22,
+        "Information Security": 19,
+        "Finance": 17,
+        "Business Development": 15,
+        "Design": 13,
+        "Product Development": 11,
+        "Engineering": 6,
+        "Recruiting": 6,
+        "Global Security and Investigations": 5,
+        "Mission Operations": 3
+      },
+      "examples": [
+        "Deployment Strategist",
+        "Forward Deployed Software Engineer",
+        "Backend Software Engineer - Infrastructure",
+        "Product Designer",
+        "Information Security Engineer"
+      ]
+    },
+    "Vercel": {
+      "board": "https://vercel.com/careers (Greenhouse board vercel)",
+      "total": 86,
+      "last30": 18,
+      "last90": 43,
+      "departments": {
+        "Engineering": 17,
+        "Account Executive": 13,
+        "Marketing": 8,
+        "Security R&D": 6,
+        "Product": 6,
+        "Professional Services": 5,
+        "People": 5,
+        "Partnerships": 5,
+        "Solution Architects": 4,
+        "Field Readiness": 4,
+        "Sales Development": 3,
+        "Controllership": 3,
+        "Legal": 2,
+        "Support": 1,
+        "Security G&A": 1,
+        "IT": 1,
+        "Finance": 1,
+        "Design": 1
+      },
+      "examples": [
+        "Software Engineer, Agent Auth",
+        "Software Engineer, Agentic Infrastructure",
+        "Product Manager, Compute",
+        "Product Manager, Observability",
+        "Forward-Deployed Engineer"
+      ]
+    },
+    "Modal": {
+      "board": "https://modal.com/careers (Ashby board modal)",
+      "total": 52,
+      "last30": 13,
+      "last90": 30,
+      "departments": {
+        "Engineering Department": 24,
+        "GTM Department": 16,
+        "G&A Department": 10,
+        "Data": 1,
+        "Design Department": 1
+      },
+      "examples": [
+        "Member of Technical Staff - Systems",
+        "Member of Technical Staff - Inference Runtime",
+        "Forward Deployed Engineer - ML",
+        "Developer Relations Engineer",
+        "Documentation Engineer"
+      ]
+    },
+    "Nebius": {
+      "board": "https://careers.nebius.com/ (Greenhouse board nebius)",
+      "total": 367,
+      "last30": 77,
+      "last90": 205,
+      "departments": {
+        "Infrastructure": 71,
+        "Product & Infrastructure": 37,
+        "Agentic Search": 22,
+        "Network Infrastructure": 16,
+        "Finance": 15,
+        "Backend": 15,
+        "System Engineers": 11,
+        "ML": 10,
+        "CEO & CSO Office": 10,
+        "Corporate": 8,
+        "Technology": 7,
+        "SRE": 7
+      },
+      "examples": [
+        "Infrastructure Engineer",
+        "Product Manager, AI Cloud",
+        "Agentic Search Engineer",
+        "Site Reliability Engineer",
+        "Solutions Architect"
+      ]
+    },
+    "Slack": {
+      "board": "https://slack.com/careers (Salesforce Workday Slack)",
+      "total": 19,
+      "last30": null,
+      "last90": null,
+      "departments": {},
+      "examples": [
+        "Staff Security Software Engineer, SecOps",
+        "Sr. Engineering Manager, Core Services",
+        "Slack AI Solution Strategist",
+        "Senior Software Engineer, Data Ingestion",
+        "Senior Product Manager, Data Products"
+      ]
+    },
+    "Substack": {
+      "board": "https://substack.com/careers (Ashby board substack)",
+      "total": 20,
+      "last30": 10,
+      "last90": 18,
+      "departments": {
+        "Communications": 6,
+        "Engineering": 4,
+        "Sponsorships": 2,
+        "Product": 2,
+        "People": 2,
+        "Partnerships": 2,
+        "Data": 1,
+        "Operations": 1
+      },
+      "examples": [
+        "Full Stack Software Engineer - Payments",
+        "Product Manager - Payments",
+        "Head of Creator Growth Programs",
+        "Senior Communications Manager, Shows",
+        "Events Lead, UK & International"
+      ]
+    },
+    "Zed": {
+      "board": "https://zed.dev/jobs (Ashby board zed)",
+      "total": 2,
+      "last30": 1,
+      "last90": 1,
+      "departments": {
+        "Engineering": 2
+      },
+      "examples": [
+        "Backend Engineer, Cloud",
+        "Designer"
+      ]
+    },
+    "SpaceX": {
+      "board": "https://www.spacex.com/careers/ (Greenhouse board spacex)",
+      "total": 2845,
+      "last30": 884,
+      "last90": 1770,
+      "disciplines": {
+        "Engineering - Software & Analytics": 378,
+        "Engineering - Aerospace & Mechanical": 341,
+        "Supply Chain & Logistics - Sourcing & Planning": 235,
+        "Engineering - Electrical": 191,
+        "Corporate - Sales & Business Operations": 167,
+        "Engineering - Information Technology": 110,
+        "Corporate - Environmental Health & Safety": 105,
+        "Manufacturing - Assembly & Integration": 93,
+        "Operations - Facilities": 86,
+        "Engineering - Security": 84,
+        "Engineering - Silicon": 78,
+        "Corporate - Human Resources": 69
+      },
+      "examples": [
+        "Software Engineer, Starlink",
+        "Aerospace Engineer, Dragon",
+        "Global Supply Manager, Capital Equipment (Terafab)",
+        "Manufacturing Engineer",
+        "Environmental Health & Safety Engineer"
+      ]
+    },
+    "Terafab": {
+      "board": "https://terafab.ai/; roles appear on the SpaceX board and Tesla careers",
+      "total": 5,
+      "last30": null,
+      "last90": null,
+      "departments": {},
+      "examples": [
+        "Global Supply Manager, Capital Equipment (Terafab)",
+        "Operations Engineer, Environmental Health & Safety (Terafab)",
+        "Sr. Construction Safety Engineer (Terafab)",
+        "Sr. Global Supply Manager, Capital Equipment (Terafab)",
+        "Sr. Global Supply Manager, Construction (Terafab)"
+      ]
+    }
+  }
+}

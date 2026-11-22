@@ -1,0 +1,184 @@
+/* Панель дежурного: узкое меню, плотные таблицы, вход по ключу. */
+
+.admin-shell {
+  --app-nav: var(--width-admin-nav);
+}
+
+/* Журналы и списки панели читаются как одна плотная таблица. */
+.admin-split {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  align-items: start;
+}
+
+/* ---------- Вход по ключу ---------- */
+
+.admin-login {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: 28px 16px;
+  background: var(--bg);
+}
+
+.admin-login-card {
+  display: grid;
+  gap: var(--sp-4);
+  width: min(430px, 100%);
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.admin-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
+
+.admin-login-intro {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-login-intro h1 {
+  font-size: var(--text-xl);
+}
+
+.admin-login-lead {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.admin-login-foot {
+  display: flex;
+  gap: 12px;
+  font-size: var(--text-xs);
+}
+
+/* One failed call: server words, code and request id, plus a retry. */
+.admin-alert {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--danger-soft);
+  border: 1px solid #f2c9c4;
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.admin-alert-meta {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Шапка и меню ---------- */
+
+.admin-nav-group {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-shell .app-nav-section {
+  margin-top: 6px;
+}
+
+.admin-topbar {
+  align-items: center;
+}
+
+.admin-topbar-staff {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.admin-staff-name {
+  max-width: 46vw;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Строка ошибки для страниц ---------- */
+
+.admin-error {
+  display: flex;
+  align-items: baseline;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  background: var(--danger-soft);
+  border: 1px solid #f2c9c4;
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+.admin-error-text {
+  flex: 1 1 220px;
+  overflow-wrap: anywhere;
+}
+
+.admin-error .btn {
+  margin-left: auto;
+}
+
+/* Ids and fingerprints may have no spaces; never let one widen a card. */
+.admin-shell .table .mono {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 980px) {
+  .admin-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-shell .app-nav {
+    display: grid;
+    gap: 8px;
+  }
+
+  .admin-nav-group {
+    gap: 4px;
+  }
+
+  .admin-staff-name {
+    max-width: 52vw;
+  }
+}
+
+@media (max-width: 460px) {
+  .admin-login-card {
+    padding: 18px 16px;
+  }
+
+  .admin-topbar {
+    row-gap: 6px;
+  }
+
+  .admin-topbar-staff {
+    width: 100%;
+  }
+
+  .admin-staff-name {
+    max-width: 100%;
+  }
+}

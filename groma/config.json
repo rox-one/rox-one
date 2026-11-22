@@ -1,0 +1,159 @@
+{
+  "scanners": [
+    {
+      "id": "c",
+      "source": "@groma/scanner-c@0.1.1",
+      "include": [
+        "**/*.c",
+        "**/*.h"
+      ]
+    },
+    {
+      "id": "javascript",
+      "source": "@groma/scanner-javascript@0.2.3",
+      "include": [
+        "**/*.js",
+        "**/*.mjs",
+        "**/*.cjs",
+        "**/*.jsx",
+        "**/package.json",
+        "**/*.html",
+        "**/project.json",
+        "**/nx.json"
+      ],
+      "exclude": [
+        "*.min.js",
+        "*.min.mjs",
+        "*.min.cjs",
+        "*.min.jsx",
+        "node_modules/",
+        "dist/",
+        "build/",
+        "coverage/"
+      ]
+    },
+    {
+      "id": "python",
+      "source": "@groma/scanner-python@0.2.3",
+      "include": [
+        "**/*.py",
+        "**/pyproject.toml",
+        "**/setup.cfg",
+        "**/requirements.txt"
+      ],
+      "exclude": [
+        ".venv/",
+        "venv/",
+        "__pycache__/",
+        "test/",
+        "tests/",
+        "test_*.py",
+        "*_test.py",
+        "conftest.py",
+        "build/",
+        "dist/"
+      ]
+    },
+    {
+      "id": "react",
+      "source": "@groma/scanner-react@0.2.3",
+      "include": [
+        "**/*.ts",
+        "**/*.tsx",
+        "**/tsconfig*.json",
+        "**/package.json",
+        "**/*.html",
+        "**/project.json",
+        "**/nx.json"
+      ],
+      "exclude": [
+        "*.test.ts",
+        "*.test.tsx",
+        "*.spec.ts",
+        "*.spec.tsx",
+        "/test/",
+        "node_modules/",
+        "dist/",
+        "build/",
+        "coverage/"
+      ]
+    },
+    {
+      "id": "rust",
+      "source": "@groma/scanner-rust@0.2.3",
+      "include": [
+        "**/*.rs",
+        "**/Cargo.toml"
+      ],
+      "exclude": [
+        "target/",
+        "vendor/"
+      ]
+    },
+    {
+      "id": "swift",
+      "source": "@groma/scanner-swift@0.2.3",
+      "include": [
+        "**/*.swift"
+      ],
+      "exclude": [
+        ".build/",
+        "Pods/",
+        "Carthage/"
+      ]
+    },
+    {
+      "id": "typescript",
+      "source": "@groma/scanner-typescript@0.2.4",
+      "include": [
+        "**/*.ts",
+        "**/*.tsx",
+        "**/tsconfig*.json",
+        "**/package.json",
+        "**/*.html",
+        "**/angular.json",
+        "**/project.json",
+        "**/nx.json"
+      ],
+      "exclude": [
+        "*.test.ts",
+        "*.test.tsx",
+        "*.spec.ts",
+        "*.spec.tsx",
+        "/test/",
+        "node_modules/",
+        "dist/",
+        "build/",
+        "coverage/"
+      ]
+    }
+  ],
+  "workSources": [],
+  "exclude": [
+    "/apps/electron/resources/skills/",
+    "/apps/ios/CraftAgentKit/Tests/",
+    "/packages/test-harness/",
+    "/tests/",
+    "/e2e/",
+    "/plans/",
+    "/reports/",
+    "/evidence/",
+    "/spikes/",
+    "/advisor-plans/",
+    "/tasks/",
+    "/eslint-baselines/",
+    "/perf-baselines/",
+    "/docs/",
+    "/registry/",
+    "/notices/",
+    "/vendor/",
+    "/tools/",
+    "/scripts/",
+    "/ops/",
+    "/.agents/",
+    "/.github/",
+    "/.circleci/",
+    "**/__tests__/"
+  ],
+  "automaticUpdates": true
+}
