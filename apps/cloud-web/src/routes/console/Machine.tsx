@@ -42,6 +42,11 @@ import './machine.css'
 
 const POLL_MS = 5000
 
+/** The prompt is Rox's own, not the image's: it reads the same for the owner and
+ * for a guest, and never repeats the machine's account or image name. */
+const PROMPT_USER = 'rox'
+const PROMPT_HOST = 'rox-computer'
+
 /** States the server can change on its own: a running machine is polled every
  * 5 s, and so is a boot or a stop that has not settled yet. */
 const POLLED_STATES: readonly SandboxState[] = ['queued', 'starting', 'running', 'stopping']
@@ -97,7 +102,7 @@ function MachineRibbon(props: { machine: Sandbox }): JSX.Element {
     <div class="machine-ribbon" role="group" aria-label="Состав и цена машины">
       <span
         class="ribbon-name"
-        title={`${machineName(props.machine)}. Образ ${textOrDash(props.machine.spec?.snapshot ?? props.machine.spec?.image)}`}
+        title={`${machineName(props.machine)}. ${sizeLine(props.machine.spec ?? {})}`}
       >
         {machineName(props.machine)}
       </span>
@@ -175,8 +180,6 @@ export default function ConsoleMachine(): JSX.Element {
   }
   const accessReason = (): string =>
     `Терминал, файлы и доступ к сети работают только на запущенной машине. Сейчас машина ${currentLabel().toLowerCase()}.`
-
-  const promptUser = (): string => (session.guest() ? 'guest' : 'user')
 
   let loadToken = 0
 
@@ -483,8 +486,8 @@ export default function ConsoleMachine(): JSX.Element {
                 sandbox={machine()}
                 enabled={isRunning()}
                 disabledReason={accessReason()}
-                promptUser={promptUser()}
-                promptHost={machineName(machine()).replace(/\s+/g, '-')}
+                promptUser={PROMPT_USER}
+                promptHost={PROMPT_HOST}
               />
               <div class="machine-extra">
                 <MachineMetrics sandboxId={machine().id} enabled={isRunning()} />

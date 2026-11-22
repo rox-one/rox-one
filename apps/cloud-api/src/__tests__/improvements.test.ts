@@ -104,7 +104,7 @@ class FakeProvider implements SandboxProvider {
   readonly openPorts = new Set<number>([3000])
   readonly images: ProviderImage[] = []
   sessionActive = false
-  sessionCwd = '/home/daytona'
+  sessionCwd = '/home/rox'
 
   async create(spec: SandboxSpec): Promise<SandboxStatus> {
     this.created.push(spec)
@@ -148,7 +148,7 @@ class FakeProvider implements SandboxProvider {
     }
     if (command.includes('mkfifo')) {
       this.sessionActive = true
-      return { stdout: 'ready\n/home/daytona\n', stderr: '', exitCode: 0 }
+      return { stdout: 'ready\n/home/rox\n', stderr: '', exitCode: 0 }
     }
     if (command.includes('pkill -INT')) {
       return { stdout: '', stderr: '', exitCode: 0 }
@@ -516,7 +516,7 @@ describe('persistent shell', () => {
     expect(await readBody<Record<string, unknown>>(started)).toEqual({
       object: 'session',
       state: 'ready',
-      cwd: '/home/daytona',
+      cwd: '/home/rox',
     })
 
     const echo = await call(h.app, `${base}/exec`, {
@@ -528,7 +528,7 @@ describe('persistent shell', () => {
     expect(await readBody<Record<string, unknown>>(echo)).toEqual({
       stdout: 'srv-ready\n',
       stderr: '',
-      cwd: '/home/daytona',
+      cwd: '/home/rox',
       exit_code: 0,
     })
 
@@ -598,11 +598,11 @@ describe('ssh keys and access', () => {
     expect(key.label).toBe('Мой ключ')
     expect(String(key.fingerprint)).toMatch(/^SHA256:[A-Za-z0-9+/]+$/)
 
-    const file = '/home/daytona/.ssh/authorized_keys'
+    const file = '/home/rox/.ssh/authorized_keys'
     const written = h.provider.writeCalls.filter((entry) => entry.path === file)
     expect(written).toHaveLength(1)
     expect(new TextDecoder().decode(written[0]!.data)).toBe(`${SSH_KEY}\n`)
-    expect(h.provider.execCalls.some((c) => c.command.includes('mkdir -p /home/daytona/.ssh'))).toBe(true)
+    expect(h.provider.execCalls.some((c) => c.command.includes('mkdir -p /home/rox/.ssh'))).toBe(true)
 
     const listed = await call(h.app, base, { token: h.secret })
     expect(listed.status).toBe(200)

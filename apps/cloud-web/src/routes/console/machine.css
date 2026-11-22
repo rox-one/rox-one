@@ -223,3 +223,30 @@
     flex-wrap: wrap;
   }
 }
+
+/* Плотная полоса состава и вспомогательные панели под рабочим местом. */
+.machine-ribbon {
+  gap: 8px;
+  padding: 7px 10px;
+}
+
+.machine-ribbon .ribbon-sep {
+  height: 16px;
+}
+
+.machine-extra {
+  gap: 12px;
+}
+
+.machine-extra .card-head {
+  padding: 8px 10px;
+}
+
+.machine-extra .card-body {
+  padding: 10px;
+}
+
+.machine-notice {
+  padding: 7px 8px 7px 10px;
+  font-size: var(--text-sm);
+}

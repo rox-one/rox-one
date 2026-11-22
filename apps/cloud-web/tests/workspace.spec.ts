@@ -71,9 +71,9 @@ test('the machine workbench keeps the terminal, files and preview usable', async
       return route.fulfill(json({ object: 'list', data: [] }))
     }
     if (path === '/v1/sandboxes/sbx_test/files/list') {
-      return route.fulfill(json({ object: 'list', path: '/home/daytona', data: [
-        { name: '.bashrc', path: '/home/daytona/.bashrc', is_dir: false, size: 12, modified_at: '2026-11-22T09:00:00.000Z' },
-        { name: 'notes', path: '/home/daytona/notes', is_dir: true, size: 0, modified_at: '2026-11-22T09:00:00.000Z' },
+      return route.fulfill(json({ object: 'list', path: '/home/rox', data: [
+        { name: '.bashrc', path: '/home/rox/.bashrc', is_dir: false, size: 12, modified_at: '2026-11-22T09:00:00.000Z' },
+        { name: 'notes', path: '/home/rox/notes', is_dir: true, size: 0, modified_at: '2026-11-22T09:00:00.000Z' },
       ] }))
     }
     if (path === '/v1/sandboxes/sbx_test/files') {
@@ -91,6 +91,7 @@ test('the machine workbench keeps the terminal, files and preview usable', async
   await page.goto('/console/machines/sbx_test')
   await expect(page.getByText('Сеть и доступ')).toBeVisible()
   await expect(page.getByText('2 CPU · 4 GB RAM · 8 GB SSD').first()).toBeVisible()
+  await expect(page.getByText('rox@rox-computer:~$')).toBeVisible()
 
   const input = page.getByRole('textbox', { name: /Команда для машины/ })
   await input.fill('echo HELLO')

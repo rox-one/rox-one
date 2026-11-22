@@ -1,9 +1,69 @@
 /* Кабинет: ширина бокового меню, верхняя полоса, дверь входа и общие сигналы. */
 
+/*
+ * Плотность кабинета живёт только в его поддереве: сайт-витрина и панель
+ * персонала остаются на общих токенах. Тело 13 px, подпись 12 px, мелкое
+ * 11 px, заголовок страницы 24 px; поля и радиусы на шаг теснее.
+ */
 .console-shell {
   --app-nav: var(--width-console-nav);
+  --text-md: 13px;
+  --text-sm: 12px;
+  --text-xs: 11px;
+  --text-2xl: 24px;
+  --width-console-nav: 216px;
+  --content-max: 1180px;
+  --sp-4: 14px;
+  --sp-5: 18px;
+  --sp-6: 22px;
+  --radius-sm: 8px;
+  --radius-lg: 14px;
   /* Ни одна страница кабинета не растягивает окно вбок. */
   overflow-x: clip;
+}
+
+/* Плотность кабинета: на шаг теснее общей витрины, но не мелко для чтения. */
+.console-shell .app-content {
+  gap: 14px;
+  padding: 18px 22px 36px;
+}
+
+.console-shell .app-topbar {
+  padding: 7px 22px;
+}
+
+.console-shell .app-nav {
+  padding: 12px 8px;
+}
+
+.console-shell .app-nav-links a {
+  padding: 6px 9px;
+}
+
+.console-shell .card-head {
+  padding: 10px 14px;
+}
+
+.console-shell .card:not(.card-flush) .card-body {
+  padding: 13px 14px;
+}
+
+.console-shell .card-title {
+  font-size: 12.5px;
+}
+
+.console-shell .card-sub {
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .console-shell .app-content {
+    padding: 16px 16px 30px;
+  }
+
+  .console-shell .app-topbar {
+    padding: 7px 16px;
+  }
 }
 
 /* ---------- Боковое меню: шапка и сворачивание ---------- */

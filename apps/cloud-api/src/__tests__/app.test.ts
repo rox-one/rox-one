@@ -114,10 +114,10 @@ class FakeProvider implements SandboxProvider {
 
   async listFiles(id: string, path: string) {
     if (!this.sandboxes.has(id)) throw new CloudRunnerError('unknown sandbox', 'not_found')
-    if (path === '/home/daytona') {
+    if (path === '/home/rox') {
       return [
-        { name: 'hello.txt', path: '/home/daytona/hello.txt', isDir: false, size: 12 },
-        { name: 'notes', path: '/home/daytona/notes', isDir: true, size: 0 },
+        { name: 'hello.txt', path: '/home/rox/hello.txt', isDir: false, size: 12 },
+        { name: 'notes', path: '/home/rox/notes', isDir: true, size: 0 },
       ]
     }
     return []
@@ -841,13 +841,13 @@ describe('sandbox operations', () => {
     const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'list-1'))
     const response = await call(
       app,
-      `/v1/sandboxes/${created.id}/files/list?path=%2Fhome%2Fdaytona`,
+      `/v1/sandboxes/${created.id}/files/list?path=%2Fhome%2Frox`,
       { token: secret },
     )
     expect(response.status).toBe(200)
     expect(await readBody<{ data: unknown[] }>(response)).toMatchObject({
       object: 'list',
-      path: '/home/daytona',
+      path: '/home/rox',
       data: [
         { name: 'hello.txt', is_dir: false, size: 12 },
         { name: 'notes', is_dir: true, size: 0 },

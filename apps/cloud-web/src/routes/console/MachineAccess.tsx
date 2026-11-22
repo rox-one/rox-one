@@ -8,7 +8,7 @@ import type { NetworkInfo, PortInfo, PreviewLink, SshAccess } from '@/lib/api'
 import { formatDate, formatDuration, formatTime } from '@/lib/format'
 
 import { errorText } from './components/console-ui'
-import FirstSiteWizard from './FirstSiteWizard'
+import FirstSiteWizard, { runExampleSite } from './FirstSiteWizard'
 
 import './machine-access.css'
 
@@ -81,6 +81,7 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
   const [previewError, setPreviewError] = createSignal<string | null>(null)
   const [previewLoading, setPreviewLoading] = createSignal(false)
   const [previewMasked, setPreviewMasked] = createSignal(true)
+  const [exampleLoading, setExampleLoading] = createSignal(false)
   const [copied, setCopied] = createSignal(false)
 
   const [ssh, setSsh] = createSignal<SshAccess | null>(null)
@@ -152,6 +153,7 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
         setPreview(null)
         setPreviewError(null)
         setPreviewMasked(true)
+        setExampleLoading(false)
         setSsh(null)
         setSshError(null)
         setNetwork(null)
@@ -191,6 +193,33 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
       setPreviewError(`Сайт не открылся: ${errorText(failure)}`)
     } finally {
       setPreviewLoading(false)
+    }
+  }
+
+  const startExample = async (): Promise<void> => {
+    if (!props.enabled || exampleLoading()) return
+    const value = Number(port())
+    if (!Number.isInteger(value) || value < 1 || value > 65535) {
+      setPreviewError('Порт — целое число от 1 до 65535.')
+      return
+    }
+    const id = props.sandboxId
+    const tab = window.open('about:blank', '_blank')
+    setExampleLoading(true)
+    setPreviewError(null)
+    setPreview(null)
+    try {
+      const outcome = await runExampleSite({ sandboxId: id, port: value, tab })
+      if (props.sandboxId !== id) return
+      if (outcome.kind === 'error') {
+        setPreviewError(outcome.message)
+        return
+      }
+      setPreview(outcome.link)
+      setPreviewMasked(true)
+      void loadPorts()
+    } finally {
+      setExampleLoading(false)
     }
   }
 
@@ -305,21 +334,31 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
                 class="input access-port"
                 inputmode="numeric"
                 value={port()}
-                disabled={!props.enabled || previewLoading()}
+                disabled={!props.enabled || previewLoading() || exampleLoading()}
                 onInput={(event) => setPort(event.currentTarget.value)}
               />
               <Button
                 size="sm"
                 variant="secondary"
                 loading={previewLoading()}
-                disabled={!props.enabled}
+                disabled={!props.enabled || exampleLoading()}
                 onClick={() => void openSite()}
               >
                 Открыть сайт
               </Button>
+              <Button
+                size="sm"
+                variant="primary"
+                loading={exampleLoading()}
+                disabled={!props.enabled || previewLoading()}
+                onClick={() => void startExample()}
+              >
+                Запустить пример
+              </Button>
             </div>
             <p class="access-note">
-              Запустите в терминале сервер на этом порту, например
+              «Запустить пример» поднимает небольшой сервер на этом порту в домашнем каталоге. Или
+              запустите свой сервер в терминале, например
               {' '}
               <code>python3 -m http.server {port()}</code>.
             </p>
@@ -462,8 +501,9 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
             </Button>
             <p class="access-note">
               После «Создать доступ» здесь появится команда вида{' '}
-              <code>{'ssh <токен>@ssh.rox.computer'}</code>. Она подключает к машине, домашний каталог
-              внутри — <code>~</code>, и перестаёт работать вместе с машиной.
+              <code>{'ssh <токен>@ssh.rox.computer'}</code>. Вы войдёте как <code>rox</code>, увидите
+              приглашение <code>rox@rox-computer</code>, а домашний каталог будет <code>~</code>.
+              Одноразовая команда перестаёт работать после истечения срока.
             </p>
             <Show when={sshError() !== null}>
               <p class="access-error" role="alert">

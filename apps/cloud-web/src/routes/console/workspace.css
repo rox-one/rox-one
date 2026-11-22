@@ -4,7 +4,7 @@
   display: flex;
   align-items: stretch;
   min-width: 0;
-  height: clamp(420px, 43vh, 520px);
+  height: clamp(380px, 39vh, 470px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -31,13 +31,13 @@
 
 .workspace-preview {
   flex: 1 1 0;
-  min-width: 220px;
+  min-width: 200px;
   border-left: 1px solid var(--border);
 }
 
 .workspace-splitter {
   position: relative;
-  flex: 0 0 7px;
+  flex: 0 0 5px;
   border: 0;
   background: var(--surface-sunken);
   cursor: col-resize;

@@ -132,7 +132,13 @@ export function machineDisplayName(spec?: {
   diskGb?: number | null
 }): string {
   const source = spec?.snapshot ?? spec?.image ?? ''
-  const family = source.replace(/^rox-(?:cloud-)?/, '').replace(/-?\d+x\d+$/, '') || 'base'
+  // A vendor image name is a build detail, not a machine family. The image
+  // family is used only when it is Rox's own short name; everything else is
+  // the plain base name, so `daytonaio/sandbox:0.11.0` never reaches a title.
+  const vendor = /daytona|sandbox:|^[a-z0-9.-]+\/[a-z]/i.test(source)
+  const family = vendor
+    ? 'base'
+    : source.replace(/^rox-(?:cloud-)?/, '').replace(/-?\d+x\d+$/, '').replace(/[^a-z0-9-]+/gi, '-').replace(/^-+|-+$/g, '') || 'base'
   const cpu = spec?.cpu ?? 1
   const ram = spec?.memoryGb ?? 1
   const disk = typeof spec?.diskGb === 'number' ? `${spec.diskGb}G-` : ''
@@ -170,10 +176,23 @@ export function auditLabel(action: string): string {
   return AUDIT_LABELS[action] ?? action
 }
 
+/** Upstream names never reach a customer. The service's own words stay, while
+ * the provider behind them and its hosts are said in Rox's words: an error
+ * never names the company that runs the machine. */
+function customerSafe(text: string): string {
+  return text
+    .replace(/Провайдер\s*«[^»]*»/g, 'Сервис машин')
+    .replace(/ssh\.app\.daytona\.io/gi, 'ssh.rox.computer')
+    .replace(/daytonaproxy\d*\.net/gi, 'preview.rox.computer')
+    .replace(/(?:[a-z0-9-]+\.)*daytona\.(?:io|net|com)/gi, 'rox.computer')
+    .replace(/daytona/gi, 'Rox')
+}
+
 /** One line for an alert: the server's words plus its code, when it has one. */
 export function errorText(err: unknown): string {
-  if (err instanceof ApiError) return err.toString()
-  return err instanceof Error ? err.message : String(err)
+  const text =
+    err instanceof ApiError ? err.toString() : err instanceof Error ? err.message : String(err)
+  return customerSafe(text)
 }
 
 function csvCell(value: string | number | null | undefined): string {

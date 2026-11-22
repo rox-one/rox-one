@@ -34,16 +34,20 @@ const TIMEOUT_SEC = 15
 /** The PTY bridge is off in this build; commands run through exec with cwd tracking. */
 const USE_PERSISTENT_SESSION = false
 
-/** The image's real home directory. Every label shows it as `~`; the full path
- * only ever travels on the wire, so it never becomes customer-visible text. */
-const SANDBOX_HOME = '/home/daytona'
-/** Boot may add a friendly symlink to the same place; a session started there
- * reports this path, so `~` must cover both spellings. */
-const ROX_HOME = '/home/rox'
-/** Fallback prompt name; the parent passes the real one. */
+/** The customer's home inside the machine. Every label shows it as `~`; the
+ * full path only ever travels on the wire, so it never becomes visible text. */
+const SANDBOX_HOME = '/home/rox'
+/** The product's name for the same directory: Rox's machine, Rox's home. */
+const ROX_HOME = SANDBOX_HOME
+/** An older image or a session opened before the move may still report the
+ * previous home; it is the same place for the person and prints as `~` too. */
+const LEGACY_HOME = '/home/daytona'
+/** Both spellings of the one home; every one of them prints as `~`. */
+const HOME_DIRS: readonly string[] = [ROX_HOME, LEGACY_HOME]
+/** The prompt is the product's own: it reads the same on every machine, and an
+ * image or account name never reaches it. */
 const DEFAULT_PROMPT_USER = 'rox'
-/** Both spellings of the same place; every one of them prints as `~`. */
-const HOME_DIRS: readonly string[] = [SANDBOX_HOME, ROX_HOME]
+const DEFAULT_PROMPT_HOST = 'rox-computer'
 
 interface QuickCommand {
   label: string
@@ -145,6 +149,23 @@ function outputLines(kind: 'stdout' | 'stderr', text: string): TermLine[] {
   return parts.map((part) => ({ kind, text: visibleLine(part) }))
 }
 
+/** A quiet, human hint after a common failure; the real output stays above it. */
+function friendlyNote(stdout: string, stderr: string): string | null {
+  const text = `${stdout}\n${stderr}`
+  const packageMiss = /E: Unable to locate package ([A-Za-z0-9.+_-]+)/.exec(text)
+  if (packageMiss !== null) {
+    return `В образе нет пакета ${packageMiss[1]}. Проверьте название или соберите его из исходников.`
+  }
+  const commandMiss = /(?:^|\n)(?:bash: |sh: )?(?:line \d+: )?([A-Za-z0-9._+-]+): command not found/.exec(text)
+  if (commandMiss !== null) {
+    return `${commandMiss[1]} не установлен на машине. Установите его или запустите другой инструмент.`
+  }
+  if (/Permission denied/i.test(text)) {
+    return 'Машина отказала в доступе. Для системного файла или службы запустите команду через sudo.'
+  }
+  return null
+}
+
 /** Success says nothing; a failure is a clear red line with its code; an answer
  * that carries no code stays a quiet note instead of pretending to be success. */
 function exitLines(code: number | null): TermLine[] {
@@ -211,7 +232,7 @@ export default function Terminal(props: TerminalProps): JSX.Element {
   }
 
   const promptText = (): string =>
-    `${props.promptUser ?? DEFAULT_PROMPT_USER}@${props.promptHost ?? props.shortId}:${promptCwd()}$`
+    `${props.promptUser ?? DEFAULT_PROMPT_USER}@${props.promptHost ?? DEFAULT_PROMPT_HOST}:${promptCwd()}$`
 
   const append = (added: TermLine[]): void => {
     if (added.length === 0) return
@@ -376,6 +397,8 @@ export default function Terminal(props: TerminalProps): JSX.Element {
       ...outputLines('stderr', result.stderr),
     ]
     append(output.length === 0 ? [{ kind: 'info', text: 'вывода нет' }] : output)
+    const hint = friendlyNote(result.stdout, result.stderr)
+    if (hint !== null) append([{ kind: 'info', text: hint }])
     if (cdMatch !== null && result.exitCode === 0) {
       const target = cleanOutput(result.stdout)
         .split('\n')
@@ -395,6 +418,8 @@ export default function Terminal(props: TerminalProps): JSX.Element {
       ...outputLines('stderr', result.stderr),
     ]
     append(output.length === 0 ? [{ kind: 'info', text: 'вывода нет' }] : output)
+    const hint = friendlyNote(result.stdout, result.stderr)
+    if (hint !== null) append([{ kind: 'info', text: hint }])
     if (typeof result.cwd === 'string' && result.cwd.length > 0) setCwd(result.cwd)
     append(exitLines(result.exitCode))
   }

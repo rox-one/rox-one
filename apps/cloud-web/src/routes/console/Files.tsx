@@ -10,14 +10,27 @@ import { errorText } from './components/console-ui'
 
 import './files.css'
 
-/** The sandbox user's home. API calls use this real path; labels show `~`. */
-export const SANDBOX_HOME = '/home/daytona'
+/** The customer's home inside the machine. API calls use this real path; labels
+ * show `~`. */
+export const SANDBOX_HOME = '/home/rox'
+
+/** An older image or session may still hand back the previous home; it is the
+ * same place for the person, so it also reads as `~`. */
+const LEGACY_HOME = '/home/daytona'
+
+/** The home spelling a path sits under, if any. */
+function homePrefix(path: string): string | null {
+  for (const home of [SANDBOX_HOME, LEGACY_HOME]) {
+    if (path === home || path.startsWith(`${home}/`)) return home
+  }
+  return null
+}
 
 /** `~` for the home and `~/…` below it; any other absolute path is shown as is. */
 export function displayPath(path: string): string {
-  if (path === SANDBOX_HOME) return '~'
-  if (path.startsWith(`${SANDBOX_HOME}/`)) return `~${path.slice(SANDBOX_HOME.length)}`
-  return path
+  const home = homePrefix(path)
+  if (home === null) return path
+  return home === path ? '~' : `~${path.slice(home.length)}`
 }
 
 /** The preview panel announces a deleted file so the browser reloads its rows. */
@@ -62,6 +75,8 @@ const SORT_OPTIONS = [
  * when the other dotfiles are shown.
  */
 const MACHINE_HIDDEN: Record<string, true> = {
+  '.rox-identity-v1': true,
+  '.rox': true,
   '.daytona': true,
   '.face': true,
   '.face.icon': true,
@@ -87,14 +102,14 @@ function compareEntries(mode: SortKey) {
 
 /** `~` for the home, then the path below it; any other absolute path is shown plainly. */
 function crumbs(path: string): Crumb[] {
-  const inHome = path === SANDBOX_HOME || path.startsWith(`${SANDBOX_HOME}/`)
-  if (!inHome) {
+  const home = homePrefix(path)
+  if (home === null) {
     return [{ label: '/', path: '/' }, ...path.split('/').filter((part) => part.length > 0).map((part, index, parts) => ({
       label: part,
       path: `/${parts.slice(0, index + 1).join('/')}`,
     }))]
   }
-  const rest = path.slice(SANDBOX_HOME.length).split('/').filter((part) => part.length > 0)
+  const rest = path.slice(home.length).split('/').filter((part) => part.length > 0)
   const out: Crumb[] = [{ label: '~', path: SANDBOX_HOME }]
   let current = SANDBOX_HOME
   for (const part of rest) {
@@ -105,7 +120,7 @@ function crumbs(path: string): Crumb[] {
 }
 
 function parentOf(path: string): string {
-  if (path === SANDBOX_HOME) return SANDBOX_HOME
+  if (path === SANDBOX_HOME || path === LEGACY_HOME) return SANDBOX_HOME
   const cut = path.replace(/\/+$/, '').lastIndexOf('/')
   if (cut <= 0) return '/'
   const parent = path.slice(0, cut)

@@ -331,3 +331,40 @@
   outline: 2px solid var(--terminal-success);
   outline-offset: 1px;
 }
+
+/* Плотная консоль: тот же контраст, меньше полей и воздуха. */
+.terminal-head {
+  gap: 6px;
+  padding: 5px 8px 5px 10px;
+}
+
+.terminal-tools {
+  gap: 3px;
+}
+
+.terminal-tool,
+.terminal-quick-command,
+.terminal-run {
+  padding: 3px 7px;
+}
+
+.terminal-output {
+  min-height: 170px;
+  max-height: 380px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.terminal-input-row {
+  gap: 5px;
+  padding: 5px 9px 7px;
+}
+
+.terminal-prompt {
+  font-size: 11.5px;
+}
+
+.terminal-input {
+  font-size: 12.5px;
+}

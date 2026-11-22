@@ -533,7 +533,7 @@ const SESSION_WAIT_TENTHS = 150
 /** Marker the exec script prints when the session was never started. */
 const SESSION_MISSING = 'ROX_NO_SESSION'
 /** Ports the machine's own services hold; a site must pick another one. */
-const RESERVED_PORTS: readonly number[] = [2280, 2281, 22_220, 33_333]
+const RESERVED_PORTS: readonly number[] = [2280, 2281, 22_220, 22_222, 33_333]
 
 /**
  * Public names Rox owns. The vendor host and gateway never reach a customer:
@@ -561,45 +561,127 @@ function base64Utf8(text: string): string {
 }
 
 /**
- * The vendor image's home is `/home/daytona`; customers only ever see `~` and
- * a shell that starts in `/home/rox`. The block is appended once, so repeated
- * session starts do not stack copies of it.
+ * The customer home. On first setup the image's own home moves here, and the
+ * old path stays behind as a symlink so the provider daemon and the SSH
+ * gateway keep finding the same directory.
  */
-const HOME_ALIAS = '/home/rox'
-const REAL_HOME = '/home/daytona'
-const HOME_RC_BLOCK = `
-# Rox machine home
-export HOME=${HOME_ALIAS}
-cd ${HOME_ALIAS} 2>/dev/null || true
+const ROX_HOME = '/home/rox'
+/** The vendor image's home: a compatibility path now, never the customer's. */
+const LEGACY_HOME = '/home/daytona'
+/** Line that marks the appended shell block, so repeated runs never stack it. */
+const ROX_IDENTITY_MARKER = '# ROX_IDENTITY'
+/** Written only after the Unix user `rox` really exists. */
+const ROX_IDENTITY_MARKER_FILE = `${ROX_HOME}/.rox-identity-v1`
+/** The setup script prints this when a command can be handed to `rox`. */
+const IDENTITY_READY = 'ROX_IDENTITY_READY'
+const IDENTITY_ABSENT = 'ROX_IDENTITY_ABSENT'
+
+/**
+ * One shell block for every login shell. `sudo -n -iu rox` fires only for the
+ * image user in an interactive terminal, so the Rox user never re-execs itself
+ * and a non-interactive command keeps the identity it was started with.
+ */
+const HOME_RC_BLOCK = `${ROX_IDENTITY_MARKER}
+export HOME=${ROX_HOME}
+cd ${ROX_HOME} 2>/dev/null || true
 PS1='rox@rox-computer:\\w\\$ '
+if [ "$(id -un 2>/dev/null)" = "daytona" ] && [ -t 0 ] && [ -t 1 ]; then exec sudo -n -iu rox; fi
 `
 
 /**
- * Point `/home/rox` at the image's home and give the shell a Rox prompt.
+ * Bring one machine to the Rox identity, idempotently.
  *
- * `sudo -n` is best effort: an image without passwordless sudo simply keeps
- * the vendor path, and the caller never fails a boot over a prompt.
+ * Every privileged step goes through `sudo -n` and ends with `|| true`: an
+ * image without passwordless sudo keeps working the way it did before. The
+ * rename keeps the daemon's open working directory valid because it holds the
+ * inode, and the symlink put back at the legacy path keeps the daemon and the
+ * SSH gateway working. A home that cannot be moved is copied instead.
  */
-function homeSetupScript(): string {
+function roxIdentityScript(): string {
+  const rcPayload = base64Utf8(HOME_RC_BLOCK)
   return [
-    `if [ ! -e ${HOME_ALIAS} ] && [ -d ${REAL_HOME} ]; then sudo -n ln -sfn ${REAL_HOME} ${HOME_ALIAS} 2>/dev/null || true; fi`,
-    `if [ -f ${REAL_HOME}/.bashrc ] || [ -w ${REAL_HOME} ]; then if ! grep -q 'rox@rox-computer' ${REAL_HOME}/.bashrc 2>/dev/null; then echo ${base64Utf8(HOME_RC_BLOCK)} | base64 -d >> ${REAL_HOME}/.bashrc 2>/dev/null || true; fi; fi`,
-  ].join('; ')
+    // 1. A symlink at the Rox path is the old best-effort setup; remove it.
+    `if [ -L ${ROX_HOME} ]; then sudo -n rm -f ${ROX_HOME} 2>/dev/null || true; fi`,
+    // 2. Move the image home into place, or copy it when the move fails. The
+    //    marker is written only after the user exists, so a copy retried on a
+    //    half-done machine still finishes the job.
+    `if [ -d ${LEGACY_HOME} ] && [ ! -L ${LEGACY_HOME} ] && [ ! -d ${ROX_HOME} ]; then sudo -n mv ${LEGACY_HOME} ${ROX_HOME} 2>/dev/null || true; fi`,
+    `if [ -d ${LEGACY_HOME} ] && [ ! -L ${LEGACY_HOME} ] && [ ! -f ${ROX_IDENTITY_MARKER_FILE} ]; then sudo -n mkdir -p ${ROX_HOME} 2>/dev/null || true; sudo -n cp -a ${LEGACY_HOME}/. ${ROX_HOME}/ 2>/dev/null || true; fi`,
+    `if [ ! -d ${ROX_HOME} ]; then sudo -n mkdir -p ${ROX_HOME} 2>/dev/null || true; fi`,
+    // 3. Keep the legacy path for the provider daemon and the SSH gateway.
+    `if [ ! -e ${LEGACY_HOME} ] && [ ! -L ${LEGACY_HOME} ]; then sudo -n ln -s ${ROX_HOME} ${LEGACY_HOME} 2>/dev/null || true; fi`,
+    // 4. A real Rox user: no home of its own to create, the image's group so
+    //    both can work in one directory, and passwordless sudo of its own.
+    `if ! id -u rox >/dev/null 2>&1; then sudo -n useradd -M -d ${ROX_HOME} -s /bin/bash -g daytona -G sudo rox 2>/dev/null || sudo -n useradd -M -d ${ROX_HOME} -s /bin/bash -g daytona rox 2>/dev/null || true; fi`,
+    `if id -u rox >/dev/null 2>&1; then sudo -n usermod -d ${ROX_HOME} -s /bin/bash -g daytona rox 2>/dev/null || true; sudo -n usermod -aG sudo rox 2>/dev/null || true; fi`,
+    `if id -u rox >/dev/null 2>&1; then printf 'rox ALL=(ALL) NOPASSWD:ALL\\n' | sudo -n tee /etc/sudoers.d/rox >/dev/null 2>&1 || true; sudo -n chmod 440 /etc/sudoers.d/rox 2>/dev/null || true; fi`,
+    // 5. One shared directory: the image user owns it, the group may write,
+    //    and new files inherit the shared group.
+    `sudo -n chown daytona:daytona ${ROX_HOME} 2>/dev/null || true`,
+    `sudo -n chmod 2775 ${ROX_HOME} 2>/dev/null || true`,
+    // 6. The marker appears only after the user does, so a deleted user is
+    //    recreated instead of the machine being considered done.
+    `if id -u rox >/dev/null 2>&1; then printf 'rox-identity-v1\\n' | sudo -n tee ${ROX_IDENTITY_MARKER_FILE} >/dev/null 2>&1 || printf 'rox-identity-v1\\n' > ${ROX_IDENTITY_MARKER_FILE} 2>/dev/null || true; fi`,
+    // 7. One guarded block per login shell file; the marker line is the guard,
+    //    so a second run appends nothing.
+    `for rc in .bashrc .zshrc .profile .bash_profile .zprofile; do f=${ROX_HOME}/$rc; if [ ! -e "$f" ]; then touch "$f" 2>/dev/null || sudo -n touch "$f" 2>/dev/null || true; fi; if [ -f "$f" ] && ! grep -q ROX_IDENTITY "$f" 2>/dev/null && ! sudo -n grep -q ROX_IDENTITY "$f" 2>/dev/null; then echo ${rcPayload} | base64 -d >> "$f" 2>/dev/null || { echo ${rcPayload} | base64 -d | sudo -n tee -a "$f" >/dev/null 2>&1 && sudo -n chown daytona:daytona "$f" 2>/dev/null || true; }; fi; done`,
+    // 8. Report whether a command can be handed to the Rox user from here.
+    `if id -u rox >/dev/null 2>&1 && sudo -n -u rox -H true 2>/dev/null; then echo ${IDENTITY_READY}; else echo ${IDENTITY_ABSENT}; fi`,
+  ].join('\n')
+}
+
+/** Ready setups are remembered for the process; a failure retries later. */
+const roxHomeCache = new Map<string, { promise: Promise<boolean>; expiresAt: number }>()
+/** How long a failed setup is remembered before the routes try again. */
+const ROX_HOME_RETRY_MS = 60_000
+
+/**
+ * Prepare one machine for the Rox identity at most once per process. The
+ * answer says whether commands can run as `rox`; a setup failure is swallowed
+ * here so an ordinary command still has a chance.
+ */
+function ensureRoxHome(provider: SandboxProvider, id: string): Promise<boolean> {
+  const key = `${provider.providerId}\u0000${id}`
+  const cached = roxHomeCache.get(key)
+  if (cached !== undefined && (cached.expiresAt === 0 || Date.now() < cached.expiresAt)) {
+    return cached.promise
+  }
+  const promise = (async (): Promise<boolean> => {
+    try {
+      const result = await provider.exec(id, roxIdentityScript(), { timeoutMs: 30_000 })
+      return result.stdout.split('\n').some((line) => line.trim() === IDENTITY_READY)
+    } catch {
+      return false
+    }
+  })()
+  const entry = { promise, expiresAt: 0 }
+  roxHomeCache.set(key, entry)
+  void promise.then((ready) => {
+    if (!ready) entry.expiresAt = Date.now() + ROX_HOME_RETRY_MS
+  })
+  return promise
+}
+
+/**
+ * Run one command as the Rox user, with the command itself base64-encoded so
+ * quotes, newlines and shell syntax never have to survive another layer. The
+ * caller passes `cwd` to the provider, so `sudo` starts in the same directory.
+ */
+function execAsRox(command: string): string {
+  return `printf %s ${base64Utf8(command)} | base64 -d | sudo -n -u rox -H bash -s`
 }
 
 /**
  * Start (or reuse) a `bash -i` that reads the FIFO forever. `exec 3<>` opens
  * the FIFO read-write so the shell never sees end-of-file between commands.
- * The shell inherits `/home/rox` as home and working directory; when the
- * alias could not be made it falls back to the image's real home.
+ * The shell inherits `/home/rox` as both home and working directory.
  */
 function sessionStartScript(): string {
   return [
-    homeSetupScript(),
-    `export HOME=${HOME_ALIAS}`,
-    `cd ${HOME_ALIAS} 2>/dev/null || cd ${REAL_HOME} 2>/dev/null || true`,
+    `export HOME=${ROX_HOME}`,
+    `cd ${ROX_HOME} 2>/dev/null || true`,
     `mkdir -p ${SESSION_DIR}`,
-    `if [ ! -p ${SESSION_FIFO} ] || [ ! -s ${SESSION_PID} ] || ! kill -0 "$(cat ${SESSION_PID})" 2>/dev/null; then rm -f ${SESSION_FIFO} ${SESSION_OUT} ${SESSION_PID}; mkfifo ${SESSION_FIFO}; setsid nohup bash -c 'export HOME=${HOME_ALIAS}; export PS1="rox@rox-computer:\\w\\$ "; cd ${HOME_ALIAS} 2>/dev/null || cd ${REAL_HOME} 2>/dev/null || true; exec 3<>${SESSION_FIFO}; exec script -qefc "bash --noprofile --norc -i" /dev/null <&3 >${SESSION_OUT} 2>&1' >/dev/null 2>&1 & echo $! > ${SESSION_PID}; fi`,
+    `if [ ! -p ${SESSION_FIFO} ] || [ ! -s ${SESSION_PID} ] || ! kill -0 "$(cat ${SESSION_PID})" 2>/dev/null; then rm -f ${SESSION_FIFO} ${SESSION_OUT} ${SESSION_PID}; mkfifo ${SESSION_FIFO}; setsid nohup bash -c 'export HOME=${ROX_HOME}; export PS1="rox@rox-computer:\\w\\$ "; cd ${ROX_HOME} 2>/dev/null || true; exec 3<>${SESSION_FIFO}; exec script -qefc "bash --noprofile --norc -i" /dev/null <&3 >${SESSION_OUT} 2>&1' >/dev/null 2>&1 & echo $! > ${SESSION_PID}; fi`,
     'sleep 0.6',
     'echo ready',
     'pwd',
@@ -666,7 +748,7 @@ function parseSessionOutput(text: string, marker: string): SessionOutput | null 
   })
   // The last path inside the frame is the `pwd` the script printed after the
   // user's command; it belongs to cwd, not to the command's stdout.
-  let cwd = HOME_ALIAS
+  let cwd = ROX_HOME
   for (let index = body.length - 1; index >= 0; index -= 1) {
     if ((body[index] ?? '').startsWith('/')) {
       cwd = body[index]!
@@ -1510,7 +1592,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
     // Home alias and Rox prompt are best effort: a machine without
     // passwordless sudo boots normally and simply keeps the image's path.
     try {
-      await lease.provider.exec(record.id, homeSetupScript(), { timeoutMs: 15_000 })
+      await ensureRoxHome(lease.provider, record.id)
     } catch {
       // A convenience for the terminal, never a condition of the boot.
     }
@@ -1611,8 +1693,9 @@ export function createApp(options: CloudApiOptions): CloudApp {
     const cwd = optionalString(body.cwd, 'cwd')
     const timeoutSec = optionalPositiveNumber(body.timeout_sec, 'timeout_sec')
     const provider = await providerForRecord(record)
-    const result = await provider.exec(record.id, command, {
-      ...(cwd === undefined ? {} : { cwd }),
+    const ready = await ensureRoxHome(provider, record.id)
+    const result = await provider.exec(record.id, ready ? execAsRox(command) : command, {
+      cwd: cwd ?? ROX_HOME,
       ...(timeoutSec === undefined ? {} : { timeoutMs: timeoutSec * 1000 }),
     })
     return json(200, { stdout: result.stdout, stderr: result.stderr, exit_code: result.exitCode })
@@ -1673,7 +1756,8 @@ export function createApp(options: CloudApiOptions): CloudApp {
       object: 'list',
       data: parseProcessTable(result.stdout).map((row) => ({
         pid: row.pid,
-        user: row.user,
+        // The image account and the Rox account are one person in this cabinet.
+        user: row.user === 'daytona' ? 'rox' : row.user,
         cpu_percent: row.cpuPercent,
         memory_kb: row.memoryKb,
         command: row.command,
@@ -1839,6 +1923,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
     if (provider.sshAccess === undefined) {
       throw new ApiError('capability_unavailable', `Провайдер «${provider.providerId}» не даёт SSH`)
     }
+    await ensureRoxHome(provider, record.id)
     const access = await provider.sshAccess(record.id, ttlSec)
     auditSandbox(record, 'sandbox.ssh', 'клиент получил SSH-команду к машине', { ttl_sec: ttlSec })
     return new Response(
@@ -1962,12 +2047,13 @@ export function createApp(options: CloudApiOptions): CloudApp {
     const record = sandboxFor(auth.tenant.id, id)
     requireRunning(record, 'Терминал')
     const provider = await providerForRecord(record)
+    await ensureRoxHome(provider, record.id)
     const result = await provider.exec(record.id, sessionStartScript(), { timeoutMs: 35_000 })
     const lines = result.stdout.trim().split('\n').filter((line) => line.length > 0)
     const state = lines[0] === 'ready' ? 'ready' : 'unavailable'
     const cwd = lines.length > 1 && (lines[lines.length - 1] ?? '').startsWith('/')
       ? lines[lines.length - 1]!
-      : HOME_ALIAS
+      : ROX_HOME
     return json(200, { object: 'session', state, cwd })
   }
 
@@ -1984,6 +2070,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
       throw new ApiError('invalid_request', 'Поле command обязательно: что выполнить в машине')
     }
     const provider = await providerForRecord(record)
+    await ensureRoxHome(provider, record.id)
     const marker = nextId('roxm_')
     const result = await provider.exec(record.id, sessionExecScript(marker, command), { timeoutMs: 20_000 })
     if (result.stdout.includes(SESSION_MISSING)) {
@@ -2038,7 +2125,8 @@ export function createApp(options: CloudApiOptions): CloudApp {
     id: string,
     keys: readonly SshKeyRecord[],
   ): Promise<void> {
-    const dir = '/home/daytona/.ssh'
+    await ensureRoxHome(provider, id)
+    const dir = `${ROX_HOME}/.ssh`
     const file = `${dir}/authorized_keys`
     await provider.exec(id, `mkdir -p ${dir} && chmod 700 ${dir} && touch ${file} && chmod 600 ${file}`, {
       timeoutMs: 10_000,
@@ -2170,6 +2258,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
       throw new ApiError('invalid_request', 'Параметр path обязателен: какой файл читать')
     }
     const provider = await providerForRecord(record)
+    await ensureRoxHome(provider, record.id)
     // `slice` lands the bytes in a fresh ArrayBuffer: a provider may hand back
     // a view over shared memory, which `Response` does not accept as a body.
     const bytes = (await provider.readFile(record.id, path)).slice()
@@ -2185,7 +2274,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
   async function listFilesRoute(auth: VerifiedApiKey, id: string, url: URL): Promise<Response> {
     const record = sandboxFor(auth.tenant.id, id)
     requireRunning(record)
-    const path = (url.searchParams.get('path') ?? '/home/daytona').trim()
+    const path = (url.searchParams.get('path') ?? ROX_HOME).trim()
     if (!path.startsWith('/') || path.split('/').includes('..') || /[\n\r\0]/.test(path)) {
       throw new ApiError('invalid_request', 'Путь к каталогу должен быть абсолютным и без «..»')
     }
@@ -2193,6 +2282,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
     if (provider.listFiles === undefined) {
       throw new ApiError('capability_unavailable', `Провайдер «${provider.providerId}» не показывает файлы`)
     }
+    await ensureRoxHome(provider, record.id)
     const entries = await provider.listFiles(record.id, path)
     return json(200, {
       object: 'list',
@@ -2214,6 +2304,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
       throw new ApiError('invalid_request', 'Параметр path обязателен: какой файл писать')
     }
     const provider = await providerForRecord(record)
+    await ensureRoxHome(provider, record.id)
     const bytes = new Uint8Array(await req.arrayBuffer())
     await provider.writeFile(record.id, path, bytes)
     return new Response(null, { status: 204 })
@@ -2234,6 +2325,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
       throw new ApiError('invalid_request', 'Путь к файлу должен быть абсолютным и без «..»')
     }
     const provider = await providerForRecord(record)
+    await ensureRoxHome(provider, record.id)
     const result = await provider.exec(
       record.id,
       `echo ${base64Utf8(fileDeleteScript(path))} | base64 -d | python3 -`,

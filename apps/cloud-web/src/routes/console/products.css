@@ -591,3 +591,56 @@
     flex-direction: column;
   }
 }
+
+/* Плотнее общая витрина конфигуратора: тот же ритм, меньше воздуха. */
+.products-page .card-body > * + * {
+  margin-top: 10px;
+}
+
+.products-page .cfg-row {
+  gap: 10px;
+}
+
+.products-page .cfg-sliders {
+  gap: 8px;
+}
+
+.products-page .stepper {
+  gap: 4px;
+}
+
+.products-page .stepper-controls {
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
+  gap: 5px;
+}
+
+.products-page .stepper-btn {
+  min-height: 28px;
+  font-size: 15px;
+}
+
+.products-page .catalog-group {
+  gap: 5px;
+}
+
+.products-page .pick {
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.products-page .summary-rows {
+  gap: 4px;
+}
+
+.products-page .summary-rows > div {
+  gap: 8px;
+}
+
+.products-page .summary-total {
+  padding-top: 6px;
+}
+
+.products-page .console-summary > .card {
+  top: 58px;
+}

@@ -25,6 +25,7 @@ import { formatCents, formatDate, formatMoney, shortId } from '@/lib/format'
 import { useConsoleSession } from './components/console-session'
 import {
   errorText,
+  machineDisplayName,
   modeLabel,
   regionFlag,
   regionLabel,
@@ -36,11 +37,9 @@ import {
 
 import './machines.css'
 
-/** The image a machine was made from; its name stands in for an unnamed one. */
+/** A machine that has no personal name yet: a Rox name built from its size. */
 function snapshotName(sandbox: Sandbox): string {
-  const spec = sandbox.spec
-  const name = spec?.snapshot ?? spec?.image
-  return typeof name === 'string' && name.length > 0 ? name : 'машина'
+  return machineDisplayName(sandbox.spec)
 }
 
 /** The person's own name for the machine, or the name its image gives it. */
