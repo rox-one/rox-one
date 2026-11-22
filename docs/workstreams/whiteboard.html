@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Rox · Карта направлений — 22 ноября 2026</title>
+<meta name="description" content="Живая доска плана Rox: десять направлений, тридцать групп, шестьдесят задач, парковка, двенадцать якорей найма, семь гильдий и десять передач между направлениями.">
+<link rel="stylesheet" href="./whiteboard.css">
+<script src="./whiteboard.js" defer></script>
+</head>
+<body>
+<div id="app">
+
+  <header id="topbar" role="banner">
+
+    <div class="topbar__main">
+      <div class="brand">
+        <span class="brand__mark">Rox</span>
+        <span class="brand__text">
+          <b>Карта направлений</b>
+          <span class="brand__date">22.11.2026 · рабочая версия</span>
+        </span>
+      </div>
+
+      <div class="search">
+        <label class="visually-hidden" for="search">Поиск по карте</label>
+        <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="Задача, роль, направление, компания…">
+        <kbd class="search__key" aria-hidden="true">/</kbd>
+      </div>
+
+      <div class="zoom" role="group" aria-label="Масштаб карты">
+        <button id="zoom-out" class="btn btn--icon" type="button" aria-label="Уменьшить масштаб" title="Уменьшить (−)">−</button>
+        <span id="zoom-label" class="zoom__label" aria-live="off">100%</span>
+        <button id="zoom-in" class="btn btn--icon" type="button" aria-label="Увеличить масштаб" title="Увеличить (+)">+</button>
+      </div>
+    </div>
+
+    <div class="topbar__tools">
+      <div class="filters" role="group" aria-label="Фильтры карты">
+        <label class="field">
+          <span class="field__label">Направление</span>
+          <select id="division-filter" aria-label="Направление">
+            <option value="all">Все направления</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field__label">Волна</span>
+          <select id="wave-filter" aria-label="Волна">
+            <option value="all">Любая волна</option>
+            <option value="1">Волна 1</option>
+            <option value="2">Волна 2</option>
+            <option value="3">Волна 3</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field__label">Статус</span>
+          <select id="status-filter" aria-label="Статус">
+            <option value="all">Любой статус</option>
+            <option value="ready">Готова к работе</option>
+            <option value="proposed">Предложена</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="actions" role="group" aria-label="Действия с картой">
+        <button id="fit" class="btn" type="button" title="Вписать всю карту в экран (F)">Вписать</button>
+
+        <div class="layers">
+          <button id="toggle-layers" class="btn" type="button" aria-expanded="false" aria-controls="layers" title="Показать или скрыть виды связей">Слои</button>
+          <div id="layers" hidden role="group" aria-label="Слои связей">
+            <label class="layers__item">
+              <input id="toggle-structure" type="checkbox" checked>
+              <span class="layers__line layers__line--structure" aria-hidden="true"></span>
+              <span class="layers__text">Структура: «входит в», «содержит»</span>
+            </label>
+            <label class="layers__item">
+              <input id="toggle-dependencies" type="checkbox" checked>
+              <span class="layers__line layers__line--dependency" aria-hidden="true"></span>
+              <span class="layers__text">Зависимости: «зависит от»</span>
+            </label>
+            <label class="layers__item">
+              <input id="toggle-handoffs" type="checkbox" checked>
+              <span class="layers__line layers__line--handoff" aria-hidden="true"></span>
+              <span class="layers__text">Передачи: «передаёт результат»</span>
+            </label>
+            <label class="layers__item">
+              <input id="toggle-market" type="checkbox" checked>
+              <span class="layers__line layers__line--market" aria-hidden="true"></span>
+              <span class="layers__text">Спрос: «подтверждает спрос»</span>
+            </label>
+            <label class="layers__item">
+              <input id="toggle-labels" type="checkbox" checked>
+              <span class="layers__line layers__line--label" aria-hidden="true">Аа</span>
+              <span class="layers__text">Подписи на стрелках</span>
+            </label>
+            <p class="layers__note">Скрытие слоя убирает только линии, карточки остаются на месте.</p>
+          </div>
+        </div>
+
+        <button id="lock" class="btn" type="button" aria-pressed="false" title="Зафиксировать раскладку (L)">Зафиксировать</button>
+        <button id="reset" class="btn" type="button" title="Вернуть исходную раскладку">Сброс</button>
+        <button id="download" class="btn" type="button" title="Скачать карту как JSON">Скачать</button>
+        <button id="print" class="btn" type="button" title="Печать без панелей">Печать</button>
+        <button id="help" class="btn" type="button" aria-expanded="false" title="Как читать карту (?)">Справка</button>
+      </div>
+    </div>
+
+    <aside id="legend" aria-label="Обозначения карты">
+      <div class="legend__row legend__row--divisions">
+        <span class="legend__lead">Направления</span>
+        <span class="legend__item"><i class="swatch" style="--accent:#2f5bea"></i>Исследования</span>
+        <span class="legend__item"><i class="swatch" style="--accent:#0f8060"></i>Прикладной ИИ</span>
+        <span class="legend__item"><i class="swatch" style="--accent:#a86400"></i>Инженерия</span>
+        <span class="legend__item"><i class="swatch" style="--accent:#6b4fd8"></i>Продукт</span>
+        <span class="legend__item"><i class="swatch" style="--accent:#0b6d8f"></i>Облако</span>
+        <span class="legend__item"><i class="swatch" style="--accent:#b42318"></i>Безопасность и доверие</span>
+        <span class="legend__item"><i class="swatch" style="--accent:#8d3f8a"></i>Корпоративный бизнес</span>
+        <span class="legend__item"><i class="swatch" style="--accent:#c2410c"></i>Рынок и рост</span>
+        <span class="legend__item"><i class="swatch" style="--accent:#4d7c0f"></i>Экосистема</span>
+        <span class="legend__item"><i class="swatch" style="--accent:#475569"></i>Железо и устройства</span>
+      </div>
+
+      <div class="legend__row">
+        <span class="legend__lead">Карточки</span>
+        <span class="legend__item"><i class="swatch swatch--task"></i>задача</span>
+        <span class="legend__item"><i class="swatch swatch--group"></i>группа</span>
+        <span class="legend__item"><i class="swatch swatch--parked"></i>парковка</span>
+        <span class="legend__item"><i class="swatch swatch--anchor"></i>якорь найма</span>
+        <span class="legend__item"><i class="swatch swatch--guild"></i>гильдия</span>
+        <span class="legend__item"><i class="swatch swatch--guild-info"></i>памятка о гильдиях</span>
+      </div>
+
+      <div class="legend__row legend__row--edges">
+        <span class="legend__lead">Стрелки</span>
+        <span class="legend__item" title="Сплошная светлая линия: группа входит в состав направления."><i class="arrow arrow--in"></i>входит в</span>
+        <span class="legend__item" title="Пунктирная светлая линия: задача содержится в группе."><i class="arrow arrow--contains"></i>содержит</span>
+        <span class="legend__item" title="Сплошная тёмная линия: задача не начинается раньше той, от которой зависит."><i class="arrow arrow--dep"></i>зависит от</span>
+        <span class="legend__item" title="Штриховая синяя линия: направление передаёт готовый результат соседнему направлению."><i class="arrow arrow--handoff"></i>передаёт результат</span>
+        <span class="legend__item" title="Точечная тёплая линия: якорь найма подтверждает спрос на направление."><i class="arrow arrow--market"></i>подтверждает спрос</span>
+      </div>
+    </aside>
+  </header>
+
+  <div class="workbench">
+    <nav id="rail" aria-label="Панель направлений">
+      <div class="rail__head">
+        <span class="rail__title">Направления</span>
+        <button id="rail-toggle" class="btn btn--icon" type="button" aria-expanded="true" aria-controls="rail-list" aria-label="Свернуть или развернуть панель направлений" title="Свернуть панель направлений">‹</button>
+      </div>
+      <div id="rail-list" class="rail__list">
+        <p class="rail__empty">Список направлений появится после загрузки карты.</p>
+      </div>
+    </nav>
+
+    <main id="stage" aria-label="Доска направлений Rox">
+      <div id="world">
+        <svg id="edges" aria-hidden="true" focusable="false"></svg>
+        <div id="nodes"><div class="loading">Загрузка карты…</div></div>
+      </div>
+
+
+      <canvas id="minimap" width="240" height="164" aria-label="Обзор всей карты: рамка показывает видимую область" title="Обзор карты: рамка — видимая область"></canvas>
+
+      <div id="statusbar" role="status">
+        <span id="count-label">Загрузка…</span>
+        <span id="hint">Колесо — масштаб · перетаскивание фона — сдвиг · клик по карточке — детали</span>
+        <span class="statusbar__meta">10 направлений · 30 групп · 60 задач · 7 гильдий</span>
+      </div>
+
+      <aside id="details" hidden aria-label="Детали карточки">
+        <div class="details__head">
+          <span class="details__kicker">Детали</span>
+          <button id="details-close" class="btn btn--icon" type="button" aria-label="Закрыть детали">×</button>
+        </div>
+        <div id="details-body">
+          <div class="details__empty">Выберите карточку на карте, чтобы увидеть её поля.</div>
+        </div>
+      </aside>
+
+      <div id="toast" role="status" aria-live="polite" hidden></div>
+
+    </main>
+  </div>
+
+
+    <div id="help-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <div class="help-overlay__backdrop" aria-hidden="true"></div>
+      <div class="help-overlay__panel" role="document">
+        <div class="help__head">
+          <div>
+            <h2 class="help__title" id="help-title">Как читать карту</h2>
+            <p class="help__sub">Десять направлений, тридцать групп, шестьдесят задач, четырнадцать отложенных, двенадцать якорей найма, семь гильдий и десять передач между направлениями.</p>
+          </div>
+          <span class="help__esc"><kbd>Esc</kbd> — закрыть</span>
+        </div>
+
+        <div class="help__grid">
+
+          <section class="help__col">
+            <h3>Карточки</h3>
+            <ul class="help__list">
+              <li><b>Направление</b><span>большой столбец с названием и миссией; внутри живут его группы</span></li>
+              <li><b>Группа</b><span>три группы на направление; в каждой свои задачи</span></li>
+              <li><b>Задача</b><span>что делаем, зачем сейчас, кто нужен, как проверить результат</span></li>
+              <li><b>Парковка</b><span>отложено, но не потеряно; возвращаем, когда появится место</span></li>
+              <li><b>Якорь найма</b><span>компания, где открыта похожая роль; подтверждает спрос</span></li>
+              <li><b>Гильдия</b><span>добровольное сообщество поперёк направлений</span></li>
+              <li><b>Памятка</b><span>первая карточка в ряду гильдий: как читать гильдии</span></li>
+            </ul>
+          </section>
+
+          <section class="help__col">
+            <h3>Стрелки</h3>
+            <ul class="help__list">
+              <li><b>входит в</b><span>группа входит в состав направления — сплошная светлая линия</span></li>
+              <li><b>содержит</b><span>задача содержится в группе — пунктирная светлая линия</span></li>
+              <li><b>зависит от</b><span>задача не начинается раньше другой — сплошная тёмная линия</span></li>
+              <li><b>передаёт результат</b><span>направление отдаёт готовый результат соседнему — штриховая синяя линия</span></li>
+              <li><b>подтверждает спрос</b><span>якорь найма подтверждает направление — точечная тёплая линия</span></li>
+            </ul>
+            <p class="help__note">Наведите курсор на стрелку, чтобы прочитать её смысл в подсказке.</p>
+          </section>
+
+          <section class="help__col">
+            <h3>Гильдии и ритм</h3>
+            <ul class="help__list">
+              <li><b>Кто это</b><span>добровольцы из разных направлений, а не второй отдел</span></li>
+              <li><b>Время</b><span>10–20 % рабочего времени, по договорённости с руководителем</span></li>
+              <li><b>Владеет</b><span>общими образцами и проверками: форматы, правила; не код вместо направлений</span></li>
+              <li><b>Результат</b><span>один общий результат за квартал</span></li>
+              <li><b>Ритм</b><span>раз в месяц — 60–90 минут; раз в две недели — короткий разбор; раз в квартал — большой обзор; раз в неделю — только срочная тема на 30–45 минут, не больше трёх встреч</span></li>
+              <li><b>Конец</b><span>два квартала подряд без результата — гильдию распускают</span></li>
+            </ul>
+          </section>
+
+          <section class="help__col">
+            <h3>Мышь и клавиши</h3>
+            <ul class="help__list">
+              <li><b>Колесо</b><span>масштаб вокруг курсора</span></li>
+              <li><b>Фон</b><span>перетаскивание сдвигает карту</span></li>
+              <li><b>Карточка</b><span>перетаскивание переносит её, клик открывает детали</span></li>
+              <li><kbd>F</kbd><span>вписать карту в экран</span></li>
+              <li><kbd>+</kbd><span>приблизить</span></li>
+              <li><kbd>−</kbd><span>отдалить</span></li>
+              <li><kbd>0</kbd><span>масштаб 100 %</span></li>
+              <li><kbd>L</kbd><span>замок переноса карточек</span></li>
+              <li><kbd>/</kbd><span>курсор в поиск</span></li>
+              <li><kbd>Esc</kbd><span>закрыть детали, справку или снять выбор</span></li>
+            </ul>
+          </section>
+
+          <section class="help__col">
+            <h3>Кнопки и панели</h3>
+            <ul class="help__list">
+              <li><b>Вписать</b><span>подогнать всю карту под экран</span></li>
+              <li><b>Слои</b><span>пять галочек: структура, зависимости, передачи, спрос, подписи</span></li>
+              <li><b>Замок</b><span>запретить перенос карточек; сдвиг карты работает</span></li>
+              <li><b>Сброс</b><span>вернуть исходную раскладку</span></li>
+              <li><b>Скачать</b><span>выгрузить карту как JSON</span></li>
+              <li><b>Печать</b><span>печать без панелей и подсказок</span></li>
+              <li><b>Справка</b><span>эта памятка; закрывается по Esc</span></li>
+              <li><b>Направления</b><span>левая панель: клик по строке ведёт к направлению</span></li>
+              <li><b>Обзор</b><span>маленькая карта справа снизу: рамка — видимая область</span></li>
+            </ul>
+          </section>
+
+        </div>
+
+        <p class="help__note">
+          <b>Фильтры</b> «Направление», «Волна» и «Статус» сужают доску, поиск подсвечивает совпадения.
+          Перенос карточки и положение карты сохраняются в браузере и переживают перезагрузку.
+          «Сброс» возвращает раскладку из данных.
+        </p>
+      </div>
+    </div>
+</div>
+<noscript>Для доски нужен JavaScript: включите его в браузере и обновите страницу.</noscript>
+</body>
+</html>

@@ -1,45 +1,88 @@
-# Rox Workstreams
+# Рабочие направления Rox
 
-This folder is the working blueprint for how Rox grows from one product into five divisions without losing the two transitions that matter:
+Эта папка — рабочий план того, как Rox растёт из одного продукта в десять направлений, не теряя два перехода, которые важнее всего:
 
-1. A person with an idea gets a working cloud machine in minutes.
-2. Their sessions, knowledge and agent stay in one desktop workspace.
+1. Человек с идеей получает работающую облачную машину за минуты.
+2. Его сессии, знания и агент остаются в одном настольном рабочем месте.
 
-## Files
+Версия 2 описывает **10 направлений, 30 групп, 60 задач, 14 отложенных задач, 7 гильдий, 10 передач результата и 12 подтверждений спроса**. Всё это лежит в одном файле данных, который читает живая доска.
 
-| File | What it is |
+## Что читать первым
+
+1. **[`blueprint-v2.ru.md`](blueprint-v2.ru.md)** — полный русский план: что изменилось после первой версии, миссии десяти направлений, результаты тридцати групп, шестьдесят задач по волнам, пять стрелок карты, правила гильдий, устройство карточки задачи, опорные компании, первые 90 дней и проверки приёмки.
+2. **[`task-board-v2.json`](task-board-v2.json)** — машиночитаемая доска, источник правды. Здесь названия, источники, роли, проверки приёмки, зависимости, статусы и волны.
+3. **Живая доска** — [`whiteboard.html`](whiteboard.html) или запущенный адрес `http://127.0.0.1:8799/whiteboard.html`.
+
+## Файлы
+
+| Файл | Что это |
 |---|---|
-| `blueprint-20261122.md` | The full blueprint: demand map, 5 divisions, 15 groups, 30 frontier tasks, 14 parked tasks, 7 guilds, operating model, hiring map, 90-day plan. |
-| `task-board.json` | The machine-readable task board generated from the blueprint. 30 tasks, 14 parked tasks, computed waves and dependencies. |
-| `open-roles-summary-20261122.json` | The job-board snapshot: totals, department counts, recency and representative titles for the five anchors and seven adjacent companies. |
-| `validate_blueprint.py` | The structural check: counts, IDs, group coverage, dependency integrity and cycles. |
-| `org-map.html` | A one-page visual org map for reading and printing. |
+| `blueprint-v2.ru.md` | Полный план версии 2 на русском: десять направлений, тридцать групп, шестьдесят задач, гильдии, карточка задачи, рынок, 90 дней, приёмка. |
+| `task-board-v2.json` | Доска версии 2: 10 направлений, 30 групп, 60 задач, 14 отложенных, 7 гильдий, 10 передач, 12 подтверждений спроса. |
+| `whiteboard.html` | Живая карта: направления, группы, задачи, гильдии, парковка, опорные компании и пять видов стрелок. |
+| `whiteboard.css` | Оформление карты: светлая плотная тема, шрифт `Rox Mono Typeface` с запасным `ui-monospace`, системный шрифт для основного текста. |
+| `whiteboard.js` | Логика карты: раскладка, масштаб, перенос узлов, фильтры, слои связей, мини-карта, сохранение состояния. |
+| `serve_whiteboard.py` | Локальный сервер только на стандартной библиотеке Python. |
+| `smoke_whiteboard.py` | Сквозная проверка поднятой доски: страница, данные, оформление и обязательные элементы. После обновления оболочки под версию 2 ожидаемые числа — 10 направлений, 30 групп, 60 задач, 14 отложенных, 7 гильдий, 10 передач и 12 подтверждений спроса. |
+| `open-roles-summary-20261122.json` | Снимок досок вакансий: числа по пяти опорным и семи соседним компаниям, разбивка по отделам и семействам ролей. |
+| `org-map.html` | Одностраничная карта организации из первой версии. Оставлена как история. |
+| `blueprint-20261122.md` | Первая версия плана: 5 направлений, 15 групп, 30 задач. История; не обновляется. |
+| `task-board.json` | Доска первой версии: 30 задач. История; не путать с `task-board-v2.json`. |
+| `validate_blueprint.py` | Проверка первой версии: читает `blueprint-20261122.md` и `task-board.json`. Для версии 2 не годится. |
 
-## Check
+## Как запустить доску
 
 ```bash
-python3 docs/workstreams/validate_blueprint.py
+cd /Users/t/Projects/rox-one
+python3 docs/workstreams/serve_whiteboard.py
 ```
 
-Expected output:
+Сервер напечатает адрес и откроет браузер:
 
 ```text
-BLUEPRINT VALID
-divisions=5 groups=15 tasks=30 parked=13
-waves=w1:10 w2:10 w3:6 w4:3 w5:1
+http://127.0.0.1:8799/whiteboard.html
 ```
 
-Use `--write` to regenerate `task-board.json` after editing the blueprint.
+Полезные варианты:
 
-## How to use this
+```bash
+python3 docs/workstreams/serve_whiteboard.py --no-open
+python3 docs/workstreams/serve_whiteboard.py --no-open --port 8800
+```
 
-1. Read the one-page summary in `blueprint-20261122.md`.
-2. Name five division leads and fifteen group stewards.
-3. Put the 30 tasks on the board. Only the ten wave-1 tasks start as `ready`.
-4. Claim a task for 10 days. If nobody claims it, re-scope it to one day or kill it.
-5. Demo the acceptance every week. A status sentence is not evidence.
-6. Refresh the job-board snapshot before a hiring decision; the boards change daily.
+На доске: колесо — масштаб вокруг курсора, перетаскивание фона — сдвиг, клик по узлу — детали, рельс направлений — переход к нужной колонке, мини-карта — положение окна. Слои включают и выключают структуру, зависимости, передачи результата, подтверждение спроса и подписи. Фильтры ищут по направлению, волне и статусу. Кнопки «Вписать», «Замок», «Сброс», «Скачать», «Печать» и «Справка» делают то, что написано. Состояние хранится в браузере под ключом `rox-whiteboard:v3`.
 
-## Status
+## Проверка
 
-Working draft, 22 November 2026. The blueprint reflects the `feat/cloud-byok` tree and the official job boards read on that date. The branch is ahead of `plans/problem-inventory.md`; check the named path before claiming a task.
+Посчитать структуру:
+
+```bash
+cd /Users/t/Projects/rox-one
+jq -c '{divisions:(.divisions|length), groups:(.groups|length), tasks:(.tasks|length), parked:(.parked|length), guilds:(.guilds|length), interfaces:(.interfaces|length), anchorLinks:(.anchorLinks|length)}' docs/workstreams/task-board-v2.json
+```
+
+Ожидаемый результат:
+
+```text
+{"divisions":10,"groups":30,"tasks":60,"parked":14,"guilds":7,"interfaces":10,"anchorLinks":12}
+```
+
+Проверить доску в браузере:
+
+```bash
+python3 docs/workstreams/smoke_whiteboard.py
+```
+
+## Как работать
+
+1. Прочитать `blueprint-v2.ru.md`, раздел 3: миссии десяти направлений и результаты тридцати групп.
+2. Назвать десять руководителей направлений и тридцать старшин групп. У каждой группы есть имя, даже если человек ведёт её на часть ставки.
+3. Взять готовую задачу на 10 дней. Написать план в пять строк, назвать проверяющего и потребителя.
+4. Раз в неделю писать одну строку: двинулось, застряло или узнали.
+5. Показывать приёмку на реальной поверхности: тест, экран, журнал, результат заказчика. Слайды доказательством не считаются.
+6. Если задачу никто не взял за 10 дней, вынести её на понедельничный аукцион: сузить до одного дня или убить. Убийство — успех.
+7. Дать каждой гильдии один результат за квартал. Два пустых квартала подряд — гильдию распускают.
+
+## Статус
+
+Рабочий проект, 22 ноября 2026. Версия 2 отражает ветку `feat/cloud-byok` и официальные доски вакансий, прочитанные в тот же день. Числа вакансий — публичные объявления, а не штат и не бюджет. Перед взятием задачи проверьте названный в ней путь: ветка может опережать плановые документы.
