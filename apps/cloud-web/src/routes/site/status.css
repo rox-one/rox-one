@@ -1,4 +1,4 @@
-/* Состояние: проверка /health, живые происшествия и ссылки поставщиков. */
+/* Состояние: проверка /health, живые происшествия и что работает в Rox Cloud. */
 
 .status-page {
   min-width: 0;
@@ -90,7 +90,8 @@
 
 .status-probe-detail code,
 .status-address code,
-.status-down code {
+.status-down code,
+.service-note code {
   padding: 1px 4px;
   border-radius: 4px;
   background: var(--surface-hover);
@@ -248,23 +249,21 @@
   font-size: var(--text-xs);
 }
 
-/* ---------- Provider links ---------- */
+/* ---------- Service state ---------- */
 
-.provider-links {
+.service-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 8px;
   margin: 0;
   padding: 0;
   min-width: 0;
 }
 
-.provider-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
+.service-card {
+  display: grid;
+  align-content: start;
+  gap: 4px;
   padding: 12px 13px;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -272,21 +271,72 @@
   min-width: 0;
 }
 
-.provider-name {
+.service-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.service-name {
   margin: 0;
   font-size: var(--text-md);
   font-weight: 700;
 }
 
-.provider-note {
-  margin: 1px 0 0;
+.service-state {
+  flex: none;
+  padding: 1px 7px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-hover);
   color: var(--muted);
   font-size: var(--text-xs);
-  line-height: 1.45;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.provider-link .btn {
-  flex: none;
+.service-card[data-state="ok"] .service-state {
+  border-color: #bfe3d2;
+  background: var(--success-soft);
+  color: #0f5f43;
+}
+
+.service-card[data-state="down"] .service-state {
+  border-color: #f1c9c5;
+  background: var(--danger-soft);
+  color: #6e221b;
+}
+
+.service-card[data-state="checking"] .service-state {
+  border-color: var(--warning);
+  background: var(--warning-soft);
+  color: var(--ink);
+}
+
+.service-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.service-soon {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.service-soon strong {
+  color: var(--ink);
 }
 
 @media (max-width: 620px) {
@@ -296,10 +346,6 @@
   }
 
   .status-probe .btn {
-    width: 100%;
-  }
-
-  .provider-link .btn {
     width: 100%;
   }
 }

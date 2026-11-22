@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createSignal, createUniqueId, onCleanup } from 'solid-js'
+import { For, Show, createEffect, createMemo, createSignal, createUniqueId, on, onCleanup } from 'solid-js'
 import type { JSX } from 'solid-js'
 
 import { api } from '@/lib/api'
@@ -10,17 +10,16 @@ import './terminal.css'
 /** One row of the transcript. The view never invents output: each row is either
  * something the person typed or bytes the machine returned. */
 interface TermLine {
-  kind: 'command' | 'stdout' | 'stderr' | 'info' | 'error' | 'exit'
+  kind: 'command' | 'stdout' | 'stderr' | 'info' | 'error'
   text?: string
   prompt?: string
-  code?: number | null
 }
 
 export interface TerminalProps {
   sandboxId: string
   /** Short handle for the prompt when no friendly host is given. */
   shortId: string
-  /** The name shown before `@`; the OS user inside the machine stays `daytona`. */
+  /** The name shown before `@`; the machine's own shell prompt uses the same one. */
   promptUser?: string
   /** The friendly host shown after `@`, e.g. `rox-computer-medium-8G-2x4`. */
   promptHost?: string
@@ -32,25 +31,99 @@ export interface TerminalProps {
 }
 
 const TIMEOUT_SEC = 15
+/** The PTY bridge is off in this build; commands run through exec with cwd tracking. */
+const USE_PERSISTENT_SESSION = false
 
-/** The Daytona image runs as `daytona` (uid 1001) and its home is here; `/root`
- * exists but is not readable, so exec must never start there. */
-const SANDBOX_USER = 'daytona'
+/** The image's real home directory. Every label shows it as `~`; the full path
+ * only ever travels on the wire, so it never becomes customer-visible text. */
 const SANDBOX_HOME = '/home/daytona'
+/** Boot may add a friendly symlink to the same place; a session started there
+ * reports this path, so `~` must cover both spellings. */
+const ROX_HOME = '/home/rox'
+/** Fallback prompt name; the parent passes the real one. */
+const DEFAULT_PROMPT_USER = 'rox'
+/** Both spellings of the same place; every one of them prints as `~`. */
+const HOME_DIRS: readonly string[] = [SANDBOX_HOME, ROX_HOME]
 
-const QUICK_COMMANDS: readonly string[] = [
-  'uname -a',
-  'ls -la',
-  'pwd',
-  'python3 --version',
-  'df -h',
+interface QuickCommand {
+  label: string
+  command: string
+  /** Downloads need longer than an ordinary probe is allowed to take. */
+  timeoutSec?: number
+  /** Run through plain exec: the persistent session waits only 15 s for an
+   * answer, so a download started there is cut off before it can finish. */
+  direct?: boolean
+}
+
+/** How one run should reach the machine when a button asks for it. */
+interface RunOptions {
+  timeoutSec?: number
+  direct?: boolean
+}
+
+const QUICK_COMMANDS: readonly QuickCommand[] = [
+  { label: 'uname -a', command: 'uname -a' },
+  { label: 'ls -la', command: 'ls -la' },
+  { label: 'pwd', command: 'pwd' },
+  { label: 'python3 --version', command: 'python3 --version' },
+  { label: 'df -h', command: 'df -h' },
 ]
+
+/** One-click installs: the exact command each vendor publishes. */
+const INSTALL_COMMANDS: readonly QuickCommand[] = [
+  {
+    label: 'OpenCode',
+    command: 'curl -fsSL https://opencode.ai/install | bash',
+    timeoutSec: 300,
+    direct: true,
+  },
+  { label: 'OMP', command: 'curl -fsSL https://omp.sh/install | sh', timeoutSec: 300, direct: true },
+]
+
+/** A real request to the outside world; a blocked egress shows as curl's own
+ * error on stderr and a non-zero code, which is the honest answer. */
+const NETWORK_CHECK: QuickCommand = {
+  label: 'Проверить сеть',
+  command:
+    "curl -fsS -m 15 -o /dev/null -w 'сеть есть: %{http_code}, %{time_total} с\\n' https://opencode.ai",
+  timeoutSec: 30,
+  direct: true,
+}
+
+/** Control bytes the panel cannot draw. The session server sometimes hands back
+ * a bare `[0;2m` whose ESC is already gone, so colour codes are stripped with
+ * and without their ESC prefix. Nothing else on the line is rewritten. */
+const OSC_SEQUENCE = /\x1b\][^\u0007\x1b]*(?:\u0007|\x1b\\)/g
+const CSI_SEQUENCE = /\x1b\[[0-?]*[ -/]*[@-~]/g
+const OTHER_ESCAPE = /\x1b[@-_]/g
+const BARE_SGR = /\[[0-9;]*m/g
+
+function cleanOutput(text: string): string {
+  return text
+    .replace(OSC_SEQUENCE, '')
+    .replace(CSI_SEQUENCE, '')
+    .replace(OTHER_ESCAPE, '')
+    .replace(BARE_SGR, '')
+    .replace(/\r\n/g, '\n')
+}
+
+/** A carriage return sends the cursor back to the start of the line, so only the
+ * text after the last one is still on screen; progress bars collapse to their
+ * final state instead of repeating every step. */
+function visibleLine(text: string): string {
+  const parts = text.split('\r')
+  for (let index = parts.length - 1; index >= 0; index -= 1) {
+    const part = parts[index]
+    if (part !== undefined && part.length > 0) return part
+  }
+  return ''
+}
 
 function helpLines(session: boolean): TermLine[] {
   return [
     { kind: 'info', text: 'clear — очистить экран' },
     { kind: 'info', text: 'help — эта подсказка' },
-    { kind: 'info', text: 'cd <каталог> — перейти в каталог; без каталога — в домашний /home/daytona' },
+    { kind: 'info', text: 'cd <каталог> — перейти в каталог; без каталога — в домашний ~' },
     { kind: 'info', text: '↑ и ↓ — история команд, Ctrl+L — очистка экрана' },
     {
       kind: 'info',
@@ -61,21 +134,27 @@ function helpLines(session: boolean): TermLine[] {
   ]
 }
 
-/** stdout/stderr as rows; a trailing newline does not create an empty row. */
+/** stdout/stderr as rows; a trailing newline does not create an empty row.
+ * Colour codes are removed and each line shows what a real terminal would still
+ * display, so no raw escape sequence or progress-bar repetition reaches the eye. */
 function outputLines(kind: 'stdout' | 'stderr', text: string): TermLine[] {
-  if (text.length === 0) return []
-  const parts = text.replace(/\r\n/g, '\n').split('\n')
+  const clean = cleanOutput(text)
+  if (clean.length === 0) return []
+  const parts = clean.split('\n')
   if (parts.length > 1 && parts[parts.length - 1] === '') parts.pop()
-  return parts.map((part) => ({ kind, text: part }))
+  return parts.map((part) => ({ kind, text: visibleLine(part) }))
 }
 
-function exitText(code: number | null): string {
-  return code === null ? 'код выхода не сообщён' : `код выхода ${code}`
+/** Success says nothing; a failure is a clear red line with its code; an answer
+ * that carries no code stays a quiet note instead of pretending to be success. */
+function exitLines(code: number | null): TermLine[] {
+  if (code === 0) return []
+  if (code === null) return [{ kind: 'info', text: 'Код выхода не сообщён.' }]
+  return [{ kind: 'error', text: `Команда завершилась с кодом ${code}.` }]
 }
 
 function lineText(line: TermLine): string {
   if (line.kind === 'command') return `${line.prompt ?? ''} ${line.text ?? ''}`.trimEnd()
-  if (line.kind === 'exit') return `[${exitText(line.code ?? null)}]`
   return line.text ?? ''
 }
 
@@ -94,6 +173,9 @@ export default function Terminal(props: TerminalProps): JSX.Element {
   const [full, setFull] = createSignal(false)
   const [copied, setCopied] = createSignal(false)
   const [sessionReady, setSessionReady] = createSignal(false)
+  /** True only while the command in flight actually runs inside the session, so
+   * «Прервать» never offers to stop a download that goes around it. */
+  const [sessionRun, setSessionRun] = createSignal(false)
 
   const inputId = createUniqueId()
   let inputEl: HTMLInputElement | undefined
@@ -119,13 +201,17 @@ export default function Terminal(props: TerminalProps): JSX.Element {
   // Shell shorthand for the home directory, the full path everywhere else.
   const promptCwd = (): string => {
     const current = cwd()
-    if (current === SANDBOX_HOME) return '~'
-    if (current.startsWith(`${SANDBOX_HOME}/`)) return `~${current.slice(SANDBOX_HOME.length)}`
+    for (const home of HOME_DIRS) {
+      if (current === home) return '~'
+      if (current.startsWith(home) && current.charAt(home.length) === '/') {
+        return `~${current.slice(home.length)}`
+      }
+    }
     return current
   }
 
   const promptText = (): string =>
-    `${props.promptUser ?? SANDBOX_USER}@${props.promptHost ?? props.shortId}:${promptCwd()}$`
+    `${props.promptUser ?? DEFAULT_PROMPT_USER}@${props.promptHost ?? props.shortId}:${promptCwd()}$`
 
   const append = (added: TermLine[]): void => {
     if (added.length === 0) return
@@ -180,7 +266,8 @@ export default function Terminal(props: TerminalProps): JSX.Element {
   // One persistent session per running machine; a stopped machine, a replaced
   // machine or an unmounted panel closes it. A failed start is not an error the
   // person must solve: the panel simply keeps working one command at a time.
-  createEffect(() => {
+  const sessionKey = createMemo(() => `${props.sandboxId}:${props.enabled}`)
+  createEffect(on(sessionKey, () => {
     const id = props.sandboxId
     const enabled = props.enabled
     const token = ++sessionToken
@@ -192,7 +279,7 @@ export default function Terminal(props: TerminalProps): JSX.Element {
     }
     stopActiveSession()
     setSessionReady(false)
-    if (!enabled) return
+    if (!enabled || !USE_PERSISTENT_SESSION) return
     void (async () => {
       try {
         const session = await api.sessionStart(id)
@@ -218,12 +305,13 @@ export default function Terminal(props: TerminalProps): JSX.Element {
         noteExecMode()
       }
     })()
-  })
+  }))
 
   onCleanup(() => {
     sessionWanted = false
     sessionToken += 1
-    stopActiveSession()
+    // The shell belongs to the machine, not to this mount: a reload or a
+    // second tab must not kill the session the next page is about to reuse.
     document.body.classList.remove('terminal-full-lock')
     clearCopyTimer()
   })
@@ -270,7 +358,7 @@ export default function Terminal(props: TerminalProps): JSX.Element {
   }
 
   /** One-shot exec: plain mode and the fallback when a session dies. */
-  const execOnce = async (raw: string): Promise<void> => {
+  const execOnce = async (raw: string, timeoutSec = TIMEOUT_SEC): Promise<void> => {
     // `cd` is a shell builtin: it cannot outlive the exec call, so the new
     // directory is read back from `pwd` and kept in this component instead.
     // Only a plain path (optionally quoted) counts; a line with `;` or `|`
@@ -281,42 +369,37 @@ export default function Terminal(props: TerminalProps): JSX.Element {
     const result = await api.exec(props.sandboxId, {
       command: wire,
       cwd: cwd(),
-      timeoutSec: TIMEOUT_SEC,
+      timeoutSec,
     })
-    append([
+    const output = [
       ...outputLines('stdout', result.stdout),
       ...outputLines('stderr', result.stderr),
-    ])
-    if (result.stdout.length === 0 && result.stderr.length === 0) {
-      append([{ kind: 'info', text: 'вывода нет' }])
-    }
+    ]
+    append(output.length === 0 ? [{ kind: 'info', text: 'вывода нет' }] : output)
     if (cdMatch !== null && result.exitCode === 0) {
-      const target = result.stdout
-        .replace(/\r\n/g, '\n')
+      const target = cleanOutput(result.stdout)
         .split('\n')
-        .map((line) => line.trim())
+        .map((line) => visibleLine(line).trim())
         .find((line) => line.length > 0)
       if (target !== undefined) setCwd(target)
     }
-    append([{ kind: 'exit', code: result.exitCode }])
+    append(exitLines(result.exitCode))
   }
 
   /** The session keeps its own directory on the machine, so `cd` goes as typed
    * and the directory that took effect comes back in the answer. */
   const sessionOnce = async (raw: string): Promise<void> => {
     const result = await api.sessionExec(props.sandboxId, raw)
-    append([
+    const output = [
       ...outputLines('stdout', result.stdout),
       ...outputLines('stderr', result.stderr),
-    ])
-    if (result.stdout.length === 0 && result.stderr.length === 0) {
-      append([{ kind: 'info', text: 'вывода нет' }])
-    }
+    ]
+    append(output.length === 0 ? [{ kind: 'info', text: 'вывода нет' }] : output)
     if (typeof result.cwd === 'string' && result.cwd.length > 0) setCwd(result.cwd)
-    append([{ kind: 'exit', code: result.exitCode }])
+    append(exitLines(result.exitCode))
   }
 
-  const run = async (rawInput: string): Promise<void> => {
+  const run = async (rawInput: string, options?: RunOptions): Promise<void> => {
     const raw = rawInput.trim()
     if (busy() || !props.enabled) return
     historyCursor = null
@@ -343,7 +426,10 @@ export default function Terminal(props: TerminalProps): JSX.Element {
     commandsRun += 1
     interruptRequested = false
     try {
-      if (sessionReady()) {
+      // A long download must not enter the session: that wait is short, and an
+      // answer arriving after it says nothing about the download still running.
+      if (sessionReady() && options?.direct !== true) {
+        setSessionRun(true)
         try {
           await sessionOnce(raw)
           return
@@ -362,11 +448,12 @@ export default function Terminal(props: TerminalProps): JSX.Element {
           ])
         }
       }
-      await execOnce(raw)
+      await execOnce(raw, options?.timeoutSec)
     } catch (error) {
       append([{ kind: 'error', text: errorText(error) }])
     } finally {
       interruptRequested = false
+      setSessionRun(false)
       setBusy(false)
       const element = inputEl
       if (element !== undefined) element.focus()
@@ -374,7 +461,7 @@ export default function Terminal(props: TerminalProps): JSX.Element {
   }
 
   const interrupt = async (): Promise<void> => {
-    if (!busy() || !sessionReady()) return
+    if (!busy() || !sessionRun()) return
     interruptRequested = true
     try {
       await api.sessionInterrupt(props.sandboxId)
@@ -432,17 +519,14 @@ export default function Terminal(props: TerminalProps): JSX.Element {
     >
       <header class="terminal-head">
         <span class="terminal-title">Терминал</span>
-        <span
-          class="terminal-mode"
-          classList={{ 'is-session': sessionReady() }}
-          title={
-            sessionReady()
-              ? 'Постоянный сеанс: команды идут в один сеанс на машине, cd меняет каталог для следующих команд.'
-              : 'Обычный режим: каждая команда выполняется отдельно, каталог запоминается в этом окне.'
-          }
-        >
-          {sessionReady() ? 'Постоянный сеанс' : 'Обычный режим'}
-        </span>
+        <Show when={sessionReady()}>
+          <span
+            class="terminal-mode is-session"
+            title="Постоянный сеанс: команды идут в один сеанс на машине, cd меняет каталог для следующих команд."
+          >
+            Постоянный сеанс
+          </span>
+        </Show>
         <Show when={busy()}>
           <span class="terminal-busy" role="status">
             Выполняется…
@@ -454,7 +538,7 @@ export default function Terminal(props: TerminalProps): JSX.Element {
           </span>
         </Show>
         <div class="terminal-tools">
-          <Show when={busy() && sessionReady()}>
+          <Show when={busy() && sessionRun()}>
             <button
               type="button"
               class="terminal-tool terminal-tool-interrupt"
@@ -509,6 +593,7 @@ export default function Terminal(props: TerminalProps): JSX.Element {
           <div class="terminal-hint">
             <span>Введите команду и нажмите Enter.</span>
             <span>help — особые команды, clear и Ctrl+L — очистка экрана.</span>
+            <span>OpenCode и OMP ставятся кнопками в строке «Установка».</span>
           </div>
         </Show>
         <For each={lines()}>
@@ -521,16 +606,12 @@ export default function Terminal(props: TerminalProps): JSX.Element {
                 'terminal-line-stderr': line.kind === 'stderr',
                 'terminal-line-info': line.kind === 'info',
                 'terminal-line-error': line.kind === 'error',
-                'terminal-line-exit': line.kind === 'exit',
-                'is-failed': line.kind === 'exit' && typeof line.code === 'number' && line.code > 0,
               }}
             >
               <Show when={line.kind === 'command'}>
                 <span class="terminal-prompt-inline">{line.prompt}</span>{' '}
               </Show>
-              <span class="terminal-text">
-                {line.kind === 'exit' ? exitText(line.code ?? null) : line.text}
-              </span>
+              <span class="terminal-text">{line.text}</span>
             </div>
           )}
         </For>
@@ -543,18 +624,56 @@ export default function Terminal(props: TerminalProps): JSX.Element {
             <button
               type="button"
               class="terminal-quick-command"
+              title={quick.command}
               disabled={!props.enabled || busy()}
-              onClick={() => void run(quick)}
+              onClick={() => void run(quick.command)}
             >
-              {quick}
+              {quick.label}
             </button>
           )}
         </For>
       </div>
 
+      <div
+        class="terminal-quick terminal-quick-install"
+        role="group"
+        aria-label="Установка и проверка сети"
+      >
+        <span class="terminal-quick-label">Установка:</span>
+        <For each={INSTALL_COMMANDS}>
+          {(item) => (
+            <button
+              type="button"
+              class="terminal-quick-command terminal-quick-install-command"
+              title={item.command}
+              disabled={!props.enabled || busy()}
+              onClick={() =>
+                void run(item.command, { timeoutSec: item.timeoutSec, direct: item.direct })
+              }
+            >
+              {item.label}
+            </button>
+          )}
+        </For>
+        <button
+          type="button"
+          class="terminal-quick-command"
+          title={NETWORK_CHECK.command}
+          disabled={!props.enabled || busy()}
+          onClick={() =>
+            void run(NETWORK_CHECK.command, {
+              timeoutSec: NETWORK_CHECK.timeoutSec,
+              direct: NETWORK_CHECK.direct,
+            })
+          }
+        >
+          {NETWORK_CHECK.label}
+        </button>
+      </div>
+
       <form class="terminal-input-row" onSubmit={submit}>
         <label class="sr-only" for={inputId}>
-          Команда для машины, каталог {cwd()}
+          Команда для машины, каталог {promptCwd()}
         </label>
         <span class="terminal-prompt" aria-hidden="true" title={promptText()}>
           {promptText()}

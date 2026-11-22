@@ -1,0 +1,195 @@
+/* Полоса запущенных машин над составом: тихая, в одну строку с переносом. */
+.running-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+
+.running-strip-empty {
+  margin: 0;
+  padding: 2px 2px 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+.running-card {
+  flex: 1 1 260px;
+  max-width: 340px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name status'
+    'meta ttl';
+  align-items: baseline;
+  gap: 3px 10px;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.running-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong, var(--border));
+}
+
+.running-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.running-card.is-current {
+  border-color: var(--accent);
+  box-shadow:
+    inset 3px 0 0 var(--accent),
+    var(--shadow-sm);
+}
+
+.running-card-name {
+  grid-area: name;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.running-card-status {
+  grid-area: status;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.running-card-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.running-card-status[data-state='online'] {
+  color: var(--success);
+}
+
+.running-card-status[data-state='online'] .running-card-dot {
+  background: var(--success);
+}
+
+.running-card-status[data-state='offline'] {
+  color: var(--danger);
+}
+
+.running-card-status[data-state='offline'] .running-card-dot {
+  background: var(--danger);
+}
+
+.running-card-meta {
+  grid-area: meta;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.running-card-ip {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-mono);
+}
+
+.running-card-cpu {
+  flex: none;
+  color: var(--ink);
+}
+
+.running-card-ttl {
+  grid-area: ttl;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.running-card-pending {
+  pointer-events: none;
+}
+
+.running-skeleton {
+  display: block;
+  height: 9px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(
+    90deg,
+    var(--surface-hover) 25%,
+    var(--border) 50%,
+    var(--surface-hover) 75%
+  );
+  background-size: 200% 100%;
+  animation: running-skeleton-wave 1.4s ease-in-out infinite;
+}
+
+.running-skeleton-name {
+  grid-area: name;
+  width: 60%;
+}
+
+.running-skeleton-line {
+  grid-area: meta;
+  width: 40%;
+}
+
+.running-card-pending .running-skeleton-line + .running-skeleton-line {
+  display: none;
+}
+
+@keyframes running-skeleton-wave {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .running-skeleton {
+    animation: none;
+  }
+
+  .running-card {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .running-card {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .running-card-ttl {
+    white-space: normal;
+    text-align: right;
+  }
+}

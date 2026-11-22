@@ -1,10 +1,10 @@
 import { A } from '@solidjs/router'
-import { For } from 'solid-js'
+import { For, onMount } from 'solid-js'
 import type { JSX } from 'solid-js'
 
 import { CodeBlock, PageHeader } from '@/components'
 
-import { DAYTONA_CONSOLE_URL, LIVE_REGION } from './products'
+import { LIVE_REGION } from './products'
 import './docs.css'
 
 const TOC: readonly { href: string; label: string }[] = [
@@ -14,7 +14,7 @@ const TOC: readonly { href: string; label: string }[] = [
   { href: '#exec', label: 'Команда' },
   { href: '#site-ssh', label: 'Сайт и SSH' },
   { href: '#stop', label: 'Остановка' },
-  { href: '#keys', label: 'Ключи и поставщики' },
+  { href: '#keys', label: 'Ключи и свой аккаунт' },
   { href: '#errors', label: 'Ошибки' },
 ]
 
@@ -32,7 +32,7 @@ const ERROR_ROWS: readonly { code: string; status: number; meaning: string }[] =
   {
     code: 'capability_unavailable',
     status: 400,
-    meaning: 'Нет ни своего, ни платформенного ключа этого поставщика.',
+    meaning: 'Нет ни своего, ни платформенного ключа этой площадки.',
   },
   {
     code: 'authentication_required',
@@ -77,17 +77,24 @@ const ERROR_ROWS: readonly { code: string; status: number; meaning: string }[] =
   {
     code: 'provider_error',
     status: 502,
-    meaning: 'Поставщик отказал или недоступен; номер запроса есть в теле ответа.',
+    meaning: 'Площадка отказала или недоступна; номер запроса есть в теле ответа.',
   },
 ]
 
 export default function SiteDocs(): JSX.Element {
+  // The access card links here with `#site-ssh`. The browser resolves a hash
+  // before this route mounts, so the section is scrolled once it exists.
+  onMount(() => {
+    const id = window.location.hash.slice(1)
+    if (id.length > 0) document.getElementById(id)?.scrollIntoView({ block: 'start' })
+  })
+
   return (
     <div class="page docs-page">
       <PageHeader
         eyebrow="Документация"
         title="Один интерфейс до работающей машины"
-        description="Ключ, окружение, создание по продукту или снимку, команда с каталогом и кодом выхода, остановка. Сейчас запускаются три Linux-машины; Windows и H100 помечены «По запросу». Ниже — короткий путь и точные поля, которые принимает API."
+        description="Ключ, окружение, создание по продукту или снимку, команда с каталогом и кодом выхода, остановка. Сейчас запускаются три Linux-машины; Windows и H100 помечены «Скоро». Ниже — короткий путь и точные поля, которые принимает API."
         actions={
           <>
             <a class="btn btn-secondary" href="#quickstart">
@@ -154,8 +161,9 @@ export default function SiteDocs(): JSX.Element {
                   <p class="docs-step-text">
                     Заголовок <code>Idempotency-Key</code> обязателен: повтор с тем же телом вернёт ту же
                     машину, а не вторую. Продукт или снимок уже называют процессор, память и диск. Сейчас
-                    запускаются три Linux-продукта: <code>linux-start</code>, <code>linux-pro</code> и{' '}
-                    <code>linux-large</code>; Windows и H100 — по запросу.
+                    запускаются три Linux-продукта: <code>linux-start</code> («Мини»),{' '}
+                    <code>linux-pro</code> («Стандарт») и <code>linux-large</code> («Про»); Windows и H100
+                    помечены «Скоро».
                   </p>
                 </div>
               </li>
@@ -195,11 +203,11 @@ export ROX_API_URL=http://localhost:8787`}
                 Продукт или снимок, но не оба
               </h2>
               <p class="site-lede">
-                Продукт — это код из прайса, например <code>linux-pro</code>. Снимок — имя образа у
-                поставщика, например <code>rox-cloud-medium-2x4</code>. Поля <code>cpu</code>,{' '}
+                Продукт — это код из прайса, например <code>linux-pro</code>. Снимок — имя образа
+                площадки, например <code>rox-cloud-medium-2x4</code>. Поля <code>cpu</code>,{' '}
                 <code>memoryGb</code>, <code>diskGb</code> и <code>gpu</code> в теле служат только
                 проверкой: расхождение со снимком — отказ, а не подмена ресурсов. Windows и H100 сейчас
-                не запускаются: их конфигурации помечены «По запросу».
+                не запускаются: их конфигурации помечены «Скоро».
               </p>
             </div>
             <CodeBlock
@@ -211,11 +219,10 @@ export ROX_API_URL=http://localhost:8787`}
   -d '{"snapshot":"rox-cloud-medium-2x4","region":"${LIVE_REGION}","ttlSec":3600}'`}
             />
             <CodeBlock
-              label="Ответ: как его вернёт API"
+              label="Ответ: главные поля"
               code={`{
   "id": "sbx_…",
   "object": "sandbox",
-  "provider": "daytona",
   "state": "running",
   "created_at": "2026-11-22T12:00:00.000Z",
   "expires_at": "2026-11-22T13:00:00.000Z",
@@ -243,12 +250,12 @@ export ROX_API_URL=http://localhost:8787`}
             <ul class="site-list">
               <li>
                 <strong>Неизвестный снимок отклоняется до резерва.</strong> Сначала сервер находит снимок
-                в живом списке поставщика, потом считает цену.
+                в живом списке площадки, потом считает цену.
               </li>
               <li>
-                <strong>Снимок с видеокартой — по запросу.</strong> <code>daytona-gpu</code> стоит 786 ¢/ч
-                и показывает состав 16 ядер / 100 ГБ / 400 ГБ, но на этой организации Daytona нет
-                кредитов GPU, поэтому запуск не предлагается. Кредиты выдаёт поставщик.
+                <strong>Снимок с видеокартой сейчас не продаётся.</strong> Продукт <code>gpu-h100</code>{' '}
+                стоит 786 ¢/ч и показывает состав 16 ядер / 100 ГБ / 400 ГБ, но помечен «Скоро»:
+                состав и цена видны, запуск не предлагается.
               </li>
               <li>
                 <strong>Режим и ставка хранятся у машины.</strong> Счёт, резерв и остановка считают по
@@ -264,33 +271,31 @@ export ROX_API_URL=http://localhost:8787`}
                 <code>region</code> и живые снимки
               </h2>
               <p class="site-lede">
-                Сейчас все доступные машины запускаются в <code>{LIVE_REGION}</code> — общей площадке
-                Daytona. Выделенную <code>us-west-4</code> в этом срезе не проверяли. Список площадок и
-                возможностей отдаёт каталог, точный состав снимков — отдельный маршрут. Если{' '}
-                <code>region</code> не задан, поставщик выбирает сам.
+                Сейчас все доступные машины запускаются в <code>{LIVE_REGION}</code>. Выделенную{' '}
+                <code>us-west-4</code> в этом срезе не проверяли. Список площадок и возможностей отдаёт
+                каталог, точный состав снимков — отдельный маршрут. Если <code>region</code> не задан,
+                его выбирает площадка.
               </p>
             </div>
             <CodeBlock
               label="curl: снимки, доступные этому ключу"
-              code={`curl -sS "$ROX_API_URL/v1/providers/daytona/images" \\
+              code={`# PLATFORM — это providers[].id из ответа каталога
+curl -sS "$ROX_API_URL/v1/providers/$PLATFORM/images" \\
   -H "Authorization: Bearer $ROX_API_KEY"
 
-# {"object":"list","provider":"daytona","mode":"managed","data":[
-#   {"id":"rox-cloud-medium-2x4","label":"Linux · Разработка",
+# {"object":"list","mode":"managed","data":[
+#   {"id":"rox-cloud-medium-2x4","label":"Linux · Стандарт",
 #    "os":"linux","cpu":2,"memoryGb":4,"diskGb":8,"gpu":null,"state":"active"}]}`}
             />
             <p class="site-lede">
-              Каталог <code>GET /v1/catalog</code> отдаёт продукты с ценами, возможности поставщиков и
+              Каталог <code>GET /v1/catalog</code> отдаёт продукты с ценами, возможности площадок и
               поле <code>managed_providers</code> — у кого работает платформенный ключ. Отдельного
               маршрута площадок нет: их список лежит в <code>providers[].regions</code>.
             </p>
             <p class="site-note site-note--plain">
               Если список снимков не получен, кабинет показывает продукты из каталога с пометкой «список
-              образов недоступен» и не выдумывает ресурсы. Класс Windows и кредиты GPU выдаёт поставщик:
-              их состояние видно в{' '}
-              <a href={DAYTONA_CONSOLE_URL} target="_blank" rel="noopener noreferrer">
-                кабинете Daytona
-              </a>. Windows и H100 помечены «По запросу», пока этих квот нет.
+              образов недоступен» и не выдумывает ресурсы. Windows и H100 помечены «Скоро»: их запуск не
+              предлагается, пока класс машины не готов.
             </p>
           </section>
 
@@ -302,8 +307,9 @@ export ROX_API_URL=http://localhost:8787`}
               </h2>
               <p class="site-lede">
                 Команда выполняется в машине, а не на сервере Rox. <code>cwd</code> задаёт рабочий
-                каталог, <code>timeout_sec</code> — предел ожидания. Ответ всегда несёт{' '}
-                <code>exit_code</code>: ненулевой код — это ответ команды, а не ошибка вызова.
+                каталог, <code>timeout_sec</code> — предел ожидания; без <code>cwd</code> команда идёт
+                в домашнем каталоге <code>~</code>. Ответ всегда несёт <code>exit_code</code>: ненулевой
+                код — это ответ команды, а не ошибка вызова.
               </p>
             </div>
             <CodeBlock
@@ -313,7 +319,7 @@ export ROX_API_URL=http://localhost:8787`}
 curl -sS -X POST "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID/exec" \\
   -H "Authorization: Bearer $ROX_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"command":"uname -a","cwd":"/root","timeout_sec":15}'
+  -d '{"command":"uname -a","cwd":"/tmp","timeout_sec":15}'
 
 # {"stdout":"Linux rox …\\n","stderr":"","exit_code":0}`}
             />
@@ -337,7 +343,7 @@ curl -sS -X POST "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID/exec" \\
             <div class="site-section-head">
               <p class="site-eyebrow">Сайт и SSH</p>
               <h2 class="site-title" id="site-ssh-title">
-                Приватный адрес, один порт и вход с компьютера
+                Внутренний адрес, подписанная ссылка и SSH
               </h2>
               <p class="site-lede">
                 Своего публичного адреса у машины нет: снаружи видны только подписанная ссылка на один
@@ -345,6 +351,13 @@ curl -sS -X POST "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID/exec" \\
                 порт, который он слушает.
               </p>
             </div>
+            <p class="site-note site-note--plain">
+              Адрес машины — внутренний, как правило вида <code>172.20.x.x</code>: из интернета он не
+              виден и публичного IP у машины нет. Наружу ведут две двери — подписанная ссылка вида{' '}
+              <code>https://&lt;подпись&gt;.rox.computer</code> и SSH-шлюз{' '}
+              <code>ssh.rox.computer</code>. Если такая ссылка отвечает 502, сама ссылка жива, а сайт
+              внутри машины не отвечает: проверьте, что сервер на этом порту запущен.
+            </p>
             <ol class="docs-steps">
               <li class="docs-step">
                 <span class="docs-step-number" aria-hidden="true">
@@ -394,18 +407,22 @@ curl -sS -X POST "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID/exec" \\
   -H "Content-Type: application/json" \\
   -d '{"port":8000,"ttl_sec":3600}'
 
-# {"object":"preview","port":8000,"url":"https://…","expires_at":"…"}`}
+# {"object":"preview","port":8000,"url":"https://<подпись>.rox.computer","expires_at":"…"}`}
             />
             <p class="site-lede">
-              Вход по SSH тоже выдаётся по запросу: кнопка «Создать доступ» в блоке SSH карточки
-              машины возвращает готовую команду для терминала на компьютере. Внутри машины
-              пользователь остаётся <code>daytona</code>, а команда действует ограниченное время и
-              перестаёт работать вместе с машиной.
+              Вход по SSH тоже выдаётся отдельным действием: кнопка «Создать доступ» в блоке SSH карточки
+              машины возвращает готовую команду для терминала на компьютере. Команда подключает к
+              машине через <code>ssh.rox.computer</code>, домашний каталог внутри — <code>~</code>, а
+              действует она ограниченное время и перестаёт работать вместе с машиной.
             </p>
+            <CodeBlock
+              label="SSH: вид команды"
+              code={`ssh <токен>@ssh.rox.computer`}
+            />
             <p class="site-note site-note--plain">
               Постоянного адреса и своего SSH-ключа мы не обещаем: шлюз принимает только выданную
               команду, поэтому запись в <code>authorized_keys</code> сама по себе доступа не даёт.
-              Адрес машины виден в блоке доступа и остаётся внутренним.
+              Внутренний адрес машины виден в блоке доступа и наружу не выходит.
             </p>
             <div class="docs-actions">
               <A class="btn btn-secondary" href="/console/machines">
@@ -422,7 +439,7 @@ curl -sS -X POST "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID/exec" \\
               </h2>
               <p class="site-lede">
                 Остановка закрывает резерв и считает фактическое время. Удаление убирает машину у
-                поставщика и возвращает неиспользованный остаток; закрытая строка счёта остаётся.
+                площадки и возвращает неиспользованный остаток; закрытая строка счёта остаётся.
               </p>
             </div>
             <CodeBlock
@@ -442,13 +459,13 @@ curl -sS -X DELETE "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID" \\
 
           <section class="site-section docs-section" id="keys" aria-labelledby="keys-title">
             <div class="site-section-head">
-              <p class="site-eyebrow">Ключи и поставщики</p>
+              <p class="site-eyebrow">Ключи и свой аккаунт</p>
               <h2 class="site-title" id="keys-title">
                 Ключ Rox и ключ вашего аккаунта
               </h2>
               <p class="site-lede">
                 Ключ Rox выпускается с правами и показывается один раз. Гостевой ключ не может выпускать
-                другие ключи и не может пополнять баланс. Ключ поставщика добавляется отдельно и хранится
+                другие ключи и не может пополнять баланс. Ключ площадки добавляется отдельно и хранится
                 зашифрованным: в ответах только последние четыре символа и отпечаток.
               </p>
             </div>
@@ -462,15 +479,16 @@ curl -sS -X DELETE "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID" \\
 # {"id":"key_…","api_key":"rox_sk_live_…","last4":"…","scopes":[…],"created_at":"…"}`}
             />
             <CodeBlock
-              label="curl: добавить ключ поставщика"
-              code={`curl -sS -X POST "$ROX_API_URL/v1/provider-credentials" \\
+              label="curl: добавить ключ площадки"
+              code={`# PLATFORM — это providers[].id из ответа каталога
+curl -sS -X POST "$ROX_API_URL/v1/provider-credentials" \\
   -H "Authorization: Bearer $ROX_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{"provider":"daytona","label":"моя команда","secret":"…","spendCapCents":5000}'`}
+  -d '{"provider":"<площадка>","label":"моя команда","secret":"…","spendCapCents":5000}'`}
             />
             <ul class="site-list">
               <li>
-                <strong>Секрет ключа поставщика не возвращается.</strong> После создания видны только{' '}
+                <strong>Секрет ключа площадки не возвращается.</strong> После создания видны только{' '}
                 <code>last4</code>, отпечаток, состояние и потолок расхода.
               </li>
               <li>
@@ -480,8 +498,7 @@ curl -sS -X DELETE "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID" \\
               </li>
               <li>
                 <strong>Свой ключ меняет только плату Rox.</strong> Машина идёт на вашем аккаунте, железо
-                вы платите поставщику, а кошелёк списывает сервисный сбор за час. Класс Windows и кредиты
-                GPU ключ не добавляет: их выдаёт поставщик в своём кабинете.
+                вы платите площадке, а кошелёк списывает сервисный сбор за час.
               </li>
             </ul>
           </section>
@@ -539,7 +556,7 @@ curl -sS -X DELETE "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID" \\
               </table>
             </div>
             <p class="site-lede">
-              Разбор отказа начинается с номера запроса. Если поставщик недоступен, ответ —{' '}
+              Разбор отказа начинается с номера запроса. Если площадка недоступна, ответ —{' '}
               <code>provider_error</code>; состояние самого API и живые происшествия — на странице{' '}
               <A href="/status">«Состояние»</A>.
             </p>

@@ -472,11 +472,11 @@ describe('catalog', () => {
       null,
       null,
       null,
-      'Класс Windows недоступен в этом аккаунте Daytona',
-      'Класс Windows недоступен в этом аккаунте Daytona',
-      'Класс Windows недоступен в этом аккаунте Daytona',
-      'Класс Windows недоступен в этом аккаунте Daytona',
-      'Нужны GPU-кредиты Daytona',
+      'Скоро: Windows пока не подключён',
+      'Скоро: Windows пока не подключён',
+      'Скоро: Windows пока не подключён',
+      'Скоро: Windows пока не подключён',
+      'Скоро: GPU по запросу',
     ])
     expect(body.managed_providers).toEqual([])
     expect(body.providers).toHaveLength(1)

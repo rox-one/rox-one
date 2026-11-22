@@ -7,7 +7,6 @@ import { CodeBlock, PageHeader } from '@/components'
 
 import {
   AVAILABLE_PRODUCTS,
-  DAYTONA_CONSOLE_URL,
   REQUEST_PRODUCTS,
   SITE_PRODUCTS,
   TRIAL_CENTS,
@@ -31,7 +30,7 @@ export default function SitePricing(): JSX.Element {
       <PageHeader
         eyebrow="Цены"
         title="Цены за час"
-        description="Сейчас запускаются три Linux-машины. Windows и видеокарта H100 показаны с составом и ценой, но помечены «По запросу»: у этой организации Daytona нет класса Windows и кредитов GPU. Цена считается по составу машины, снимок уже несёт процессор, память и диск."
+        description="Сейчас запускаются три Linux-машины. Windows и видеокарта H100 показаны с составом и ценой, но помечены «Скоро»: эти конфигурации ещё готовятся. Цена считается по составу машины: образ уже несёт процессор, память и диск."
         actions={
           <>
             <a class="btn btn-secondary" href="#formula">
@@ -51,26 +50,26 @@ export default function SitePricing(): JSX.Element {
             {AVAILABLE_PRODUCTS.length}{' '}
             {pluralRu(AVAILABLE_PRODUCTS.length, ['машина', 'машины', 'машин'])} запускаются,{' '}
             {REQUEST_PRODUCTS.length}{' '}
-            {pluralRu(REQUEST_PRODUCTS.length, ['конфигурация', 'конфигурации', 'конфигураций'])} — по
-            запросу
+            {pluralRu(REQUEST_PRODUCTS.length, ['конфигурация', 'конфигурации', 'конфигураций'])} —
+            скоро
           </h2>
           <p class="site-lede">
             Сейчас можно купить и запустить три Linux-машины; Windows и H100 видны для справки. Первая
             цена — полная, когда машина идёт на платформенном ключе Rox. Вторая — только сервисный сбор,
-            когда машина идёт на вашем ключе поставщика, а железо вы платите ему напрямую.
+            когда машина идёт на вашем ключе, а железо вы платите в своём облачном аккаунте.
           </p>
         </div>
         <div class="price-table-wrap">
           <table class="price-table">
             <caption>
-              Цены в долларах США за час работы. Строки «По запросу» показывают состав и цену для
-              справки: запуск зависит от класса и квоты организации Daytona.
+              Цены в долларах США за час работы. Строки «Скоро» показывают состав и цену для справки:
+              запуск откроется позже.
             </caption>
             <thead>
               <tr>
                 <th scope="col">Продукт</th>
                 <th scope="col">Состав</th>
-                <th scope="col">Снимок</th>
+                <th scope="col">Образ</th>
                 <th scope="col" class="num">
                   Цена за час
                 </th>
@@ -87,9 +86,6 @@ export default function SitePricing(): JSX.Element {
                     <th scope="row" data-label="Продукт">
                       <span class="price-name">{product.name}</span>
                       <span class="price-os">{osLabel(product)}</span>
-                      <Show when={product.providerNote}>
-                        {(note) => <span class="price-note">{note()}</span>}
-                      </Show>
                     </th>
                     <td data-label="Состав">
                       {cpuText(product.cpu)} · {memoryText(product.memoryGb)} · {diskText(product.diskGb)}
@@ -97,8 +93,8 @@ export default function SitePricing(): JSX.Element {
                         {(gpu) => <span class="price-gpu"> · видеокарта {gpuText(gpu())}</span>}
                       </Show>
                     </td>
-                    <td data-label="Снимок">
-                      <span class="price-snapshot">{product.snapshotLabel}</span>
+                    <td data-label="Образ">
+                      <span class="price-image">{product.snapshotLabel}</span>
                     </td>
                     <td data-label="Цена за час" class="num">
                       <strong>{formatCents(product.retail)}</strong>
@@ -111,7 +107,7 @@ export default function SitePricing(): JSX.Element {
                     <td class="price-action" data-label="Запуск">
                       <Show
                         when={product.available}
-                        fallback={<span class="price-request">По запросу</span>}
+                        fallback={<span class="price-request">Скоро</span>}
                       >
                         <A
                           class="btn btn-primary btn-sm"
@@ -129,16 +125,14 @@ export default function SitePricing(): JSX.Element {
           </table>
         </div>
         <p class="site-note">
-          <strong>Сервисный сбор — это плата Rox, а не наценка на железо.</strong> Со своим ключом
-          поставщика счёт за машину приходит вам от него по вашему тарифу; Rox выставляет только сбор за
-          час. Без своего ключа работает платформенный, и кошелёк платит полную цену.
+          <strong>Сервисный сбор — это плата Rox, а не наценка на железо.</strong> Со своим ключом счёт
+          за железо приходит вам из вашего облачного аккаунта по его тарифу; Rox выставляет только сбор
+          за час. Без своего ключа работает платформенный, и кошелёк платит полную цену.
         </p>
         <p class="site-note site-note--plain">
-          <strong>Windows и H100 — по запросу.</strong> На этой организации Daytona нет класса Windows и
-          кредитов GPU, поэтому у этих строк нет кнопки запуска. Класс и квоты выдаёт поставщик: проверьте{' '}
-          <a href={DAYTONA_CONSOLE_URL} target="_blank" rel="noopener noreferrer">
-            кошелёк и квоты Daytona
-          </a>.
+          <strong>Windows и H100 — скоро.</strong> Эти конфигурации ещё готовятся, поэтому у их строк нет
+          кнопки запуска. Когда запуск откроется, он появится <A href="/console">в кабинете</A> рядом с
+          остальными машинами.
         </p>
       </section>
 
@@ -164,13 +158,13 @@ export default function SitePricing(): JSX.Element {
 сервисный сбор со своим ключом = max(5, round(цена × 0,15))`}
         />
         <div class="formula-example">
-          <p class="formula-example-title">Проверка на «Разработке»</p>
+          <p class="formula-example-title">Проверка на «Стандарте»</p>
           <p class="formula-math">
             10 + 6×2 + 3×4 + 0,2×8 = 35,6 → округляем вверх → 36 ¢/ч = 0,36 $/ч
           </p>
           <p class="formula-note">
-            Своим ключом поставщика: max(5, round(36 × 0,15)) = 5 ¢/ч, то есть 0,05 $/ч. У H100 сбор
-            больше: 118 ¢/ч, или 1,18 $/ч.
+            Своим ключом: max(5, round(36 × 0,15)) = 5 ¢/ч, то есть 0,05 $/ч. У H100 сбор больше:
+            118 ¢/ч, или 1,18 $/ч.
           </p>
         </div>
       </section>
@@ -183,25 +177,24 @@ export default function SitePricing(): JSX.Element {
           </h2>
           <p class="site-lede">
             Режим виден в карточке машины и в счёте. Переключить его можно, только добавив или убрав
-            свой ключ поставщика; задним числом цена не меняется.
+            свой ключ; задним числом цена не меняется.
           </p>
         </div>
         <div class="modes-grid">
           <div class="mode-card">
             <h3 class="mode-title">Платформенный ключ Rox</h3>
             <p class="mode-text">
-              Машина запускается на ключе Rox у поставщика. Кошелёк платит полную цену часа из таблицы,
-              а машина и площадка выбираются в кабинете. Так работает пробный запуск — свой ключ для
-              него не нужен.
+              Машина запускается на ключе Rox. Кошелёк платит полную цену часа из таблицы, а машина и
+              регион выбираются в кабинете. Так работает пробный запуск — свой ключ для него не нужен.
             </p>
             <p class="mode-tag">Полная цена часа</p>
           </div>
           <div class="mode-card mode-card--accent">
-            <h3 class="mode-title">Свой ключ поставщика</h3>
+            <h3 class="mode-title">Свой ключ облака</h3>
             <p class="mode-text">
-              Вы добавляете ключ своего аккаунта Daytona в кабинете. Машина идёт на нём, железо вы
-              платите поставщику по своему тарифу, а кошелёк Rox списывает только сервисный сбор. Класс
-              Windows и кредиты GPU ключ не добавляет: их выдаёт поставщик.
+              Вы добавляете ключ своего облачного аккаунта в кабинете. Машина идёт на нём, железо вы
+              платите там же по своему тарифу, а кошелёк Rox списывает только сервисный сбор. Windows и
+              видеокарту ключ не добавляет: они откроются, когда будут готовы.
             </p>
             <p class="mode-tag">Только сервисный сбор</p>
           </div>
@@ -234,14 +227,14 @@ export default function SitePricing(): JSX.Element {
             <h3 class="trial-title">За что мы не берём денег</h3>
             <ul class="site-list">
               <li>За регистрацию, вход и выпуск гостевого ключа.</li>
-              <li>За хранение ключа поставщика и его отпечатка.</li>
+              <li>За хранение вашего ключа и его отпечатка.</li>
               <li>За остановку, удаление машины и просмотр счёта.</li>
               <li>За подписку и минимальный платёж: их нет.</li>
               <li>За время, пока машина остановлена: счётчик стоит.</li>
             </ul>
             <p class="trial-fine">
-              Отдельно придёт только счёт поставщика за железо — и только если машина шла на вашем
-              ключе. Rox в этой оплате не участвует.
+              Отдельно придёт только счёт за железо из вашего облачного аккаунта — и только если машина
+              шла на вашем ключе. Rox в этой оплате не участвует.
             </p>
           </div>
         </div>
@@ -270,7 +263,7 @@ export default function SitePricing(): JSX.Element {
             </span>
             <p>
               При остановке резерв закрывается, списывается фактическое время работы. Строка счёта
-              хранит снимок, режим, ставку и время — её можно выгрузить в CSV.
+              хранит режим, ставку и время на момент списания — её можно выгрузить в CSV.
             </p>
           </li>
           <li class="billing-step">

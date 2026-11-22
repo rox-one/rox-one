@@ -1,12 +1,14 @@
 import { Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from 'solid-js'
 import type { JSX } from 'solid-js'
 
-import { Button, EmptyState, Icon, Skeleton } from '@/components'
+import { Button, Dialog, EmptyState, Icon, Skeleton } from '@/components'
 import { api } from '@/lib/api'
 import type { FileEntry } from '@/lib/api'
 import { formatBytes, formatDate } from '@/lib/format'
 
 import CodeEditor, { CodeView } from './CodeEditor'
+import { FILES_CHANGED_EVENT, announceFileDeleted, displayPath } from './Files'
+import type { FilesChangedDetail } from './Files'
 import { errorText } from './components/console-ui'
 
 import './file-preview.css'
@@ -65,6 +67,9 @@ export default function FilePreview(props: FilePreviewProps): JSX.Element {
   const [copied, setCopied] = createSignal(false)
   const [tooLarge, setTooLarge] = createSignal(false)
   const [guard, setGuard] = createSignal<Guard | null>(null)
+  const [confirmDelete, setConfirmDelete] = createSignal(false)
+  const [deleting, setDeleting] = createSignal(false)
+  const [deleteError, setDeleteError] = createSignal<string | null>(null)
 
   let requestToken = 0
   let fileInput: HTMLInputElement | undefined
@@ -103,6 +108,8 @@ export default function FilePreview(props: FilePreviewProps): JSX.Element {
     requestToken += 1
     setShown(next)
     setGuard(null)
+    setConfirmDelete(false)
+    setDeleteError(null)
     setContent(null)
     setDraft('')
     setError(null)
@@ -161,8 +168,21 @@ export default function FilePreview(props: FilePreviewProps): JSX.Element {
       event.preventDefault()
       event.returnValue = ''
     }
+    // A file deleted anywhere in the workspace leaves no draft behind, so no
+    // unsaved-changes guard can offer to write it back.
+    const onFilesChanged = (event: Event): void => {
+      const detail = (event as CustomEvent<FilesChangedDetail | undefined>).detail
+      if (detail === undefined || detail.sandboxId !== props.sandboxId) return
+      if (shown()?.path !== detail.path) return
+      applyEntry(null)
+      props.onClose()
+    }
     window.addEventListener('beforeunload', beforeUnload)
-    onCleanup(() => window.removeEventListener('beforeunload', beforeUnload))
+    window.addEventListener(FILES_CHANGED_EVENT, onFilesChanged)
+    onCleanup(() => {
+      window.removeEventListener('beforeunload', beforeUnload)
+      window.removeEventListener(FILES_CHANGED_EVENT, onFilesChanged)
+    })
   })
 
   onCleanup(() => {
@@ -238,6 +258,22 @@ export default function FilePreview(props: FilePreviewProps): JSX.Element {
       setError(`Файл не скачан: ${errorText(failure)}`)
     } finally {
       setDownloading(false)
+    }
+  }
+
+  const remove = async (): Promise<void> => {
+    const entry = shown()
+    if (entry === null || deleting() || !props.enabled) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await api.deleteFile(props.sandboxId, entry.path)
+      // The announcement clears this panel and reloads the browser's rows.
+      announceFileDeleted(props.sandboxId, entry.path)
+    } catch (failure) {
+      setDeleteError(`Файл не удалён: ${errorText(failure)}`)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -370,6 +406,18 @@ export default function FilePreview(props: FilePreviewProps): JSX.Element {
             </button>
             <button
               type="button"
+              class="file-preview-tool file-preview-danger"
+              onClick={() => {
+                setDeleteError(null)
+                setConfirmDelete(true)
+              }}
+              disabled={!props.enabled || saving() || uploading()}
+              title="Удалить файл с машины"
+            >
+              Удалить
+            </button>
+            <button
+              type="button"
               class="file-preview-tool"
               onClick={() => requestClose()}
               aria-label="Закрыть файл"
@@ -406,7 +454,7 @@ export default function FilePreview(props: FilePreviewProps): JSX.Element {
           <>
             <div class="file-preview-name">
               <strong>{entry().name}</strong>
-              <span title={entry().path}>{entry().path}</span>
+              <span title={displayPath(entry().path)}>{displayPath(entry().path)}</span>
             </div>
             <div class="file-preview-meta">
               <span>{formatBytes(entry().size)}</span>
@@ -549,6 +597,35 @@ export default function FilePreview(props: FilePreviewProps): JSX.Element {
           </>
         )}
       </Show>
+
+      <Dialog
+        open={confirmDelete()}
+        onClose={() => setConfirmDelete(false)}
+        title="Удалить файл?"
+        subtitle={displayPath(current()?.path ?? '')}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmDelete(false)} disabled={deleting()}>
+              Отмена
+            </Button>
+            <Button variant="danger" loading={deleting()} onClick={() => void remove()}>
+              Удалить
+            </Button>
+          </>
+        }
+      >
+        <p>
+          Файл пропадёт с машины, и вернуть его будет нельзя. Папки этим действием не удаляются.
+        </p>
+        <Show when={dirty()}>
+          <p>Несохранённые правки тоже пропадут.</p>
+        </Show>
+        <Show when={deleteError() !== null}>
+          <div class="file-preview-error" role="alert">
+            {deleteError()}
+          </div>
+        </Show>
+      </Dialog>
     </section>
   )
 }

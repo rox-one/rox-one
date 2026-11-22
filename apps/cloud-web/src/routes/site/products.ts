@@ -24,15 +24,12 @@ export interface SiteProduct extends CloudMachineProduct {
   readonly available: boolean
   /** Provider-side reason or caveat, copied from the price list's `note`. */
   readonly providerNote?: string
-  /** A human label such as «Снимок Rox · 2×4», never the raw snapshot id. */
+  /** A human label such as «Образ Rox · 2×4», never the raw snapshot id. */
   readonly snapshotLabel: string
 }
 
 /** The region every available machine boots in, confirmed on a live run. */
 export const LIVE_REGION = 'us'
-
-/** Daytona's dashboard, where the wallet and provider quotas live. */
-export const DAYTONA_CONSOLE_URL = 'https://app.daytona.io/'
 
 const GPU_NAMES: Readonly<Record<string, string>> = {
   h100: 'H100',
@@ -68,21 +65,15 @@ function readAvailability(product: CloudMachineProduct): SiteAvailability {
 }
 
 /**
- * The human name of the snapshot a machine boots: «Снимок Rox · 2×4», not
- * `rox-cloud-medium-2x4`. The family is read from the id so a rename cannot
- * silently claim Rox when the base Daytona image is used.
+ * The human name of the image a machine boots: «Образ Rox · 2×4», not
+ * `rox-cloud-medium-2x4`. The family never leaks the upstream image owner: a
+ * machine is either a Rox image or a Windows image, nothing else.
  */
 function snapshotLabelFor(product: CloudMachineProduct): string {
   const size = `${product.cpu}×${product.memoryGb}`
-  const family = product.snapshot.startsWith('rox-cloud')
-    ? 'Rox'
-    : product.snapshot.startsWith('daytonaio/') || product.snapshot.startsWith('daytona-')
-      ? 'Daytona'
-      : product.os === 'windows'
-        ? 'Windows'
-        : 'Rox'
+  const family = product.os === 'windows' ? 'Windows' : 'Rox'
   const gpuPart = product.gpu === undefined ? '' : ` · ${gpuText(product.gpu)}`
-  return `Снимок ${family} · ${size}${gpuPart}`
+  return `Образ ${family} · ${size}${gpuPart}`
 }
 
 /** The eight products with both prices, availability and a label resolved once. */

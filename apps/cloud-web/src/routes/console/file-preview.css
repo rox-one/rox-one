@@ -70,6 +70,13 @@
   cursor: not-allowed;
 }
 
+/* Deleting is the only destructive tool in the inspector, so it reads as such. */
+.file-preview-danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
 .file-preview-name {
   display: grid;
   gap: 2px;

@@ -1,6 +1,6 @@
 import { A } from '@solidjs/router'
 import type { RouteSectionProps } from '@solidjs/router'
-import { For, Show } from 'solid-js'
+import { For, Show, createSignal } from 'solid-js'
 import type { JSX } from 'solid-js'
 
 import { Badge, Button, Icon, Skeleton } from '@/components'
@@ -12,14 +12,37 @@ import { ConsoleWelcome } from './components/Welcome'
 
 import './console.css'
 
+/**
+ * The customer sections. Provider credentials are staff bookkeeping, not a
+ * customer task, so the console does not name a provider anywhere.
+ */
 const links: readonly { href: string; label: string; icon: IconName; end?: boolean }[] = [
   { href: '/console', label: 'Продукты', icon: 'box', end: true },
   { href: '/console/machines', label: 'Машины', icon: 'server' },
   { href: '/console/invoice', label: 'Счёт', icon: 'chart' },
   { href: '/console/keys', label: 'Ключи', icon: 'key' },
-  { href: '/console/providers', label: 'Поставщики', icon: 'globe' },
   { href: '/console/journal', label: 'Журнал', icon: 'log' },
 ]
+
+/** A layout preference, not a secret: it may outlive the tab. */
+const NAV_STORAGE_KEY = 'rox.console.nav'
+
+function readNavCollapsed(): boolean {
+  try {
+    return window.localStorage.getItem(NAV_STORAGE_KEY) === 'collapsed'
+  } catch {
+    return false
+  }
+}
+
+function writeNavCollapsed(collapsed: boolean): void {
+  try {
+    if (collapsed) window.localStorage.setItem(NAV_STORAGE_KEY, 'collapsed')
+    else window.localStorage.removeItem(NAV_STORAGE_KEY)
+  } catch {
+    /* private mode: the choice lasts for this visit only */
+  }
+}
 
 /**
  * The console chrome: the key door, the sections, and the wallet that every
@@ -61,27 +84,52 @@ function ConsoleSurface(props: { children?: JSX.Element }) {
 function ConsoleFrame(props: { children?: JSX.Element }) {
   const session = useConsoleSession()
   const reserved = (): number => session.account()?.reserved_cents ?? 0
+  const [collapsed, setCollapsed] = createSignal(readNavCollapsed())
 
   return (
-    <div class="app-shell console-shell">
-      <aside class="app-nav">
-        <A href="/console" class="app-brand" end>
-          <span class="app-brand-mark" aria-hidden="true">
-            R
-          </span>
-          Rox Cloud
-        </A>
-        <nav class="app-nav-links" aria-label="Разделы кабинета">
+    <div class={`app-shell console-shell${collapsed() ? ' is-nav-collapsed' : ''}`}>
+      <aside class="app-nav console-nav" aria-label="Боковое меню кабинета">
+        <div class="console-nav-head">
+          <A href="/console" class="app-brand console-brand" end title="Rox Cloud" aria-label="Rox Cloud">
+            <span class="app-brand-mark" aria-hidden="true">
+              R
+            </span>
+            <span class="console-brand-text">Rox Cloud</span>
+          </A>
+          <button
+            type="button"
+            class="console-nav-toggle"
+            onClick={() => {
+              const next = !collapsed()
+              setCollapsed(next)
+              writeNavCollapsed(next)
+            }}
+            aria-expanded={!collapsed()}
+            aria-controls="console-nav-links"
+            aria-label={collapsed() ? 'Развернуть меню' : 'Свернуть меню'}
+            title={collapsed() ? 'Развернуть меню' : 'Свернуть меню'}
+          >
+            <Icon name="arrow" size={14} />
+          </button>
+        </div>
+        <nav id="console-nav-links" class="app-nav-links" aria-label="Разделы кабинета">
           <For each={links}>
             {(link) => (
-              <A href={link.href} end={link.end} activeClass="is-active">
+              <A
+                href={link.href}
+                end={link.end}
+                activeClass="is-active"
+                title={collapsed() ? link.label : undefined}
+              >
                 <Icon name={link.icon} size={16} />
-                {link.label}
+                <span class={collapsed() ? 'console-nav-label sr-only' : 'console-nav-label'}>
+                  {link.label}
+                </span>
               </A>
             )}
           </For>
         </nav>
-        <div class="app-nav-foot">
+        <div class="app-nav-foot console-nav-foot">
           <span>Ключ живёт только в этой вкладке</span>
           <A href="/">На сайт</A>
         </div>

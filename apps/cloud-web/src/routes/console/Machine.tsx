@@ -21,13 +21,12 @@ import { formatCents, formatDate, formatMoney, formatTime, shortId } from '@/lib
 
 import { useConsoleSession } from './components/console-session'
 import {
-  coresLabel,
   errorText,
-  gpuName,
   machineDisplayName,
   modeLabel,
   regionFlag,
   regionLabel,
+  sizeLine,
   stateLabel as labelForState,
   stateTone as toneForState,
   ttlLabel,
@@ -38,6 +37,7 @@ import MachineAccessJournal from './MachineAccessJournal'
 import MachineMetrics from './MachineMetrics'
 import MachineSnapshots from './MachineSnapshots'
 import MachineWorkspace from './MachineWorkspace'
+import RunningMachinesStrip from './RunningMachinesStrip'
 import './machine.css'
 
 const POLL_MS = 5000
@@ -46,10 +46,6 @@ const POLL_MS = 5000
  * 5 s, and so is a boot or a stop that has not settled yet. */
 const POLLED_STATES: readonly SandboxState[] = ['queued', 'starting', 'running', 'stopping']
 
-function gigabytes(value: unknown): string {
-  return typeof value === 'number' && Number.isFinite(value) ? `${value} ГБ` : '—'
-}
-
 /** A life span reads `1 ч` or `15 мин`; a missing one is a dash, not zero. */
 function ttlText(seconds: number | null | undefined): string {
   return seconds === null || seconds === undefined ? '—' : ttlLabel(seconds)
@@ -57,17 +53,6 @@ function ttlText(seconds: number | null | undefined): string {
 
 function textOrDash(value: unknown): string {
   return typeof value === 'string' && value.length > 0 ? value : '—'
-}
-
-/** Daytona regions in a person's words; the id stays for anything unknown. */
-const REGION_TEXT: Record<string, string> = {
-  us: 'США, общая',
-  'us-west-4': 'США, запад 4, выделенная',
-}
-
-function regionText(id: string | null): string {
-  if (id === null) return 'выбирает поставщик'
-  return REGION_TEXT[id] ?? regionLabel(id)
 }
 
 /** The region may sit beside the spec (older records) or inside it. */
@@ -85,10 +70,9 @@ function machineName(machine: Sandbox): string {
   return machineDisplayName(machine.spec)
 }
 
-/** The ribbon keeps the site short: «США», not «США, общая»; the title has the rest. */
+/** The ribbon keeps the site short: «США», not «США, Запад 1»; the title has the rest. */
 function shortRegion(id: string | null): string {
-  if (id === 'us' || id === 'us-west-4') return 'США'
-  return regionText(id)
+  return regionLabel(id)
 }
 
 /**
@@ -113,20 +97,15 @@ function MachineRibbon(props: { machine: Sandbox }): JSX.Element {
     <div class="machine-ribbon" role="group" aria-label="Состав и цена машины">
       <span
         class="ribbon-name"
-        title={`${machineName(props.machine)}. Образ ${textOrDash(props.machine.spec?.snapshot ?? props.machine.spec?.image)}; поставщик ${textOrDash(props.machine.provider)}`}
+        title={`${machineName(props.machine)}. Образ ${textOrDash(props.machine.spec?.snapshot ?? props.machine.spec?.image)}`}
       >
         {machineName(props.machine)}
       </span>
       <span class="ribbon-sep" aria-hidden="true" />
       <span>{textOrDash(props.machine.spec?.os)}</span>
-      <span title="Ядра">{coresLabel(props.machine.spec?.cpu)}</span>
-      <span title="Память">{gigabytes(props.machine.spec?.memoryGb)}</span>
-      <span title="Диск">{gigabytes(props.machine.spec?.diskGb)}</span>
-      <Show when={gpuName(props.machine.spec?.gpu)}>
-        {(card) => <span>{card()}</span>}
-      </Show>
+      <span>{sizeLine(props.machine.spec ?? {})}</span>
       <span class="ribbon-sep" aria-hidden="true" />
-      <span class="ribbon-region" title={`Площадка: ${regionText(regionOf(props.machine))}`}>
+      <span class="ribbon-region" title={`Площадка: ${regionLabel(regionOf(props.machine))}`}>
         <span class="ribbon-flag" aria-hidden="true">
           {regionFlag(regionOf(props.machine))}
         </span>
@@ -427,6 +406,8 @@ export default function ConsoleMachine(): JSX.Element {
         }
       />
 
+      <RunningMachinesStrip currentId={machineId()} />
+
       <Show when={loading()}>
         <Card title="Машина">
           <Skeleton lines={7} />
@@ -535,7 +516,7 @@ export default function ConsoleMachine(): JSX.Element {
           label="Название"
           for="machine-rename-input"
           error={renameError()}
-          hint={`Пустое поле вернёт имя по составу: ${machineDisplayName(sandbox()?.spec)}. Системный пользователь на машине остаётся daytona.`}
+          hint={`Пустое поле вернёт имя по составу: ${machineDisplayName(sandbox()?.spec)}.`}
         >
           <input
             id="machine-rename-input"

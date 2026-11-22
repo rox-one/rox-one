@@ -166,17 +166,6 @@
   color: var(--terminal-muted);
 }
 
-.terminal-line-exit {
-  margin-top: 2px;
-  color: var(--terminal-muted);
-  font-size: var(--text-xs);
-}
-
-.terminal-line-exit.is-failed {
-  color: var(--terminal-danger);
-  font-weight: 650;
-}
-
 .terminal-quick {
   display: flex;
   align-items: center;
@@ -198,6 +187,20 @@
 
 .terminal-quick-command:hover:not(:disabled) {
   color: var(--terminal-ink);
+}
+
+/* Installing an agent is the first real job on a fresh machine, so those two
+   commands carry the accent while the probes above stay quiet. */
+.terminal-quick-install-command {
+  border-color: rgba(111, 227, 176, 0.35);
+  color: var(--terminal-ink);
+  font-weight: 600;
+}
+
+.terminal-quick-install-command:hover:not(:disabled) {
+  border-color: rgba(111, 227, 176, 0.6);
+  background: rgba(111, 227, 176, 0.14);
+  color: var(--terminal-success);
 }
 
 .terminal-input-row {
@@ -295,6 +298,13 @@
 
   .terminal-input-row {
     flex-wrap: wrap;
+  }
+
+  /* At phone width the two installers share the row instead of leaving a ragged
+     edge; a single narrow button simply grows to the free space beside the label. */
+  .terminal-quick-install-command {
+    flex: 1 1 auto;
+    text-align: center;
   }
 
   .terminal-prompt {

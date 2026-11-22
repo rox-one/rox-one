@@ -921,7 +921,7 @@ describe('kill switch', () => {
 
     const allowed = await customerCall(h, '/v1/sandboxes', 'admin-idem-allowed')
     expect(allowed.status).toBe(201)
-    expect(h.daytona.calls).toBe(1)
+    expect(h.daytona.calls).toBe(2)
   })
 
   test('a kill request without a reason is refused and the list stays empty', async () => {

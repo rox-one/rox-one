@@ -47,6 +47,7 @@ import { createMemoryMoneyStore, release } from '../../../packages/cloud-runner/
 import type { AccountLimits } from '../../../packages/cloud-runner/src/limits.ts'
 import type { SandboxProvider } from '../../../packages/cloud-runner/src/sandbox.ts'
 import { capabilityUnavailable } from '../../../packages/cloud-runner/src/sandbox.ts'
+import { CloudRunnerError } from '../../../packages/cloud-runner/src/types.ts'
 import { createAdminApp } from './admin.ts'
 import { createApp, DEFAULT_PRICE_SHEET } from './app.ts'
 import type { CloudApp, DeclaredCapabilities } from './app.ts'
@@ -465,6 +466,34 @@ async function main() {
             record.expiresAt,
           ),
         )
+        try {
+          await provider.get(record.id)
+        } catch (error) {
+          if (error instanceof CloudRunnerError && error.code === 'not_found') {
+            record.state = 'failed'
+            await runtime.afterStop({
+              tenantId: record.tenantId,
+              sandboxId: record.id,
+              startedAt: record.startedAt ?? record.createdAt,
+              stoppedAt: Date.now(),
+              ...(record.rateCentsPerHour === undefined
+                ? {}
+                : { rateCentsPerHour: record.rateCentsPerHour }),
+            })
+            const line = store.usage.find(
+              (row) => row.tenantId === record.tenantId && row.ref === record.id,
+            )
+            if (line !== undefined) {
+              line.stoppedAt = Date.now()
+              if (record.costCents > 0) line.cents = record.costCents
+            }
+            console.error(
+              `Rox Cloud: машина ${record.id} не найдена у провайдера — помечена failed, резерв закрыт`,
+            )
+            continue
+          }
+          throw error
+        }
         console.log(
           `Rox Cloud: машина ${record.id} восстановлена в провайдере «${record.providerId}»`,
         )
@@ -746,6 +775,9 @@ async function main() {
 
   const server = Bun.serve({
     port,
+    // Long commands and a first interactive-shell start can exceed the default
+    // 10 s; keep the request open while the machine works.
+    idleTimeout: 255,
     fetch: async (req: Request, bunServer): Promise<Response> => {
       const ip = bunServer.requestIP(req)?.address
       if (ip !== undefined) ipByRequest.set(req, ip)

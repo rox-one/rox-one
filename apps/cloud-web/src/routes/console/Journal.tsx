@@ -91,7 +91,12 @@ export default function ConsoleJournal(): JSX.Element {
     {
       key: 'reason',
       label: 'Причина',
-      render: (row) => (row.reason.length > 0 ? row.reason : '—'),
+      render: (row) =>
+        row.reason.length === 0
+          ? '—'
+          : row.reason === 'customer request'
+            ? 'запрос клиента'
+            : row.reason,
     },
   ]
 

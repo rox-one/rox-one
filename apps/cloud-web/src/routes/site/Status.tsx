@@ -24,11 +24,11 @@ const INCIDENT_LABEL: Readonly<Record<IncidentStatus, string>> = {
   resolved: 'решено',
 }
 
-const PROVIDERS: readonly { name: string; href: string; note: string }[] = [
-  { name: 'Daytona', href: 'https://status.app.daytona.io/', note: 'Официальная страница состояния Daytona.' },
-  { name: 'Modal', href: 'https://status.modal.com/', note: 'Официальная страница состояния Modal.' },
-  { name: 'E2B', href: 'https://status.e2b.dev/', note: 'Официальная страница состояния E2B.' },
-]
+const PROBE_LABEL: Readonly<Record<ProbeState, string>> = {
+  checking: 'Проверяем',
+  ok: 'Работает',
+  down: 'Нет ответа',
+}
 
 export default function SiteStatus(): JSX.Element {
   const [probe, setProbe] = createSignal<ProbeState>('checking')
@@ -127,7 +127,7 @@ export default function SiteStatus(): JSX.Element {
       <PageHeader
         eyebrow="Состояние"
         title="Состояние Rox Cloud"
-        description="Эта страница проверяет /health Rox Cloud API прямо из вашего браузера и показывает живые происшествия из /v1/status. Состояние поставщиков она не пересказывает — для этого есть их собственные страницы."
+        description="Эта страница проверяет /health Rox Cloud API прямо из вашего браузера и показывает живые происшествия из /v1/status."
         actions={
           <>
             <a class="btn btn-secondary" href="/docs">
@@ -286,42 +286,51 @@ curl -sS "$ROX_API_URL/v1/status"
         </Show>
       </section>
 
-      <section class="site-section" aria-labelledby="providers-title">
+      <section class="site-section" aria-labelledby="service-title">
         <div class="site-section-head">
-          <p class="site-eyebrow">Поставщики</p>
-          <h2 class="site-title" id="providers-title">
-            Где смотреть площадки поставщиков
+          <p class="site-eyebrow">Состояние сервиса</p>
+          <h2 class="site-title" id="service-title">
+            Что работает в Rox Cloud
           </h2>
           <p class="site-lede">
-            Машины работают на площадках поставщиков. Их состояние Rox не копирует и не подставляет свои
-            адреса: ссылки ведут на официальные страницы. Сейчас запуск идёт на Daytona и только для
-            Linux; Windows и H100 — по запросу, пока у организации нет класса и кредитов GPU.
+            Отсюда видно три части Rox Cloud: API, сайт и запуск машин. Состояние API и запуска
+            берётся из проверки выше, поэтому отдельного опроса нет.
           </p>
         </div>
-        <ul class="provider-links">
-          <For each={PROVIDERS}>
-            {(provider) => (
-              <li class="provider-link">
-                <div>
-                  <p class="provider-name">{provider.name}</p>
-                  <p class="provider-note">{provider.note}</p>
-                </div>
-                <a
-                  class="btn btn-secondary btn-sm"
-                  href={provider.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Открыть страницу {provider.name}
-                </a>
-              </li>
-            )}
-          </For>
+        <ul class="service-grid">
+          <li class="service-card" data-state={probe()}>
+            <div class="service-card-head">
+              <p class="service-name">API Rox Cloud</p>
+              <span class="service-state">{PROBE_LABEL[probe()]}</span>
+            </div>
+            <p class="service-note">
+              Проверка выше запрашивает <code>/health</code> из вашего браузера, без ключа. Ответ с
+              телом <code>{'{"ok":true}'}</code> и есть признак работы.
+            </p>
+          </li>
+          <li class="service-card" data-state="ok">
+            <div class="service-card-head">
+              <p class="service-name">Сайт и документация</p>
+              <span class="service-state">Работает</span>
+            </div>
+            <p class="service-note">
+              Страницы, цены и справка считаются в браузере, поэтому открываются, даже когда API
+              молчит.
+            </p>
+          </li>
+          <li class="service-card" data-state={probe()}>
+            <div class="service-card-head">
+              <p class="service-name">Запуск машин</p>
+              <span class="service-state">{PROBE_LABEL[probe()]}</span>
+            </div>
+            <p class="service-note">
+              Linux-машина запускается из <A href="/console?guest=1">кабинета</A>. Список машин и
+              журнал живут там же и работают, пока отвечает API.
+            </p>
+          </li>
         </ul>
-        <p class="site-note site-note--plain">
-          <strong>Если поставщик недоступен,</strong> Rox вернёт <code>provider_error</code> с номером
-          запроса — назовите его поддержке. Ключи и заголовок Authorization в журнал не попадают, и
-          пересылать их при разборе не нужно.
+        <p class="service-soon">
+          <strong>Скоро:</strong> машины на Windows и машины с GPU.
         </p>
       </section>
 
@@ -345,7 +354,7 @@ curl -sS "$ROX_API_URL/v1/status"
             <strong>Происшествия</strong> — из <code>/v1/status</code>, без ключа. Если этот запрос не
             прошёл, страница честно пишет, что список недоступен, и не выдаёт пустоту за «всё хорошо».
           </li>
-          <li>Страница не проверяет поставщиков, кошелёк и отдельные машины: для этого есть кабинет и журнал.</li>
+          <li>Страница не проверяет кошелёк и отдельные машины: для этого есть кабинет и журнал.</li>
         </ul>
       </section>
 

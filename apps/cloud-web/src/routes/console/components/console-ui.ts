@@ -73,15 +73,15 @@ export interface MachineSize {
   gpu?: GpuSpec | null
 }
 
-/** `2 ядра · 4 ГБ памяти · 8 ГБ диска · 1×H100` without empty parts. */
+/** One machine size in the product's words: `2 CPU · 4 GB RAM · 8 GB SSD`. */
 export function sizeLine(size: MachineSize): string {
   const parts: string[] = []
-  if (size.cpu !== null && size.cpu !== undefined && size.cpu > 0) parts.push(coresLabel(size.cpu))
+  if (size.cpu !== null && size.cpu !== undefined && size.cpu > 0) parts.push(`${size.cpu} CPU`)
   if (size.memoryGb !== null && size.memoryGb !== undefined && size.memoryGb > 0) {
-    parts.push(`${size.memoryGb} ГБ памяти`)
+    parts.push(`${size.memoryGb} GB RAM`)
   }
   if (size.diskGb !== null && size.diskGb !== undefined && size.diskGb > 0) {
-    parts.push(`${size.diskGb} ГБ диска`)
+    parts.push(`${size.diskGb} GB SSD`)
   }
   const card = gpuName(size.gpu)
   if (card !== null) parts.push(card)
@@ -95,11 +95,11 @@ export function ttlLabel(seconds: number): string {
   return formatDuration(seconds)
 }
 
-/** `us` and `us-west-4` carry the vendor's own meaning; anything else is its id. */
+/** The public site names behind the region ids; anything unknown stays its id. */
 export function regionLabel(id: string | null | undefined): string {
-  if (id === null || id === undefined || id.length === 0) return 'поставщик выбирает сам'
-  if (id === 'us') return 'us · общая'
-  if (id === 'us-west-4') return 'us-west-4 · выделенная'
+  if (id === null || id === undefined || id.length === 0) return 'площадка не указана'
+  if (id === 'us') return 'США, Запад 1'
+  if (id === 'us-west-4') return 'США, Запад 4'
   return id
 }
 
@@ -144,6 +144,10 @@ const AUDIT_LABELS: Record<string, string> = {
   'sandbox.stop': 'Остановка машины',
   'sandbox.delete': 'Удаление машины',
   'sandbox.extend': 'Продление машины',
+  'sandbox.preview': 'Ссылка на сайт',
+  'sandbox.ssh': 'SSH-доступ',
+  'sandbox.snapshot': 'Снимок машины',
+  'sandbox.ssh_key': 'SSH-ключ',
   'tenant.guest': 'Гостевой вход',
   'tenant.credit': 'Пополнение баланса',
   'tenant.rotate_key': 'Перевыпуск ключа',

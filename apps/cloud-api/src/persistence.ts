@@ -344,6 +344,21 @@ export function applyState(state: PersistedState, deps: PersistenceDeps): void {
       `Rox Cloud: машина ${record.id} арендатора ${record.tenantId} была в состоянии ${was} при остановке — помечена как failed, ${note}`,
     )
   }
+
+  // An invoice line whose machine is already finished must not keep running
+  // after a reload. A line saved without a stop time is closed at the machine's
+  // own deadline, or at load time when there is none, and follows the final
+  // cost the record carries. Lines that already stopped are left untouched.
+  for (const record of store.sandboxes.values()) {
+    if (!TERMINAL_STATES[record.state]) continue
+    const line = store.usage.find(
+      (row) => row.tenantId === record.tenantId && row.ref === record.id,
+    )
+    if (line === undefined || line.stoppedAt !== undefined) continue
+    line.stoppedAt =
+      record.expiresAt !== undefined && record.expiresAt <= atMs ? record.expiresAt : atMs
+    line.cents = record.costCents
+  }
 }
 
 /**

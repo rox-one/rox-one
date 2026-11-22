@@ -6,6 +6,132 @@
   overflow-x: clip;
 }
 
+/* ---------- Боковое меню: шапка и сворачивание ---------- */
+
+.console-nav-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Марка и название делят строку с кнопкой сворачивания. */
+.console-shell .console-brand {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 2px 4px;
+  border-bottom: 0;
+}
+
+.console-brand-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.console-nav-toggle {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.console-nav-toggle:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-sunken);
+  color: var(--ink);
+}
+
+/* Стрелка смотрит в сторону, куда уедет меню. */
+.console-nav-toggle .icon {
+  transform: rotate(180deg);
+  transition: transform var(--dur-fast) ease;
+}
+
+.console-shell.is-nav-collapsed .console-nav-toggle .icon {
+  transform: none;
+}
+
+/*
+ * Свёрнутое меню — только значки. Ширина полосы меняется через ту же
+ * переменную сетки, а подписи остаются в дереве доступности (sr-only),
+ * поэтому у каждой ссылки сохраняется имя.
+ */
+@media (min-width: 901px) {
+  .console-shell.is-nav-collapsed {
+    --app-nav: 64px;
+  }
+
+  .console-shell.is-nav-collapsed .console-nav {
+    padding: 14px 8px;
+  }
+
+  .console-shell.is-nav-collapsed .console-nav-head {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .console-shell.is-nav-collapsed .console-brand {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .console-shell.is-nav-collapsed .console-brand-text {
+    display: none;
+  }
+
+  .console-shell.is-nav-collapsed .app-nav-links a {
+    justify-content: center;
+    padding: 8px 0;
+  }
+
+  .console-shell.is-nav-collapsed .console-nav-foot {
+    justify-items: center;
+    font-size: 10.5px;
+  }
+
+  .console-shell.is-nav-collapsed .console-nav-foot > span {
+    display: none;
+  }
+}
+
+/* На узком экране меню становится верхней полосой: сворачивать нечего. */
+@media (max-width: 900px) {
+  .console-nav-head {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .console-nav-toggle {
+    display: none;
+  }
+
+  /* Свёрнутость, запомненная на большом экране, здесь не прячет подписи. */
+  .console-shell .console-nav-label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+    white-space: normal;
+  }
+}
+
 /* ---------- Верхняя полоса ---------- */
 
 .console-topbar {

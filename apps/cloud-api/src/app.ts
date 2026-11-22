@@ -559,14 +559,46 @@ function base64Utf8(text: string): string {
 }
 
 /**
+ * The vendor image's home is `/home/daytona`; customers only ever see `~` and
+ * a shell that starts in `/home/rox`. The block is appended once, so repeated
+ * session starts do not stack copies of it.
+ */
+const HOME_ALIAS = '/home/rox'
+const REAL_HOME = '/home/daytona'
+const HOME_RC_BLOCK = `
+# Rox machine home
+export HOME=${HOME_ALIAS}
+cd ${HOME_ALIAS} 2>/dev/null || true
+PS1='rox@rox-computer:\\w\\$ '
+`
+
+/**
+ * Point `/home/rox` at the image's home and give the shell a Rox prompt.
+ *
+ * `sudo -n` is best effort: an image without passwordless sudo simply keeps
+ * the vendor path, and the caller never fails a boot over a prompt.
+ */
+function homeSetupScript(): string {
+  return [
+    `if [ ! -e ${HOME_ALIAS} ] && [ -d ${REAL_HOME} ]; then sudo -n ln -sfn ${REAL_HOME} ${HOME_ALIAS} 2>/dev/null || true; fi`,
+    `if [ -f ${REAL_HOME}/.bashrc ] || [ -w ${REAL_HOME} ]; then if ! grep -q 'rox@rox-computer' ${REAL_HOME}/.bashrc 2>/dev/null; then echo ${base64Utf8(HOME_RC_BLOCK)} | base64 -d >> ${REAL_HOME}/.bashrc 2>/dev/null || true; fi; fi`,
+  ].join('; ')
+}
+
+/**
  * Start (or reuse) a `bash -i` that reads the FIFO forever. `exec 3<>` opens
  * the FIFO read-write so the shell never sees end-of-file between commands.
+ * The shell inherits `/home/rox` as home and working directory; when the
+ * alias could not be made it falls back to the image's real home.
  */
 function sessionStartScript(): string {
   return [
+    homeSetupScript(),
+    `export HOME=${HOME_ALIAS}`,
+    `cd ${HOME_ALIAS} 2>/dev/null || cd ${REAL_HOME} 2>/dev/null || true`,
     `mkdir -p ${SESSION_DIR}`,
-    `if [ ! -p ${SESSION_FIFO} ]; then rm -f ${SESSION_FIFO} ${SESSION_OUT}; mkfifo ${SESSION_FIFO}; setsid nohup bash -c 'exec 3<>${SESSION_FIFO}; exec bash -i <&3 >${SESSION_OUT} 2>&1' >/dev/null 2>&1 & echo $! > ${SESSION_PID}; fi`,
-    'sleep 0.3',
+    `if [ ! -p ${SESSION_FIFO} ] || [ ! -s ${SESSION_PID} ] || ! kill -0 "$(cat ${SESSION_PID})" 2>/dev/null; then rm -f ${SESSION_FIFO} ${SESSION_OUT} ${SESSION_PID}; mkfifo ${SESSION_FIFO}; setsid nohup bash -c 'export HOME=${HOME_ALIAS}; export PS1="rox@rox-computer:\\w\\$ "; cd ${HOME_ALIAS} 2>/dev/null || cd ${REAL_HOME} 2>/dev/null || true; exec 3<>${SESSION_FIFO}; exec script -qefc "bash --noprofile --norc -i" /dev/null <&3 >${SESSION_OUT} 2>&1' >/dev/null 2>&1 & echo $! > ${SESSION_PID}; fi`,
+    'sleep 0.6',
     'echo ready',
     'pwd',
   ].join('; ')
@@ -601,30 +633,46 @@ interface SessionOutput {
 
 /** Everything the shell printed between this call's markers, minus its noise. */
 function parseSessionOutput(text: string, marker: string): SessionOutput | null {
-  const endToken = `${marker}:END:`
-  const endAt = text.lastIndexOf(endToken)
-  if (endAt < 0) return null
-  const rc = /^(\d+)/.exec(text.slice(endAt + endToken.length))
-  // The end token itself starts with the marker, so the search must stop
-  // before it; otherwise the start and end collapse and the body is empty.
-  const startAt = text.lastIndexOf(marker, endAt - 1)
-  let body = startAt < 0 ? text.slice(0, endAt) : text.slice(startAt + marker.length, endAt)
-  // One newline after the start marker and the blank line before the end
-  // marker are the markers' own frame, not command output.
-  body = body.replace(/^\r?\n/, '').replace(/\n+$/, '')
-  const lines = body.split('\n')
-  const last = lines[lines.length - 1] ?? ''
-  let cwd = '/home/daytona'
-  if (last.startsWith('/')) {
-    cwd = last
-    lines.pop()
+  // The interactive shell can echo the payload (or its tail) before the start
+  // marker; only a line that is exactly the marker is the frame. Matching a
+  // substring would pick that echo and swallow the command output.
+  const lines = text.replace(/\r/g, '').split('\n')
+  let endIndex = -1
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    if ((lines[index] ?? '').startsWith(`${marker}:END:`)) {
+      endIndex = index
+      break
+    }
   }
-  const stdout = lines
-    .filter(
-      (line) =>
-        !/^bash: (?:cannot set terminal process group|no job control in this shell)/.test(line),
-    )
-    .join('\n')
+  if (endIndex < 0) return null
+  const rc = /^(\d+)/.exec((lines[endIndex] ?? '').slice(`${marker}:END:`.length))
+  let startIndex = -1
+  for (let index = endIndex - 1; index >= 0; index -= 1) {
+    if (lines[index] === marker) {
+      startIndex = index
+      break
+    }
+  }
+  if (startIndex < 0) return null
+
+  const body = lines.slice(startIndex + 1, endIndex).filter((line) => {
+    if (line.trim().length === 0) return false
+    if (line.includes(marker)) return false
+    if (line.startsWith('bash: cannot set terminal process group')) return false
+    if (line.startsWith('bash: no job control in this shell')) return false
+    return true
+  })
+  // The last path inside the frame is the `pwd` the script printed after the
+  // user's command; it belongs to cwd, not to the command's stdout.
+  let cwd = HOME_ALIAS
+  for (let index = body.length - 1; index >= 0; index -= 1) {
+    if ((body[index] ?? '').startsWith('/')) {
+      cwd = body[index]!
+      body.splice(index, 1)
+      break
+    }
+  }
+  const stdout = body.join('\n')
   return {
     stdout: stdout.length === 0 ? '' : `${stdout}\n`,
     cwd,
@@ -683,6 +731,136 @@ function portProbeScript(port: number): string {
     'finally:',
     '    probe.close()',
     'sys.exit(0)',
+  ].join('\n')
+}
+
+/** Busiest first, one line per process, no header: the console's process card. */
+const PROCESS_LIST_COMMAND = 'ps -eo pid=,user=,pcpu=,rss=,args= --sort=-pcpu | head -30'
+
+interface ProcessRow {
+  readonly pid: number
+  readonly user: string
+  readonly cpuPercent: number
+  readonly memoryKb: number
+  readonly command: string
+}
+
+/** Parse `pid user pcpu rss args…`; a line that does not fit is skipped. */
+function parseProcessTable(stdout: string): ProcessRow[] {
+  const rows: ProcessRow[] = []
+  for (const raw of stdout.split('\n')) {
+    const line = raw.trim()
+    if (line.length === 0) continue
+    const fields = line.split(/\s+/)
+    if (fields.length < 5) continue
+    const pid = Number(fields[0])
+    if (!Number.isInteger(pid) || pid <= 0) continue
+    const cpu = Number(fields[2])
+    const rss = Number(fields[3])
+    rows.push({
+      pid,
+      user: fields[1]!,
+      cpuPercent: Number.isFinite(cpu) ? Math.round(Math.max(0, cpu) * 10) / 10 : 0,
+      memoryKb: Number.isFinite(rss) ? Math.max(0, Math.round(rss)) : 0,
+      command: fields.slice(4).join(' '),
+    })
+  }
+  return rows
+}
+
+/**
+ * One `kill -TERM`, with the machine's own scaffolding refused: init (pid 1),
+ * the session shell and the vendor toolbox daemon (`/usr/local/bin/daytona`,
+ * which owns exec and files inside the sandbox). Each refusal answers with a
+ * marker the route turns into a readable error.
+ */
+function processKillScript(pid: number): string {
+  return [
+    `if [ ${pid} -le 1 ]; then echo ROX_PROTECTED; exit 3; fi`,
+    `if [ -f ${SESSION_PID} ] && [ "${pid}" = "$(cat ${SESSION_PID} 2>/dev/null || true)" ]; then echo ROX_PROTECTED; exit 3; fi`,
+    `cmd=$(cat /proc/${pid}/cmdline 2>/dev/null | tr '\\0' ' ' || true)`,
+    'if [ -z "$cmd" ]; then echo ROX_MISSING; exit 4; fi',
+    `name=$(cat /proc/${pid}/comm 2>/dev/null || true)`,
+    'first=${cmd%% *}',
+    'case "$first" in daytona|*/daytona|*toolbox*) echo ROX_PROTECTED; exit 3;; esac',
+    'case "$name" in daytona|daytona-daemon|toolbox*) echo ROX_PROTECTED; exit 3;; esac',
+    `if kill -TERM ${pid} 2>/dev/null; then echo ok; else echo ROX_MISSING; exit 4; fi`,
+  ].join('; ')
+}
+
+/**
+ * Egress from inside the machine, measured honestly: TCP handshake latency to
+ * a public resolver, two HTTP probes (either one proves the internet works),
+ * and a 1 MB download for throughput. Anything blocked stays `null`.
+ */
+const NETWORK_CHECK_NOTE_BLOCKED = 'Исходящая сеть машины закрыта: HTTP-проверка не прошла.'
+const NETWORK_CHECK_NOTE_SLOW = 'Интернет есть, но скорость измерить не удалось.'
+const NETWORK_CHECK_SCRIPT = `import json, socket, time, urllib.request
+
+def tcp_latency():
+    start = time.monotonic()
+    try:
+        probe = socket.create_connection(("1.1.1.1", 443), timeout=3.0)
+    except OSError:
+        return None
+    probe.close()
+    return int(round((time.monotonic() - start) * 1000))
+
+def http_ok(url):
+    try:
+        request = urllib.request.Request(url, headers={"User-Agent": "rox-network-check"})
+        with urllib.request.urlopen(request, timeout=5) as answer:
+            return 100 <= answer.status < 500
+    except Exception:
+        return False
+
+def download_mbps(url):
+    try:
+        request = urllib.request.Request(url, headers={"User-Agent": "rox-network-check"})
+        start = time.monotonic()
+        total = 0
+        with urllib.request.urlopen(request, timeout=10) as answer:
+            while True:
+                chunk = answer.read(65536)
+                if not chunk:
+                    break
+                total += len(chunk)
+        elapsed = time.monotonic() - start
+        if elapsed <= 0 or total <= 0:
+            return None
+        return round(total * 8 / elapsed / 1000000, 1)
+    except Exception:
+        return None
+
+latency = tcp_latency()
+online = http_ok("https://example.com") or http_ok("https://opencode.ai")
+if online:
+    speed = download_mbps("https://speed.cloudflare.com/__down?bytes=1000000")
+    note = None if speed is not None else "${NETWORK_CHECK_NOTE_SLOW}"
+else:
+    speed = None
+    note = "${NETWORK_CHECK_NOTE_BLOCKED}"
+print(json.dumps({"latency_ms": latency, "online": online, "download_mbps": speed, "note": note}))
+`
+
+/**
+ * Remove one file by absolute path. A directory is refused before `os.remove`
+ * so the route never turns into a recursive delete by accident.
+ */
+function fileDeleteScript(path: string): string {
+  return [
+    'import base64, os, sys',
+    `path = base64.b64decode("${base64Utf8(path)}").decode("utf-8")`,
+    'if not os.path.isabs(path):',
+    '    sys.exit(2)',
+    'if os.path.isdir(path):',
+    '    sys.exit(3)',
+    'try:',
+    '    os.remove(path)',
+    'except FileNotFoundError:',
+    '    sys.exit(4)',
+    'except OSError:',
+    '    sys.exit(5)',
   ].join('\n')
 }
 
@@ -1327,6 +1505,13 @@ export function createApp(options: CloudApiOptions): CloudApp {
       createdAt: now(),
       ...(record.startedAt === undefined ? {} : { startedAt: record.startedAt }),
     })
+    // Home alias and Rox prompt are best effort: a machine without
+    // passwordless sudo boots normally and simply keeps the image's path.
+    try {
+      await lease.provider.exec(record.id, homeSetupScript(), { timeoutMs: 15_000 })
+    } catch {
+      // A convenience for the terminal, never a condition of the boot.
+    }
     return record
   }
 
@@ -1467,6 +1652,112 @@ export function createApp(options: CloudApiOptions): CloudApp {
     }
     networkCache.set(cacheKey, { at: now(), body })
     return json(200, body)
+  }
+
+  /**
+   * What runs inside the machine, busiest first. The list is read from `ps`,
+   * so a machine without it answers an upstream failure instead of an empty
+   * card that looks like a quiet box.
+   */
+  async function processesRoute(auth: VerifiedApiKey, id: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Список процессов')
+    const provider = await providerForRecord(record)
+    const result = await provider.exec(record.id, PROCESS_LIST_COMMAND, { timeoutMs: 10_000 })
+    if (result.exitCode !== 0) {
+      throw new ApiError('provider_error', 'Машина не отдала список процессов: ps недоступен')
+    }
+    return json(200, {
+      object: 'list',
+      data: parseProcessTable(result.stdout).map((row) => ({
+        pid: row.pid,
+        user: row.user,
+        cpu_percent: row.cpuPercent,
+        memory_kb: row.memoryKb,
+        command: row.command,
+      })),
+    })
+  }
+
+  /**
+   * Stop one process with `kill -TERM`. Init, the session shell and the
+   * vendor toolbox are refused with 409; a process already gone is 404.
+   */
+  async function killProcessRoute(auth: VerifiedApiKey, id: string, rawPid: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Процессы')
+    const pid = Number(rawPid)
+    if (!Number.isInteger(pid) || pid <= 0 || pid > 4_194_304) {
+      throw new ApiError('invalid_request', 'pid должен быть целым положительным числом')
+    }
+    if (pid === 1) {
+      throw new ApiError('conflict', 'Процесс init держит машину: остановить его нельзя')
+    }
+    const provider = await providerForRecord(record)
+    const result = await provider.exec(record.id, processKillScript(pid), { timeoutMs: 10_000 })
+    if (result.stdout.includes('ROX_PROTECTED')) {
+      throw new ApiError('conflict', 'Этот процесс держит машину или терминал: остановить его нельзя')
+    }
+    if (result.exitCode !== 0 || !result.stdout.includes('ok')) {
+      throw new ApiError('not_found', 'Процесс не найден или уже завершился')
+    }
+    // The staff journal records the route (path with the pid) and never the
+    // command line, which could carry a token; no separate trail entry is
+    // written because the shared audit vocabulary has no process action.
+    return json(200, { ok: true })
+  }
+
+  /**
+   * Whether the machine can reach the internet, and how fast. Every number is
+   * measured inside the machine; a blocked egress reports nulls and a short
+   * note instead of a made-up success.
+   */
+  async function networkCheckRoute(auth: VerifiedApiKey, id: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Проверка сети')
+    const provider = await providerForRecord(record)
+    const result = await provider.exec(
+      record.id,
+      `echo ${base64Utf8(NETWORK_CHECK_SCRIPT)} | base64 -d | python3 -`,
+      { timeoutMs: 30_000 },
+    )
+    if (result.exitCode !== 0) {
+      throw new ApiError('provider_error', 'Машина не отдала проверку сети: python3 недоступен')
+    }
+    let sample: Record<string, unknown>
+    try {
+      const line = result.stdout.trim().split('\n').pop() ?? ''
+      const parsed: unknown = JSON.parse(line)
+      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('not an object')
+      }
+      sample = parsed as Record<string, unknown>
+    } catch {
+      throw new ApiError('provider_error', 'Машина не отдала проверку сети: ответ не разобран')
+    }
+    const latency = sample['latency_ms']
+    const speed = sample['download_mbps']
+    const online = sample['online'] === true
+    const latencyMs = typeof latency === 'number' && Number.isFinite(latency)
+      ? Math.max(0, Math.round(latency))
+      : null
+    const downloadMbps = typeof speed === 'number' && Number.isFinite(speed) ? Math.max(0, speed) : null
+    // The machine's own note wins; a script that stayed silent still gets the
+    // honest sentence, so a blocked egress never looks like a fast machine.
+    const rawNote = sample['note']
+    const note = typeof rawNote === 'string' && rawNote.length > 0
+      ? rawNote
+      : online
+        ? (downloadMbps === null ? NETWORK_CHECK_NOTE_SLOW : null)
+        : NETWORK_CHECK_NOTE_BLOCKED
+    return json(200, {
+      object: 'network_check',
+      at: iso(now()),
+      online,
+      latency_ms: latencyMs,
+      download_mbps: downloadMbps,
+      ...(note === null ? {} : { note }),
+    })
   }
 
   /**
@@ -1669,12 +1960,13 @@ export function createApp(options: CloudApiOptions): CloudApp {
     const record = sandboxFor(auth.tenant.id, id)
     requireRunning(record, 'Терминал')
     const provider = await providerForRecord(record)
-    const result = await provider.exec(record.id, sessionStartScript(), { timeoutMs: 15_000 })
+    const result = await provider.exec(record.id, sessionStartScript(), { timeoutMs: 35_000 })
     const lines = result.stdout.trim().split('\n').filter((line) => line.length > 0)
+    const state = lines[0] === 'ready' ? 'ready' : 'unavailable'
     const cwd = lines.length > 1 && (lines[lines.length - 1] ?? '').startsWith('/')
       ? lines[lines.length - 1]!
-      : '/home/daytona'
-    return json(200, { object: 'session', state: 'ready', cwd })
+      : HOME_ALIAS
+    return json(200, { object: 'session', state, cwd })
   }
 
   /**
@@ -1922,6 +2214,38 @@ export function createApp(options: CloudApiOptions): CloudApp {
     const provider = await providerForRecord(record)
     const bytes = new Uint8Array(await req.arrayBuffer())
     await provider.writeFile(record.id, path, bytes)
+    return new Response(null, { status: 204 })
+  }
+
+  /**
+   * Remove one file. The path is absolute and free of `..`; the script itself
+   * refuses a directory, so a mistaken path can never wipe a tree.
+   */
+  async function deleteFileRoute(auth: VerifiedApiKey, id: string, url: URL): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Удаление файла')
+    const path = url.searchParams.get('path')
+    if (path === null || path.length === 0) {
+      throw new ApiError('invalid_request', 'Параметр path обязателен: какой файл удалить')
+    }
+    if (!path.startsWith('/') || path.split('/').includes('..') || /[\n\r\0]/.test(path)) {
+      throw new ApiError('invalid_request', 'Путь к файлу должен быть абсолютным и без «..»')
+    }
+    const provider = await providerForRecord(record)
+    const result = await provider.exec(
+      record.id,
+      `echo ${base64Utf8(fileDeleteScript(path))} | base64 -d | python3 -`,
+      { timeoutMs: 15_000 },
+    )
+    if (result.exitCode === 3) {
+      throw new ApiError('invalid_request', 'Удалить можно только файл, а не каталог')
+    }
+    if (result.exitCode === 4) {
+      throw new ApiError('not_found', 'Файл не найден')
+    }
+    if (result.exitCode !== 0) {
+      throw new ApiError('provider_error', 'Машина не удалила файл')
+    }
     return new Response(null, { status: 204 })
   }
 
@@ -2552,11 +2876,25 @@ export function createApp(options: CloudApiOptions): CloudApp {
       if (segments.length === 5 && segments[3] === 'ssh-keys' && method === 'DELETE') {
         return deleteSshKeyRoute(requireAuth(req, 'sandboxes:write'), segments[2], segments[4])
       }
+      if (
+        segments.length === 6 &&
+        segments[3] === 'processes' &&
+        segments[5] === 'kill' &&
+        method === 'POST'
+      ) {
+        return killProcessRoute(requireAuth(req, 'sandboxes:write'), segments[2], segments[4])
+      }
       if (segments.length === 4) {
         const id = segments[2]
         const action = segments[3]
         if (action === 'exec' && method === 'POST') {
           return execRoute(requireAuth(req, 'sandboxes:write'), id, req)
+        }
+        if (action === 'processes' && method === 'GET') {
+          return processesRoute(requireAuth(req, 'sandboxes:read'), id)
+        }
+        if (action === 'network-check' && method === 'GET') {
+          return networkCheckRoute(requireAuth(req, 'sandboxes:read'), id)
         }
         if (action === 'ports' && method === 'GET') {
           return portsRoute(requireAuth(req, 'sandboxes:read'), id)
@@ -2590,6 +2928,9 @@ export function createApp(options: CloudApiOptions): CloudApp {
         }
         if (action === 'files' && method === 'PUT') {
           return writeFileRoute(requireAuth(req, 'sandboxes:write'), id, url, req)
+        }
+        if (action === 'files' && method === 'DELETE') {
+          return deleteFileRoute(requireAuth(req, 'sandboxes:write'), id, url)
         }
         if (action === 'stop' && method === 'POST') {
           return stopRoute(requireAuth(req, 'sandboxes:write'), id)

@@ -14,7 +14,6 @@ import {
   PageHeader,
   Select,
   Skeleton,
-  Switch,
   useToast,
 } from '@/components'
 import type { BadgeTone } from '@/components'
@@ -24,21 +23,22 @@ import { formatCents, formatMoney, shortId } from '@/lib/format'
 
 import { Stepper } from './components/Stepper'
 import { useConsoleSession } from './components/console-session'
-import { coresLabel, errorText, gpuName, sizeLine, ttlLabel } from './components/console-ui'
+import { errorText, gpuName, ttlLabel } from './components/console-ui'
 
 import './products.css'
 
 type GroupId = 'linux' | 'windows' | 'gpu'
 
+/** Groups run Linux → Windows → GPU; rows inside a group run large to small. */
 const GROUPS: readonly { id: GroupId; label: string; hint: string }[] = [
   { id: 'linux', label: 'Linux', hint: 'Сервер и разработка' },
   { id: 'windows', label: 'Windows', hint: 'Рабочий стол' },
-  { id: 'gpu', label: 'GPU', hint: 'Видеокарта в комплекте' },
+  { id: 'gpu', label: 'GPU', hint: 'С видеокартой' },
 ]
 
 const KNOWN_REGIONS: Record<string, string> = {
-  us: 'Общая (us)',
-  'us-west-4': 'Выделенная (us-west-4)',
+  us: 'США, Запад 1',
+  'us-west-4': 'США, Запад 4',
 }
 
 /** Shown only when the catalog cannot answer: two regions from the live API. */
@@ -61,7 +61,7 @@ interface MachineImage {
   custom?: boolean
   /** `false` only when the price list says this snapshot cannot boot now. */
   available?: boolean
-  /** The price list's own words for why a product is unavailable. */
+  /** The price list's own words for why a product is not bootable yet. */
   note?: string
 }
 
@@ -72,6 +72,34 @@ type SellableProduct = CloudMachineProduct & {
 }
 
 const PRODUCTS: readonly SellableProduct[] = DEFAULT_PRODUCTS
+
+/** One row of the catalog: a price-list product or a live snapshot beside it. */
+interface OptionRow {
+  key: string
+  name: string
+  image: MachineImage
+  group: GroupId
+  /** «Linux», «Windows» or «GPU» as the row's strip names the group. */
+  groupLabel: string
+  /** A named product of the price list, or a snapshot the list does not sell. */
+  kind: 'product' | 'image'
+  available: boolean
+  note: string | null
+  /** Cents per hour at the full price; the mode below decides the final rate. */
+  price: number
+}
+
+/** The machine a row represents, whatever it is called; equal keys are one row. */
+function shapeKey(image: MachineImage): string {
+  const gpu = image.gpu === null ? '' : `${image.gpu.type.toLowerCase()}x${image.gpu.count}`
+  return `${image.os}|${image.cpu}|${image.memoryGb}|${image.diskGb ?? ''}|${gpu}`
+}
+
+/** The same machine without the disk a live listing may leave out. */
+function sizeKey(image: MachineImage): string {
+  const gpu = image.gpu === null ? '' : `${image.gpu.type.toLowerCase()}x${image.gpu.count}`
+  return `${image.os}|${image.cpu}|${image.memoryGb}|${gpu}`
+}
 
 function groupOf(image: { os?: string; gpu?: GpuSpec | null }): GroupId {
   if (image.gpu !== null && image.gpu !== undefined) return 'gpu'
@@ -103,10 +131,13 @@ function imageFromProvider(image: ProviderImage): MachineImage | undefined {
   const product = PRODUCTS.find((entry) => entry.snapshot === name)
   const broken = BROKEN_SNAPSHOTS[name]
   const note = broken ?? product?.note
+  const label = image.label ?? name
   return {
     id: image.id,
     name,
-    label: image.label ?? name,
+    // A live label may still carry the upstream image owner; the customer sees
+    // a Rox image and the size it carries, never the vendor's own name.
+    label: /daytona/i.test(label) ? `Образ Rox · ${cpu}×${memoryGb}` : label,
     os: typeof image.os === 'string' && image.os.length > 0 ? image.os : 'linux',
     cpu,
     memoryGb,
@@ -122,12 +153,9 @@ const PRESET_IMAGES: readonly MachineImage[] = PRODUCTS.map(presetImage)
 
 /** Live snapshots the platform knows are broken; presets never come from here. */
 const BROKEN_SNAPSHOTS: Record<string, string> = {
-  'daytona-small':
-    'Старый снимок Daytona: команды в нём падают с «permission denied». Выберите образ из пресетов.',
-  'daytona-medium':
-    'Старый снимок Daytona: команды в нём падают с «permission denied». Выберите образ из пресетов.',
-  'daytona-large':
-    'Старый снимок Daytona: команды в нём падают с «permission denied». Выберите образ из пресетов.',
+  'daytona-small': 'Скоро: образ обновляется',
+  'daytona-medium': 'Скоро: образ обновляется',
+  'daytona-large': 'Скоро: образ обновляется',
 }
 
 /** A preset that would price this image the same way; only then it is safe to send `product`. */
@@ -147,6 +175,37 @@ function presetFor(image: MachineImage): SellableProduct | undefined {
 
 function gpuCents(gpu: GpuSpec | null): number {
   return gpu === null ? 0 : gpuCentsPerHour(gpu.type, gpu.count)
+}
+
+/** A server message as a customer may read it: no upstream owner names. */
+function customerText(message: string): string {
+  return message.replace(/daytona/gi, 'Rox')
+}
+
+/** `2 CPU · 4 GB RAM · 8 GB SSD · 1×H100`, the machine as the customer reads it. */
+function specLine(image: {
+  cpu: number
+  memoryGb: number
+  diskGb?: number | undefined
+  gpu: GpuSpec | null
+}): string {
+  const parts: string[] = [`${image.cpu} CPU`, `${image.memoryGb} GB RAM`]
+  if (image.diskGb !== undefined && image.diskGb > 0) parts.push(`${image.diskGb} GB SSD`)
+  const card = gpuName(image.gpu)
+  if (card !== null) parts.push(card)
+  return parts.join(' · ')
+}
+
+/** Full price of an hour for this image; a catalog product keeps its own number. */
+function priceOf(image: MachineImage): number {
+  const preset = presetFor(image)
+  if (preset !== undefined) return preset.centsPerHour
+  return retailCentsPerHour({
+    cpu: image.cpu,
+    memoryGb: image.memoryGb,
+    diskGb: image.diskGb ?? 0,
+    gpu: gpuCents(image.gpu),
+  })
 }
 
 /**
@@ -183,9 +242,46 @@ function nearestImage(
   return best
 }
 
+/** Large to small inside a group: a person scanning the list sees Про before Мини. */
+function bySize(left: OptionRow, right: OptionRow): number {
+  const a = left.image
+  const b = right.image
+  return (
+    b.cpu - a.cpu ||
+    b.memoryGb - a.memoryGb ||
+    (b.diskGb ?? 0) - (a.diskGb ?? 0) ||
+    left.name.localeCompare(right.name, 'ru')
+  )
+}
+
+interface CatalogRowProps {
+  row: OptionRow
+  active: boolean
+  onPick: (image: MachineImage) => void
+}
+
+/** One clickable catalog row; products and extra snapshots share it. */
+function CatalogRow(props: CatalogRowProps): JSX.Element {
+  return (
+    <button
+      type="button"
+      class="cfg-option"
+      classList={{ 'is-active': props.active }}
+      aria-pressed={props.active ? 'true' : 'false'}
+      onClick={() => props.onPick(props.row.image)}
+    >
+      <span class="cfg-option-main">
+        <span class="cfg-option-name">{props.row.name}</span>
+        <span class="cfg-option-spec">{specLine(props.row.image)}</span>
+      </span>
+      <span class="cfg-option-price">{formatMoney(props.row.price, { perHour: true })}</span>
+    </button>
+  )
+}
+
 interface LaunchBlock {
   text: string
-  kind: 'providers' | 'topup' | 'account' | 'images' | 'wait' | 'unavailable'
+  kind: 'platform' | 'topup' | 'account' | 'images' | 'wait' | 'unavailable'
 }
 
 interface LaunchFailure {
@@ -215,8 +311,6 @@ export default function ConsoleProducts(): JSX.Element {
   const [credentialsChecked, setCredentialsChecked] = createSignal(false)
   const [credentialsFailure, setCredentialsFailure] = createSignal<string | null>(null)
 
-  const [group, setGroup] = createSignal<GroupId>('linux')
-  const [plainGroup, setPlainGroup] = createSignal<GroupId>('linux')
   const [targetCpu, setTargetCpu] = createSignal(initialImage?.cpu ?? 2)
   const [targetMemory, setTargetMemory] = createSignal(initialImage?.memoryGb ?? 4)
   const [targetDisk, setTargetDisk] = createSignal(initialImage?.diskGb ?? 8)
@@ -233,20 +327,115 @@ export default function ConsoleProducts(): JSX.Element {
     imagesState() === 'live' ? liveImages() : [...PRESET_IMAGES],
   )
 
-  const pool = createMemo<MachineImage[]>(() => {
-    const cpuLimit = session.guest() ? 16 : 32
-    const current = group()
-    return allImages().filter((image) => {
-      if (image.available === false) return false
-      if (image.cpu > cpuLimit) return false
-      if (current === 'gpu') return image.gpu !== null
-      if (current === 'windows') return image.os === 'windows' && image.gpu === null
-      return image.os === 'linux' && image.gpu === null
-    })
+  const cpuLimit = createMemo(() => (session.guest() ? 16 : 32))
+
+  /**
+   * Every product in the price list as one catalog row, its live snapshot when
+   * one matches by name and size, then live snapshots the list does not sell.
+   */
+  const rows = createMemo<OptionRow[]>(() => {
+    const live = allImages().filter((image) => !image.fallback)
+    const used = new Set<MachineImage>()
+    const snapshots = new Set<string>()
+    const shapes = new Set<string>()
+    const sizes = new Set<string>()
+    const list: OptionRow[] = []
+    for (const product of PRODUCTS) {
+      const preset = presetImage(product)
+      const matched = live.find(
+        (entry) =>
+          !used.has(entry) &&
+          entry.name === product.snapshot &&
+          entry.cpu === product.cpu &&
+          entry.memoryGb === product.memoryGb &&
+          (entry.diskGb === undefined || entry.diskGb === product.diskGb),
+      )
+      const image = matched ?? preset
+      if (matched !== undefined) used.add(matched)
+      snapshots.add(product.snapshot)
+      snapshots.add(image.name)
+      // Both the catalog shape and the live shape count as taken, so a second
+      // listing of the same machine never becomes a row of its own.
+      shapes.add(shapeKey(preset))
+      sizes.add(sizeKey(preset))
+      if (matched !== undefined) {
+        shapes.add(shapeKey(matched))
+        sizes.add(sizeKey(matched))
+      }
+      const group = groupOf(product)
+      list.push({
+        key: product.id,
+        name: product.name,
+        image,
+        group,
+        groupLabel: GROUPS.find((entry) => entry.id === group)?.label ?? group,
+        kind: 'product',
+        available: image.available !== false,
+        note: image.note ?? product.note ?? null,
+        price: priceOf(image),
+      })
+    }
+    for (const image of live) {
+      // A live snapshot takes a row of its own only when neither its id, its
+      // exact shape, nor the same size with an unlisted disk is already shown
+      // under a product's own name.
+      const known =
+        used.has(image) ||
+        snapshots.has(image.name) ||
+        shapes.has(shapeKey(image)) ||
+        (image.diskGb === undefined && sizes.has(sizeKey(image)))
+      if (known) continue
+      used.add(image)
+      snapshots.add(image.name)
+      shapes.add(shapeKey(image))
+      sizes.add(sizeKey(image))
+      const group = groupOf(image)
+      list.push({
+        key: `live:${image.id}`,
+        name: image.label,
+        image,
+        group,
+        groupLabel: GROUPS.find((entry) => entry.id === group)?.label ?? group,
+        kind: 'image',
+        available: image.available !== false,
+        note: image.note ?? null,
+        price: priceOf(image),
+      })
+    }
+    return list.sort(bySize)
   })
 
+  const groups = createMemo(() =>
+    GROUPS.map((entry) => ({
+      ...entry,
+      rows: rows().filter(
+        (row) =>
+          row.kind === 'product' &&
+          row.group === entry.id &&
+          row.available &&
+          row.image.cpu <= cpuLimit(),
+      ),
+    })),
+  )
+
+  /** Snapshots beyond the price list: real machines, kept apart from the names. */
+  const extra = createMemo<OptionRow[]>(() =>
+    rows().filter(
+      (row) => row.kind === 'image' && row.available && row.image.cpu <= cpuLimit(),
+    ),
+  )
+
+  /** Everything that cannot boot now, collapsed into one «Скоро» strip. */
+  const soon = createMemo<OptionRow[]>(() => rows().filter((row) => !row.available))
+
+  const bootable = createMemo<MachineImage[]>(() =>
+    rows()
+      .filter((row) => row.available && row.image.cpu <= cpuLimit())
+      .map((row) => row.image),
+  )
+
   const nearest = createMemo<MachineImage | undefined>(() =>
-    nearestImage(pool(), targetCpu(), targetMemory(), targetDisk()),
+    nearestImage(bootable(), targetCpu(), targetMemory(), targetDisk()),
   )
 
   const selected = createMemo<MachineImage | undefined>(() => picked() ?? nearest())
@@ -261,22 +450,40 @@ export default function ConsoleProducts(): JSX.Element {
     )
   })
 
-  const activePreset = (product: CloudMachineProduct): boolean => {
+  const chosenProduct = createMemo<SellableProduct | undefined>(() => {
     const image = selected()
+    return image === undefined ? undefined : presetFor(image)
+  })
+
+  const chosenName = createMemo<string>(() => {
+    const image = selected()
+    if (image === undefined) return 'Машина не выбрана'
+    return chosenProduct()?.name ?? image.label
+  })
+
+  const isActive = (image: MachineImage): boolean => {
+    const current = selected()
     return (
-      image !== undefined &&
-      image.name === product.snapshot &&
-      image.cpu === product.cpu &&
-      image.memoryGb === product.memoryGb
+      current !== undefined &&
+      current.name === image.name &&
+      current.cpu === image.cpu &&
+      current.memoryGb === image.memoryGb
     )
+  }
+
+  const selectImage = (image: MachineImage): void => {
+    setTargetCpu(image.cpu)
+    setTargetMemory(image.memoryGb)
+    setTargetDisk(image.diskGb ?? targetDisk())
+    setPicked(image)
+    setLaunchError(null)
   }
 
   const selectPreset = (product: SellableProduct): void => {
     if (product.available === false) {
-      setPlanNote(product.note ?? `«${product.name}» сейчас недоступен: выберите другой продукт.`)
+      setPlanNote(product.note ?? 'Скоро: эта конфигурация пока не запускается.')
       return
     }
-    const fallback = presetImage(product)
     const live = allImages().find(
       (image) =>
         image.name === product.snapshot &&
@@ -284,10 +491,7 @@ export default function ConsoleProducts(): JSX.Element {
         image.memoryGb === product.memoryGb &&
         image.diskGb === product.diskGb,
     )
-    const image = live ?? fallback
-    const nextGroup = groupOf(product)
-    setGroup(nextGroup)
-    if (nextGroup !== 'gpu') setPlainGroup(nextGroup)
+    const image = live ?? presetImage(product)
     setTargetCpu(image.cpu)
     setTargetMemory(image.memoryGb)
     setTargetDisk(image.diskGb ?? product.diskGb)
@@ -296,42 +500,14 @@ export default function ConsoleProducts(): JSX.Element {
     setPlanNote(null)
   }
 
-  const chooseGroup = (next: GroupId): void => {
-    if (next === group()) return
-    if (next !== 'gpu') setPlainGroup(next)
-    const inGroup = PRODUCTS.filter((product) => groupOf(product) === next)
-    const available = inGroup.find((product) => product.available !== false)
-    if (available !== undefined) {
-      selectPreset(available)
-      return
-    }
-    setGroup(next)
-    setPicked(undefined)
-    setLaunchError(null)
-    const note = inGroup.find((product) => product.note !== undefined)?.note
-    const label = GROUPS.find((entry) => entry.id === next)?.label ?? next
-    setPlanNote(
-      note ?? (inGroup.length === 0 ? null : `В группе «${label}» сейчас нет доступных продуктов.`),
-    )
-  }
-
-  const selectImage = (image: MachineImage): void => {
-    setGroup(groupOf(image))
-    setTargetCpu(image.cpu)
-    setTargetMemory(image.memoryGb)
-    setTargetDisk(image.diskGb ?? targetDisk())
-    setPicked(image)
-    setLaunchError(null)
-  }
-
   const applyCustom = (): void => {
     const name = customName().trim()
-    if (name.length === 0 || group() === 'gpu') return
+    if (name.length === 0) return
     setPicked({
       id: name,
       name,
       label: `Свой снимок ${name}`,
-      os: group() === 'windows' ? 'windows' : 'linux',
+      os: 'linux',
       cpu: targetCpu(),
       memoryGb: targetMemory(),
       diskGb: targetDisk(),
@@ -375,7 +551,7 @@ export default function ConsoleProducts(): JSX.Element {
       }
     } catch (err) {
       setLiveImages([])
-      setImagesFailure(errorText(err))
+      setImagesFailure(customerText(errorText(err)))
       setImagesState('fallback')
     }
   }
@@ -393,9 +569,9 @@ export default function ConsoleProducts(): JSX.Element {
         setRegion('us')
       }
     } catch (err) {
-      setCatalogFailure(errorText(err))
+      setCatalogFailure(customerText(errorText(err)))
       // Even without the catalog the known working region is `us`: leaving the
-      // field empty would let the provider choose a region with no snapshot.
+      // field empty would let the platform choose a region with no snapshot.
       if (!regionTouched() && region().length === 0) setRegion('us')
     }
   }
@@ -416,7 +592,7 @@ export default function ConsoleProducts(): JSX.Element {
       )
       setCredentialsFailure(null)
     } catch (err) {
-      // A guest key cannot read provider keys; a guest has none by definition.
+      // A guest key cannot read private account data; a guest has none by definition.
       setOwnKey(false)
       setCredentialsFailure(errorText(err))
     } finally {
@@ -440,14 +616,13 @@ export default function ConsoleProducts(): JSX.Element {
     appliedPlan = code
     const product = PRODUCTS.find((entry) => entry.id === code)
     if (product === undefined) {
-      setPlanNote(`Продукта «${code}» в каталоге нет: выберите состав ниже.`)
+      setPlanNote(`Такой конфигурации в списке нет: соберите свою ниже.`)
       return
     }
-    setPlanNote(null)
     selectPreset(product)
   })
 
-  const daytonaListed = createMemo<boolean>(() => {
+  const platformListed = createMemo<boolean>(() => {
     const catalogue = catalog()
     if (catalogue === undefined) return true
     return (catalogue.providers ?? []).some((provider) => provider.id === 'daytona')
@@ -462,32 +637,31 @@ export default function ConsoleProducts(): JSX.Element {
     const ids = provider?.regions ?? []
     const list = ids.length > 0 ? ids : FALLBACK_REGIONS
     return [
-      { value: '', label: 'Поставщик выбирает сам' },
-      ...list.map((id) => ({ value: id, label: KNOWN_REGIONS[id] ?? `${id} — площадка поставщика` })),
+      { value: '', label: 'Любая площадка' },
+      ...list.map((id) => ({ value: id, label: KNOWN_REGIONS[id] ?? id })),
     ]
+  })
+
+  const regionText = createMemo<string>(() => {
+    const current = region()
+    if (current.length === 0) return 'Любая площадка'
+    return KNOWN_REGIONS[current] ?? current
   })
 
   const regionNote = createMemo<string | null>(() => {
     if (catalog() === undefined) return null
     const provider = catalog()?.providers?.find((entry) => entry.id === 'daytona')
     if (provider !== undefined && (provider.regions?.length ?? 0) > 0) return null
-    return 'Каталог не прислал список площадок: показаны известные — us (общая) и us-west-4 (выделенная). Рабочие снимки Rox сейчас лежат в us.'
+    return 'Список площадок не пришёл: показаны известные — США (общая) и США (выделенная). Рабочие образы Rox лежат в США.'
   })
 
   const retail = createMemo<number>(() => {
     const image = selected()
-    if (image === undefined) return 0
-    return retailCentsPerHour({
-      cpu: image.cpu,
-      memoryGb: image.memoryGb,
-      diskGb: image.diskGb ?? 0,
-      gpu: gpuCents(image.gpu),
-    })
+    return image === undefined ? 0 : priceOf(image)
   })
 
-  const byok = createMemo<boolean>(() => ownKey())
   const rate = createMemo<number>(() =>
-    byok() ? serviceFeeCentsPerHour(retail()) : retail(),
+    ownKey() ? serviceFeeCentsPerHour(retail()) : retail(),
   )
   const hold = createMemo<number>(() => Math.ceil((ttlSec() / 3600) * rate() - 1e-9))
   const balance = createMemo<number | undefined>(() => session.account()?.balance_cents)
@@ -509,28 +683,22 @@ export default function ConsoleProducts(): JSX.Element {
   const blocked = createMemo<LaunchBlock | null>(() => {
     const image = selected()
     if (image === undefined) {
-      return { kind: 'images', text: 'Нет подходящего образа: смените группу или обновите список.' }
+      return { kind: 'images', text: 'Сейчас нечего запустить: обновите список конфигураций.' }
     }
     if (image.available === false) {
-      return {
-        kind: 'unavailable',
-        text: image.note ?? 'Этот снимок сейчас недоступен: выберите другой продукт.',
-      }
+      return { kind: 'unavailable', text: image.note ?? 'Скоро: эта конфигурация пока не запускается.' }
     }
     if (!credentialsChecked()) {
-      return { kind: 'wait', text: 'Проверяем, есть ли у вас свой ключ Daytona: от этого зависит цена.' }
+      return { kind: 'wait', text: 'Считаем цену часа…' }
     }
     if (catalog() === undefined && catalogFailure() === null) {
-      return { kind: 'wait', text: 'Проверяем площадки и платформенный ключ Rox…' }
+      return { kind: 'wait', text: 'Проверяем площадки…' }
     }
-    if (!daytonaListed()) {
-      return { kind: 'providers', text: 'Поставщик Daytona не подключён в этой сборке — запускать не на чем.' }
+    if (!platformListed()) {
+      return { kind: 'platform', text: 'Запуск в этой сборке закрыт: площадка не подключена.' }
     }
-    if (!byok() && catalog() !== undefined && !managedAvailable()) {
-      return {
-        kind: 'providers',
-        text: 'Нет ни своего ключа Daytona, ни платформенного ключа Rox. Добавьте свой ключ в разделе «Поставщики».',
-      }
+    if (!ownKey() && catalog() !== undefined && !managedAvailable()) {
+      return { kind: 'platform', text: 'Запуск пока закрыт: Rox подключает площадку по обращению.' }
     }
     const current = balance()
     if (current === undefined) {
@@ -557,48 +725,44 @@ export default function ConsoleProducts(): JSX.Element {
 
   const mode = createMemo<{ label: string; tone: BadgeTone; hint: string }>(() => {
     if (!credentialsChecked()) {
-      return {
-        label: 'Режим…',
-        tone: 'neutral',
-        hint: 'Проверяем, есть ли у вас свой ключ Daytona: от этого зависит цена часа.',
-      }
+      return { label: 'Считаем', tone: 'neutral', hint: 'Цена часа уточняется.' }
     }
-    if (byok()) {
+    if (ownKey()) {
       return {
-        label: 'Свой ключ',
+        label: 'Сервисный тариф',
         tone: 'success',
-        hint: 'Железо вы платите Daytona напрямую, Rox берёт только сервисный сбор за управление.',
+        hint: 'Железо оплачиваете напрямую, Rox берёт сервисный сбор за управление.',
       }
     }
     if (catalog() !== undefined && !managedAvailable()) {
       return {
-        label: 'Нет ключа',
+        label: 'Запуск закрыт',
         tone: 'danger',
-        hint: 'Ни своего ключа Daytona, ни платформенного ключа Rox в этой сборке нет.',
+        hint: 'В этой сборке Rox ещё не подключил площадку для запуска.',
       }
     }
     if (credentialsFailure() !== null && !session.guest()) {
       return {
-        label: 'Режим?',
+        label: 'Цена уточняется',
         tone: 'neutral',
-        hint: 'Список своих ключей не получен: окончательный режим и цену назовёт сервер при запуске.',
+        hint: 'Окончательную цену назовёт сервер при запуске.',
       }
     }
     return {
-      label: 'Ключ Rox',
+      label: 'Цена Rox',
       tone: 'accent',
       hint: session.guest()
-        ? 'Пробный доступ: машина на ключе Rox, платите полную цену с пробного баланса.'
-        : 'Машина идёт на ключе Rox: платите полную цену с баланса, без своего аккаунта у Daytona.',
+        ? 'Пробный доступ: полная цена часа списывается с пробного баланса.'
+        : 'Полная цена часа: машина целиком на стороне Rox.',
     }
   })
 
   const imagesSubtitle = (): string => {
     const state = imagesState()
-    if (state === 'loading') return 'Запрашиваем живой список у Daytona'
-    if (state === 'live') return 'Живой список Daytona: только активные снимки'
-    if (state === 'empty') return 'Снимки из каталога: Daytona не вернул активных'
-    return 'Снимки из каталога: живой список недоступен'
+    if (state === 'loading') return 'Обновляем список образов'
+    if (state === 'live') return 'Только активные образы'
+    if (state === 'empty') return 'Каталог Rox: активных образов нет'
+    return 'Каталог Rox: список образов не пришёл'
   }
 
   /** A catalog preset whose live snapshot has drifted to another size. */
@@ -612,7 +776,7 @@ export default function ConsoleProducts(): JSX.Element {
       live.memoryGb === image.memoryGb &&
       (live.diskGb === undefined || live.diskGb === image.diskGb)
     if (sameSize) return null
-    return `У Daytona снимок ${image.name} сейчас другого состава: ${sizeLine(live)}. Показан состав каталога, по которому считается цена; сверить фактический состав можно в терминале после запуска.`
+    return `${image.label} в облаке сейчас другого состава: ${specLine(live)}. Показан состав каталога, по которому считается цена; сверить фактический состав можно в терминале после запуска.`
   })
 
   const launch = async (): Promise<void> => {
@@ -642,7 +806,7 @@ export default function ConsoleProducts(): JSX.Element {
     } catch (err) {
       const failure = err instanceof ApiError ? err : null
       setLaunchError({
-        message: errorText(err),
+        message: customerText(errorText(err)),
         code: failure === null ? null : failure.code,
         requestId: failure === null ? null : failure.requestId,
       })
@@ -651,12 +815,18 @@ export default function ConsoleProducts(): JSX.Element {
     }
   }
 
+  const adjust = (set: (value: number) => void) => (value: number): void => {
+    set(value)
+    setPicked(undefined)
+    setLaunchError(null)
+  }
+
   return (
     <section class="page products-page">
       <PageHeader
         eyebrow="Кабинет"
-        title="Соберите машину"
-        description="Пресет, образ, ресурсы, площадка и срок жизни на одном экране. Цена часа и резерв пересчитываются сразу."
+        title="Новая машина"
+        description="Процессор, память и диск — одной строкой, цена часа пересчитывается сразу. Выбранная машина, площадка и запуск — в карточке справа."
         actions={
           <A href="/console/machines" class="btn btn-secondary btn-sm">
             Мои машины
@@ -668,64 +838,64 @@ export default function ConsoleProducts(): JSX.Element {
         {(note) => <div class="console-note">{note()}</div>}
       </Show>
 
-      <div class="console-grid">
-        <div class="console-col stack-lg">
-          <Card title="Пресеты" subtitle="Готовые составы из каталога Rox">
-            <div class="preset-groups">
-              <For each={GROUPS}>
-                {(entry) => (
-                  <div class="preset-group">
-                    <div class="preset-group-head">
-                      <span class="preset-group-label">{entry.label}</span>
-                      <span class="preset-group-hint">{entry.hint}</span>
-                    </div>
-                    <div class="preset-list">
-                      <For each={PRODUCTS.filter((product) => groupOf(product) === entry.id)}>
-                        {(product) => {
-                          const unavailable = product.available === false
-                          return (
-                            <button
-                              type="button"
-                              class="preset"
-                              classList={{
-                                'is-active': activePreset(product),
-                                'is-unavailable': unavailable,
-                              }}
-                              aria-pressed={activePreset(product)}
-                              disabled={unavailable}
-                              title={product.note ?? undefined}
-                              onClick={() => selectPreset(product)}
-                            >
-                              <span class="preset-name">{product.name}</span>
-                              <span class="preset-size">
-                                {sizeLine({
-                                  cpu: product.cpu,
-                                  memoryGb: product.memoryGb,
-                                  diskGb: product.diskGb,
-                                  gpu: product.gpu ?? null,
-                                })}
-                              </span>
-                              <span class="preset-price">
-                                {unavailable
-                                  ? 'Недоступно'
-                                  : formatMoney(product.centsPerHour, { perHour: true })}
-                              </span>
-                              <Show when={unavailable && product.note !== undefined}>
-                                <span class="preset-note">{product.note}</span>
-                              </Show>
-                            </button>
-                          )
-                        }}
-                      </For>
-                    </div>
-                  </div>
-                )}
-              </For>
-            </div>
-          </Card>
+      <Card bodyClass="cfg-body">
+        <div class="cfg-row">
+          <div class="cfg-sliders">
+            <Stepper
+              id="cfg-cpu"
+              label="Процессор"
+              value={targetCpu()}
+              unit="ядра"
+              min={1}
+              max={cpuLimit()}
+              hint={session.guest() ? 'Гостю до 16 ядер' : undefined}
+              onChange={adjust(setTargetCpu)}
+            />
+            <Stepper
+              id="cfg-memory"
+              label="Память"
+              value={targetMemory()}
+              unit="ГБ"
+              min={1}
+              max={128}
+              onChange={adjust(setTargetMemory)}
+            />
+            <Stepper
+              id="cfg-disk"
+              label="Диск"
+              value={targetDisk()}
+              unit="ГБ"
+              min={1}
+              max={500}
+              step={5}
+              onChange={adjust(setTargetDisk)}
+            />
+          </div>
+          <div class="cfg-price">
+            <span class="cfg-price-label">Цена часа</span>
+            <span class="cfg-price-value" aria-live="polite">
+              {formatMoney(rate(), { perHour: true })}
+            </span>
+            <span class="cfg-price-note">
+              резерв {formatCents(hold())} за {ttlLabel(ttlSec())}
+            </span>
+          </div>
+        </div>
+        <Show when={selected()}>
+          {(image) => (
+            <Show when={!exact()}>
+              <p class="cfg-hint">
+                Готового состава ровно под эти числа нет: запустим {specLine(image())}.
+              </p>
+            </Show>
+          )}
+        </Show>
+      </Card>
 
+      <div class="console-grid products-grid">
+        <div class="console-col stack-lg">
           <Card
-            title="Образы"
+            title="Конфигурации"
             subtitle={imagesSubtitle()}
             actions={
               <Button
@@ -740,71 +910,96 @@ export default function ConsoleProducts(): JSX.Element {
           >
             <Show
               when={imagesState() !== 'loading'}
-              fallback={
-                <div class="stack">
-                  <Skeleton lines={5} />
-                  <p class="console-muted small">
-                    Пока идёт запрос, пресеты слева уже можно выбирать: их состав берётся из каталога.
-                  </p>
-                </div>
-              }
+              fallback={<Skeleton lines={4} />}
             >
               <Show
-                when={pool().length > 0}
+                when={bootable().length > 0}
                 fallback={
                   <EmptyState
                     icon="box"
-                    title="В этой группе нет образов"
-                    description={
-                      group() === 'gpu'
-                        ? 'У доступных снимков нет видеокарты. Выключите «С видеокартой» или обновите список.'
-                        : 'Смените группу, обновите список или выберите пресет слева.'
-                    }
+                    title="Сейчас нет доступных конфигураций"
+                    description="Windows и видеокарты появятся позже: они собраны в разделе «Скоро»."
                   />
                 }
               >
-                <div class="image-list" role="group" aria-label="Образы Daytona">
-                  <For each={pool()}>
-                    {(image) => (
-                      <button
-                        type="button"
-                        aria-pressed={
-                          selected()?.name === image.name && selected()?.cpu === image.cpu ? 'true' : 'false'
-                        }
-                        class="image-item"
-                        classList={{
-                          'is-active': selected()?.name === image.name && selected()?.cpu === image.cpu,
-                        }}
-                        onClick={() => selectImage(image)}
-                      >
-                        <span class="image-main">
-                          <span class="image-name">{image.label}</span>
-                          <span class="image-size">{sizeLine(image)}</span>
-                        </span>
-                        <span class="image-tags">
-                          <Show when={image.gpu !== null}>
-                            <Badge tone="accent">{gpuName(image.gpu)}</Badge>
-                          </Show>
-                          <Show when={image.custom === true}>
-                            <Badge tone="warning">Свой снимок</Badge>
-                          </Show>
-                        </span>
-                      </button>
-                    )}
-                  </For>
-                </div>
+                <For each={groups()}>
+                  {(entry) => (
+                    <Show when={entry.rows.length > 0}>
+                      <div class="catalog-group">
+                        <div class="catalog-head">
+                          <span class="catalog-label">{entry.label}</span>
+                          <span class="catalog-hint">{entry.hint}</span>
+                        </div>
+                        <div class="catalog-list" role="group" aria-label={`${entry.label}: доступные образы`}>
+                          <For each={entry.rows}>
+                            {(row) => (
+                              <CatalogRow
+                                row={row}
+                                active={isActive(row.image)}
+                                onPick={selectImage}
+                              />
+                            )}
+                          </For>
+                        </div>
+                      </div>
+                    </Show>
+                  )}
+                </For>
+
+                <Show when={extra().length > 0}>
+                  <div class="catalog-group">
+                    <div class="catalog-head">
+                      <span class="catalog-label">Другие образы</span>
+                      <span class="catalog-hint">Снимки сверх каталога Rox</span>
+                    </div>
+                    <div class="catalog-list" role="group" aria-label="Другие образы">
+                      <For each={extra()}>
+                        {(row) => (
+                          <CatalogRow
+                            row={row}
+                            active={isActive(row.image)}
+                            onPick={selectImage}
+                          />
+                        )}
+                      </For>
+                    </div>
+                  </div>
+                </Show>
+              </Show>
+
+              <Show when={soon().length > 0}>
+                <details class="soon">
+                  <summary class="soon-summary">
+                    <span class="soon-title">Скоро</span>
+                    <span class="soon-count">{soon().length}</span>
+                    <span class="soon-hint">Windows и видеокарты — появятся позже</span>
+                  </summary>
+                  <div class="soon-list">
+                    <For each={soon()}>
+                      {(row) => (
+                        <div class="soon-row">
+                          <span class="soon-group">{row.groupLabel}</span>
+                          <span class="soon-main">
+                            <span class="soon-name">{row.name}</span>
+                            <span class="soon-spec">{specLine(row.image)}</span>
+                          </span>
+                          <span class="soon-note">{row.note ?? 'Скоро'}</span>
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                </details>
               </Show>
 
               <Show when={imagesState() === 'fallback'}>
                 <div class="console-note" role="status">
-                  Живой список образов недоступен: {imagesFailure()}. Показаны снимки из каталога — состав
-                  и цена точные, доступность проверит сервер при запуске.
+                  Список образов не пришёл: {imagesFailure()}. Показан каталог Rox — состав и
+                  цена точные, доступность проверит сервер при запуске.
                 </div>
               </Show>
               <Show when={imagesState() === 'empty'}>
                 <div class="console-note" role="status">
-                  Daytona не вернул ни одного активного снимка. Показаны снимки из каталога: сервер
-                  откажет, если такого снимка у поставщика нет.
+                  Активных образов сейчас нет. Показан каталог Rox: сервер откажет, если образа нет.
                 </div>
               </Show>
 
@@ -820,11 +1015,7 @@ export default function ConsoleProducts(): JSX.Element {
                 <Field
                   label="Свой снимок"
                   for="custom-snapshot"
-                  hint={
-                    group() === 'gpu'
-                      ? 'Для машины с видеокартой выберите образ из списка: цену карты сервер берёт из снимка.'
-                      : 'Имя снимка Daytona. Ресурсы сервер проверит по снимку; при расхождении запуск остановится до резерва. Цена часа посчитана без видеокарты.'
-                  }
+                  hint="Имя вашего снимка. Ресурсы сервер проверит по снимку; при расхождении запуск остановится до резерва. Цена часа посчитана по ползункам выше."
                 >
                   <div class="custom-row">
                     <input
@@ -835,7 +1026,6 @@ export default function ConsoleProducts(): JSX.Element {
                       autocomplete="off"
                       autocapitalize="off"
                       spellcheck={false}
-                      disabled={group() === 'gpu'}
                       onInput={(event) => setCustomName(event.currentTarget.value)}
                       onKeyDown={(event) => {
                         if (event.key !== 'Enter') return
@@ -846,7 +1036,7 @@ export default function ConsoleProducts(): JSX.Element {
                     <Button
                       size="sm"
                       variant="secondary"
-                      disabled={group() === 'gpu' || customName().trim().length === 0}
+                      disabled={customName().trim().length === 0}
                       onClick={applyCustom}
                     >
                       Выбрать
@@ -858,128 +1048,33 @@ export default function ConsoleProducts(): JSX.Element {
           </Card>
         </div>
 
-        <div class="console-col stack-lg">
-          <Card title="Ресурсы" subtitle="Ползунки выбирают ближайший живой образ, а не выдумывают состав">
-            <div class="stepper-grid">
-              <Stepper
-                id="cfg-cpu"
-                label="Процессор"
-                value={targetCpu()}
-                unit="ядра"
-                min={1}
-                max={session.guest() ? 16 : 32}
-                hint={session.guest() ? 'Гостю до 16 ядер' : undefined}
-                onChange={(value) => {
-                  setTargetCpu(value)
-                  setPicked(undefined)
-                }}
-              />
-              <Stepper
-                id="cfg-memory"
-                label="Память"
-                value={targetMemory()}
-                unit="ГБ"
-                min={1}
-                max={128}
-                onChange={(value) => {
-                  setTargetMemory(value)
-                  setPicked(undefined)
-                }}
-              />
-              <Stepper
-                id="cfg-disk"
-                label="Диск"
-                value={targetDisk()}
-                unit="ГБ"
-                min={1}
-                max={500}
-                step={5}
-                onChange={(value) => {
-                  setTargetDisk(value)
-                  setPicked(undefined)
-                }}
-              />
-            </div>
-
-            <Switch
-              checked={group() === 'gpu'}
-              onChange={(checked) => chooseGroup(checked ? 'gpu' : plainGroup())}
-              label="С видеокартой"
-              hint="Показывать только образы с GPU: H100, L4, A10, T4"
-            />
-
+        <aside class="console-col console-summary">
+          <Card title="Ваша машина" subtitle="Цена, площадка и запуск">
             <Show
               when={selected()}
-              fallback={
-                <div class="console-note" role="status">
-                  Образ не выбран: в этой группе нет доступных снимков.
-                </div>
-              }
+              fallback={<div class="console-note">Машина не выбрана: выберите конфигурацию слева.</div>}
             >
               {(image) => (
-                <div class="chosen">
-                  <div class="chosen-head">
-                    <span class="chosen-label">
-                      {exact() ? 'Точный образ' : 'Точного образа нет, ближайший'}
-                    </span>
-                    <Badge tone={exact() ? 'success' : 'warning'}>{image().label}</Badge>
+                <div class="pick">
+                  <div class="pick-head">
+                    <span class="pick-name">{chosenName()}</span>
+                    <Badge tone={exact() ? 'success' : 'warning'}>
+                      {exact() ? 'Точный состав' : 'Ближайший'}
+                    </Badge>
                   </div>
-                  <dl class="chosen-grid">
-                    <div>
-                      <dt>Процессор</dt>
-                      <dd>{coresLabel(image().cpu)}</dd>
-                    </div>
-                    <div>
-                      <dt>Память</dt>
-                      <dd>{image().memoryGb} ГБ</dd>
-                    </div>
-                    <div>
-                      <dt>Диск</dt>
-                      <dd>{image().diskGb === undefined ? 'по снимку' : `${image().diskGb} ГБ`}</dd>
-                    </div>
-                    <Show when={image().gpu !== null}>
-                      <div>
-                        <dt>Видеокарта</dt>
-                        <dd>{gpuName(image().gpu)}</dd>
-                      </div>
-                    </Show>
-                  </dl>
-                  <Show when={!exact()}>
-                    <p class="field-hint">
-                      Вы просили {coresLabel(targetCpu())}, {targetMemory()} ГБ памяти и {targetDisk()} ГБ
-                      диска. Машина получит точный состав ближайшего образа: {sizeLine(image())}.
-                    </p>
-                  </Show>
+                  <div class="pick-spec">{specLine(image())}</div>
+                  <div class="pick-foot">
+                    <span class="pick-price">{formatMoney(rate(), { perHour: true })}</span>
+                    <span class="pick-region">{regionText()}</span>
+                  </div>
                 </div>
               )}
             </Show>
-          </Card>
 
-          <Card title="Площадка и срок" subtitle="Где запустится машина и сколько она проживёт">
-            <Field
-              label="Площадка"
-              for="cfg-region"
-              hint="Рабочие снимки Rox сейчас лежат в us — она выбрана по умолчанию. Пусто — поставщик выберет сам."
-            >
-              <Select
-                id="cfg-region"
-                options={regionOptions()}
-                value={region()}
-                onChange={(event) => {
-                  setRegionTouched(true)
-                  setRegion(event.currentTarget.value)
-                }}
-              />
-            </Field>
-            <Show when={region().length > 0 && region() !== 'us'}>
-              <p class="field-hint">
-                Сейчас рабочие снимки Rox лежат в us: на другой площадке снимок может не найтись, и запуск
-                остановится до резерва.
-              </p>
-            </Show>
-            <Show when={regionNote()}>
-              {(note) => <p class="field-hint">{note()}</p>}
-            </Show>
+            <div class="summary-mode">
+              <Badge tone={mode().tone}>{mode().label}</Badge>
+              <span class="summary-mode-text">{mode().hint}</span>
+            </div>
 
             <div class="field">
               <span class="field-label" id="cfg-ttl-label">
@@ -1001,51 +1096,40 @@ export default function ConsoleProducts(): JSX.Element {
                 </For>
               </div>
               <p class="field-hint">
-                Машина остановится сама в конце срока, плата рассчитается по факту. Гостю доступно до 24
-                часов.
+                Машина остановится сама в конце срока, плата рассчитается по факту. Гостю доступно до
+                24 часов.
               </p>
             </div>
 
-            <Show when={catalogFailure()}>
-              {(failure) => (
-                <p class="field-hint">
-                  Каталог не загрузился ({failure()}), поэтому площадки и платформенный ключ проверены не
-                  полностью: окончательный ответ даст сервер при запуске.
-                </p>
-              )}
+            <Field
+              label="Площадка"
+              for="cfg-region"
+              hint="Рабочие образы Rox лежат в США — она выбрана по умолчанию."
+            >
+              <Select
+                id="cfg-region"
+                options={regionOptions()}
+                value={region()}
+                onChange={(event) => {
+                  setRegionTouched(true)
+                  setRegion(event.currentTarget.value)
+                }}
+              />
+            </Field>
+            <Show when={region().length > 0 && region() !== 'us'}>
+              <p class="field-hint">
+                Сейчас рабочие образы Rox лежат в США: на другой площадке образа может не найтись, и
+                запуск остановится до резерва.
+              </p>
             </Show>
-          </Card>
-        </div>
-
-        <aside class="console-col console-summary">
-          <Card title="Итог" subtitle="Цена и резерв до запуска">
-            <div class="summary-mode">
-              <Badge tone={mode().tone}>{mode().label}</Badge>
-              <span class="summary-mode-text">{mode().hint}</span>
-            </div>
-
-            <div class="summary-image">
-              <Show
-                when={selected()}
-                fallback={<div class="summary-image-name">Образ не выбран</div>}
-              >
-                {(image) => (
-                  <>
-                    <div class="summary-image-name">{image().label}</div>
-                    <div class="summary-image-size">{sizeLine(image())}</div>
-                  </>
-                )}
-              </Show>
-            </div>
+            <Show when={regionNote()}>
+              {(note) => <p class="field-hint">{note()}</p>}
+            </Show>
 
             <dl class="summary-rows">
-              <div>
-                <dt>Цена часа</dt>
-                <dd>{formatMoney(rate(), { perHour: true })}</dd>
-              </div>
-              <Show when={byok()}>
+              <Show when={ownKey()}>
                 <div>
-                  <dt>Полная цена у поставщика</dt>
+                  <dt>Полная цена железа</dt>
                   <dd class="muted">{formatMoney(retail(), { perHour: true })}</dd>
                 </div>
               </Show>
@@ -1062,6 +1146,15 @@ export default function ConsoleProducts(): JSX.Element {
                 <dd>{formatCents(after())}</dd>
               </div>
             </dl>
+
+            <Show when={catalogFailure()}>
+              {(failure) => (
+                <p class="field-hint">
+                  Каталог не загрузился ({failure()}), поэтому площадки проверены не полностью:
+                  окончательный ответ даст сервер при запуске.
+                </p>
+              )}
+            </Show>
 
             <Show when={launchError()}>
               {(failure) => (
@@ -1082,11 +1175,6 @@ export default function ConsoleProducts(): JSX.Element {
               {(reason) => (
                 <div class="console-block" role="status">
                   <span>{reason().text}</span>
-                  <Show when={reason().kind === 'providers'}>
-                    <A href="/console/providers" class="btn btn-secondary btn-sm">
-                      Поставщики
-                    </A>
-                  </Show>
                   <Show when={reason().kind === 'topup'}>
                     <Button size="sm" variant="secondary" onClick={() => session.openTopUp()}>
                       Пополнить

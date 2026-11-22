@@ -147,12 +147,25 @@
   scrollbar-color: var(--border) transparent;
 }
 
+.files-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  border-radius: 7px;
+}
+
+.files-item.is-selected {
+  background: var(--accent-soft, var(--surface-hover));
+  color: var(--accent-ink, var(--ink));
+}
+
 .files-row {
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
-  width: 100%;
+  flex: 1 1 auto;
   min-width: 0;
   padding: 6px 7px;
   border: 0;
@@ -172,8 +185,8 @@
   background: var(--surface-hover);
 }
 
-.files-row.is-selected {
-  background: var(--accent-soft, var(--surface-hover));
+.files-item.is-selected .files-row {
+  background: transparent;
   color: var(--accent-ink, var(--ink));
 }
 
@@ -182,8 +195,55 @@
   color: var(--muted);
 }
 
-.files-row.is-selected .files-row-icon {
+.files-item.is-selected .files-row-icon {
   color: var(--accent, var(--ink));
+}
+
+/* Deleting is a second action on the row, so it appears on hover and focus. */
+.files-row-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-right: 3px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.files-item:hover .files-row-delete,
+.files-item:focus-within .files-row-delete,
+.files-item.is-selected .files-row-delete {
+  opacity: 1;
+}
+
+.files-row-delete:hover {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.files-row-delete:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.files-hidden-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft, var(--surface-hover));
+  color: var(--accent-ink, var(--ink));
 }
 
 .files-name {
@@ -220,12 +280,38 @@
   overflow-wrap: anywhere;
 }
 
+/* The confirmation dialog has its own padding and gap. */
+.files .dialog-body .files-error {
+  margin: 0;
+}
+
 .files-skeleton {
   padding: 8px;
+}
+
+/* Touch screens have no hover, so the delete action must stay visible. */
+@media (hover: none) {
+  .files-row-delete {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 980px) {
   .files {
     max-height: 360px;
+  }
+}
+
+@media (max-width: 520px) {
+  .files-filter {
+    flex-wrap: wrap;
+  }
+
+  .input.files-search {
+    flex-basis: 100%;
+  }
+
+  .files-row-delete {
+    opacity: 1;
   }
 }

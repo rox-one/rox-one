@@ -249,7 +249,7 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
     <>
       <Card
         title="Сеть и доступ"
-        subtitle="Приватный адрес машины, ссылка на сайт и вход по SSH с компьютера."
+        subtitle="Внутренний адрес машины, подписанная ссылка на сайт и вход по SSH с компьютера."
         footer={
           <A class="access-docs" href="/docs#site-ssh">
             Справка: сайт и SSH
@@ -262,9 +262,9 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
           </p>
         </Show>
         <div class="access-grid">
-          <section class="access-block" aria-label="Адрес машины">
+          <section class="access-block" aria-label="Внутренний адрес машины">
             <h3 class="access-title">
-              <Icon name="globe" size={14} /> Адрес
+              <Icon name="globe" size={14} /> Внутренний адрес
             </h3>
             <Show
               when={!networkLoading()}
@@ -284,9 +284,9 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
               >
                 <p class="access-value">{network()?.privateIp ?? 'не сообщён'}</p>
                 <p class="access-note">
-                  {network()?.publicIp === null || network()?.publicIp === undefined
-                    ? 'Своего публичного IP нет: снаружи машина открыта ссылкой на порт и SSH-шлюзом.'
-                    : `Публичный адрес: ${network()?.publicIp}`}
+                  Адрес внутренний, обычно вида 172.20.x.x: из интернета он не виден, публичного IP у
+                  машины нет. Снаружи работают только подписанная ссылка на порт и SSH-шлюз{' '}
+                  <code>ssh.rox.computer</code>.
                 </p>
               </Show>
             </Show>
@@ -322,6 +322,10 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
               Запустите в терминале сервер на этом порту, например
               {' '}
               <code>python3 -m http.server {port()}</code>.
+            </p>
+            <p class="access-note">
+              Ссылка открывает этот порт по адресу <code>*.rox.computer</code>. Ответ 502 значит, что
+              сайт внутри машины не отвечает: проверьте, что сервер на порту запущен.
             </p>
 
             <Show when={props.enabled}>
@@ -457,8 +461,9 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
               Создать доступ
             </Button>
             <p class="access-note">
-              Команда для вашего терминала. Внутри машины пользователь остаётся <code>daytona</code>,
-              а ключ живёт до указанного времени.
+              После «Создать доступ» здесь появится команда вида{' '}
+              <code>{'ssh <токен>@ssh.rox.computer'}</code>. Она подключает к машине, домашний каталог
+              внутри — <code>~</code>, и перестаёт работать вместе с машиной.
             </p>
             <Show when={sshError() !== null}>
               <p class="access-error" role="alert">

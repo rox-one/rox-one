@@ -485,6 +485,15 @@ export interface NetworkInfo {
   note: string
 }
 
+/** One reachability probe of the machine's egress, measured at `at`. */
+export interface NetworkCheck {
+  at: number | null
+  online: boolean
+  latencyMs: number
+  downloadMbps: number
+  note: string | null
+}
+
 export interface PreviewLink {
   port: number
   url: string
@@ -510,6 +519,15 @@ export interface MetricsInfo {
   memoryTotalKb: number
   diskUsedKb: number
   diskTotalKb: number
+}
+
+/** One running process inside the machine, as `ps` reports it. */
+export interface ProcessInfo {
+  pid: number
+  user: string
+  cpuPercent: number
+  memoryKb: number
+  command: string
 }
 
 /** One command run inside the machine's persistent shell session. */
@@ -925,6 +943,31 @@ export const api = {
     }
   },
 
+  /** Running processes inside the machine, as `ps` reports them. */
+  processes: async (id: string): Promise<ProcessInfo[]> => {
+    const raw = await request<{ data?: unknown }>(`/v1/sandboxes/${enc(id)}/processes`)
+    const rows = Array.isArray(raw.data) ? raw.data : []
+    return rows.map((row) => {
+      const item = asRow(row)
+      return {
+        pid: typeof item.pid === 'number' ? item.pid : 0,
+        user: typeof item.user === 'string' ? item.user : '',
+        cpuPercent: typeof item.cpu_percent === 'number' ? item.cpu_percent : 0,
+        memoryKb: typeof item.memory_kb === 'number' ? item.memory_kb : 0,
+        command: typeof item.command === 'string' ? item.command : '',
+      }
+    })
+  },
+
+  /** Stop one process; the server refuses pid 1, the session shell and the toolbox daemon. */
+  killProcess: async (id: string, pid: number): Promise<{ ok: boolean }> => {
+    const raw = await request<{ ok?: unknown }>(
+      `/v1/sandboxes/${enc(id)}/processes/${enc(String(pid))}/kill`,
+      { method: 'POST' },
+    )
+    return { ok: raw?.ok === true }
+  },
+
   /** Open or reuse the machine's persistent shell; `cwd` is where it starts. */
   sessionStart: async (id: string): Promise<{ state: string; cwd: string }> => {
     const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/session/start`, {
@@ -1004,6 +1047,18 @@ export const api = {
     }
   },
 
+  /** One live egress probe; `note` says why the machine cannot reach the internet. */
+  networkCheck: async (id: string): Promise<NetworkCheck> => {
+    const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/network-check`)
+    return {
+      at: parseTime(raw.at),
+      online: raw.online === true,
+      latencyMs: typeof raw.latency_ms === 'number' ? raw.latency_ms : 0,
+      downloadMbps: typeof raw.download_mbps === 'number' ? raw.download_mbps : 0,
+      note: typeof raw.note === 'string' && raw.note.length > 0 ? raw.note : null,
+    }
+  },
+
   preview: async (id: string, port: number): Promise<PreviewLink> => {
     const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/preview`, {
       method: 'POST',
@@ -1073,6 +1128,10 @@ export const api = {
       parse: 'none',
     })
   },
+
+  /** Delete one file (never a directory) inside the machine. */
+  deleteFile: (id: string, path: string) =>
+    request<void>(withQuery(`/v1/sandboxes/${enc(id)}/files`, { path }), { method: 'DELETE', parse: 'none' }),
 
   keys: () => request<ListResponse<ApiKeyRow>>('/v1/keys'),
 

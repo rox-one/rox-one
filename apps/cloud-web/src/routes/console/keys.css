@@ -4,6 +4,55 @@
   min-width: 0;
 }
 
+/* ---------- Ключ этой вкладки ---------- */
+
+.keys-current .card-body {
+  display: grid;
+  gap: 8px;
+}
+
+.keys-current-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Плашка показывает начало ключа, точки и последние четыре знака. */
+.keys-current-plate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.keys-current-dots {
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.keys-current-empty {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.keys-current-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
 .keys-page .card-flush .table-wrap {
   border: 0;
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);

@@ -7,7 +7,6 @@ import { CodeBlock } from '@/components'
 
 import {
   AVAILABLE_PRODUCTS,
-  DAYTONA_CONSOLE_URL,
   LIVE_REGION,
   REQUEST_PRODUCTS,
   SITE_PRODUCTS,
@@ -28,42 +27,44 @@ function trialHours(id: string): number | null {
   return Math.floor(TRIAL_CENTS / product.retail)
 }
 
-const START_HOURS = trialHours('linux-start')
-const PRO_HOURS = trialHours('linux-pro')
+const MINI_HOURS = trialHours('linux-start')
+const STANDARD_HOURS = trialHours('linux-pro')
+
+/** One-line use case per live plan, keyed by the price-list id. */
+const PLAN_HINTS: Readonly<Record<string, string>> = {
+  'linux-start': 'Скрипты, учёба и проверка идеи.',
+  'linux-pro': 'Основная машина: разработка и небольшие сборки.',
+  'linux-large': 'Сборки, тесты и несколько сервисов сразу.',
+}
 
 function ProductCard(props: { product: SiteProduct }): JSX.Element {
   const product = (): SiteProduct => props.product
   return (
-    <article class="product-card" data-group={product().gpu === undefined ? product().os : 'gpu'}>
+    <article class="product-card">
       <div class="product-card-head">
         <h4 class="product-name">{product().name}</h4>
-        <span class="product-tag">
-          {product().gpu !== undefined ? 'Видеокарта' : product().os === 'windows' ? 'Windows' : 'Linux'}
-        </span>
+        <span class="product-tag">{product().os === 'windows' ? 'Windows' : 'Linux'}</span>
       </div>
       <p class="product-snapshot">{product().snapshotLabel}</p>
+      <p class="product-hint">
+        {PLAN_HINTS[product().id] ?? 'Готовая машина с терминалом в браузере.'}
+      </p>
       <ul class="product-specs" aria-label="Состав машины">
         <li>{cpuText(product().cpu)}</li>
         <li>{memoryText(product().memoryGb)}</li>
         <li>{diskText(product().diskGb)}</li>
-        <Show
-          when={product().gpu}
-          fallback={<li class="product-no-gpu">без видеокарты</li>}
-        >
+        <Show when={product().gpu}>
           {(gpu) => <li class="product-gpu">Видеокарта {gpuText(gpu())}</li>}
         </Show>
       </ul>
-      <p class="product-price">
-        <span class="product-price-value">{formatCents(product().retail)}</span>
-        <span class="product-price-unit">/час</span>
-      </p>
-      <p class="product-fee">
-        Со своим ключом поставщика — только сервисный сбор <strong>{formatCents(product().fee)}/ч</strong>.
-      </p>
-      <Show
-        when={product().available}
-        fallback={<p class="product-request">По запросу</p>}
-      >
+      <div class="product-card-foot">
+        <p class="product-price">
+          <span class="product-price-value">{formatCents(product().retail)}</span>
+          <span class="product-price-unit">/час</span>
+        </p>
+        <p class="product-fee">
+          Со своим ключом — только сервисный сбор <strong>{formatCents(product().fee)}/ч</strong>.
+        </p>
         <A
           class="btn btn-primary btn-block"
           href={`/console?plan=${product().id}&guest=1`}
@@ -71,7 +72,7 @@ function ProductCard(props: { product: SiteProduct }): JSX.Element {
         >
           Купить
         </A>
-      </Show>
+      </div>
     </article>
   )
 }
@@ -95,8 +96,8 @@ export default function SiteHome(): JSX.Element {
           </h1>
           <p class="hero-lede">
             Три Linux-машины запускаются прямо сейчас: выбираете состав на одном экране, запускаете и
-            работаете в терминале прямо в браузере. Windows и видеокарта — по запросу. Регистрация не
-            нужна — на пробном счёте уже лежит {formatCents(TRIAL_CENTS)}.
+            работаете в терминале прямо в браузере. Windows и видеокарта — скоро. Регистрация не нужна —
+            на пробном счёте уже лежит {formatCents(TRIAL_CENTS)}.
           </p>
           <div class="hero-actions">
             <A class="btn btn-primary btn-lg" href="/console?guest=1">
@@ -107,9 +108,9 @@ export default function SiteHome(): JSX.Element {
             </A>
           </div>
           <ul class="hero-facts">
-            <li>Готовая Linux-машина, а не пустая форма: снимок задаёт процессор, память и диск</li>
+            <li>Готовая Linux-машина, а не пустая форма: образ задаёт процессор, память и диск</li>
             <li>Терминал в браузере: команда, ответ и код выхода на одном экране</li>
-            <li>Свой ключ поставщика — тогда платите только сервисный сбор</li>
+            <li>Свой ключ — тогда платите только сервисный сбор</li>
           </ul>
         </div>
         <aside class="hero-trial" aria-labelledby="trial-heading">
@@ -118,10 +119,13 @@ export default function SiteHome(): JSX.Element {
           </p>
           <p class="hero-trial-amount">{formatCents(TRIAL_CENTS)}</p>
           <p class="hero-trial-note">
-            <Show when={START_HOURS !== null && PRO_HOURS !== null} fallback="Хватает на первые запуски.">
-              Хватает на {START_HOURS} {pluralRu(START_HOURS ?? 0, ['час', 'часа', 'часов'])} машины
-              «Старт» или на {PRO_HOURS} {pluralRu(PRO_HOURS ?? 0, ['час', 'часа', 'часов'])} машины
-              «Разработка».
+            <Show
+              when={MINI_HOURS !== null && STANDARD_HOURS !== null}
+              fallback="Хватает на первые запуски."
+            >
+              Хватает на {MINI_HOURS} {pluralRu(MINI_HOURS ?? 0, ['час', 'часа', 'часов'])} машины
+              «Мини» или на {STANDARD_HOURS} {pluralRu(STANDARD_HOURS ?? 0, ['час', 'часа', 'часов'])}{' '}
+              машины «Стандарт».
             </Show>
           </p>
           <ul class="hero-trial-limits">
@@ -147,10 +151,10 @@ export default function SiteHome(): JSX.Element {
             {pluralRu(AVAILABLE_PRODUCTS.length, ['машина', 'машины', 'машин'])} Linux запускаются сейчас
           </h2>
           <p class="site-lede">
-            Цена считается по составу машины: снимок задаёт процессор, память и диск, поэтому счёт
+            Цена считается по составу машины: образ задаёт процессор, память и диск, поэтому счёт
             совпадает с карточкой. Все три запускаются в площадке <code>{LIVE_REGION}</code>. Со своим
-            ключом поставщика машина идёт на вашем аккаунте, а Rox берёт только сервисный сбор — он
-            указан в каждой карточке.
+            ключом машина идёт на вашем ключе, а Rox берёт только сервисный сбор — он указан в каждой
+            карточке.
           </p>
         </div>
         <ul class="product-grid product-grid--live">
@@ -162,60 +166,49 @@ export default function SiteHome(): JSX.Element {
             )}
           </For>
         </ul>
-        <div class="request-panel" role="group" aria-labelledby="request-title">
-          <div class="request-head">
-            <div>
-              <h3 class="request-title" id="request-title">
-                По запросу: Windows и видеокарта H100
+        <div class="soon-band" role="group" aria-labelledby="soon-title">
+          <div class="soon-head">
+            <div class="soon-head-copy">
+              <h3 class="soon-title" id="soon-title">
+                Скоро
               </h3>
-              <p class="request-lede">
-                Эти конфигурации и цены видны, но на этой организации Daytona запуск не пройдёт: нет
-                класса Windows и кредитов GPU. Доступность зависит от класса и квоты вашей организации.
+              <p class="soon-lede">
+                Windows и машины с видеокартой сейчас в работе. Состав и цена уже известны — запуск
+                появится в этом же кабинете.
               </p>
             </div>
-            <a
-              class="btn btn-secondary btn-sm"
-              href={DAYTONA_CONSOLE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Кошелёк и квоты Daytona
-            </a>
+            <A class="btn btn-secondary btn-sm" href="/console">
+              Открыть кабинет
+            </A>
           </div>
-          <ul class="request-list">
+          <ul class="soon-list">
             <For each={REQUEST_PRODUCTS}>
               {(product) => (
-                <li class="request-item">
-                  <div class="request-item-main">
-                    <p class="request-name">{product.name}</p>
-                    <p class="request-specs">
+                <li class="soon-item">
+                  <div class="soon-item-main">
+                    <p class="soon-name">{product.name}</p>
+                    <p class="soon-specs">
                       {cpuText(product.cpu)} · {memoryText(product.memoryGb)} · {diskText(product.diskGb)}
-                      <Show when={product.gpu} fallback={<span> · без видеокарты</span>}>
-                        {(gpu) => <span> · видеокарта {gpuText(gpu())}</span>}
+                      <Show when={product.gpu}>
+                        {(gpu) => <span> · {gpuText(gpu())}</span>}
                       </Show>
                     </p>
                   </div>
-                  <div class="request-item-side">
-                    <p class="request-price">
+                  <div class="soon-item-side">
+                    <p class="soon-price">
                       {formatCents(product.retail)}
-                      <span class="request-unit">/час</span>
+                      <span class="soon-unit">/час</span>
                     </p>
-                    <span class="request-badge">По запросу</span>
+                    <span class="soon-badge">Скоро</span>
                   </div>
-                  <Show when={product.providerNote}>
-                    {(note) => <p class="request-note">{note()}</p>}
-                  </Show>
                 </li>
               )}
             </For>
           </ul>
-          <p class="request-fine">
-            Ссылка ведёт в кабинет поставщика: Rox не продаёт запуск, который поставщик отклонит.
-          </p>
         </div>
         <p class="site-note">
-          <strong>Свой ключ — это ваш аккаунт у поставщика.</strong> Машина запускается на нём, железо вы
-          платите поставщику напрямую, и Rox не выставляет счёт за мощность. Без своего ключа работает
+          <strong>Свой ключ — это ключ вашего облачного аккаунта.</strong> Машина запускается на нём,
+          железо вы оплачиваете там же, а Rox берёт только сервисный сбор. Без своего ключа работает
           платформенный: так устроен и пробный запуск.
         </p>
       </section>
@@ -250,7 +243,7 @@ export default function SiteHome(): JSX.Element {
             <h3 class="step-title">Выберите машину</h3>
             <p class="step-text">
               Продукт, площадка и срок — на одном экране. Цена часа, резерв за срок и остаток после
-              запуска пересчитываются сразу; точный состав берётся из снимка.
+              запуска пересчитываются сразу; точный состав берётся из образа.
             </p>
           </li>
           <li class="step">
@@ -273,8 +266,8 @@ export default function SiteHome(): JSX.Element {
             Всё, что делает машину продуктом
           </h2>
           <p class="site-lede">
-            Плата за час — это не только железо. В неё входит то, что превращает чужие машины в один
-            понятный инструмент.
+            Плата за час — это не только железо. В неё входит то, что превращает облачное железо в
+            один понятный инструмент.
           </p>
         </div>
         <ul class="included-grid">
@@ -282,22 +275,21 @@ export default function SiteHome(): JSX.Element {
             <h3 class="included-title">Терминал в браузере</h3>
             <p class="included-text">
               Без ssh и установки клиента: команда уходит на машину, stdout и stderr показаны разными
-              цветами, код выхода больше нуля — красной пометкой. Терминал проверен на «Разработке».
+              цветами, код выхода больше нуля — красной пометкой. Терминал проверен на «Стандарте».
             </p>
           </li>
           <li class="included-item">
-            <h3 class="included-title">Три готовых Linux-снимка</h3>
+            <h3 class="included-title">Три готовых образа Linux</h3>
             <p class="included-text">
-              «Старт», «Разработка» и «Большая» запускаются сейчас. Windows и H100 видны с составом и
-              ценой, но помечены «По запросу»: запуск зависит от класса и квот организации.
+              «Мини», «Стандарт» и «Про» запускаются сейчас. Windows и машины с видеокартой — в работе:
+              состав и цена уже видны, запуск появится позже.
             </p>
           </li>
           <li class="included-item">
             <h3 class="included-title">Площадка <code>us</code></h3>
             <p class="included-text">
-              Все три доступные машины запускаются в общей площадке <code>us</code>. Выделенную{' '}
-              <code>us-west-4</code> в этом срезе не проверяли; если площадку не задать, поставщик
-              выберет сам.
+              Все три доступные машины запускаются в общей площадке <code>us</code>. Другую площадку мы
+              пока не проверяли, поэтому не обещаем.
             </p>
           </li>
           <li class="included-item">
@@ -310,7 +302,7 @@ export default function SiteHome(): JSX.Element {
           <li class="included-item">
             <h3 class="included-title">Ключи без секретов в ответах</h3>
             <p class="included-text">
-              Ключ поставщика хранится на сервере, а API показывает только последние четыре символа и
+              Ключ облака хранится на сервере, а API показывает только последние четыре символа и
               отпечаток. Ключ Rox живёт в памяти вкладки.
             </p>
           </li>
@@ -332,7 +324,7 @@ export default function SiteHome(): JSX.Element {
           </h2>
           <p class="site-lede">
             Тот же запуск, что и в кабинете: продукт и площадка в теле, ключ в заголовке. Ответ заберёт
-            снимок, площадку и ставку — подставлять ресурсы вручную не нужно.
+            образ, площадку и ставку — подставлять ресурсы вручную не нужно.
           </p>
         </div>
         <CodeBlock
@@ -347,10 +339,10 @@ curl -sS -X POST "$ROX_API_URL/v1/sandboxes" \\
   -d '{"product":"linux-pro","region":"us","ttlSec":3600}'`}
         />
         <p class="site-lede">
-          Ответ содержит <code>id</code>, состояние, состав снимка, площадку, ставку и режим оплаты.
-          Вместо <code>product</code> можно передать <code>snapshot</code>; неизвестный снимок сервер
-          отклонит до списания. Этим запросом запускается доступная Linux-машина; Windows и H100 — по
-          запросу. Полный разбор — в <A href="/docs">документации</A>.
+          Ответ содержит <code>id</code>, состояние, состав образа, площадку, ставку и режим оплаты.
+          Вместо <code>product</code> можно передать <code>snapshot</code>; неизвестный образ сервер
+          отклонит до списания. Этим запросом запускается машина Linux; Windows и видеокарта появятся
+          позже. Полный разбор — в <A href="/docs">документации</A>.
         </p>
       </section>
 
@@ -382,12 +374,11 @@ curl -sS -X POST "$ROX_API_URL/v1/sandboxes" \\
             <h3 class="limits-title">Чего не обещаем</h3>
             <ul class="site-list">
               <li>
-                Windows и H100 — по запросу: на этой организации Daytona нет класса Windows и кредитов
-                GPU. Состав и цена показаны, запуск не обещан.
+                Windows и машины с видеокартой — скоро: цена и состав уже известны, запуск не обещан.
               </li>
               <li>Данные внутри машины не гарантированы после остановки — забирайте нужное до конца срока.</li>
               <li>Пробный счёт не пополняется сам: когда деньги кончатся, новые машины не запустятся.</li>
-              <li>Если поставщик отказал, придёт <code>provider_error</code> с номером запроса, а не ложный успех.</li>
+              <li>Если запуск отказал, придёт <code>provider_error</code> с номером запроса, а не ложный успех.</li>
             </ul>
           </div>
         </div>
@@ -412,37 +403,33 @@ curl -sS -X POST "$ROX_API_URL/v1/sandboxes" \\
           <details class="faq-item">
             <summary>На сколько хватит пробных {formatCents(TRIAL_CENTS)}?</summary>
             <p>
-              Это арифметика по прайсу: {START_HOURS ?? 0} часов машины «Старт» или {PRO_HOURS ?? 0}{' '}
-              часов «Разработки». Один запуск длится не больше 24 часов, поэтому часы можно
-              распределить между несколькими запусками.
+              Это арифметика по прайсу: {MINI_HOURS ?? 0} часов машины «Мини» или{' '}
+              {STANDARD_HOURS ?? 0} часов «Стандарт». Один запуск длится не больше 24 часов, поэтому
+              часы можно распределить между несколькими запусками.
             </p>
           </details>
           <details class="faq-item">
-            <summary>Чем «свой ключ поставщика» отличается от платформенного?</summary>
+            <summary>Чем «свой ключ» отличается от платформенного?</summary>
             <p>
-              Свой ключ — это ключ вашего аккаунта Daytona. Машина идёт на нём, железо вы платите
-              поставщику по своему тарифу, а Rox берёт только сервисный сбор: 15 % цены часа, но не
-              меньше {formatCents(MIN_SERVICE_FEE_CENTS_PER_HOUR)}. Без своего ключа работает
-              платформенный, и кошелёк платит полную цену часа.
+              Свой ключ — это ключ вашего облачного аккаунта. Машина идёт на нём, железо вы оплачиваете
+              там же по своему тарифу, а Rox берёт только сервисный сбор: 15 % цены часа, но не меньше{' '}
+              {formatCents(MIN_SERVICE_FEE_CENTS_PER_HOUR)}. Без своего ключа работает платформенный, и
+              кошелёк платит полную цену часа.
             </p>
           </details>
           <details class="faq-item">
-            <summary>Где хранится ключ Rox и ключ поставщика?</summary>
+            <summary>Где хранится ключ Rox и ключ облака?</summary>
             <p>
               Ключ Rox — в памяти вкладки (<code>sessionStorage</code>), не в адресной строке и не в
-              cookie. Ключ поставщика хранится на сервере, а ответы API показывают только последние
-              четыре символа и отпечаток.
+              cookie. Ключ облака хранится на сервере, а ответы API показывают только последние четыре
+              символа и отпечаток.
             </p>
           </details>
           <details class="faq-item">
-            <summary>Можно ли запустить Windows или H100?</summary>
+            <summary>Можно ли запустить Windows или машину с видеокартой?</summary>
             <p>
-              Сейчас нет. На этой организации Daytona нет класса Windows и кредитов GPU, поэтому
-              Windows-конфигурации и H100 показаны с составом и ценой, но помечены «По запросу»: кнопки
-              запуска у них нет. Класс и квоты выдаёт поставщик — их видно в{' '}
-              <a href={DAYTONA_CONSOLE_URL} target="_blank" rel="noopener noreferrer">
-                кабинете Daytona
-              </a>.
+              Пока нет — они в работе. Состав и цена уже видны на странице <A href="/pricing">«Цены»</A>{' '}
+              с пометкой «Скоро», а запуск появится в этом же кабинете.
             </p>
           </details>
           <details class="faq-item">

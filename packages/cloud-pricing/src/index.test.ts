@@ -83,10 +83,10 @@ describe('DEFAULT_PRODUCTS', () => {
     }
     for (const id of ['windows-start', 'windows-pro', 'windows-large', 'windows-xl']) {
       expect(findProduct(id)?.available).toBe(false)
-      expect(findProduct(id)?.note).toBe('Класс Windows недоступен в этом аккаунте Daytona')
+      expect(findProduct(id)?.note).toBe('Скоро: Windows пока не подключён')
     }
     expect(findProduct('gpu-h100')?.available).toBe(false)
-    expect(findProduct('gpu-h100')?.note).toBe('Нужны GPU-кредиты Daytona')
+    expect(findProduct('gpu-h100')?.note).toBe('Скоро: GPU по запросу')
   })
 
   test('no product points at the custom snapshots that fail exec', () => {

@@ -277,7 +277,7 @@ describe('invoice after delete', () => {
     expect(body.data).toHaveLength(1)
     expect(body.data[0]).toMatchObject({
       ref: created.id,
-      label: 'Разработка',
+      label: 'Стандарт',
       snapshot: 'rox-cloud-medium-2x4',
       billing_mode: 'managed',
       rate_cents_per_hour: 36,

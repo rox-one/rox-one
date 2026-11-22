@@ -91,19 +91,7 @@
   white-space: normal;
 }
 
-.price-note {
-  display: block;
-  margin-top: 3px;
-  max-width: 26ch;
-  color: var(--muted);
-  font-size: 10.5px;
-  font-weight: 400;
-  line-height: 1.4;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.price-snapshot {
+.price-image {
   color: var(--muted);
   font-size: var(--text-xs);
   overflow-wrap: anywhere;

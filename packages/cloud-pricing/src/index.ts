@@ -82,7 +82,7 @@ const SERVICE_FEE_RATE = 0.15
 export const DEFAULT_PRODUCTS: readonly CloudMachineProduct[] = [
   {
     id: 'linux-start',
-    name: 'Старт',
+    name: 'Мини',
     snapshot: 'daytonaio/sandbox:0.11.0',
     os: 'linux',
     cpu: 1,
@@ -93,7 +93,7 @@ export const DEFAULT_PRODUCTS: readonly CloudMachineProduct[] = [
   },
   {
     id: 'linux-pro',
-    name: 'Разработка',
+    name: 'Стандарт',
     snapshot: 'rox-cloud-medium-2x4',
     os: 'linux',
     cpu: 2,
@@ -104,7 +104,7 @@ export const DEFAULT_PRODUCTS: readonly CloudMachineProduct[] = [
   },
   {
     id: 'linux-large',
-    name: 'Большая',
+    name: 'Про',
     snapshot: 'rox-cloud-large-4x8',
     os: 'linux',
     cpu: 4,
@@ -115,7 +115,7 @@ export const DEFAULT_PRODUCTS: readonly CloudMachineProduct[] = [
   },
   {
     id: 'windows-start',
-    name: 'Windows Старт',
+    name: 'Windows · 1 CPU',
     snapshot: 'windows-small',
     os: 'windows',
     cpu: 1,
@@ -123,11 +123,11 @@ export const DEFAULT_PRODUCTS: readonly CloudMachineProduct[] = [
     diskGb: 30,
     centsPerHour: 34,
     available: false,
-    note: 'Класс Windows недоступен в этом аккаунте Daytona',
+    note: 'Скоро: Windows пока не подключён',
   },
   {
     id: 'windows-pro',
-    name: 'Windows Про',
+    name: 'Windows · 2 CPU',
     snapshot: 'windows-medium',
     os: 'windows',
     cpu: 2,
@@ -135,11 +135,11 @@ export const DEFAULT_PRODUCTS: readonly CloudMachineProduct[] = [
     diskGb: 50,
     centsPerHour: 56,
     available: false,
-    note: 'Класс Windows недоступен в этом аккаунте Daytona',
+    note: 'Скоро: Windows пока не подключён',
   },
   {
     id: 'windows-large',
-    name: 'Windows Большая',
+    name: 'Windows · 4 CPU',
     snapshot: 'windows-large',
     os: 'windows',
     cpu: 4,
@@ -147,11 +147,11 @@ export const DEFAULT_PRODUCTS: readonly CloudMachineProduct[] = [
     diskGb: 50,
     centsPerHour: 92,
     available: false,
-    note: 'Класс Windows недоступен в этом аккаунте Daytona',
+    note: 'Скоро: Windows пока не подключён',
   },
   {
     id: 'windows-xl',
-    name: 'Windows XL',
+    name: 'Windows · 8 CPU',
     snapshot: 'windows-xlarge',
     os: 'windows',
     cpu: 8,
@@ -159,11 +159,11 @@ export const DEFAULT_PRODUCTS: readonly CloudMachineProduct[] = [
     diskGb: 100,
     centsPerHour: 174,
     available: false,
-    note: 'Класс Windows недоступен в этом аккаунте Daytona',
+    note: 'Скоро: Windows пока не подключён',
   },
   {
     id: 'gpu-h100',
-    name: 'GPU H100',
+    name: 'H100',
     snapshot: 'daytona-gpu',
     os: 'linux',
     cpu: 16,
@@ -172,7 +172,7 @@ export const DEFAULT_PRODUCTS: readonly CloudMachineProduct[] = [
     gpu: { type: 'h100', count: 1 },
     centsPerHour: 786,
     available: false,
-    note: 'Нужны GPU-кредиты Daytona',
+    note: 'Скоро: GPU по запросу',
   },
 ]
 
