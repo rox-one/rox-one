@@ -354,7 +354,7 @@ curl -sS -X POST "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID/exec" \\
             <p class="site-note site-note--plain">
               Адрес машины — внутренний, как правило вида <code>172.20.x.x</code>: из интернета он не
               виден и публичного IP у машины нет. Наружу ведут две двери — подписанная ссылка вида{' '}
-              <code>https://&lt;подпись&gt;.rox.computer</code> и SSH-шлюз{' '}
+              <code>https://preview.rox.computer/&lt;подпись&gt;/</code> и SSH-шлюз{' '}
               <code>ssh.rox.computer</code>. Если такая ссылка отвечает 502, сама ссылка жива, а сайт
               внутри машины не отвечает: проверьте, что сервер на этом порту запущен.
             </p>
@@ -407,7 +407,7 @@ curl -sS -X POST "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID/exec" \\
   -H "Content-Type: application/json" \\
   -d '{"port":8000,"ttl_sec":3600}'
 
-# {"object":"preview","port":8000,"url":"https://<подпись>.rox.computer","expires_at":"…"}`}
+# {"object":"preview","port":8000,"url":"https://preview.rox.computer/<подпись>/","expires_at":"…"}`}
             />
             <p class="site-lede">
               Вход по SSH тоже выдаётся отдельным действием: кнопка «Создать доступ» в блоке SSH карточки

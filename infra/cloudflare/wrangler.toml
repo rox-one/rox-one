@@ -3,8 +3,8 @@ main = "preview-worker.js"
 compatibility_date = "2026-11-22"
 workers_dev = false
 
-# The wildcard is one label below the apex because Cloudflare Universal SSL
-# covers *.rox.computer, not two-level hosts such as *.preview.rox.computer.
+# `preview` is one label below the apex, so Universal SSL covers it. The signed
+# port+token label is the first path segment; `app` and `ssh` stay free.
 routes = [
-  { pattern = "*.rox.computer/*", zone_id = "e512d85975c3876b448cfb60ff6d5ee2" }
+  { pattern = "preview.rox.computer/*", zone_id = "e512d85975c3876b448cfb60ff6d5ee2" }
 ]

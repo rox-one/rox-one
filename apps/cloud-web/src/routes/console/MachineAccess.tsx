@@ -324,7 +324,7 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
               <code>python3 -m http.server {port()}</code>.
             </p>
             <p class="access-note">
-              Ссылка открывает этот порт по адресу <code>*.rox.computer</code>. Ответ 502 значит, что
+              Ссылка открывает этот порт по адресу <code>preview.rox.computer/&lt;подпись&gt;/</code>. Ответ 502 значит, что
               сайт внутри машины не отвечает: проверьте, что сервер на порту запущен.
             </p>
 

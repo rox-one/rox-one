@@ -12,14 +12,19 @@ function down() {
 export default {
   async fetch(request) {
     const url = new URL(request.url);
-    const label = url.hostname.split('.')[0] || '';
-    const match = /^(\d{1,5})-([a-z0-9]+)$/.exec(label);
+    // One stable host keeps Universal SSL working: the signed label and port
+    // travel in the first path segment, not in a second-level subdomain.
+    const match = /^\/(\d{1,5}-[a-z0-9]+)(\/.*)?$/.exec(url.pathname);
     if (!match) return new Response('Not found', { status: 404 });
-    if (RESERVED.has(Number(match[1]))) return new Response('Not found', { status: 404 });
+    const label = match[1];
+    if (RESERVED.has(Number(label.split('-')[0]))) {
+      return new Response('Not found', { status: 404 });
+    }
 
     const target = new URL(request.url);
     target.protocol = 'https:';
     target.hostname = `${label}.${ORIGIN_SUFFIX}`;
+    target.pathname = match[2] || '/';
     const headers = new Headers(request.headers);
     headers.delete('host');
     try {

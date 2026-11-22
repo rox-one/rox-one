@@ -540,12 +540,14 @@ const RESERVED_PORTS: readonly number[] = [2280, 2281, 22_220, 33_333]
  * the signed preview token stays in the first label, and a Worker in front of
  * the provider fetches the origin; SSH resolves through a CNAME.
  */
-const PUBLIC_PREVIEW_SUFFIX = (process.env.ROX_PREVIEW_SUFFIX ?? '.rox.computer').trim()
+const PUBLIC_PREVIEW_HOST = (process.env.ROX_PREVIEW_HOST ?? 'preview.rox.computer').trim()
 const PUBLIC_SSH_HOST = (process.env.ROX_SSH_HOST ?? 'ssh.rox.computer').trim()
 
-/** A vendor preview host → the same signed label under Rox's own domain. */
+/** A vendor signed preview → the same label as a path on Rox's preview host. */
 function publicPreviewUrl(url: string): string {
-  return url.replace(/\.daytonaproxy01\.net$/i, PUBLIC_PREVIEW_SUFFIX)
+  const match = /^https:\/\/(\d{1,5}-[a-z0-9]+)\.daytonaproxy01\.net(\/.*)?$/i.exec(url)
+  if (match === null) return url
+  return `https://${PUBLIC_PREVIEW_HOST}/${match[1]}${match[2] ?? '/'}`
 }
 
 /** A vendor SSH command → Rox's gateway alias, keeping the one-time token. */
