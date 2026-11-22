@@ -16,7 +16,6 @@ const ConsoleMachines = lazy(() => import('./routes/console/Machines'))
 const ConsoleMachine = lazy(() => import('./routes/console/Machine'))
 const ConsoleInvoice = lazy(() => import('./routes/console/Invoice'))
 const ConsoleKeys = lazy(() => import('./routes/console/Keys'))
-const ConsoleProviders = lazy(() => import('./routes/console/Providers'))
 const ConsoleJournal = lazy(() => import('./routes/console/Journal'))
 
 const AdminLayout = lazy(() => import('./routes/admin/AdminLayout'))
@@ -81,7 +80,6 @@ export default function App() {
           <Route path="machines/:id" component={ConsoleMachine} />
           <Route path="invoice" component={ConsoleInvoice} />
           <Route path="keys" component={ConsoleKeys} />
-          <Route path="providers" component={ConsoleProviders} />
           <Route path="journal" component={ConsoleJournal} />
         </Route>
 
