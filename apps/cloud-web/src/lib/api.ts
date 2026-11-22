@@ -131,6 +131,43 @@ function parseTime(value: unknown): number | null {
   return Number.isFinite(at) ? at : null
 }
 
+function asRow(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+}
+
+/** One key from `ssh-keys`: metadata only, the public key material is never echoed. */
+function parseSshKey(row: unknown): SshKeyInfo {
+  const item = asRow(row)
+  return {
+    id: typeof item.id === 'string' ? item.id : '',
+    label: typeof item.label === 'string' ? item.label : '',
+    fingerprint: typeof item.fingerprint === 'string' ? item.fingerprint : '',
+    createdAt: parseTime(item.created_at),
+  }
+}
+
+function parseSnapshot(row: unknown): SnapshotInfo {
+  const item = asRow(row)
+  return {
+    name: typeof item.name === 'string' ? item.name : '',
+    state: typeof item.state === 'string' ? item.state : '',
+    createdAt: parseTime(item.created_at),
+  }
+}
+
+/**
+ * A sandbox row: every field passes through untouched, while the two nested
+ * lists and the display name take their camelCase shape from the contract.
+ */
+function parseSandbox(payload: unknown): Sandbox {
+  const row = asRow(payload)
+  const out: Record<string, unknown> = { ...row }
+  out.display_name = typeof row.display_name === 'string' && row.display_name.length > 0 ? row.display_name : null
+  if (Array.isArray(row.ssh_keys)) out.ssh_keys = row.ssh_keys.map(parseSshKey)
+  if (Array.isArray(row.snapshots)) out.snapshots = row.snapshots.map(parseSnapshot)
+  return out as unknown as Sandbox
+}
+
 export async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
   const method = (options.method ?? 'GET').toUpperCase()
   const auth = options.auth ?? defaultAuth(path)
@@ -345,6 +382,12 @@ export interface Sandbox {
   product?: string
   spec?: SandboxSpec
   billing?: SandboxBilling
+  /** Customer-facing name; null when the machine is shown by its id. */
+  display_name?: string | null
+  /** Keys registered on the machine, metadata only. */
+  ssh_keys?: SshKeyInfo[]
+  /** Checkpoints saved from the machine. */
+  snapshots?: SnapshotInfo[]
   [key: string]: unknown
 }
 
@@ -453,6 +496,45 @@ export interface SshAccess {
   expiresAt: number | null
 }
 
+/** One TCP port listening inside the machine; `reserved` marks Rox's own services. */
+export interface PortInfo {
+  port: number
+  reserved: boolean
+}
+
+/** Live resource use of a running machine, sampled at `at`. */
+export interface MetricsInfo {
+  at: number | null
+  cpuPercent: number
+  memoryUsedKb: number
+  memoryTotalKb: number
+  diskUsedKb: number
+  diskTotalKb: number
+}
+
+/** One command run inside the machine's persistent shell session. */
+export interface SessionExecResult {
+  stdout: string
+  stderr: string
+  cwd: string
+  exitCode: number | null
+}
+
+/** A key registered on the machine; the public key material is never sent back. */
+export interface SshKeyInfo {
+  id: string
+  label: string
+  fingerprint: string
+  createdAt: number | null
+}
+
+/** A named checkpoint of the machine's disk. */
+export interface SnapshotInfo {
+  name: string
+  state: string
+  createdAt: number | null
+}
+
 export interface CreateSandboxInput {
   /** A pricing product id; it fixes the snapshot and its resources. */
   product?: string
@@ -468,6 +550,8 @@ export interface CreateSandboxInput {
   region?: string
   provider?: string
   metadata?: Record<string, string>
+  /** Friendly name shown in the console; sent as `display_name`. */
+  displayName?: string
   /** Defaults to a fresh random UUID; reuse it to retry the same boot safely. */
   idempotencyKey?: string
 }
@@ -783,23 +867,93 @@ export const api = {
 
   usage: (query?: Query) => request<ListResponse<UsageRow>>(withQuery('/v1/usage', query)),
 
-  sandboxes: (query?: Query) => request<ListResponse<Sandbox>>(withQuery('/v1/sandboxes', query)),
-
-  sandbox: (id: string) => request<Sandbox>(`/v1/sandboxes/${enc(id)}`),
-
-  createSandbox: (input: CreateSandboxInput) => {
-    const { idempotencyKey, ...body } = input
-    return request<Sandbox>('/v1/sandboxes', {
-      method: 'POST',
-      body,
-      headers: { 'idempotency-key': idempotencyKey ?? newIdempotencyKey() },
-    })
+  sandboxes: async (query?: Query): Promise<ListResponse<Sandbox>> => {
+    const raw = await request<ListResponse<unknown>>(withQuery('/v1/sandboxes', query))
+    const rows = Array.isArray(raw.data) ? raw.data : []
+    return { ...raw, data: rows.map(parseSandbox) }
   },
 
-  stopSandbox: (id: string) => request<Sandbox>(`/v1/sandboxes/${enc(id)}/stop`, { method: 'POST' }),
+  sandbox: async (id: string) => parseSandbox(await request<unknown>(`/v1/sandboxes/${enc(id)}`)),
+
+  /** Rename the machine; an empty name clears it. */
+  updateSandbox: async (id: string, input: { displayName: string }) =>
+    parseSandbox(
+      await request<unknown>(`/v1/sandboxes/${enc(id)}`, {
+        method: 'PATCH',
+        body: { display_name: input.displayName },
+      }),
+    ),
+
+  createSandbox: async (input: CreateSandboxInput) => {
+    const { idempotencyKey, displayName, ...rest } = input
+    const raw = await request<unknown>('/v1/sandboxes', {
+      method: 'POST',
+      body: displayName === undefined ? rest : { ...rest, display_name: displayName },
+      headers: { 'idempotency-key': idempotencyKey ?? newIdempotencyKey() },
+    })
+    return parseSandbox(raw)
+  },
+
+  stopSandbox: async (id: string) =>
+    parseSandbox(await request<unknown>(`/v1/sandboxes/${enc(id)}/stop`, { method: 'POST' })),
 
   deleteSandbox: (id: string) =>
     request<void>(`/v1/sandboxes/${enc(id)}`, { method: 'DELETE', parse: 'none' }),
+
+  /** Ports listening inside the machine, from `ss -ltnH`. */
+  ports: async (id: string): Promise<PortInfo[]> => {
+    const raw = await request<{ data?: unknown }>(`/v1/sandboxes/${enc(id)}/ports`)
+    const rows = Array.isArray(raw.data) ? raw.data : []
+    return rows.map((row) => {
+      const item = asRow(row)
+      return {
+        port: typeof item.port === 'number' ? item.port : 0,
+        reserved: item.reserved === true,
+      }
+    })
+  },
+
+  metrics: async (id: string): Promise<MetricsInfo> => {
+    const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/metrics`)
+    return {
+      at: parseTime(raw.at),
+      cpuPercent: typeof raw.cpu_percent === 'number' ? raw.cpu_percent : 0,
+      memoryUsedKb: typeof raw.memory_used_kb === 'number' ? raw.memory_used_kb : 0,
+      memoryTotalKb: typeof raw.memory_total_kb === 'number' ? raw.memory_total_kb : 0,
+      diskUsedKb: typeof raw.disk_used_kb === 'number' ? raw.disk_used_kb : 0,
+      diskTotalKb: typeof raw.disk_total_kb === 'number' ? raw.disk_total_kb : 0,
+    }
+  },
+
+  /** Open or reuse the machine's persistent shell; `cwd` is where it starts. */
+  sessionStart: async (id: string): Promise<{ state: string; cwd: string }> => {
+    const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/session/start`, {
+      method: 'POST',
+    })
+    return {
+      state: typeof raw.state === 'string' ? raw.state : 'ready',
+      cwd: typeof raw.cwd === 'string' ? raw.cwd : '',
+    }
+  },
+
+  sessionExec: async (id: string, command: string): Promise<SessionExecResult> => {
+    const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/session/exec`, {
+      method: 'POST',
+      body: { command },
+    })
+    return {
+      stdout: typeof raw.stdout === 'string' ? raw.stdout : '',
+      stderr: typeof raw.stderr === 'string' ? raw.stderr : '',
+      cwd: typeof raw.cwd === 'string' ? raw.cwd : '',
+      exitCode: typeof raw.exit_code === 'number' ? raw.exit_code : null,
+    }
+  },
+
+  sessionInterrupt: (id: string) =>
+    request<{ ok: boolean }>(`/v1/sandboxes/${enc(id)}/session/interrupt`, { method: 'POST' }),
+
+  sessionStop: (id: string) =>
+    request<void>(`/v1/sandboxes/${enc(id)}/session/stop`, { method: 'POST', parse: 'none' }),
 
   exec: async (id: string, input: ExecInput): Promise<ExecResult> => {
     const timeoutSec = input.timeoutSec ?? input.timeout_sec
@@ -839,8 +993,10 @@ export const api = {
     })
   },
 
-  network: async (id: string): Promise<NetworkInfo> => {
-    const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/network`)
+  network: async (id: string, refresh = false): Promise<NetworkInfo> => {
+    const raw = await request<Record<string, unknown>>(
+      withQuery(`/v1/sandboxes/${enc(id)}/network`, { refresh: refresh ? 1 : undefined }),
+    )
     return {
       privateIp: typeof raw.private_ip === 'string' ? raw.private_ip : null,
       publicIp: typeof raw.public_ip === 'string' ? raw.public_ip : null,
@@ -871,9 +1027,43 @@ export const api = {
     }
   },
 
+  /** Keys registered on the machine; metadata only, never the key material. */
+  sshKeys: async (id: string): Promise<SshKeyInfo[]> => {
+    const raw = await request<{ data?: unknown }>(`/v1/sandboxes/${enc(id)}/ssh-keys`)
+    const rows = Array.isArray(raw.data) ? raw.data : []
+    return rows.map(parseSshKey)
+  },
+
+  addSshKey: async (id: string, input: { publicKey: string; label?: string }): Promise<SshKeyInfo> => {
+    const body: Record<string, unknown> = { public_key: input.publicKey }
+    if (input.label !== undefined) body.label = input.label
+    const raw = await request<unknown>(`/v1/sandboxes/${enc(id)}/ssh-keys`, { method: 'POST', body })
+    return parseSshKey(raw)
+  },
+
+  deleteSshKey: (id: string, keyId: string) =>
+    request<void>(`/v1/sandboxes/${enc(id)}/ssh-keys/${enc(keyId)}`, { method: 'DELETE', parse: 'none' }),
+
+  /** Checkpoints saved from the machine. */
+  snapshots: async (id: string): Promise<SnapshotInfo[]> => {
+    const raw = await request<{ data?: unknown }>(`/v1/sandboxes/${enc(id)}/snapshots`)
+    const rows = Array.isArray(raw.data) ? raw.data : []
+    return rows.map(parseSnapshot)
+  },
+
+  createSnapshot: async (id: string, input: { name?: string } = {}): Promise<SnapshotInfo> => {
+    const body = input.name === undefined ? {} : { name: input.name }
+    const raw = await request<unknown>(`/v1/sandboxes/${enc(id)}/snapshots`, { method: 'POST', body })
+    return parseSnapshot(raw)
+  },
+
   /** Files are read as UTF-8 text; the console shows text, not binary. */
   readFile: (id: string, path: string) =>
     request<string>(withQuery(`/v1/sandboxes/${enc(id)}/files`, { path }), { parse: 'text' }),
+
+  /** Raw bytes of one file, so the browser can save it without reading it as text. */
+  downloadFile: (id: string, path: string) =>
+    request<Blob>(withQuery(`/v1/sandboxes/${enc(id)}/files`, { path }), { parse: 'blob' }),
 
   writeFile: (id: string, path: string, content: string | Blob) => {
     const body = typeof content === 'string' ? new Blob([content], { type: 'text/plain; charset=utf-8' }) : content

@@ -1,4 +1,4 @@
-/* Инспектор файла: чтение, копирование и правка выбранного файла. */
+/* Инспектор файла: чтение, копирование, правка, скачивание и загрузка. */
 .file-preview {
   display: flex;
   flex-direction: column;
@@ -32,8 +32,14 @@
 .file-preview-tools {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
+  flex-wrap: wrap;
   margin-left: auto;
+}
+
+.file-preview-file {
+  display: none;
 }
 
 .file-preview-tool {
@@ -104,6 +110,43 @@
   font-weight: 650;
 }
 
+.file-preview-dirty {
+  color: var(--warning);
+  font-weight: 650;
+}
+
+.file-preview-guard {
+  display: grid;
+  gap: 6px;
+  margin: 0 12px 8px;
+  padding: 8px;
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.file-preview-guard-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.file-preview-large {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: 10px 2px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.file-preview-large p {
+  margin: 0;
+}
+
 .file-preview-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -115,21 +158,6 @@
 
 .file-preview-body .empty-state {
   padding: 24px 16px;
-}
-
-.file-preview-code {
-  margin: 0;
-}
-
-.file-preview-code .code-body {
-  max-height: none;
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-.file-preview-code .code-body code {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 
 .file-preview-loading {
@@ -159,10 +187,9 @@
   min-width: 0;
 }
 
-.file-preview-edit .textarea {
-  min-height: 300px;
-  font-family: var(--font-mono);
-  font-size: 11px;
+.file-preview-edit .code-editor {
+  height: 420px;
+  max-height: 60vh;
 }
 
 .file-preview-actions {
@@ -177,12 +204,24 @@
   font-size: 10px;
 }
 
+@media (max-width: 520px) {
+  .file-preview-head {
+    flex-wrap: wrap;
+  }
+
+  .file-preview-tools {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 980px) {
   .file-preview {
     max-height: 420px;
   }
 
-  .file-preview-edit .textarea {
-    min-height: 180px;
+  .file-preview-edit .code-editor {
+    height: 240px;
   }
 }

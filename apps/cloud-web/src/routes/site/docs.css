@@ -129,6 +129,13 @@
   overflow-wrap: anywhere;
 }
 
+.docs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
 /* ---------- Error table ---------- */
 
 .error-table-wrap {

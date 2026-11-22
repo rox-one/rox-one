@@ -10,6 +10,8 @@
  * Every response carries `x-request-id`.
  */
 
+import { createHash } from 'node:crypto'
+
 import type {
   ProviderImage,
   SandboxGpu,
@@ -47,6 +49,8 @@ import type {
   MemoryStore,
   SandboxRecord,
   Scope,
+  SnapshotRecord,
+  SshKeyRecord,
   Tenant,
   UsageRow,
 } from './store.ts'
@@ -452,6 +456,236 @@ function optionalStringMap(value: unknown, field: string): Record<string, string
   return out
 }
 
+/** Longest name a customer may give a machine. */
+const MAX_DISPLAY_NAME = 64
+
+/**
+ * A machine's name: trimmed, at most 64 characters, no control characters.
+ * An empty value reads as `undefined` — on boot that means «no name», on rename
+ * it means «clear», and both answer as `display_name: null`.
+ */
+function parseDisplayName(value: unknown, field: string): string | undefined {
+  if (value === undefined || value === null) return undefined
+  if (typeof value !== 'string') {
+    throw new ApiError('invalid_request', `Поле ${field} должно быть строкой`)
+  }
+  const name = value.trim()
+  if (name.length === 0) return undefined
+  if (name.length > MAX_DISPLAY_NAME) {
+    throw new ApiError('invalid_request', `Поле ${field} не длиннее ${MAX_DISPLAY_NAME} символов`)
+  }
+  if (/[\u0000-\u001f\u007f]/.test(name)) {
+    throw new ApiError('invalid_request', `Поле ${field} не должно содержать управляющих символов`)
+  }
+  return name
+}
+
+/** Key types the machine's `authorized_keys` accepts. */
+const SSH_KEY_PREFIXES = ['ssh-rsa', 'ssh-ed25519', 'ecdsa-sha2-'] as const
+const MAX_SSH_KEY_LENGTH = 4096
+
+/** One pasted public key: a single line of a known type, not a private key. */
+function parseSshPublicKey(value: unknown): string {
+  if (typeof value !== 'string') {
+    throw new ApiError('invalid_request', 'Поле public_key обязательно: строка открытого ключа')
+  }
+  const key = value.trim()
+  if (key.length === 0 || key.length > MAX_SSH_KEY_LENGTH) {
+    throw new ApiError(
+      'invalid_request',
+      `Открытый ключ должен быть непустой строкой не длиннее ${MAX_SSH_KEY_LENGTH} символов`,
+    )
+  }
+  if (/[\u0000-\u001f\u007f]/.test(key)) {
+    throw new ApiError('invalid_request', 'Открытый ключ должен быть одной строкой без управляющих символов')
+  }
+  if (!SSH_KEY_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+    throw new ApiError(
+      'invalid_request',
+      'Открытый ключ должен начинаться с ssh-rsa, ssh-ed25519 или ecdsa-sha2-',
+    )
+  }
+  return key
+}
+
+/** `SHA256:` plus base64 of the key blob's digest, the way OpenSSH prints it. */
+function sshFingerprint(publicKey: string): string {
+  const blob = Buffer.from(publicKey.split(/\s+/)[1] ?? '', 'base64')
+  const bytes = blob.length > 0 ? blob : Buffer.from(publicKey, 'utf8')
+  const digest = createHash('sha256').update(bytes).digest('base64').replace(/=+$/, '')
+  return `SHA256:${digest}`
+}
+
+// ============================================================
+// Machine session, metrics and port checks
+// ============================================================
+
+/**
+ * The persistent shell lives in one directory on the machine: a FIFO it reads
+ * commands from, a file it writes output to, and the pid of the shell itself.
+ */
+const SESSION_DIR = '/tmp/rox-session'
+const SESSION_FIFO = `${SESSION_DIR}/in`
+const SESSION_OUT = `${SESSION_DIR}/out`
+const SESSION_PID = `${SESSION_DIR}/pid`
+/** How many tenths of a second a command may take before the route gives up. */
+const SESSION_WAIT_TENTHS = 150
+/** Marker the exec script prints when the session was never started. */
+const SESSION_MISSING = 'ROX_NO_SESSION'
+/** Ports the machine's own services hold; a site must pick another one. */
+const RESERVED_PORTS: readonly number[] = [2280, 2281, 22_220, 33_333]
+
+/**
+ * Public names Rox owns. The vendor host and gateway never reach a customer:
+ * the signed preview token stays in the first label, and a Worker in front of
+ * the provider fetches the origin; SSH resolves through a CNAME.
+ */
+const PUBLIC_PREVIEW_SUFFIX = (process.env.ROX_PREVIEW_SUFFIX ?? '.rox.computer').trim()
+const PUBLIC_SSH_HOST = (process.env.ROX_SSH_HOST ?? 'ssh.rox.computer').trim()
+
+/** A vendor preview host → the same signed label under Rox's own domain. */
+function publicPreviewUrl(url: string): string {
+  return url.replace(/\.daytonaproxy01\.net$/i, PUBLIC_PREVIEW_SUFFIX)
+}
+
+/** A vendor SSH command → Rox's gateway alias, keeping the one-time token. */
+function publicSshCommand(command: string): string {
+  return command.replace(/@ssh\.app\.daytona\.io(?=\s|$)/i, `@${PUBLIC_SSH_HOST}`)
+}
+
+/** Base64 in one step, so no user text reaches the shell unquoted. */
+function base64Utf8(text: string): string {
+  return Buffer.from(text, 'utf8').toString('base64')
+}
+
+/**
+ * Start (or reuse) a `bash -i` that reads the FIFO forever. `exec 3<>` opens
+ * the FIFO read-write so the shell never sees end-of-file between commands.
+ */
+function sessionStartScript(): string {
+  return [
+    `mkdir -p ${SESSION_DIR}`,
+    `if [ ! -p ${SESSION_FIFO} ]; then rm -f ${SESSION_FIFO} ${SESSION_OUT}; mkfifo ${SESSION_FIFO}; setsid nohup bash -c 'exec 3<>${SESSION_FIFO}; exec bash -i <&3 >${SESSION_OUT} 2>&1' >/dev/null 2>&1 & echo $! > ${SESSION_PID}; fi`,
+    'sleep 0.3',
+    'echo ready',
+    'pwd',
+  ].join('; ')
+}
+
+/**
+ * One command through the session: the payload is base64 so quoting never eats
+ * it, the markers tell this call's output from every earlier one, and `pwd`
+ * reports where the command left the shell.
+ */
+function sessionExecScript(marker: string, command: string): string {
+  const payload = [
+    `printf '\\n${marker}\\n'`,
+    `eval "$(echo ${base64Utf8(command)} | base64 -d)"`,
+    '__rc=$?',
+    'pwd',
+    `printf '\\n${marker}:END:%s\\n' "$__rc"`,
+  ].join('; ')
+  return [
+    `if [ ! -p ${SESSION_FIFO} ]; then echo ${SESSION_MISSING}; exit 0; fi`,
+    `{ echo ${base64Utf8(payload)} | base64 -d; echo; } > ${SESSION_FIFO}`,
+    `i=0; while [ $i -lt ${SESSION_WAIT_TENTHS} ]; do if grep -q '${marker}:END:' ${SESSION_OUT} 2>/dev/null; then break; fi; sleep 0.1; i=$((i+1)); done`,
+    `(tail -c 262144 ${SESSION_OUT} 2>/dev/null || true)`,
+  ].join('; ')
+}
+
+interface SessionOutput {
+  readonly stdout: string
+  readonly cwd: string
+  readonly exitCode: number
+}
+
+/** Everything the shell printed between this call's markers, minus its noise. */
+function parseSessionOutput(text: string, marker: string): SessionOutput | null {
+  const endToken = `${marker}:END:`
+  const endAt = text.lastIndexOf(endToken)
+  if (endAt < 0) return null
+  const rc = /^(\d+)/.exec(text.slice(endAt + endToken.length))
+  // The end token itself starts with the marker, so the search must stop
+  // before it; otherwise the start and end collapse and the body is empty.
+  const startAt = text.lastIndexOf(marker, endAt - 1)
+  let body = startAt < 0 ? text.slice(0, endAt) : text.slice(startAt + marker.length, endAt)
+  // One newline after the start marker and the blank line before the end
+  // marker are the markers' own frame, not command output.
+  body = body.replace(/^\r?\n/, '').replace(/\n+$/, '')
+  const lines = body.split('\n')
+  const last = lines[lines.length - 1] ?? ''
+  let cwd = '/home/daytona'
+  if (last.startsWith('/')) {
+    cwd = last
+    lines.pop()
+  }
+  const stdout = lines
+    .filter(
+      (line) =>
+        !/^bash: (?:cannot set terminal process group|no job control in this shell)/.test(line),
+    )
+    .join('\n')
+  return {
+    stdout: stdout.length === 0 ? '' : `${stdout}\n`,
+    cwd,
+    exitCode: rc === null ? 0 : Number(rc[1]),
+  }
+}
+
+/**
+ * Resource use in one Python pass: two `/proc/stat` samples 200 ms apart, the
+ * memory counters, and the root filesystem. The answer is one JSON line.
+ */
+const METRICS_SCRIPT = `import json, os, time
+def cpu():
+    with open("/proc/stat") as handle:
+        fields = handle.readline().split()[1:]
+    values = [int(value) for value in fields]
+    idle = values[3] + (values[4] if len(values) > 4 else 0)
+    return sum(values), idle
+total1, idle1 = cpu()
+time.sleep(0.2)
+total2, idle2 = cpu()
+delta_total = total2 - total1
+delta_idle = idle2 - idle1
+percent = 0.0 if delta_total <= 0 else (delta_total - delta_idle) * 100.0 / delta_total
+percent = max(0.0, min(100.0, percent))
+meminfo = {}
+with open("/proc/meminfo") as handle:
+    for line in handle:
+        parts = line.split(":")
+        if len(parts) == 2:
+            meminfo[parts[0].strip()] = parts[1].strip()
+def kb(name):
+    return int(meminfo.get(name, "0 kB").split()[0])
+memory_total = kb("MemTotal")
+if "MemAvailable" in meminfo:
+    memory_used = memory_total - kb("MemAvailable")
+else:
+    memory_used = memory_total - (kb("MemFree") + kb("Buffers") + kb("Cached"))
+stat = os.statvfs("/")
+block = stat.f_frsize
+disk_total = stat.f_blocks * block // 1024
+disk_used = (stat.f_blocks - stat.f_bfree) * block // 1024
+print(json.dumps({"cpu_percent": round(percent, 1), "memory_used_kb": memory_used, "memory_total_kb": memory_total, "disk_used_kb": disk_used, "disk_total_kb": disk_total}))
+`
+
+/** Is anything listening on `port` inside the machine, right now? */
+function portProbeScript(port: number): string {
+  return [
+    'import socket, sys',
+    'probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)',
+    'probe.settimeout(1.0)',
+    'try:',
+    `    probe.connect(("127.0.0.1", ${port}))`,
+    'except OSError:',
+    '    sys.exit(1)',
+    'finally:',
+    '    probe.close()',
+    'sys.exit(0)',
+  ].join('\n')
+}
+
 interface CreateRequest {
   /** Product code from the catalog; its snapshot fixes the resources. */
   readonly product?: string
@@ -467,6 +701,8 @@ interface CreateRequest {
   readonly ttlSec?: number
   readonly metadata?: Record<string, string>
   readonly provider?: string
+  /** What the customer calls this machine; absent = the console shows the id. */
+  readonly displayName?: string
 }
 
 function parseGpu(value: unknown): SandboxGpu | undefined {
@@ -533,6 +769,7 @@ function parseCreateRequest(body: Record<string, unknown>): CreateRequest {
     ttlSec,
     metadata: optionalStringMap(body.metadata, 'metadata'),
     provider: optionalString(body.provider, 'provider'),
+    displayName: parseDisplayName(body.display_name, 'display_name'),
   }
 }
 
@@ -589,6 +826,23 @@ export function createApp(options: CloudApiOptions): CloudApp {
     }
   }
 
+  function sshKeyJson(key: SshKeyRecord): Record<string, unknown> {
+    return {
+      id: key.id,
+      label: key.label,
+      fingerprint: key.fingerprint,
+      created_at: iso(key.createdAt),
+    }
+  }
+
+  function snapshotJson(snapshot: SnapshotRecord): Record<string, unknown> {
+    return {
+      name: snapshot.name,
+      state: snapshot.state ?? null,
+      created_at: iso(snapshot.createdAt),
+    }
+  }
+
   function sandboxJson(record: SandboxRecord): Record<string, unknown> {
     return {
       id: record.id,
@@ -600,10 +854,33 @@ export function createApp(options: CloudApiOptions): CloudApp {
       cost_so_far_cents: record.costCents,
       cost_so_far_usd: (record.costCents / 100).toFixed(2),
       routing_reason: record.routingReason ?? null,
+      display_name: record.displayName ?? null,
+      ssh_keys: (record.sshKeys ?? []).map(sshKeyJson),
+      snapshots: (record.snapshots ?? []).map(snapshotJson),
       spec: specJson(record),
       region: record.region ?? record.spec.region ?? null,
       billing: billingJson(record),
     }
+  }
+
+  /**
+   * One line in the customer's journal. The actor is the tenant's own key, the
+   * target is the machine, and `details` never holds a link, a command or a key.
+   */
+  function auditSandbox(
+    record: SandboxRecord,
+    action: AuditAction,
+    reason: string,
+    details: Record<string, unknown>,
+  ): void {
+    options.audit?.append({
+      actorId: `tenant:${record.tenantId}`,
+      action,
+      targetType: 'sandbox',
+      targetId: record.id,
+      reason,
+      details,
+    })
   }
 
   function keyJson(record: ApiKeyRecord): Record<string, unknown> {
@@ -897,11 +1174,20 @@ export function createApp(options: CloudApiOptions): CloudApp {
   }
 
   /** Network doors exist only while the machine runs; a stopped one has none. */
-  function requireRunning(record: SandboxRecord): void {
+  function requireRunning(record: SandboxRecord, what?: string): void {
     if (record.state !== 'running') {
-      throw new ApiError('conflict', 'Сеть и SSH доступны только у запущенной машины')
+      throw new ApiError(
+        'conflict',
+        what === undefined
+          ? 'Сеть и SSH доступны только у запущенной машины'
+          : `${what}: только у запущенной машины`,
+      )
     }
   }
+
+  /** The machine's own address is cached for 30 s; `?refresh=1` re-reads it. */
+  const networkCache = new Map<string, { at: number; body: Record<string, unknown> }>()
+  const NETWORK_CACHE_TTL_MS = 30_000
 
   /** A link or token never outlives the machine it opens. */
   function liveTtl(record: SandboxRecord, requested: number): number {
@@ -1010,6 +1296,9 @@ export function createApp(options: CloudApiOptions): CloudApp {
       ...(quote === undefined ? {} : { retailCentsPerHour: quote.retailCentsPerHour }),
       billingMode: lease.mode,
       ...(request.region === undefined ? {} : { region: request.region }),
+      // The vendor-side id is the only handle `adopt` has after a restart.
+      ...(status.providerRef === undefined ? {} : { providerRef: status.providerRef }),
+      ...(request.displayName === undefined ? {} : { displayName: request.displayName }),
     }
 
     store.sandboxes.set(record.id, record)
@@ -1148,9 +1437,14 @@ export function createApp(options: CloudApiOptions): CloudApp {
    * provider that cannot run commands simply reports `null` instead of a
    * made-up number.
    */
-  async function networkRoute(auth: VerifiedApiKey, id: string): Promise<Response> {
+  async function networkRoute(auth: VerifiedApiKey, id: string, url: URL): Promise<Response> {
     const record = sandboxFor(auth.tenant.id, id)
     requireRunning(record)
+    const cacheKey = `${record.id}:${record.state}`
+    const cached = networkCache.get(cacheKey)
+    if (url.searchParams.get('refresh') !== '1' && cached !== undefined && now() - cached.at < NETWORK_CACHE_TTL_MS) {
+      return json(200, cached.body)
+    }
     const provider = await providerForRecord(record)
     let privateIp: string | null = null
     try {
@@ -1164,13 +1458,15 @@ export function createApp(options: CloudApiOptions): CloudApp {
       // A stopped daemon or a missing `hostname` is not a reason to fail the
       // page: the card says the address was not reported.
     }
-    return json(200, {
+    const body = {
       object: 'network',
       sandbox_id: record.id,
       private_ip: privateIp,
       public_ip: null,
       note: 'Публичного адреса у машины нет: снаружи она открыта ссылкой на порт и SSH-шлюзом.',
-    })
+    }
+    networkCache.set(cacheKey, { at: now(), body })
+    return json(200, body)
   }
 
   /**
@@ -1185,7 +1481,7 @@ export function createApp(options: CloudApiOptions): CloudApp {
     if (!Number.isInteger(port) || port > 65_535) {
       throw new ApiError('invalid_request', 'Поле port должно быть целым числом от 1 до 65535')
     }
-    if (port === 2280 || port === 2281 || port === 22_220) {
+    if (RESERVED_PORTS.includes(port)) {
       throw new ApiError('invalid_request', 'Этот порт занят службой машины: выберите порт сайта')
     }
     const ttlRaw = optionalPositiveNumber(body.ttl_sec, 'ttl_sec')
@@ -1194,13 +1490,22 @@ export function createApp(options: CloudApiOptions): CloudApp {
     if (provider.previewUrl === undefined) {
       throw new ApiError('capability_unavailable', `Провайдер «${provider.providerId}» не умеет открывать сайт`)
     }
+    // Signing a link to a closed port hands out a credential that routes
+    // nowhere: check the port inside the machine first and refuse with 409.
+    const probe = await provider.exec(record.id, `echo ${base64Utf8(portProbeScript(port))} | base64 -d | python3 -`, {
+      timeoutMs: 5000,
+    })
+    if (probe.exitCode !== 0) {
+      throw new ApiError('conflict', `На порту ${port} никто не слушает: сначала запустите сайт`)
+    }
     const preview = await provider.previewUrl(record.id, port, ttlSec)
+    auditSandbox(record, 'sandbox.preview', 'клиент открыл ссылку на порт машины', { port, ttl_sec: ttlSec })
     return new Response(
       JSON.stringify({
         object: 'preview',
         sandbox_id: record.id,
         port,
-        url: preview.url,
+        url: publicPreviewUrl(preview.url),
         expires_at: preview.expiresAt === undefined ? null : iso(preview.expiresAt),
       }),
       {
@@ -1242,11 +1547,12 @@ export function createApp(options: CloudApiOptions): CloudApp {
       throw new ApiError('capability_unavailable', `Провайдер «${provider.providerId}» не даёт SSH`)
     }
     const access = await provider.sshAccess(record.id, ttlSec)
+    auditSandbox(record, 'sandbox.ssh', 'клиент получил SSH-команду к машине', { ttl_sec: ttlSec })
     return new Response(
       JSON.stringify({
         object: 'ssh_access',
         sandbox_id: record.id,
-        command: access.command,
+        command: publicSshCommand(access.command),
         expires_at: access.expiresAt === undefined ? null : iso(access.expiresAt),
       }),
       {
@@ -1257,6 +1563,310 @@ export function createApp(options: CloudApiOptions): CloudApp {
         },
       },
     )
+  }
+
+  /** Rename one machine. An empty `display_name` clears the name for good. */
+  async function renameSandboxRoute(auth: VerifiedApiKey, id: string, req: Request): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    const body = await readJson(req)
+    // A patch that names no field changes nothing: refusing is clearer than
+    // answering «ok» to a request that asked for nothing.
+    if (!('display_name' in body)) {
+      throw new ApiError(
+        'invalid_request',
+        'Поле display_name обязательно: новое имя или пустая строка, чтобы стереть',
+      )
+    }
+    const name = parseDisplayName(body.display_name, 'display_name')
+    if (name === undefined) delete record.displayName
+    else record.displayName = name
+    return json(200, sandboxJson(record))
+  }
+
+  /**
+   * Ports something inside the machine listens on, read from `ss -ltnH`. The
+   * machine's own service ports are marked, so the console can keep a site off
+   * them; the answer is a plain list, because ports change every second.
+   */
+  async function portsRoute(auth: VerifiedApiKey, id: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Список портов')
+    const provider = await providerForRecord(record)
+    const result = await provider.exec(record.id, 'ss -ltnH', { timeoutMs: 10_000 })
+    if (result.exitCode !== 0) {
+      throw new ApiError('provider_error', 'Машина не отдала список портов: ss недоступен')
+    }
+    const found = new Set<number>()
+    for (const line of result.stdout.split('\n')) {
+      const fields = line.trim().split(/\s+/)
+      if (fields.length < 4) continue
+      const local = fields[3] ?? ''
+      const port = Number(local.slice(local.lastIndexOf(':') + 1))
+      if (Number.isInteger(port) && port > 0 && port <= 65_535) found.add(port)
+    }
+    const data = [...found]
+      .sort((left, right) => left - right)
+      .map((port) => ({ port, reserved: RESERVED_PORTS.includes(port) }))
+    return json(200, { object: 'list', data })
+  }
+
+  /**
+   * Live resource use of one machine, sampled by one Python pass inside it.
+   * Nothing is invented: a machine that cannot answer is an upstream failure,
+   * not a card full of zeros.
+   */
+  async function metricsRoute(auth: VerifiedApiKey, id: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Метрики')
+    const provider = await providerForRecord(record)
+    const result = await provider.exec(record.id, `echo ${base64Utf8(METRICS_SCRIPT)} | base64 -d | python3 -`, {
+      timeoutMs: 15_000,
+    })
+    if (result.exitCode !== 0) {
+      throw new ApiError('provider_error', 'Машина не отдала метрики: python3 недоступен')
+    }
+    let sample: Record<string, unknown>
+    try {
+      const line = result.stdout.trim().split('\n').pop() ?? ''
+      const parsed: unknown = JSON.parse(line)
+      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('not an object')
+      }
+      sample = parsed as Record<string, unknown>
+    } catch {
+      throw new ApiError('provider_error', 'Машина не отдала метрики: ответ не разобран')
+    }
+    const kb = (field: string): number => {
+      const value = sample[field]
+      if (typeof value !== 'number' || !Number.isFinite(value)) {
+        throw new ApiError('provider_error', `Машина не отдала метрики: поле ${field}`)
+      }
+      return Math.max(0, Math.round(value))
+    }
+    const rawCpu = sample['cpu_percent']
+    const cpuPercent =
+      typeof rawCpu === 'number' && Number.isFinite(rawCpu)
+        ? Math.round(Math.max(0, Math.min(100, rawCpu)) * 10) / 10
+        : 0
+    return json(200, {
+      object: 'metrics',
+      at: iso(now()),
+      cpu_percent: cpuPercent,
+      memory_used_kb: kb('memory_used_kb'),
+      memory_total_kb: kb('memory_total_kb'),
+      disk_used_kb: kb('disk_used_kb'),
+      disk_total_kb: kb('disk_total_kb'),
+    })
+  }
+
+  // ---------- persistent shell ----------
+
+  /**
+   * Open (or reuse) the machine's one persistent shell. The answer names the
+   * state and the directory a later command starts in.
+   */
+  async function sessionStartRoute(auth: VerifiedApiKey, id: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Терминал')
+    const provider = await providerForRecord(record)
+    const result = await provider.exec(record.id, sessionStartScript(), { timeoutMs: 15_000 })
+    const lines = result.stdout.trim().split('\n').filter((line) => line.length > 0)
+    const cwd = lines.length > 1 && (lines[lines.length - 1] ?? '').startsWith('/')
+      ? lines[lines.length - 1]!
+      : '/home/daytona'
+    return json(200, { object: 'session', state: 'ready', cwd })
+  }
+
+  /**
+   * Run one command in the persistent shell and wait for its end marker. The
+   * command travels base64-encoded, so nothing in it is re-quoted or logged.
+   */
+  async function sessionExecRoute(auth: VerifiedApiKey, id: string, req: Request): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Терминал')
+    const body = await readJson(req)
+    const command = body.command
+    if (typeof command !== 'string' || command.trim().length === 0) {
+      throw new ApiError('invalid_request', 'Поле command обязательно: что выполнить в машине')
+    }
+    const provider = await providerForRecord(record)
+    const marker = nextId('roxm_')
+    const result = await provider.exec(record.id, sessionExecScript(marker, command), { timeoutMs: 20_000 })
+    if (result.stdout.includes(SESSION_MISSING)) {
+      throw new ApiError('conflict', 'Сессия не запущена: сначала POST /session/start')
+    }
+    const parsed = parseSessionOutput(result.stdout, marker)
+    if (parsed === null) {
+      throw new ApiError('provider_error', 'Команда не завершилась за 15 секунд')
+    }
+    return json(200, {
+      stdout: parsed.stdout,
+      stderr: '',
+      cwd: parsed.cwd,
+      exit_code: parsed.exitCode,
+    })
+  }
+
+  /** Interrupt whatever runs in the session, without closing it. */
+  async function sessionInterruptRoute(auth: VerifiedApiKey, id: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Терминал')
+    const provider = await providerForRecord(record)
+    await provider.exec(
+      record.id,
+      `if [ -f ${SESSION_PID} ]; then pkill -INT -P "$(cat ${SESSION_PID})" 2>/dev/null || true; fi`,
+      { timeoutMs: 10_000 },
+    )
+    return json(200, { ok: true })
+  }
+
+  /** Close the session and remove its directory; nothing is left running. */
+  async function sessionStopRoute(auth: VerifiedApiKey, id: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Терминал')
+    const provider = await providerForRecord(record)
+    await provider.exec(
+      record.id,
+      `if [ -f ${SESSION_PID} ]; then pkill -TERM -P "$(cat ${SESSION_PID})" 2>/dev/null || true; kill -TERM "$(cat ${SESSION_PID})" 2>/dev/null || true; fi; rm -rf ${SESSION_DIR}; true`,
+      { timeoutMs: 10_000 },
+    )
+    return new Response(null, { status: 204 })
+  }
+
+  // ---------- SSH keys ----------
+
+  /**
+   * Rewrite the machine's `authorized_keys` from the record. The file holds
+   * only public keys; the private half never reaches the server.
+   */
+  async function writeAuthorizedKeys(
+    provider: SandboxProvider,
+    id: string,
+    keys: readonly SshKeyRecord[],
+  ): Promise<void> {
+    const dir = '/home/daytona/.ssh'
+    const file = `${dir}/authorized_keys`
+    await provider.exec(id, `mkdir -p ${dir} && chmod 700 ${dir} && touch ${file} && chmod 600 ${file}`, {
+      timeoutMs: 10_000,
+    })
+    const body = keys.length === 0 ? '' : `${keys.map((key) => key.publicKey).join('\n')}\n`
+    await provider.writeFile(id, file, new TextEncoder().encode(body))
+  }
+
+  function listSshKeysRoute(auth: VerifiedApiKey, id: string): Response {
+    const record = sandboxFor(auth.tenant.id, id)
+    return json(200, { object: 'list', data: (record.sshKeys ?? []).map(sshKeyJson) })
+  }
+
+  /**
+   * Register one public key. The response is metadata only: the key body is
+   * public by definition but the list stays a fingerprint list.
+   */
+  async function addSshKeyRoute(auth: VerifiedApiKey, id: string, req: Request): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'SSH-ключи')
+    const body = await readJson(req)
+    const publicKey = parseSshPublicKey(body.public_key)
+    const rawLabel = body.label
+    if (rawLabel !== undefined && rawLabel !== null && typeof rawLabel !== 'string') {
+      throw new ApiError('invalid_request', 'Поле label должно быть строкой')
+    }
+    const label = (typeof rawLabel === 'string' && rawLabel.trim().length > 0 ? rawLabel.trim() : 'Ключ').slice(0, 64)
+    const provider = await providerForRecord(record)
+    const key: SshKeyRecord = {
+      id: nextId('ssh_'),
+      label,
+      publicKey,
+      fingerprint: sshFingerprint(publicKey),
+      createdAt: now(),
+    }
+    const keys = [...(record.sshKeys ?? []), key]
+    record.sshKeys = keys
+    try {
+      await writeAuthorizedKeys(provider, record.id, keys)
+    } catch (err) {
+      record.sshKeys = keys.filter((entry) => entry.id !== key.id)
+      throw err
+    }
+    auditSandbox(record, 'sandbox.ssh_key', 'клиент добавил открытый ключ к машине', { label: key.label })
+    return json(201, sshKeyJson(key))
+  }
+
+  async function deleteSshKeyRoute(auth: VerifiedApiKey, id: string, keyId: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'SSH-ключи')
+    const keys = record.sshKeys ?? []
+    const key = keys.find((entry) => entry.id === keyId)
+    if (key === undefined) throw new ApiError('not_found', 'SSH-ключ не найден')
+    const provider = await providerForRecord(record)
+    const remaining = keys.filter((entry) => entry.id !== key.id)
+    await writeAuthorizedKeys(provider, record.id, remaining)
+    record.sshKeys = remaining
+    auditSandbox(record, 'sandbox.ssh_key', 'клиент убрал открытый ключ с машины', { label: key.label })
+    return new Response(null, { status: 204 })
+  }
+
+  // ---------- snapshots ----------
+
+  const SNAPSHOT_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$/
+
+  /** Images this machine took, with the state the provider reports now. */
+  async function listSnapshotsRoute(auth: VerifiedApiKey, id: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    const stored = record.snapshots ?? []
+    if (stored.length > 0) {
+      try {
+        const provider = await providerForRecord(record)
+        if (provider.listImages !== undefined) {
+          const images = await provider.listImages()
+          record.snapshots = stored.map((snapshot) => {
+            const image = images.find((entry) => entry.name === snapshot.name || entry.id === snapshot.name)
+            if (image === undefined) return snapshot
+            return { ...snapshot, ...(image.state === undefined ? {} : { state: image.state }) }
+          })
+        }
+      } catch {
+        // A missing provider key or a listing failure is not a reason to hide
+        // what was already taken; the stored state stays as it was.
+      }
+    }
+    return json(200, { object: 'list', data: (record.snapshots ?? []).map(snapshotJson) })
+  }
+
+  /**
+   * Freeze the machine's disk under a safe name. A named snapshot is checked
+   * against the same alphabet the provider accepts, so a raw body cannot
+   * travel into a vendor route.
+   */
+  async function createSnapshotRoute(auth: VerifiedApiKey, id: string, req: Request): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record, 'Снимки')
+    const body = await readJson(req)
+    const requested = optionalString(body.name, 'name')
+    if (requested !== undefined && !SNAPSHOT_NAME.test(requested.trim())) {
+      throw new ApiError(
+        'invalid_request',
+        'Имя снимка: латиница, цифры, «.», «_», «-», до 63 символов и не с дефиса',
+      )
+    }
+    const name = requested === undefined
+      ? `rox-${nextId('').slice(0, 8)}-${Math.floor(now() / 1000)}`
+      : requested.trim()
+    const provider = await providerForRecord(record)
+    if (provider.createSnapshot === undefined) {
+      throw new ApiError('capability_unavailable', `Провайдер «${provider.providerId}» не умеет делать снимки`)
+    }
+    const created = await provider.createSnapshot(record.id, name)
+    const storedName = created.name.length > 0 ? created.name : name
+    const state = created.state ?? 'building'
+    const snapshot: SnapshotRecord = { name: storedName, createdAt: now(), state }
+    const snapshots = [...(record.snapshots ?? [])]
+    const index = snapshots.findIndex((entry) => entry.name === storedName)
+    if (index >= 0) snapshots[index] = snapshot
+    else snapshots.push(snapshot)
+    record.snapshots = snapshots
+    auditSandbox(record, 'sandbox.snapshot', 'клиент снял снимок диска машины', { name: storedName })
+    return json(201, { object: 'snapshot', name: storedName, state })
   }
 
   async function readFileRoute(auth: VerifiedApiKey, id: string, url: URL): Promise<Response> {
@@ -1925,10 +2535,22 @@ export function createApp(options: CloudApiOptions): CloudApp {
           const auth = requireAuth(req, 'sandboxes:read')
           return json(200, sandboxJson(sandboxFor(auth.tenant.id, id)))
         }
+        if (method === 'PATCH') return renameSandboxRoute(requireAuth(req, 'sandboxes:write'), id, req)
         if (method === 'DELETE') return deleteRoute(requireAuth(req, 'sandboxes:write'), id)
       }
       if (segments.length === 5 && segments[3] === 'files' && segments[4] === 'list' && method === 'GET') {
         return listFilesRoute(requireAuth(req, 'sandboxes:read'), segments[2], url)
+      }
+      if (segments.length === 5 && segments[3] === 'session' && method === 'POST') {
+        const id = segments[2]
+        const step = segments[4]
+        if (step === 'start') return sessionStartRoute(requireAuth(req, 'sandboxes:write'), id)
+        if (step === 'exec') return sessionExecRoute(requireAuth(req, 'sandboxes:write'), id, req)
+        if (step === 'interrupt') return sessionInterruptRoute(requireAuth(req, 'sandboxes:write'), id)
+        if (step === 'stop') return sessionStopRoute(requireAuth(req, 'sandboxes:write'), id)
+      }
+      if (segments.length === 5 && segments[3] === 'ssh-keys' && method === 'DELETE') {
+        return deleteSshKeyRoute(requireAuth(req, 'sandboxes:write'), segments[2], segments[4])
       }
       if (segments.length === 4) {
         const id = segments[2]
@@ -1936,14 +2558,32 @@ export function createApp(options: CloudApiOptions): CloudApp {
         if (action === 'exec' && method === 'POST') {
           return execRoute(requireAuth(req, 'sandboxes:write'), id, req)
         }
+        if (action === 'ports' && method === 'GET') {
+          return portsRoute(requireAuth(req, 'sandboxes:read'), id)
+        }
+        if (action === 'metrics' && method === 'GET') {
+          return metricsRoute(requireAuth(req, 'sandboxes:read'), id)
+        }
         if (action === 'network' && method === 'GET') {
-          return networkRoute(requireAuth(req, 'sandboxes:read'), id)
+          return networkRoute(requireAuth(req, 'sandboxes:read'), id, url)
         }
         if (action === 'preview' && method === 'POST') {
           return previewRoute(requireAuth(req, 'sandboxes:write'), id, req)
         }
         if (action === 'ssh' && method === 'POST') {
           return sshRoute(requireAuth(req, 'sandboxes:write'), id, req)
+        }
+        if (action === 'ssh-keys' && method === 'GET') {
+          return listSshKeysRoute(requireAuth(req, 'sandboxes:read'), id)
+        }
+        if (action === 'ssh-keys' && method === 'POST') {
+          return addSshKeyRoute(requireAuth(req, 'sandboxes:write'), id, req)
+        }
+        if (action === 'snapshots' && method === 'GET') {
+          return listSnapshotsRoute(requireAuth(req, 'sandboxes:read'), id)
+        }
+        if (action === 'snapshots' && method === 'POST') {
+          return createSnapshotRoute(requireAuth(req, 'sandboxes:write'), id, req)
         }
         if (action === 'files' && method === 'GET') {
           return readFileRoute(requireAuth(req, 'sandboxes:read'), id, url)

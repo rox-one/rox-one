@@ -20,6 +20,8 @@ import { api } from '@/lib/api'
 import type { AdminResource } from '@/lib/api'
 import { formatDate, shortId } from '@/lib/format'
 
+import { regionFlag } from '../console/components/console-ui'
+
 import { AdminError } from './components/AdminError'
 import { adminRefreshTick, handleAdminError, sandboxStateLabel, sandboxStateTone } from './components/adminSession'
 import { ReasonDialog } from './components/ops/ReasonDialog'
@@ -251,7 +253,14 @@ export default function AdminMachines(): JSX.Element {
     {
       key: 'region',
       label: 'Площадка',
-      render: (row) => <span class="machines-region">{row.region ?? '—'}</span>,
+      render: (row) => (
+        <span class="machines-region">
+          <span class="machines-region-flag" aria-hidden="true">
+            {regionFlag(row.region)}
+          </span>{' '}
+          {row.region ?? '—'}
+        </span>
+      ),
     },
     {
       key: 'cost_cents',

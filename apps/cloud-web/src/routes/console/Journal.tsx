@@ -11,7 +11,7 @@ import { auditLabel, downloadCsv, errorText, todayStamp } from './components/con
 
 import './journal.css'
 
-const LIMIT = 200
+const LIMIT = 100
 
 const OBJECT_KINDS: Record<string, string> = {
   sandbox: 'машина',

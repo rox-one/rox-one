@@ -19,6 +19,47 @@ export interface MachineWorkspaceProps {
 
 type Splitter = 'terminal' | 'preview'
 
+interface Layout {
+  terminal: number
+  files: number
+}
+
+const LAYOUT_KEY = 'rox.machine-workspace.split'
+const DEFAULT_LAYOUT: Layout = { terminal: 55, files: 24 }
+
+/** A saved split reads back only if both numbers sit inside the allowed
+ * ranges; anything else is a bad value and gives the default 55/24 back. */
+function readLayout(): Layout {
+  try {
+    const raw = window.localStorage.getItem(LAYOUT_KEY)
+    if (raw === null) return DEFAULT_LAYOUT
+    const parts = raw.split('/')
+    if (parts.length !== 2) return DEFAULT_LAYOUT
+    const terminal = Number(parts[0] ?? '')
+    const files = Number(parts[1] ?? '')
+    if (!Number.isFinite(terminal) || !Number.isFinite(files)) return DEFAULT_LAYOUT
+    if (terminal < 34 || terminal > 59) return DEFAULT_LAYOUT
+    // 20 is reachable: at the widest terminal the 79% cap leaves files 20.
+    if (files < 20 || files > 34) return DEFAULT_LAYOUT
+    if (terminal + files > 79) return DEFAULT_LAYOUT
+    return { terminal, files }
+  } catch {
+    return DEFAULT_LAYOUT
+  }
+}
+
+/** One key, numbers only, written when a drag ends rather than on every move.
+ * Rounding down keeps the saved pair inside the 79% cap the drag enforces. */
+function saveLayout(layout: Layout): void {
+  try {
+    const terminal = Math.floor(layout.terminal * 100) / 100
+    const files = Math.floor(layout.files * 100) / 100
+    window.localStorage.setItem(LAYOUT_KEY, `${terminal}/${files}`)
+  } catch {
+    // Запрещённое хранилище: раскладка живёт до перезагрузки страницы.
+  }
+}
+
 /**
  * The machine workbench: terminal, files and inspector in one row with two
  * draggable dividers. Widths are percentages of the bench, so a window resize
@@ -26,8 +67,9 @@ type Splitter = 'terminal' | 'preview'
  */
 export default function MachineWorkspace(props: MachineWorkspaceProps): JSX.Element {
   const [selected, setSelected] = createSignal<FileEntry | null>(null)
-  const [terminalPct, setTerminalPct] = createSignal(55)
-  const [filesPct, setFilesPct] = createSignal(24)
+  const initialLayout = readLayout()
+  const [terminalPct, setTerminalPct] = createSignal(initialLayout.terminal)
+  const [filesPct, setFilesPct] = createSignal(initialLayout.files)
   let benchEl: HTMLElement | undefined
 
   const clamp = (value: number, min: number, max: number): number =>
@@ -66,6 +108,7 @@ export default function MachineWorkspace(props: MachineWorkspaceProps): JSX.Elem
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', stop)
       window.removeEventListener('pointercancel', stop)
+      saveLayout({ terminal: terminalPct(), files: filesPct() })
     }
 
     window.addEventListener('pointermove', move)
@@ -78,9 +121,16 @@ export default function MachineWorkspace(props: MachineWorkspaceProps): JSX.Elem
       const nextTerminal = clamp(terminalPct() + direction * 2, 34, 59)
       setTerminalPct(nextTerminal)
       setFilesPct(Math.min(filesPct(), 79 - nextTerminal))
-      return
+    } else {
+      setFilesPct(Math.min(clamp(filesPct() + direction * 2, 21, 34), 79 - terminalPct()))
     }
-    setFilesPct(clamp(filesPct() + direction * 2, 21, 34))
+    saveLayout({ terminal: terminalPct(), files: filesPct() })
+  }
+
+  const resetLayout = (): void => {
+    setTerminalPct(DEFAULT_LAYOUT.terminal)
+    setFilesPct(DEFAULT_LAYOUT.files)
+    saveLayout(DEFAULT_LAYOUT)
   }
 
   return (
@@ -106,8 +156,10 @@ export default function MachineWorkspace(props: MachineWorkspaceProps): JSX.Elem
         role="separator"
         aria-orientation="vertical"
         aria-label="Изменить ширину терминала"
+        title="Двойной щелчок возвращает ширины 55/24"
         tabindex="0"
         onPointerDown={(event) => drag('terminal', event)}
+        onDblClick={() => resetLayout()}
         onKeyDown={(event) => {
           if (event.key === 'ArrowLeft') {
             event.preventDefault()
@@ -139,8 +191,10 @@ export default function MachineWorkspace(props: MachineWorkspaceProps): JSX.Elem
         role="separator"
         aria-orientation="vertical"
         aria-label="Изменить ширину файлов"
+        title="Двойной щелчок возвращает ширины 55/24"
         tabindex="0"
         onPointerDown={(event) => drag('preview', event)}
+        onDblClick={() => resetLayout()}
         onKeyDown={(event) => {
           if (event.key === 'ArrowLeft') {
             event.preventDefault()
@@ -161,8 +215,19 @@ export default function MachineWorkspace(props: MachineWorkspaceProps): JSX.Elem
           entry={selected()}
           enabled={props.enabled}
           onClose={() => setSelected(null)}
+          onSaved={(next) => setSelected(next)}
         />
       </div>
+
+      <button
+        type="button"
+        class="workspace-reset"
+        title="Вернуть ширины 55/24"
+        aria-label="Вернуть ширины по умолчанию: терминал 55, файлы 24"
+        onClick={() => resetLayout()}
+      >
+        55/24
+      </button>
     </section>
   )
 }

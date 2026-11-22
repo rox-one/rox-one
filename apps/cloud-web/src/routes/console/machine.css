@@ -35,6 +35,9 @@
   font-size: var(--text-sm);
   font-weight: 650;
   letter-spacing: -0.01em;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ribbon-sep {
@@ -85,6 +88,41 @@
   gap: 8px;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+/* ---------- Панели ниже рабочего места ---------- */
+
+/* Нагрузка, снимки и журнал доступа стоят одной полосой под рабочим местом:
+    три колонки на широком экране, две на среднем и одна на узком. Ширины
+    сжимаемые, поэтому ни одна карточка не тянет страницу вбок. */
+.machine-extra {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.machine-extra > * {
+  min-width: 0;
+}
+
+/* Карточки здесь вспомогательные, поэтому поля и подписи плотнее обычных. */
+.machine-extra .card-head {
+  padding: 10px 12px;
+}
+
+.machine-extra .card-body {
+  padding: 12px;
+}
+
+.machine-extra .card-title {
+  font-size: var(--text-md);
+}
+
+.machine-extra .card-sub {
+  font-size: var(--text-xs);
+  line-height: 1.45;
 }
 
 .machine-notice {
@@ -140,6 +178,19 @@
   color: var(--ink);
 }
 
+@media (max-width: 1180px) {
+  .machine-extra {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .machine-extra {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
+  }
+}
+
 @media (max-width: 640px) {
   .machine-ribbon {
     flex-wrap: wrap;
@@ -151,6 +202,19 @@
 
   .ribbon-sep {
     display: none;
+  }
+
+  .ribbon-name {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .machine-extra .card-head {
+    padding: 9px 10px;
+  }
+
+  .machine-extra .card-body {
+    padding: 10px;
   }
 }
 

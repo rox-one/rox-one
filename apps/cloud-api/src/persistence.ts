@@ -13,8 +13,11 @@
  *   version or an audit chain that does not verify raises with the file path
  *   instead of quietly opening an empty deployment;
  * - a sandbox that was still `queued`, `starting`, `running`, `paused` or
- *   `stopping` when the process died is gone — its provider lease was never
- *   renewed — so it comes back as `failed` and its reservation is released.
+ *   `stopping` when the process died and has no `providerRef` is gone — nobody
+ *   can name its lease — so it comes back as `failed` and its reservation is
+ *   released. A record that does carry a `providerRef` is left exactly as it
+ *   was: the process re-adopts the lease on boot (see `server.ts`) and marks
+ *   nothing failed, charges nothing and releases no hold here.
  *
  * Writing is atomic: a `${file}.tmp` sibling is written and fsynced, chmodded
  * 600 and only then renamed over the target, so a crash mid-write leaves the
@@ -255,6 +258,11 @@ export function snapshotState(deps: PersistenceDeps): PersistedState {
  * Sandboxes that were not already finished come back as `failed` with their
  * reservation released: their provider-side lease is gone, and keeping a hold
  * for a machine nobody can stop would lock customer money for good.
+ *
+ * The one exception is a record with a `providerRef`: its lease still has a
+ * name, so it is restored untouched — no `failed`, no charge, no release. The
+ * boot path then hands the reference to the provider's `adopt`, and the reaper
+ * and the shutdown keep working on a live record exactly as before.
  */
 export function applyState(state: PersistedState, deps: PersistenceDeps): void {
   const { store, moneyStore, keyStore, audit, killSwitch } = deps
@@ -292,6 +300,16 @@ export function applyState(state: PersistedState, deps: PersistenceDeps): void {
   const atMs = Date.now()
   for (const record of store.sandboxes.values()) {
     if (TERMINAL_STATES[record.state]) continue
+    // A named lease survives the restart: the page it lives on is the
+    // provider's, not ours. Left exactly as saved, including its hold, so the
+    // boot path can re-adopt it and the ordinary stop and reaper paths keep
+    // settling money the way they did before the restart.
+    if (record.providerRef !== undefined) {
+      console.log(
+        `Rox Cloud: машина ${record.id} арендатора ${record.tenantId} была в состоянии ${record.state} при остановке — аренда провайдера сохранена, управление будет восстановлено`,
+      )
+      continue
+    }
     const was = record.state
     const account = moneyStore.getAccount(record.tenantId)
     const held =

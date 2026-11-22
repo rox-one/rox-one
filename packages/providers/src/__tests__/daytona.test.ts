@@ -567,3 +567,115 @@ test('listFiles maps names, folders, sizes and modified time', async () => {
     { name: 'hello.txt', path: '/home/daytona/hello.txt', isDir: false, size: 12 },
   ]);
 });
+
+test('create reports the vendor sandbox id as providerRef', async () => {
+  const { provider } = setup(() => json({ id: 'dt-1', state: 'started' }));
+
+  const status = await provider.create(baseSpec);
+
+  // The caller persists this, so it must be the id the vendor itself uses.
+  expect(status.providerRef).toBe('dt-1');
+  expect((await provider.get('sbx-1')).providerRef).toBe('dt-1');
+});
+
+test('adopt reattaches through the stored vendor id without a POST', async () => {
+  const { provider, calls } = setup((call) =>
+    call.url.includes('/process/execute')
+      ? json({ result: 'hi\n', exitCode: 0 })
+      : json({ id: 'dt-adopted', state: 'started' }),
+  );
+
+  const adoptedAt = CREATED_AT - 60_000;
+  provider.adopt!('sbx-9', 'dt-adopted', 'paused', adoptedAt, adoptedAt + 3_600_000);
+
+  const status = await provider.get('sbx-9');
+  expect(status).toMatchObject({
+    id: 'sbx-9',
+    provider: 'daytona',
+    providerRef: 'dt-adopted',
+    state: 'running',
+    createdAt: adoptedAt,
+    expiresAt: adoptedAt + 3_600_000,
+  });
+
+  const result = await provider.exec('sbx-9', 'echo hi');
+  expect(result).toEqual({ stdout: 'hi\n', stderr: '', exitCode: 0 });
+
+  // The first request is the get: nothing was created for the adopted id.
+  expect(calls.length).toBe(2);
+  expect(calls[0]!.method).toBe('GET');
+  expect(calls[0]!.url).toBe('https://daytona.test/api/sandbox/dt-adopted');
+  expect(calls[1]!.url).toBe('https://toolbox.test/toolbox/dt-adopted/process/execute');
+  expect(calls.some((call) => call.method === 'POST' && call.url.endsWith('/sandbox'))).toBe(false);
+  for (const call of calls) {
+    expect(call.headers.Authorization).toBe('Bearer tenant-key');
+    expect(call.url.includes('tenant-key')).toBe(false);
+  }
+});
+
+test('createSnapshot posts name and includeMemory:false to the vendor route', async () => {
+  const { provider, calls } = setup(
+    createdThen((call) =>
+      call.url.endsWith('/sandbox/dt-1/snapshot')
+        ? json({ name: 'rox-snap', state: 'building' })
+        : json({}),
+    ),
+  );
+
+  await provider.create(baseSpec);
+  const snapshot = await provider.createSnapshot!('sbx-1', '  rox-snap  ');
+
+  const call = calls.at(-1)!;
+  expect(call.method).toBe('POST');
+  expect(call.url).toBe('https://daytona.test/api/sandbox/dt-1/snapshot');
+  expect(call.headers.Authorization).toBe('Bearer tenant-key');
+  expect(call.headers['Content-Type']).toBe('application/json');
+  // Trimmed, memory excluded, and nothing else in the body.
+  expect(call.json).toEqual({ name: 'rox-snap', includeMemory: false });
+  expect(call.url.includes('tenant-key')).toBe(false);
+  expect(snapshot).toEqual({ name: 'rox-snap', state: 'building' });
+});
+
+test('createSnapshot falls back to the sent name and building state', async () => {
+  const { provider } = setup(
+    createdThen(() => json({}, 202)),
+  );
+
+  await provider.create(baseSpec);
+
+  expect(await provider.createSnapshot!('sbx-1', 'rox-snap')).toEqual({
+    name: 'rox-snap',
+    state: 'building',
+  });
+});
+
+test('a 404 on createSnapshot becomes not_found without leaking the key', async () => {
+  const { provider, calls } = setup(createdThen(() => new Response(null, { status: 404 })));
+
+  await provider.create(baseSpec);
+  const error = await provider.createSnapshot!('sbx-1', 'rox-snap').then(
+    () => undefined,
+    (cause: unknown) => cause,
+  );
+
+  expect(error).toBeInstanceOf(CloudRunnerError);
+  expect((error as CloudRunnerError).code).toBe('not_found');
+  expect((error as Error).message.includes('tenant-key')).toBe(false);
+  expect(calls.at(-1)!.url).toBe('https://daytona.test/api/sandbox/dt-1/snapshot');
+});
+
+test('a failed snapshot request names no key and no body', async () => {
+  const { provider } = setup(createdThenSteps([() => json({ message: 'boom' }, 500)]));
+
+  await provider.create(baseSpec);
+  const error = await provider.createSnapshot!('sbx-1', 'rox-snap').then(
+    () => undefined,
+    (cause: unknown) => cause,
+  );
+
+  expect(error).toBeInstanceOf(CloudRunnerError);
+  expect((error as CloudRunnerError).code).toBe('provider_error');
+  const message = (error as Error).message;
+  expect(message.includes('tenant-key')).toBe(false);
+  expect(message.includes('rox-snap')).toBe(false);
+});

@@ -94,6 +94,29 @@ export interface ApiKeyRecord {
 /** How a machine's hour is paid for; see `docs/cloud-product-spec.md` §3. */
 export type BillingMode = 'byok' | 'managed'
 
+/**
+ * One SSH public key accepted for a machine. A public key is not a secret: it
+ * may be listed back to the customer as a fingerprint, and the wire format
+ * drops the key body itself.
+ */
+export interface SshKeyRecord {
+  readonly id: string
+  readonly label: string
+  /** The `ssh-ed25519 …` line the customer pasted; public by definition. */
+  readonly publicKey: string
+  /** `SHA256:…` of the key body, so two keys are told apart at a glance. */
+  readonly fingerprint: string
+  readonly createdAt: number
+}
+
+/** One image of a machine, as the snapshot list shows it. */
+export interface SnapshotRecord {
+  readonly name: string
+  readonly createdAt: number
+  /** Provider-side state (`active`, `building`…), absent when it says nothing. */
+  readonly state?: string
+}
+
 export interface SandboxRecord {
   readonly id: string
   readonly tenantId: string
@@ -120,6 +143,20 @@ export interface SandboxRecord {
   readonly billingMode?: BillingMode
   /** Provider region the machine was asked for; absent = provider's choice. */
   readonly region?: string
+  /**
+   * What the customer calls this machine. Absent means the console prints the
+   * id; an empty string is stored as absent, because a cleared name is no name.
+   */
+  displayName?: string
+  /**
+   * The provider-side id of the machine. A record that carries one still owns
+   * a lease after a restart, so it is re-adopted instead of marked failed.
+   */
+  providerRef?: string
+  /** Public keys accepted for this machine; the key body is never a secret. */
+  sshKeys?: readonly SshKeyRecord[]
+  /** Images taken from this machine, newest last, as the panel lists them. */
+  snapshots?: readonly SnapshotRecord[]
 }
 
 export interface IdempotencyRecord {

@@ -1,4 +1,5 @@
-/* Тёмная панель терминала поверх exec. Владелец: волна 2, «Кабинет, машина». */
+/* Тёмная панель терминала: постоянный сеанс или отдельные вызовы exec.
+   Владелец: волна 2, «Кабинет, машина». */
 .terminal {
   display: flex;
   flex-direction: column;
@@ -25,6 +26,33 @@
 .terminal-title {
   font-weight: 650;
   letter-spacing: 0.02em;
+}
+
+/* The mode is a fact about this panel, not a control: a quiet pill that changes
+   colour only while the persistent session is actually open. */
+.terminal-mode {
+  padding: 1px 6px;
+  border: 1px solid var(--terminal-border);
+  border-radius: 999px;
+  color: var(--terminal-muted);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.terminal-mode.is-session {
+  border-color: rgba(111, 227, 176, 0.45);
+  background: rgba(111, 227, 176, 0.12);
+  color: var(--terminal-success);
+}
+
+.terminal-tool-interrupt {
+  border-color: rgba(255, 154, 145, 0.5);
+  color: var(--terminal-danger);
+}
+
+.terminal-tool-interrupt:hover:not(:disabled) {
+  background: rgba(255, 154, 145, 0.16);
 }
 
 .terminal-busy {

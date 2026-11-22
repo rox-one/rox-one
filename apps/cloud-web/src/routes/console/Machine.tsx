@@ -8,6 +8,7 @@ import {
   Card,
   Dialog,
   EmptyState,
+  Field,
   Icon,
   PageHeader,
   Skeleton,
@@ -33,6 +34,9 @@ import {
 } from './components/console-ui'
 
 import MachineAccess from './MachineAccess'
+import MachineAccessJournal from './MachineAccessJournal'
+import MachineMetrics from './MachineMetrics'
+import MachineSnapshots from './MachineSnapshots'
 import MachineWorkspace from './MachineWorkspace'
 import './machine.css'
 
@@ -74,6 +78,13 @@ function regionOf(machine: Sandbox): string | null {
   return typeof spec === 'string' && spec.length > 0 ? spec : null
 }
 
+/** The person's own name for the machine, or the name its make-up gives it. */
+function machineName(machine: Sandbox): string {
+  const custom = machine.display_name
+  if (typeof custom === 'string' && custom.trim().length > 0) return custom.trim()
+  return machineDisplayName(machine.spec)
+}
+
 /** The ribbon keeps the site short: «США», not «США, общая»; the title has the rest. */
 function shortRegion(id: string | null): string {
   if (id === 'us' || id === 'us-west-4') return 'США'
@@ -102,9 +113,9 @@ function MachineRibbon(props: { machine: Sandbox }): JSX.Element {
     <div class="machine-ribbon" role="group" aria-label="Состав и цена машины">
       <span
         class="ribbon-name"
-        title={`Образ ${textOrDash(props.machine.spec?.snapshot ?? props.machine.spec?.image)}; поставщик ${textOrDash(props.machine.provider)}`}
+        title={`${machineName(props.machine)}. Образ ${textOrDash(props.machine.spec?.snapshot ?? props.machine.spec?.image)}; поставщик ${textOrDash(props.machine.provider)}`}
       >
-        {machineDisplayName(props.machine.spec)}
+        {machineName(props.machine)}
       </span>
       <span class="ribbon-sep" aria-hidden="true" />
       <span>{textOrDash(props.machine.spec?.os)}</span>
@@ -164,6 +175,10 @@ export default function ConsoleMachine(): JSX.Element {
   const [actionError, setActionError] = createSignal<string | null>(null)
   const [confirmStop, setConfirmStop] = createSignal(false)
   const [confirmDelete, setConfirmDelete] = createSignal(false)
+  const [renameOpen, setRenameOpen] = createSignal(false)
+  const [renameValue, setRenameValue] = createSignal('')
+  const [renaming, setRenaming] = createSignal(false)
+  const [renameError, setRenameError] = createSignal<string | null>(null)
 
   const state = (): SandboxState | null => sandbox()?.state ?? null
   const currentLabel = (): string => {
@@ -183,7 +198,6 @@ export default function ConsoleMachine(): JSX.Element {
     `Терминал, файлы и доступ к сети работают только на запущенной машине. Сейчас машина ${currentLabel().toLowerCase()}.`
 
   const promptUser = (): string => (session.guest() ? 'guest' : 'user')
-  const promptHost = (machine: Sandbox): string => machineDisplayName(machine.spec)
 
   let loadToken = 0
 
@@ -234,6 +248,10 @@ export default function ConsoleMachine(): JSX.Element {
       setDeleting(false)
       setConfirmStop(false)
       setConfirmDelete(false)
+      setRenameOpen(false)
+      setRenameValue('')
+      setRenameError(null)
+      setRenaming(false)
       void load(true)
     }),
   )
@@ -307,18 +325,76 @@ export default function ConsoleMachine(): JSX.Element {
     }
   }
 
+  /** The title shows the person's name once the machine is known; before that,
+   * the id is the only thing that identifies it. */
+  const titleName = (): string => {
+    const current = sandbox()
+    return current === null ? shortId(machineId(), 8) : machineName(current)
+  }
+
+  const openRename = (): void => {
+    const current = sandbox()
+    if (current === null) return
+    const custom = typeof current.display_name === 'string' ? current.display_name.trim() : ''
+    setRenameValue(custom)
+    setRenameError(null)
+    setRenameOpen(true)
+  }
+
+  const closeRename = (): void => {
+    if (renaming()) return
+    setRenameOpen(false)
+    setRenameError(null)
+  }
+
+  const saveName = async (): Promise<void> => {
+    if (renaming()) return
+    const current = sandbox()
+    if (current === null) return
+    const value = renameValue().trim().replace(/\s+/g, ' ')
+    setRenaming(true)
+    setRenameError(null)
+    try {
+      const updated = await api.updateSandbox(current.id, { displayName: value })
+      // A poll that started before the rename must not paint the old name back
+      // over the server's answer, so its result is dropped and the timer stops.
+      loadToken += 1
+      setRefreshing(false)
+      setSandbox(updated)
+      setRenameOpen(false)
+      toast.success(
+        value.length > 0
+          ? `Машина теперь называется «${value}».`
+          : `Своё имя убрано: машина снова называется ${machineDisplayName(updated.spec)}.`,
+      )
+    } catch (error) {
+      setRenameError(`Не удалось сохранить название: ${errorText(error)}`)
+    } finally {
+      setRenaming(false)
+    }
+  }
+
   return (
     <section class="page machine-page">
       <PageHeader
         back={{ href: '/console/machines', label: 'Все машины' }}
         eyebrow="Машина"
-        title={machineId().length === 0 ? 'Машина' : `Машина ${shortId(machineId(), 8)}`}
+        title={machineId().length === 0 ? 'Машина' : `Машина ${titleName()}`}
         description="Состав, доступ, терминал и файлы одной машины."
         actions={
           <>
             <Badge tone={currentTone()} dot>
               {currentLabel()}
             </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Icon name="pencil" size={14} />}
+              disabled={loading() || sandbox() === null}
+              onClick={openRename}
+            >
+              Переименовать
+            </Button>
             <Button
               variant="ghost"
               size="sm"
@@ -427,12 +503,58 @@ export default function ConsoleMachine(): JSX.Element {
                 enabled={isRunning()}
                 disabledReason={accessReason()}
                 promptUser={promptUser()}
-                promptHost={promptHost(machine())}
+                promptHost={machineName(machine()).replace(/\s+/g, '-')}
               />
+              <div class="machine-extra">
+                <MachineMetrics sandboxId={machine().id} enabled={isRunning()} />
+                <MachineSnapshots sandboxId={machine().id} enabled={isRunning()} />
+                <MachineAccessJournal sandboxId={machine().id} />
+              </div>
             </>
           )}
         </Show>
       </Show>
+
+      <Dialog
+        open={renameOpen()}
+        onClose={closeRename}
+        title="Название машины"
+        subtitle="Видно только в кабинете: на машине ничего не меняется."
+        footer={
+          <>
+            <Button variant="ghost" disabled={renaming()} onClick={closeRename}>
+              Отмена
+            </Button>
+            <Button variant="primary" loading={renaming()} onClick={() => void saveName()}>
+              Сохранить
+            </Button>
+          </>
+        }
+      >
+        <Field
+          label="Название"
+          for="machine-rename-input"
+          error={renameError()}
+          hint={`Пустое поле вернёт имя по составу: ${machineDisplayName(sandbox()?.spec)}. Системный пользователь на машине остаётся daytona.`}
+        >
+          <input
+            id="machine-rename-input"
+            class="input"
+            type="text"
+            maxlength={64}
+            placeholder={machineDisplayName(sandbox()?.spec)}
+            value={renameValue()}
+            disabled={renaming()}
+            onInput={(event) => setRenameValue(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                void saveName()
+              }
+            }}
+          />
+        </Field>
+      </Dialog>
 
       <Dialog
         open={confirmStop()}

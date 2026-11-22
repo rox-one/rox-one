@@ -1,10 +1,10 @@
 import { For, Show, createEffect, createMemo, createSignal, on } from 'solid-js'
 import type { JSX } from 'solid-js'
 
-import { EmptyState, Icon, Skeleton } from '@/components'
+import { EmptyState, Icon, Select, Skeleton } from '@/components'
 import { api } from '@/lib/api'
 import type { FileEntry } from '@/lib/api'
-import { formatBytes } from '@/lib/format'
+import { formatBytes, formatDate } from '@/lib/format'
 
 import { errorText } from './components/console-ui'
 
@@ -26,6 +26,32 @@ export interface FilesProps {
 interface Crumb {
   label: string
   path: string
+}
+
+type SortKey = 'name' | 'size' | 'modified'
+
+const SORT_OPTIONS = [
+  { value: 'name', label: 'По имени' },
+  { value: 'size', label: 'По размеру' },
+  { value: 'modified', label: 'По изменению' },
+] as const
+
+/** Name sort keeps folders in their own group; the other sorts interleave them. */
+function compareEntries(mode: SortKey) {
+  return (left: FileEntry, right: FileEntry): number => {
+    if (mode === 'name') {
+      return (
+        Number(right.isDir) - Number(left.isDir) ||
+        left.name.localeCompare(right.name, 'ru')
+      )
+    }
+    if (mode === 'size') {
+      return right.size - left.size || left.name.localeCompare(right.name, 'ru')
+    }
+    const leftAt = left.modifiedAt ?? 0
+    const rightAt = right.modifiedAt ?? 0
+    return rightAt - leftAt || left.name.localeCompare(right.name, 'ru')
+  }
 }
 
 /** `~` for the home, then the path below it; any other absolute path is shown plainly. */
@@ -64,15 +90,41 @@ export default function Files(props: FilesProps): JSX.Element {
   const [entries, setEntries] = createSignal<FileEntry[]>([])
   const [loading, setLoading] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
+  const [query, setQuery] = createSignal('')
+  const [sort, setSort] = createSignal<SortKey>('name')
 
   let requestToken = 0
 
-  const sorted = createMemo(() =>
-    [...entries()].sort(
-      (left, right) =>
-        Number(right.isDir) - Number(left.isDir) || left.name.localeCompare(right.name, 'ru'),
-    ),
-  )
+  const visible = createMemo(() => {
+    const needle = query().trim().toLocaleLowerCase('ru')
+    const rows =
+      needle.length === 0
+        ? [...entries()]
+        : entries().filter((entry) => entry.name.toLocaleLowerCase('ru').includes(needle))
+    return rows.sort(compareEntries(sort()))
+  })
+
+  const hasQuery = createMemo(() => query().trim().length > 0)
+
+  const emptyTitle = createMemo(() => {
+    if (error() !== null) return 'Каталог не открылся'
+    if (hasQuery()) return 'Ничего не найдено'
+    return 'Пусто'
+  })
+
+  const emptyDescription = createMemo(() => {
+    const failure = error()
+    if (failure !== null) return failure
+    return hasQuery()
+      ? `По запросу «${query().trim()}» ничего не найдено.`
+      : 'В этом каталоге нет файлов и папок.'
+  })
+
+  /** Folders keep their own label so a mixed size or time sort still marks them. */
+  const metaFor = (entry: FileEntry): string => {
+    if (entry.isDir) return 'папка'
+    return sort() === 'modified' ? formatDate(entry.modifiedAt) : formatBytes(entry.size)
+  }
 
   const load = async (target = path()): Promise<void> => {
     if (!props.enabled) return
@@ -94,6 +146,7 @@ export default function Files(props: FilesProps): JSX.Element {
 
   const go = (target: string): void => {
     setPath(target)
+    setQuery('')
     props.onSelect(null)
     void load(target)
   }
@@ -108,6 +161,7 @@ export default function Files(props: FilesProps): JSX.Element {
         setPath(SANDBOX_HOME)
         setEntries([])
         setError(null)
+        setQuery('')
         props.onSelect(null)
         void load(SANDBOX_HOME)
       },
@@ -171,6 +225,27 @@ export default function Files(props: FilesProps): JSX.Element {
       </Show>
 
       <Show when={props.enabled}>
+        <div class="files-filter">
+          <input
+            type="search"
+            class="input files-search"
+            value={query()}
+            placeholder="Поиск по имени"
+            aria-label="Поиск файла по имени"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck={false}
+            onInput={(event) => setQuery(event.currentTarget.value)}
+          />
+          <Select
+            class="files-sort"
+            options={SORT_OPTIONS}
+            value={sort()}
+            aria-label="Сортировка файлов"
+            onChange={(event) => setSort(event.currentTarget.value as SortKey)}
+          />
+        </div>
+
         <div class="files-list" role="listbox" aria-label={`Содержимое ${path()}`}>
           <Show
             when={!loading()}
@@ -181,16 +256,16 @@ export default function Files(props: FilesProps): JSX.Element {
             }
           >
             <Show
-              when={sorted().length > 0}
+              when={visible().length > 0}
               fallback={
                 <EmptyState
                   icon="folder"
-                  title={error() === null ? 'Пусто' : 'Каталог не открылся'}
-                  description={error() ?? 'В этом каталоге нет файлов и папок.'}
+                  title={emptyTitle()}
+                  description={emptyDescription()}
                 />
               }
             >
-              <For each={sorted()}>
+              <For each={visible()}>
                 {(entry) => (
                   <button
                     type="button"
@@ -207,16 +282,14 @@ export default function Files(props: FilesProps): JSX.Element {
                       <Icon name={entry.isDir ? 'folder' : 'file'} size={15} />
                     </span>
                     <span class="files-name">{entry.name}</span>
-                    <span class="files-meta">
-                      {entry.isDir ? 'папка' : formatBytes(entry.size)}
-                    </span>
+                    <span class="files-meta">{metaFor(entry)}</span>
                   </button>
                 )}
               </For>
             </Show>
           </Show>
         </div>
-        <Show when={error() !== null && sorted().length > 0}>
+        <Show when={error() !== null && visible().length > 0}>
           <div class="files-error" role="alert">
             {error()}
           </div>

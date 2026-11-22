@@ -12,6 +12,7 @@ const TOC: readonly { href: string; label: string }[] = [
   { href: '#create', label: 'Создание машины' },
   { href: '#region', label: 'Площадка и снимки' },
   { href: '#exec', label: 'Команда' },
+  { href: '#site-ssh', label: 'Сайт и SSH' },
   { href: '#stop', label: 'Остановка' },
   { href: '#keys', label: 'Ключи и поставщики' },
   { href: '#errors', label: 'Ошибки' },
@@ -330,6 +331,87 @@ curl -sS -X POST "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID/exec" \\
                 запросом; это не постоянный терминал на сервере, и это подписано в интерфейсе.
               </li>
             </ul>
+          </section>
+
+          <section class="site-section docs-section" id="site-ssh" aria-labelledby="site-ssh-title">
+            <div class="site-section-head">
+              <p class="site-eyebrow">Сайт и SSH</p>
+              <h2 class="site-title" id="site-ssh-title">
+                Приватный адрес, один порт и вход с компьютера
+              </h2>
+              <p class="site-lede">
+                Своего публичного адреса у машины нет: снаружи видны только подписанная ссылка на один
+                порт и SSH-шлюз. Поэтому сервер запускают внутри машины, а наружу открывают ровно тот
+                порт, который он слушает.
+              </p>
+            </div>
+            <ol class="docs-steps">
+              <li class="docs-step">
+                <span class="docs-step-number" aria-hidden="true">
+                  1
+                </span>
+                <div>
+                  <h3 class="docs-step-title">Запустите сервер в машине</h3>
+                  <p class="docs-step-text">
+                    Самый короткий пример — <code>python3 -m http.server 8000</code>: он отдаёт
+                    каталог на порту 8000. Сервер живёт, пока жива команда, поэтому её оставляют в
+                    терминале или запускают в отдельном сеансе.
+                  </p>
+                </div>
+              </li>
+              <li class="docs-step">
+                <span class="docs-step-number" aria-hidden="true">
+                  2
+                </span>
+                <div>
+                  <h3 class="docs-step-title">Откройте порт в карточке машины</h3>
+                  <p class="docs-step-text">
+                    В блоке «Сайт» карточки машины укажите порт <code>8000</code> и нажмите «Открыть
+                    сайт». Порты служб самой машины — <code>2280</code>, <code>2281</code>,{' '}
+                    <code>22220</code> и <code>33333</code> — не выдаются: они заняты.
+                  </p>
+                </div>
+              </li>
+              <li class="docs-step">
+                <span class="docs-step-number" aria-hidden="true">
+                  3
+                </span>
+                <div>
+                  <h3 class="docs-step-title">Пользуйтесь ссылкой до её срока</h3>
+                  <p class="docs-step-text">
+                    Ссылка открывает только этот порт и действует до указанного в ней времени. Она
+                    сама является доступом, поэтому её не пересылают и не кладут в закладки надолго:
+                    после окончания срока ссылка перестаёт работать, а новая выдаётся отдельным
+                    действием.
+                  </p>
+                </div>
+              </li>
+            </ol>
+            <CodeBlock
+              label="curl: подписанная ссылка на порт 8000"
+              code={`curl -sS -X POST "$ROX_API_URL/v1/sandboxes/$SANDBOX_ID/preview" \\
+  -H "Authorization: Bearer $ROX_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"port":8000,"ttl_sec":3600}'
+
+# {"object":"preview","port":8000,"url":"https://…","expires_at":"…"}`}
+            />
+            <p class="site-lede">
+              Вход по SSH тоже выдаётся по запросу: кнопка «Создать доступ» в блоке SSH карточки
+              машины возвращает готовую команду для терминала на компьютере. Внутри машины
+              пользователь остаётся <code>daytona</code>, а команда действует ограниченное время и
+              перестаёт работать вместе с машиной.
+            </p>
+            <p class="site-note site-note--plain">
+              Постоянного адреса и своего SSH-ключа мы не обещаем: шлюз принимает только выданную
+              команду, поэтому запись в <code>authorized_keys</code> сама по себе доступа не даёт.
+              Адрес машины виден в блоке доступа и остаётся внутренним.
+            </p>
+            <div class="docs-actions">
+              <A class="btn btn-secondary" href="/console/machines">
+                Открыть машины
+              </A>
+            </div>
           </section>
 
           <section class="site-section docs-section" id="stop" aria-labelledby="stop-title">

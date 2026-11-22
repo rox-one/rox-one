@@ -24,6 +24,7 @@ export type IconName =
   | 'copy'
   | 'check'
   | 'plus'
+  | 'pencil'
   | 'arrow'
 
 /**
@@ -146,6 +147,12 @@ const drawings: Record<IconName, () => JSX.Element> = {
   ),
   check: () => <path d="m5 12.5 4.5 4.5L19 7" />,
   plus: () => <path d="M12 5v14M5 12h14" />,
+  pencil: () => (
+    <>
+      <path d="m4 20 1-4.2L15.2 5.6a2.1 2.1 0 0 1 3 3L8.2 19 4 20Z" />
+      <path d="m13.8 7 3.2 3.2" />
+    </>
+  ),
   arrow: () => <path d="M5 12h14M13 6l6 6-6 6" />,
 }
 

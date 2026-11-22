@@ -241,8 +241,12 @@ export default function ConsoleMachines(): JSX.Element {
                     </dl>
 
                     <footer class="machine-card-actions">
-                      <A href={`/console/machines/${sandbox.id}`} class="btn btn-primary btn-sm">
-                        Терминал
+                      <A
+                        href={`/console/machines/${sandbox.id}`}
+                        class="btn btn-primary btn-sm"
+                        aria-label={`Открыть машину ${shortId(sandbox.id, 8)}: терминал, файлы и просмотр`}
+                      >
+                        Открыть
                       </A>
                       <Button
                         size="sm"

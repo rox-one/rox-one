@@ -81,6 +81,12 @@ export interface SandboxStatus {
   id: string;
   /** Provider id that actually served the request, e.g. 'daytona'. */
   provider: string;
+  /**
+   * The sandbox's id on the provider side (`payload.id` for Daytona). Persist
+   * it: `adopt` needs it to reach the machine again after a restart, because
+   * the vendor has no lookup by the contract id.
+   */
+  providerRef?: string;
   state: SandboxState;
   createdAt: number;
   startedAt?: number;
@@ -213,6 +219,33 @@ export interface SandboxProvider {
    * reason as `previewUrl`; the returned command is a secret.
    */
   sshAccess?(id: string, ttlSec: number): Promise<SandboxSshAccess>;
+
+  /**
+   * Re-attach a sandbox the vendor already has to a fresh adapter instance.
+   *
+   * The contract's `id` is chosen by Rox, and the vendor has no lookup by it,
+   * so after a restart the adapter has to be told which vendor machine the id
+   * means. The caller persists `SandboxStatus.providerRef` and passes it back
+   * here before calling `get`, `exec` or `stop`. The stored arguments replace
+   * whatever this instance already held, so a repeated adopt is idempotent.
+   * Optional: a provider that can look the id up itself does not need it.
+   */
+  adopt?(
+    id: string,
+    providerRef: string,
+    state: SandboxState,
+    createdAt: number,
+    expiresAt?: number,
+  ): void;
+
+  /**
+   * Snapshot a sandbox's filesystem so a later `create` can boot from it.
+   * The snapshot is usually built asynchronously, so the returned `state`
+   * reports where it is (`building` when the vendor stays silent); the same
+   * name later appears in `listImages`. Optional where the vendor cannot
+   * snapshot a running machine.
+   */
+  createSnapshot?(id: string, name: string): Promise<{ name: string; state?: string }>;
 }
 
 /** Raised by adapters when the vendor cannot do what the spec asks. */

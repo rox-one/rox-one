@@ -426,6 +426,55 @@ async function main() {
 
     resolveProvider = runtime.resolveProvider
 
+    // A machine that was running when the process died still lives at the
+    // provider; only our page of it was lost. `applyState` leaves such a record
+    // called `running` with its hold, and this is the single pass that gives
+    // the adapter its provider-side id back — without it the first exec after
+    // a restart would talk to a machine that does not exist. A record without
+    // a reference was already settled by `applyState` and is not touched here.
+    // An adapter that cannot adopt, or one that throws, leaves the record as
+    // it is: a machine that may still be running must not be reported failed.
+    for (const record of store.sandboxes.values()) {
+      if (record.providerRef === undefined) continue
+      if (record.state === 'stopped' || record.state === 'failed' || record.state === 'expired') {
+        continue
+      }
+      try {
+        const lease = await runtime.resolveLease(record.tenantId, record.providerId)
+        if (lease === null) {
+          console.error(
+            `Rox Cloud: машина ${record.id} не восстановлена — нет ключа для провайдера «${record.providerId}»`,
+          )
+          continue
+        }
+        const provider = lease.provider
+        if (provider.adopt === undefined) {
+          console.error(
+            `Rox Cloud: машина ${record.id} не восстановлена — провайдер «${record.providerId}» не умеет принимать аренду`,
+          )
+          continue
+        }
+        // The contract says `void`; an adapter that answers with a promise is
+        // still awaited, so its rejection lands in the catch below.
+        await Promise.resolve(
+          provider.adopt(
+            record.id,
+            record.providerRef,
+            record.state,
+            record.createdAt,
+            record.expiresAt,
+          ),
+        )
+        console.log(
+          `Rox Cloud: машина ${record.id} восстановлена в провайдере «${record.providerId}»`,
+        )
+      } catch (error) {
+        console.error(
+          `Rox Cloud: машина ${record.id} не восстановлена в провайдере «${record.providerId}»: ${messageOf(error)}`,
+        )
+      }
+    }
+
     const guestEnabled = ['1', 'true', 'yes'].includes(
       (process.env.ROX_GUEST_ENABLED ?? '').trim().toLowerCase(),
     )

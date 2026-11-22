@@ -294,6 +294,7 @@ export function createDaytonaProvider(config: ProviderConfig): SandboxProvider {
     const status: SandboxStatus = {
       id,
       provider: DAYTONA_PROVIDER_ID,
+      providerRef: record.sandboxId,
       state: record.state,
       createdAt: record.createdAt,
     };
@@ -370,6 +371,57 @@ export function createDaytonaProvider(config: ProviderConfig): SandboxProvider {
       applyState(record, typeof payload.state === 'string' ? payload.state : 'creating', createdAt);
       records.set(spec.id, record);
       return toStatus(spec.id, record);
+    },
+
+    /**
+     * Re-attach a sandbox this process did not create. Daytona has no lookup
+     * by the contract id, so the caller supplies the vendor id from storage
+     * (`SandboxStatus.providerRef`); after this, `get`, `exec`, `stop` and the
+     * file routes address the same machine as before the restart.
+     */
+    adopt(
+      id: string,
+      providerRef: string,
+      state: SandboxState,
+      createdAt: number,
+      expiresAt?: number,
+    ): void {
+      if (providerRef.length === 0) {
+        throw new CloudRunnerError('daytona: пустой идентификатор песочницы', 'invalid_spec');
+      }
+      const record: SandboxRecord = { sandboxId: providerRef, createdAt, state };
+      if (expiresAt !== undefined) record.expiresAt = expiresAt;
+      records.set(id, record);
+    },
+
+    /**
+     * Snapshot the sandbox filesystem (memory stays out, so the image boots
+     * clean) with `POST /sandbox/{vendorId}/snapshot`. Daytona builds
+     * asynchronously: the returned state is the vendor's word or `building`
+     * when the response is silent, and the same name later shows up in
+     * `listImages` as an active image.
+     */
+    async createSnapshot(id: string, name: string): Promise<{ name: string; state?: string }> {
+      const record = requireRecord(id);
+      const trimmed = name.trim();
+      if (trimmed.length === 0 || trimmed.length > 128 || /[\u0000-\u001f\u007f]/.test(trimmed)) {
+        throw new CloudRunnerError('Недопустимое имя снимка', 'invalid_spec');
+      }
+      const res = await send(sandboxUrl(record, '/snapshot'), {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ name: trimmed, includeMemory: false }),
+      });
+      if (res.status === 404) throw notFoundError(id);
+      if (!res.ok) throw httpError('createSnapshot', res.status);
+      const payload = await readJson(res);
+      const returnedName = typeof payload.name === 'string' && payload.name.length > 0
+        ? payload.name
+        : trimmed;
+      const returnedState = typeof payload.state === 'string' && payload.state.trim().length > 0
+        ? payload.state
+        : 'building';
+      return { name: returnedName, state: returnedState };
     },
 
     async get(id: string): Promise<SandboxStatus> {

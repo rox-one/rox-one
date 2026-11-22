@@ -1,14 +1,54 @@
-import { Show, createEffect, createMemo, createSignal, on } from 'solid-js'
+import { A } from '@solidjs/router'
+import { For, Show, createEffect, createMemo, createSignal, on, onCleanup } from 'solid-js'
 import type { JSX } from 'solid-js'
 
 import { Button, Card, Icon, Skeleton } from '@/components'
 import { api } from '@/lib/api'
-import type { NetworkInfo, PreviewLink, SshAccess } from '@/lib/api'
-import { formatDate, formatTime } from '@/lib/format'
+import type { NetworkInfo, PortInfo, PreviewLink, SshAccess } from '@/lib/api'
+import { formatDate, formatDuration, formatTime } from '@/lib/format'
 
 import { errorText } from './components/console-ui'
+import FirstSiteWizard from './FirstSiteWizard'
 
 import './machine-access.css'
+
+/** Stands in for the link while the eye toggle is off. */
+const MASKED_URL = '••••••••••••'
+
+function secondsLeft(expiresAt: number | null | undefined, now: number): number | null {
+  if (expiresAt === null || expiresAt === undefined) return null
+  return Math.max(0, Math.ceil((expiresAt - now) / 1000))
+}
+
+/** `осталось 4 мин 59 с`, or `истекла` once the clock passes the deadline. */
+function remainingText(expiresAt: number | null | undefined, now: number): string {
+  const left = secondsLeft(expiresAt, now)
+  if (left === null) return 'срок не указан'
+  return left <= 0 ? 'истекла' : `осталось ${formatDuration(left)}`
+}
+
+/** The console icon set has no eye yet; one stroke drawing lives here. */
+function EyeIcon(props: { closed: boolean }): JSX.Element {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="13"
+      height="13"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12Z" />
+      <circle cx="12" cy="12" r="3" />
+      <Show when={props.closed}>
+        <path d="M4 20 20 4" />
+      </Show>
+    </svg>
+  )
+}
 
 export interface MachineAccessProps {
   sandboxId: string
@@ -19,17 +59,28 @@ export interface MachineAccessProps {
 /**
  * The three ways out of a machine: its private address, a signed link to one
  * HTTP port, and a one-shot SSH command. Every secret is created on demand and
- * never stored by the console.
+ * never stored by the console; both temporary accesses count down to the second.
  */
 export default function MachineAccess(props: MachineAccessProps): JSX.Element {
+  const [now, setNow] = createSignal(Date.now())
+  createEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000)
+    onCleanup(() => window.clearInterval(timer))
+  })
+
   const [network, setNetwork] = createSignal<NetworkInfo | null>(null)
   const [networkError, setNetworkError] = createSignal<string | null>(null)
   const [networkLoading, setNetworkLoading] = createSignal(false)
 
   const [port, setPort] = createSignal('8000')
+  const [ports, setPorts] = createSignal<PortInfo[]>([])
+  const [portsError, setPortsError] = createSignal<string | null>(null)
+  const [portsLoading, setPortsLoading] = createSignal(false)
+  const [portsLoaded, setPortsLoaded] = createSignal(false)
   const [preview, setPreview] = createSignal<PreviewLink | null>(null)
   const [previewError, setPreviewError] = createSignal<string | null>(null)
   const [previewLoading, setPreviewLoading] = createSignal(false)
+  const [previewMasked, setPreviewMasked] = createSignal(true)
   const [copied, setCopied] = createSignal(false)
 
   const [ssh, setSsh] = createSignal<SshAccess | null>(null)
@@ -37,20 +88,58 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
   const [sshLoading, setSshLoading] = createSignal(false)
   const [sshCopied, setSshCopied] = createSignal(false)
 
+  const [wizardOpen, setWizardOpen] = createSignal(false)
+
   let copyTimer: number | undefined
   let sshCopyTimer: number | undefined
+  onCleanup(() => {
+    window.clearTimeout(copyTimer)
+    window.clearTimeout(sshCopyTimer)
+  })
 
-  const loadNetwork = async (): Promise<void> => {
+  const previewLeft = createMemo(() => secondsLeft(preview()?.expiresAt, now()))
+  const previewExpired = (): boolean => {
+    const left = previewLeft()
+    return left !== null && left <= 0
+  }
+  const sshLeft = createMemo(() => secondsLeft(ssh()?.expiresAt, now()))
+  const sshExpired = (): boolean => {
+    const left = sshLeft()
+    return left !== null && left <= 0
+  }
+
+  const loadNetwork = async (refresh = false): Promise<void> => {
+    if (!props.enabled) return
     setNetworkLoading(true)
     setNetworkError(null)
     try {
-      setNetwork(await api.network(props.sandboxId))
+      setNetwork(await api.network(props.sandboxId, refresh))
     } catch (failure) {
       setNetwork(null)
       setNetworkError(errorText(failure))
     } finally {
       setNetworkLoading(false)
     }
+  }
+
+  const loadPorts = async (): Promise<void> => {
+    if (!props.enabled) return
+    setPortsLoading(true)
+    setPortsError(null)
+    try {
+      setPorts(await api.ports(props.sandboxId))
+      setPortsLoaded(true)
+    } catch (failure) {
+      setPorts([])
+      setPortsError(`Порты не получены: ${errorText(failure)}`)
+    } finally {
+      setPortsLoading(false)
+    }
+  }
+
+  const refreshFacts = async (): Promise<void> => {
+    if (!props.enabled) return
+    await Promise.all([loadNetwork(true), loadPorts()])
   }
 
   // A memo with primitive equality keeps a parent poll from wiping a link or
@@ -62,11 +151,19 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
       () => {
         setPreview(null)
         setPreviewError(null)
+        setPreviewMasked(true)
         setSsh(null)
         setSshError(null)
         setNetwork(null)
         setNetworkError(null)
-        if (props.enabled) void loadNetwork()
+        setPorts([])
+        setPortsLoaded(false)
+        setPortsError(null)
+        setWizardOpen(false)
+        if (props.enabled) {
+          void loadNetwork()
+          void loadPorts()
+        }
       },
     ),
   )
@@ -87,6 +184,7 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
     try {
       const link = await api.preview(props.sandboxId, value)
       setPreview(link)
+      setPreviewMasked(true)
       if (tab !== null) tab.location.href = link.url
     } catch (failure) {
       tab?.close()
@@ -94,6 +192,12 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
     } finally {
       setPreviewLoading(false)
     }
+  }
+
+  const openLink = (): void => {
+    const link = preview()
+    if (link === null || previewExpired()) return
+    window.open(link.url, '_blank', 'noopener,noreferrer')
   }
 
   const createSsh = async (): Promise<void> => {
@@ -112,7 +216,7 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
 
   const copyLink = async (): Promise<void> => {
     const link = preview()
-    if (link === null) return
+    if (link === null || previewExpired()) return
     try {
       await navigator.clipboard.writeText(link.url)
       setCopied(true)
@@ -125,7 +229,7 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
 
   const copySsh = async (): Promise<void> => {
     const access = ssh()
-    if (access === null) return
+    if (access === null || sshExpired()) return
     try {
       await navigator.clipboard.writeText(access.command)
       setSshCopied(true)
@@ -136,131 +240,261 @@ export default function MachineAccess(props: MachineAccessProps): JSX.Element {
     }
   }
 
+  const choosePort = (value: number): void => {
+    setPort(String(value))
+    setPreviewError(null)
+  }
+
   return (
-    <Card
-      title="Сеть и доступ"
-      subtitle="Приватный адрес машины, ссылка на сайт и вход по SSH с компьютера."
-    >
-      <Show when={!props.enabled}>
-        <p class="access-blocked" role="status">
-          {props.reason ?? 'Сеть и SSH доступны только на запущенной машине.'}
-        </p>
-      </Show>
-      <div class="access-grid">
-        <section class="access-block" aria-label="Адрес машины">
-          <h3 class="access-title">
-            <Icon name="globe" size={14} /> Адрес
-          </h3>
-          <Show
-            when={!networkLoading()}
-            fallback={
-              <div class="access-loading">
-                <Skeleton lines={2} />
-              </div>
-            }
-          >
+    <>
+      <Card
+        title="Сеть и доступ"
+        subtitle="Приватный адрес машины, ссылка на сайт и вход по SSH с компьютера."
+        footer={
+          <A class="access-docs" href="/docs#site-ssh">
+            Справка: сайт и SSH
+          </A>
+        }
+      >
+        <Show when={!props.enabled}>
+          <p class="access-blocked" role="status">
+            {props.reason ?? 'Сеть и SSH доступны только на запущенной машине.'}
+          </p>
+        </Show>
+        <div class="access-grid">
+          <section class="access-block" aria-label="Адрес машины">
+            <h3 class="access-title">
+              <Icon name="globe" size={14} /> Адрес
+            </h3>
             <Show
-              when={network() !== null}
+              when={!networkLoading()}
               fallback={
-                <p class="access-note">
-                  {networkError() === null ? 'Адрес не сообщён.' : `Адрес не получен: ${networkError()}`}
-                </p>
+                <div class="access-loading">
+                  <Skeleton lines={2} />
+                </div>
               }
             >
-              <p class="access-value">{network()?.privateIp ?? 'не сообщён'}</p>
-              <p class="access-note">
-                {network()?.publicIp === null || network()?.publicIp === undefined
-                  ? 'Своего публичного IP нет: снаружи машина открыта ссылкой на порт и SSH-шлюзом.'
-                  : `Публичный адрес: ${network()?.publicIp}`}
+              <Show
+                when={network() !== null}
+                fallback={
+                  <p class="access-note">
+                    {networkError() === null ? 'Адрес не сообщён.' : `Адрес не получен: ${networkError()}`}
+                  </p>
+                }
+              >
+                <p class="access-value">{network()?.privateIp ?? 'не сообщён'}</p>
+                <p class="access-note">
+                  {network()?.publicIp === null || network()?.publicIp === undefined
+                    ? 'Своего публичного IP нет: снаружи машина открыта ссылкой на порт и SSH-шлюзом.'
+                    : `Публичный адрес: ${network()?.publicIp}`}
+                </p>
+              </Show>
+            </Show>
+          </section>
+
+          <section class="access-block" aria-label="Сайт на машине">
+            <h3 class="access-title">
+              <Icon name="server" size={14} /> Сайт
+            </h3>
+            <div class="access-form">
+              <label class="access-label" for="access-port">
+                Порт
+              </label>
+              <input
+                id="access-port"
+                class="input access-port"
+                inputmode="numeric"
+                value={port()}
+                disabled={!props.enabled || previewLoading()}
+                onInput={(event) => setPort(event.currentTarget.value)}
+              />
+              <Button
+                size="sm"
+                variant="secondary"
+                loading={previewLoading()}
+                disabled={!props.enabled}
+                onClick={() => void openSite()}
+              >
+                Открыть сайт
+              </Button>
+            </div>
+            <p class="access-note">
+              Запустите в терминале сервер на этом порту, например
+              {' '}
+              <code>python3 -m http.server {port()}</code>.
+            </p>
+
+            <Show when={props.enabled}>
+              <div class="access-ports">
+                <div class="access-ports-head">
+                  <span class="access-label">Порты на машине</span>
+                  <button
+                    type="button"
+                    class="access-copy"
+                    disabled={portsLoading()}
+                    onClick={() => void refreshFacts()}
+                  >
+                    {portsLoading() ? 'Обновляю…' : 'Обновить'}
+                  </button>
+                </div>
+                <Show
+                  when={portsError() === null}
+                  fallback={<p class="access-note access-error">{portsError()}</p>}
+                >
+                  <Show when={ports().length > 0} fallback={
+                    <p class="access-note">
+                      {portsLoading() || !portsLoaded()
+                        ? 'Смотрю порты…'
+                        : 'Портов не видно: сервер внутри машины ещё не запущен.'}
+                    </p>
+                  }>
+                    <div class="access-chips">
+                      <For each={ports()}>
+                        {(item) => (
+                          <button
+                            type="button"
+                            class="access-chip"
+                            classList={{
+                              'is-reserved': item.reserved,
+                              'is-active': !item.reserved && Number(port()) === item.port,
+                            }}
+                            disabled={item.reserved}
+                            title={
+                              item.reserved
+                                ? 'Служебный порт машины: ссылкой не открывается'
+                                : `Подставить порт ${item.port}`
+                            }
+                            onClick={() => choosePort(item.port)}
+                          >
+                            <span class="access-chip-port">{item.port}</span>
+                            <Show when={item.reserved}>
+                              <span class="access-chip-tag">служба машины</span>
+                            </Show>
+                          </button>
+                        )}
+                      </For>
+                    </div>
+                  </Show>
+                </Show>
+              </div>
+            </Show>
+
+            <div class="access-wizard">
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={!props.enabled}
+                title={props.enabled ? undefined : props.reason}
+                onClick={() => setWizardOpen(true)}
+              >
+                Мастер первого сайта
+              </Button>
+              <span class="access-note">Проверит порт, откроет ссылку и покажет вход по SSH.</span>
+            </div>
+
+            <Show when={previewError() !== null}>
+              <p class="access-error" role="alert">
+                {previewError()}
               </p>
             </Show>
-          </Show>
-        </section>
+            <Show when={preview() !== null}>
+              <div class="access-link" classList={{ 'is-expired': previewExpired() }}>
+                <span
+                  class="access-link-value"
+                  classList={{ 'is-masked': previewMasked() }}
+                  title={previewMasked() ? undefined : preview()?.url}
+                >
+                  {previewMasked() ? MASKED_URL : preview()?.url}
+                </span>
+                <button
+                  type="button"
+                  class="access-copy access-eye"
+                  aria-pressed={previewMasked() ? 'false' : 'true'}
+                  aria-label={previewMasked() ? 'Показать ссылку' : 'Скрыть ссылку'}
+                  title={previewMasked() ? 'Показать ссылку' : 'Скрыть ссылку'}
+                  onClick={() => setPreviewMasked((value) => !value)}
+                >
+                  <EyeIcon closed={previewMasked()} />
+                </button>
+                <button
+                  type="button"
+                  class="access-copy"
+                  disabled={previewExpired()}
+                  onClick={() => void copyLink()}
+                >
+                  {copied() ? 'Скопировано' : 'Копировать'}
+                </button>
+                <button
+                  type="button"
+                  class="access-copy"
+                  disabled={previewExpired()}
+                  onClick={openLink}
+                >
+                  Открыть
+                </button>
+              </div>
+              <p class="access-note" classList={{ 'is-expired': previewExpired() }}>
+                до {formatTime(preview()?.expiresAt ?? null)} ·{' '}
+                {remainingText(preview()?.expiresAt ?? null, now())} · только порт {preview()?.port}
+              </p>
+              <p class="access-note">
+                Ссылка = доступ: пока она действует, её владелец открывает этот порт. Не пересылайте её в чужие чаты.
+              </p>
+            </Show>
+          </section>
 
-        <section class="access-block" aria-label="Сайт на машине">
-          <h3 class="access-title">
-            <Icon name="server" size={14} /> Сайт
-          </h3>
-          <div class="access-form">
-            <label class="access-label" for="access-port">
-              Порт
-            </label>
-            <input
-              id="access-port"
-              class="input access-port"
-              inputmode="numeric"
-              value={port()}
-              disabled={!props.enabled || previewLoading()}
-              onInput={(event) => setPort(event.currentTarget.value)}
-            />
+          <section class="access-block" aria-label="Вход по SSH">
+            <h3 class="access-title">
+              <Icon name="terminal" size={14} /> SSH
+            </h3>
             <Button
               size="sm"
               variant="secondary"
-              loading={previewLoading()}
+              loading={sshLoading()}
               disabled={!props.enabled}
-              onClick={() => void openSite()}
+              onClick={() => void createSsh()}
             >
-              Открыть сайт
+              Создать доступ
             </Button>
-          </div>
-          <p class="access-note">
-            Запустите в терминале сервер на этом порту, например
-            {' '}
-            <code>python3 -m http.server {port()}</code>.
-          </p>
-          <Show when={previewError() !== null}>
-            <p class="access-error" role="alert">
-              {previewError()}
-            </p>
-          </Show>
-          <Show when={preview() !== null}>
-            <div class="access-link">
-              <a href={preview()?.url} target="_blank" rel="noreferrer">
-                {preview()?.url}
-              </a>
-              <button type="button" class="access-copy" onClick={() => void copyLink()}>
-                {copied() ? 'Скопировано' : 'Копировать'}
-              </button>
-            </div>
             <p class="access-note">
-              до {formatTime(preview()?.expiresAt ?? null)} · только порт {preview()?.port}
+              Команда для вашего терминала. Внутри машины пользователь остаётся <code>daytona</code>,
+              а ключ живёт до указанного времени.
             </p>
-          </Show>
-        </section>
+            <Show when={sshError() !== null}>
+              <p class="access-error" role="alert">
+                {sshError()}
+              </p>
+            </Show>
+            <Show when={ssh() !== null}>
+              <div class="access-ssh" classList={{ 'is-expired': sshExpired() }}>
+                <code title={ssh()?.command}>{ssh()?.command}</code>
+                <button
+                  type="button"
+                  class="access-copy"
+                  disabled={sshExpired()}
+                  onClick={() => void copySsh()}
+                >
+                  {sshCopied() ? 'Скопировано' : 'Копировать'}
+                </button>
+              </div>
+              <p class="access-note" classList={{ 'is-expired': sshExpired() }}>
+                Действует до {formatDate(ssh()?.expiresAt ?? null)} ·{' '}
+                {remainingText(ssh()?.expiresAt ?? null, now())}.
+              </p>
+              <Show when={sshExpired()}>
+                <p class="access-note">Команда больше не работает. Создайте доступ заново.</p>
+              </Show>
+            </Show>
+          </section>
+        </div>
+      </Card>
 
-        <section class="access-block" aria-label="Вход по SSH">
-          <h3 class="access-title">
-            <Icon name="terminal" size={14} /> SSH
-          </h3>
-          <Button
-            size="sm"
-            variant="secondary"
-            loading={sshLoading()}
-            disabled={!props.enabled}
-            onClick={() => void createSsh()}
-          >
-            Создать доступ
-          </Button>
-          <p class="access-note">
-            Команда для вашего терминала. Внутри машины пользователь остаётся <code>daytona</code>,
-            а ключ живёт до указанного времени.
-          </p>
-          <Show when={sshError() !== null}>
-            <p class="access-error" role="alert">
-              {sshError()}
-            </p>
-          </Show>
-          <Show when={ssh() !== null}>
-            <div class="access-ssh">
-              <code title={ssh()?.command}>{ssh()?.command}</code>
-              <button type="button" class="access-copy" onClick={() => void copySsh()}>
-                {sshCopied() ? 'Скопировано' : 'Копировать'}
-              </button>
-            </div>
-            <p class="access-note">Действует до {formatDate(ssh()?.expiresAt ?? null)}.</p>
-          </Show>
-        </section>
-      </div>
-    </Card>
+      <FirstSiteWizard
+        open={wizardOpen()}
+        onClose={() => setWizardOpen(false)}
+        sandboxId={props.sandboxId}
+        enabled={props.enabled}
+      />
+    </>
   )
 }

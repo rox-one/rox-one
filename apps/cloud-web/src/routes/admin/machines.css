@@ -55,6 +55,11 @@
   overflow-wrap: anywhere;
 }
 
+.machines-region-flag {
+  font-size: 13px;
+  line-height: 1;
+}
+
 .machines-cost {
   display: inline-grid;
   gap: 1px;
