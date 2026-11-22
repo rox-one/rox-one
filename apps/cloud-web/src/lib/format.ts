@@ -44,6 +44,28 @@ export function formatDate(value: string | number | Date | null | undefined): st
   }).format(date)
 }
 
+/** ISO instant → `14:05`, for a ribbon where the date is already known. */
+export function formatTime(value: string | number | Date | null | undefined): string {
+  if (value === null || value === undefined || value === '') return EMPTY
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return EMPTY
+  return new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' }).format(date)
+}
+
+/** File size → `812 Б`, `4,2 КБ`, `18,6 МБ`; a directory passes `0` and gets `—`. */
+export function formatBytes(bytes: number | null | undefined): string {
+  if (bytes === null || bytes === undefined || !Number.isFinite(bytes) || bytes <= 0) return '—'
+  if (bytes < 1024) return `${bytes} Б`
+  const units = ['КБ', 'МБ', 'ГБ']
+  let value = bytes / 1024
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit += 1
+  }
+  return `${value.toFixed(value >= 10 ? 0 : 1).replace('.', ',')} ${units[unit]}`
+}
+
 /** Whole seconds → `45 с`, `12 мин 05 с`, `1 ч 30 мин`. */
 export function formatDuration(seconds: number | null | undefined): string {
   if (seconds === null || seconds === undefined || !Number.isFinite(seconds) || seconds < 0) return EMPTY

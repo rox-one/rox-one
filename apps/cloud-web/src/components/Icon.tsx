@@ -15,6 +15,8 @@ export type IconName =
   | 'users'
   | 'chart'
   | 'log'
+  | 'folder'
+  | 'file'
   | 'shield'
   | 'play'
   | 'stop'
@@ -108,6 +110,18 @@ const drawings: Record<IconName, () => JSX.Element> = {
     <>
       <path d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
       <path d="M8 9h8M8 13h8M8 17h5" />
+    </>
+  ),
+  folder: () => (
+    <>
+      <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M3 10h18" />
+    </>
+  ),
+  file: () => (
+    <>
+      <path d="M6 3h8l5 5v13H6z" />
+      <path d="M14 3v5h5M9 13h6M9 17h4" />
     </>
   ),
   shield: () => (

@@ -1,0 +1,118 @@
+/* Рабочее место машины: терминал, файлы и инспектор в одной раме. */
+.machine-workspace {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  height: clamp(420px, 43vh, 520px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.workspace-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.workspace-terminal {
+  flex: 0 0 var(--terminal-pct);
+}
+
+.workspace-files {
+  flex: 0 0 var(--files-pct);
+  border-left: 1px solid var(--border);
+}
+
+.workspace-preview {
+  flex: 1 1 0;
+  min-width: 220px;
+  border-left: 1px solid var(--border);
+}
+
+.workspace-splitter {
+  position: relative;
+  flex: 0 0 7px;
+  border: 0;
+  background: var(--surface-sunken);
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.workspace-splitter::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 34px;
+  background: var(--border-strong);
+  transform: translate(-50%, -50%);
+  transition: background-color var(--dur-fast) ease;
+}
+
+.workspace-splitter:hover::before,
+.workspace-splitter:focus-visible::before {
+  background: var(--accent);
+}
+
+.workspace-splitter:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.machine-workspace .terminal,
+.machine-workspace .files,
+.machine-workspace .file-preview {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.machine-workspace .terminal-output {
+  max-height: none;
+}
+
+.machine-workspace .terminal-full {
+  border: 0;
+  border-radius: 0;
+}
+
+@media (max-width: 980px) {
+  .machine-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .workspace-pane {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .workspace-terminal {
+    height: 460px;
+    border-top: 0;
+  }
+
+  .workspace-files,
+  .workspace-preview {
+    max-height: 420px;
+  }
+
+  .workspace-splitter {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .workspace-terminal {
+    height: 420px;
+  }
+}

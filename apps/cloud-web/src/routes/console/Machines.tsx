@@ -11,6 +11,7 @@ import { useConsoleSession } from './components/console-session'
 import {
   errorText,
   modeLabel,
+  regionFlag,
   regionLabel,
   sizeLine,
   stateLabel,
@@ -203,7 +204,12 @@ export default function ConsoleMachines(): JSX.Element {
                       </div>
                       <div>
                         <dt>Площадка</dt>
-                        <dd>{regionLabel(sandboxRegion(sandbox))}</dd>
+                        <dd>
+                          <span class="machine-region-flag" aria-hidden="true">
+                            {regionFlag(sandboxRegion(sandbox))}
+                          </span>{' '}
+                          {regionLabel(sandboxRegion(sandbox))}
+                        </dd>
                       </div>
                       <div>
                         <dt>Поставщик</dt>

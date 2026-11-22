@@ -92,7 +92,35 @@ class FakeProvider implements SandboxProvider {
   ): Promise<SandboxExecResult> {
     if (!this.sandboxes.has(id)) throw new CloudRunnerError('unknown sandbox', 'not_found')
     this.lastExec = { command, ...(opts?.cwd === undefined ? {} : { cwd: opts.cwd }), ...(opts?.timeoutMs === undefined ? {} : { timeoutMs: opts.timeoutMs }) }
+    if (command === 'hostname -I') return { stdout: '172.20.0.33 \n', stderr: '', exitCode: 0 }
     return { stdout: `ok: ${command}`, stderr: '', exitCode: 0 }
+  }
+
+  /** Every signed link asked for, so the wire shape and TTL can be asserted. */
+  readonly previewCalls: Array<{ id: string; port: number; ttlSec: number }> = []
+  readonly sshCalls: Array<{ id: string; ttlSec: number }> = []
+
+  async previewUrl(id: string, port: number, ttlSec: number) {
+    if (!this.sandboxes.has(id)) throw new CloudRunnerError('unknown sandbox', 'not_found')
+    this.previewCalls.push({ id, port, ttlSec })
+    return { url: `https://${port}-${id}.preview.test`, expiresAt: NOW + ttlSec * 1000 }
+  }
+
+  async sshAccess(id: string, ttlSec: number) {
+    if (!this.sandboxes.has(id)) throw new CloudRunnerError('unknown sandbox', 'not_found')
+    this.sshCalls.push({ id, ttlSec })
+    return { command: `ssh ${id}@ssh.test`, expiresAt: NOW + ttlSec * 1000 }
+  }
+
+  async listFiles(id: string, path: string) {
+    if (!this.sandboxes.has(id)) throw new CloudRunnerError('unknown sandbox', 'not_found')
+    if (path === '/home/daytona') {
+      return [
+        { name: 'hello.txt', path: '/home/daytona/hello.txt', isDir: false, size: 12 },
+        { name: 'notes', path: '/home/daytona/notes', isDir: true, size: 0 },
+      ]
+    }
+    return []
   }
 
   async readFile(id: string, path: string): Promise<Uint8Array> {
@@ -721,6 +749,120 @@ describe('sandbox operations', () => {
     const { app, secret } = harness()
     const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'files-2'))
     const response = await call(app, `/v1/sandboxes/${created.id}/files`, { token: secret })
+    expect(response.status).toBe(400)
+  })
+
+  test('network reports the private address and no public one', async () => {
+    const { app, secret } = harness()
+    const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'network-1'))
+    const response = await call(app, `/v1/sandboxes/${created.id}/network`, { token: secret })
+    expect(response.status).toBe(200)
+    expect(await readBody<Record<string, unknown>>(response)).toMatchObject({
+      object: 'network',
+      private_ip: '172.20.0.33',
+      public_ip: null,
+    })
+  })
+
+  test('preview returns a signed link and no-store', async () => {
+    const { app, secret, provider } = harness()
+    const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'preview-1'))
+    const response = await call(app, `/v1/sandboxes/${created.id}/preview`, {
+      method: 'POST',
+      token: secret,
+      body: { port: 8000 },
+    })
+    expect(response.status).toBe(200)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(await readBody<Record<string, unknown>>(response)).toMatchObject({
+      object: 'preview',
+      port: 8000,
+      url: `https://8000-${created.id}.preview.test`,
+    })
+    expect(provider.previewCalls).toEqual([{ id: created.id, port: 8000, ttlSec: 3600 }])
+  })
+
+  test('preview refuses a daemon port and a stopped machine', async () => {
+    const { app, secret } = harness()
+    const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'preview-2'))
+    const daemon = await call(app, `/v1/sandboxes/${created.id}/preview`, {
+      method: 'POST',
+      token: secret,
+      body: { port: 2280 },
+    })
+    expect(daemon.status).toBe(400)
+    await call(app, `/v1/sandboxes/${created.id}/stop`, { method: 'POST', token: secret })
+    const stopped = await call(app, `/v1/sandboxes/${created.id}/preview`, {
+      method: 'POST',
+      token: secret,
+      body: { port: 8000 },
+    })
+    expect(stopped.status).toBe(409)
+  })
+
+  test('a link and an SSH token never outlive the machine', async () => {
+    const { app, secret, provider } = harness()
+    const created = await readBody<SandboxBody>(
+      await createSandbox(app, secret, 'ttl-cap', { ...SPEC_BODY, ttlSec: 120 }),
+    )
+    await call(app, `/v1/sandboxes/${created.id}/preview`, {
+      method: 'POST',
+      token: secret,
+      body: { port: 8000 },
+    })
+    await call(app, `/v1/sandboxes/${created.id}/ssh`, {
+      method: 'POST',
+      token: secret,
+      body: {},
+    })
+    expect(provider.previewCalls).toEqual([{ id: created.id, port: 8000, ttlSec: 120 }])
+    expect(provider.sshCalls).toEqual([{ id: created.id, ttlSec: 120 }])
+  })
+
+  test('ssh returns a one-shot command and no-store', async () => {
+    const { app, secret, provider } = harness()
+    const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'ssh-1'))
+    const response = await call(app, `/v1/sandboxes/${created.id}/ssh`, {
+      method: 'POST',
+      token: secret,
+      body: {},
+    })
+    expect(response.status).toBe(200)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(await readBody<Record<string, unknown>>(response)).toMatchObject({
+      object: 'ssh_access',
+      command: `ssh ${created.id}@ssh.test`,
+    })
+    expect(provider.sshCalls).toEqual([{ id: created.id, ttlSec: 900 }])
+  })
+
+  test('file listing carries names, folders and sizes', async () => {
+    const { app, secret } = harness()
+    const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'list-1'))
+    const response = await call(
+      app,
+      `/v1/sandboxes/${created.id}/files/list?path=%2Fhome%2Fdaytona`,
+      { token: secret },
+    )
+    expect(response.status).toBe(200)
+    expect(await readBody<{ data: unknown[] }>(response)).toMatchObject({
+      object: 'list',
+      path: '/home/daytona',
+      data: [
+        { name: 'hello.txt', is_dir: false, size: 12 },
+        { name: 'notes', is_dir: true, size: 0 },
+      ],
+    })
+  })
+
+  test('file listing refuses a path that walks up', async () => {
+    const { app, secret } = harness()
+    const created = await readBody<SandboxBody>(await createSandbox(app, secret, 'list-2'))
+    const response = await call(
+      app,
+      `/v1/sandboxes/${created.id}/files/list?path=%2Fhome%2F..%2Fetc`,
+      { token: secret },
+    )
     expect(response.status).toBe(400)
   })
 

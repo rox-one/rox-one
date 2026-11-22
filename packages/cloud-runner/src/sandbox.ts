@@ -109,6 +109,43 @@ export interface SandboxExecResult {
   exitCode: number;
 }
 
+/** One directory entry for the console's file browser. */
+export interface SandboxFileEntry {
+  name: string;
+  path: string;
+  isDir: boolean;
+  size: number;
+  modifiedAt?: number;
+}
+
+// ============================================================
+// Network access
+// ============================================================
+
+/**
+ * A link that reaches one port of a running sandbox from outside.
+ *
+ * `url` is already signed where the vendor supports it, so a browser can open
+ * it without a header. The link is a secret: it grants access to whatever the
+ * sandbox serves on that port until `expiresAt`.
+ */
+export interface SandboxPreview {
+  url: string;
+  expiresAt?: number;
+}
+
+/**
+ * A one-shot SSH credential for one sandbox.
+ *
+ * `command` is ready to paste into a terminal. It contains the credential, so
+ * it must never be logged or stored; the caller shows it once. `expiresAt` is
+ * the moment the gateway stops accepting it.
+ */
+export interface SandboxSshAccess {
+  command: string;
+  expiresAt?: number;
+}
+
 // ============================================================
 // Images
 // ============================================================
@@ -151,6 +188,8 @@ export interface SandboxProvider {
   exec(id: string, command: string, opts?: SandboxExecOptions): Promise<SandboxExecResult>;
   readFile(id: string, path: string): Promise<Uint8Array>;
   writeFile(id: string, path: string, data: Uint8Array): Promise<void>;
+  /** Directory entries for the file browser; optional where the vendor has no listing. */
+  listFiles?(id: string, path: string): Promise<SandboxFileEntry[]>;
   /** Graceful stop; `get` reports `stopped` afterwards. */
   stop(id: string): Promise<void>;
   /** Delete for good; `get` then raises `not_found`. */
@@ -161,6 +200,19 @@ export interface SandboxProvider {
    * products stand in for it.
    */
   listImages?(): Promise<ProviderImage[]>;
+
+  /**
+   * A signed link to one HTTP port of a running sandbox. Optional: providers
+   * without an HTTP proxy answer `capability_unavailable` instead of inventing
+   * a URL that does not route anywhere.
+   */
+  previewUrl?(id: string, port: number, ttlSec: number): Promise<SandboxPreview>;
+
+  /**
+   * A time-limited SSH command for one running sandbox. Optional for the same
+   * reason as `previewUrl`; the returned command is a secret.
+   */
+  sshAccess?(id: string, ttlSec: number): Promise<SandboxSshAccess>;
 }
 
 /** Raised by adapters when the vendor cannot do what the spec asks. */

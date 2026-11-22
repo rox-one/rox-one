@@ -728,6 +728,184 @@ paths:
         '502':
           $ref: '#/components/responses/BadGateway'
 
+  /v1/sandboxes/{id}/files/list:
+    get:
+      operationId: listSandboxFiles
+      summary: List a directory inside a sandbox
+      tags: [sandboxes]
+      description: |
+        Requires the `sandboxes:read` scope. The machine must be running.
+        Names and paths come from the provider's own directory listing, never
+        from a shell command built out of the path.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+        - name: path
+          in: query
+          required: false
+          schema:
+            type: string
+            default: /home/daytona
+          description: Absolute directory path without `..` segments.
+      responses:
+        '200':
+          description: Directory entries.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandboxFileList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /v1/sandboxes/{id}/network:
+    get:
+      operationId: getSandboxNetwork
+      summary: Read the machine's private address
+      tags: [sandboxes]
+      description: |
+        Requires the `sandboxes:read` scope. A Daytona sandbox has a private
+        address inside the provider's network and no public address of its own;
+        outside access goes through a signed port link or the SSH gateway.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      responses:
+        '200':
+          description: The address the machine sees.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandboxNetwork'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /v1/sandboxes/{id}/preview:
+    post:
+      operationId: createSandboxPreview
+      summary: Sign a link to one HTTP port
+      tags: [sandboxes]
+      description: |
+        Requires the `sandboxes:write` scope. The response carries `no-store`:
+        the URL is a credential and lives no longer than the machine. Start the
+        server inside the machine first, then open the link in a browser.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [port]
+              properties:
+                port:
+                  type: integer
+                  minimum: 1
+                  maximum: 65535
+                  description: Port the process inside the machine listens on.
+                ttl_sec:
+                  type: integer
+                  minimum: 60
+                  maximum: 604800
+                  default: 3600
+                  description: Requested lifetime; capped by the machine's own expiry.
+      responses:
+        '200':
+          description: A signed preview URL.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+            cache-control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandboxPreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
+  /v1/sandboxes/{id}/ssh:
+    post:
+      operationId: createSandboxSshAccess
+      summary: Create a one-shot SSH command
+      tags: [sandboxes]
+      description: |
+        Requires the `sandboxes:write` scope. The command carries the
+        credential, so the response is `no-store` and the console shows it
+        once. Its lifetime is capped by the machine's own expiry.
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ttl_sec:
+                  type: integer
+                  minimum: 60
+                  maximum: 86400
+                  default: 900
+      responses:
+        '200':
+          description: A ready-to-paste SSH command.
+          headers:
+            x-request-id:
+              $ref: '#/components/headers/RequestId'
+            cache-control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SandboxSshAccess'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+
   /v1/sandboxes/{id}/stop:
     post:
       operationId: stopSandbox
@@ -1773,7 +1951,7 @@ components:
   schemas:
     Scope:
       type: string
-      enum: [sandboxes:read, sandboxes:write, keys:write, billing:read, billing:write]
+      enum: ['sandboxes:read', 'sandboxes:write', 'keys:write', 'billing:read', 'billing:write']
 
     Error:
       type: object
@@ -2622,6 +2800,84 @@ components:
           type: string
         exit_code:
           type: integer
+
+    SandboxFileList:
+      type: object
+      required: [object, path, data]
+      properties:
+        object:
+          const: list
+        path:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SandboxFileEntry'
+
+    SandboxFileEntry:
+      type: object
+      required: [name, path, is_dir, size, modified_at]
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        is_dir:
+          type: boolean
+        size:
+          type: integer
+          minimum: 0
+        modified_at:
+          type: [string, 'null']
+          format: date-time
+
+    SandboxNetwork:
+      type: object
+      required: [object, sandbox_id, private_ip, public_ip, note]
+      properties:
+        object:
+          const: network
+        sandbox_id:
+          type: string
+        private_ip:
+          type: [string, 'null']
+        public_ip:
+          type: [string, 'null']
+          description: Always null on Daytona; outside access goes through links and SSH.
+        note:
+          type: string
+
+    SandboxPreview:
+      type: object
+      required: [object, sandbox_id, port, url, expires_at]
+      properties:
+        object:
+          const: preview
+        sandbox_id:
+          type: string
+        port:
+          type: integer
+        url:
+          type: string
+          description: Signed HTTPS link; a credential that expires with the machine.
+        expires_at:
+          type: [string, 'null']
+          format: date-time
+
+    SandboxSshAccess:
+      type: object
+      required: [object, sandbox_id, command, expires_at]
+      properties:
+        object:
+          const: ssh_access
+        sandbox_id:
+          type: string
+        command:
+          type: string
+          description: Ready-to-paste `ssh …` line containing a time-limited token.
+        expires_at:
+          type: [string, 'null']
+          format: date-time
 
     ApiKey:
       type: object

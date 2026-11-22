@@ -1,205 +1,227 @@
-import { Show, createSignal, createUniqueId } from 'solid-js'
+import { For, Show, createEffect, createMemo, createSignal, on } from 'solid-js'
 import type { JSX } from 'solid-js'
 
-import { Button, CodeBlock, EmptyState, Field, Textarea } from '@/components'
+import { EmptyState, Icon, Skeleton } from '@/components'
 import { api } from '@/lib/api'
+import type { FileEntry } from '@/lib/api'
+import { formatBytes } from '@/lib/format'
 
 import { errorText } from './components/console-ui'
 
 import './files.css'
 
 /** The sandbox user's home; `/root` is not readable there, so never start in it. */
-const SANDBOX_HOME = '/home/daytona'
+export const SANDBOX_HOME = '/home/daytona'
 
 export interface FilesProps {
   sandboxId: string
   /** Reading and writing go through the machine's toolbox: it must be running. */
   enabled: boolean
   reason?: string
+  /** The file the preview panel is showing, so the row can stay highlighted. */
+  selectedPath?: string | null
+  onSelect: (entry: FileEntry | null) => void
 }
 
-/** `1 символ`, `2 символа`, `5 символов`. */
-function characters(count: number): string {
-  const mod100 = count % 100
-  const mod10 = count % 10
-  const word =
-    mod100 >= 11 && mod100 <= 14
-      ? 'символов'
-      : mod10 === 1
-        ? 'символ'
-        : mod10 >= 2 && mod10 <= 4
-          ? 'символа'
-          : 'символов'
-  return `${count} ${word}`
+interface Crumb {
+  label: string
+  path: string
+}
+
+/** `~` for the home, then the path below it; any other absolute path is shown plainly. */
+function crumbs(path: string): Crumb[] {
+  if (!path.startsWith(SANDBOX_HOME)) {
+    return [{ label: '/', path: '/' }, ...path.split('/').filter((part) => part.length > 0).map((part, index, parts) => ({
+      label: part,
+      path: `/${parts.slice(0, index + 1).join('/')}`,
+    }))]
+  }
+  const rest = path.slice(SANDBOX_HOME.length).split('/').filter((part) => part.length > 0)
+  const out: Crumb[] = [{ label: '~', path: SANDBOX_HOME }]
+  let current = SANDBOX_HOME
+  for (const part of rest) {
+    current = `${current}/${part}`
+    out.push({ label: part, path: current })
+  }
+  return out
+}
+
+function parentOf(path: string): string {
+  if (path === SANDBOX_HOME) return SANDBOX_HOME
+  const cut = path.replace(/\/+$/, '').lastIndexOf('/')
+  if (cut <= 0) return '/'
+  const parent = path.slice(0, cut)
+  return parent.length === 0 ? '/' : parent
 }
 
 /**
- * One file at a time: read a path into a read-only block, edit it in the
- * textarea and write it back. Binary files are refused instead of mangled.
+ * A directory browser over the machine's own file listing. A folder opens on
+ * click; a file is handed to the preview panel, so the browser never loads a
+ * file it was not asked to show.
  */
 export default function Files(props: FilesProps): JSX.Element {
-  const [path, setPath] = createSignal(`${SANDBOX_HOME}/`)
-  const [readPath, setReadPath] = createSignal('')
-  const [content, setContent] = createSignal<string | null>(null)
-  const [draft, setDraft] = createSignal('')
-  const [reading, setReading] = createSignal(false)
-  const [writing, setWriting] = createSignal(false)
-  const [readError, setReadError] = createSignal<string | null>(null)
-  const [writeError, setWriteError] = createSignal<string | null>(null)
-  const [saved, setSaved] = createSignal(false)
+  const [path, setPath] = createSignal(SANDBOX_HOME)
+  const [entries, setEntries] = createSignal<FileEntry[]>([])
+  const [loading, setLoading] = createSignal(false)
+  const [error, setError] = createSignal<string | null>(null)
 
-  const pathId = createUniqueId()
-  const bodyId = createUniqueId()
+  let requestToken = 0
 
-  // An empty write to a path that was never read could wipe a file we did not
-  // see, so an empty draft is allowed only when this path was read.
-  const canSave = (): boolean => {
-    if (!props.enabled || path().trim().length === 0) return false
-    if (draft().length > 0) return true
-    return content() !== null && path().trim() === readPath()
-  }
+  const sorted = createMemo(() =>
+    [...entries()].sort(
+      (left, right) =>
+        Number(right.isDir) - Number(left.isDir) || left.name.localeCompare(right.name, 'ru'),
+    ),
+  )
 
-  const open = async (event: SubmitEvent): Promise<void> => {
-    event.preventDefault()
-    if (!props.enabled || reading()) return
-    const target = path().trim()
-    if (target.length === 0) {
-      setReadError(`Укажите путь к файлу, например ${SANDBOX_HOME}/hello.txt.`)
-      return
-    }
-    // The default is the home directory itself; a trailing slash says «каталог»,
-    // so ask for a file instead of sending a read that cannot succeed.
-    if (target.endsWith('/')) {
-      setReadError(`Это каталог. Укажите файл, например ${SANDBOX_HOME}/hello.txt.`)
-      return
-    }
-    setReading(true)
-    setReadError(null)
-    setWriteError(null)
-    setSaved(false)
+  const load = async (target = path()): Promise<void> => {
+    if (!props.enabled) return
+    const token = ++requestToken
+    setLoading(true)
+    setError(null)
     try {
-      const text = await api.readFile(props.sandboxId, target)
-      // File bytes are read as UTF-8 text; a NUL byte means this is not text at all.
-      if (text.includes('\u0000')) {
-        setContent(null)
-        setDraft('')
-        setReadPath(target)
-        setReadError('Похоже, это двоичный файл. Такие файлы здесь не показываем и не правим.')
-        return
-      }
-      setContent(text)
-      setDraft(text)
-      setReadPath(target)
-    } catch (error) {
-      setContent(null)
-      setDraft('')
-      setReadError(`Не удалось прочитать файл: ${errorText(error)}`)
+      const listing = await api.listFiles(props.sandboxId, target)
+      if (token !== requestToken) return
+      setEntries(listing)
+    } catch (failure) {
+      if (token !== requestToken) return
+      setEntries([])
+      setError(`Каталог не открылся: ${errorText(failure)}`)
     } finally {
-      setReading(false)
+      if (token === requestToken) setLoading(false)
     }
   }
 
-  const save = async (event: SubmitEvent): Promise<void> => {
-    event.preventDefault()
-    if (!canSave() || writing()) return
-    const target = path().trim()
-    setWriting(true)
-    setWriteError(null)
-    setSaved(false)
-    try {
-      await api.writeFile(props.sandboxId, target, draft())
-      setContent(draft())
-      setReadPath(target)
-      setReadError(null)
-      setSaved(true)
-    } catch (error) {
-      setWriteError(`Не удалось записать файл: ${errorText(error)}`)
-    } finally {
-      setWriting(false)
-    }
+  const go = (target: string): void => {
+    setPath(target)
+    props.onSelect(null)
+    void load(target)
   }
+
+  // A memo with primitive equality keeps the effect from re-running when a
+  // parent poll hands over a new machine object with the same id and state.
+  const resetKey = createMemo(() => `${props.sandboxId}:${props.enabled}`)
+  createEffect(
+    on(
+      resetKey,
+      () => {
+        setPath(SANDBOX_HOME)
+        setEntries([])
+        setError(null)
+        props.onSelect(null)
+        void load(SANDBOX_HOME)
+      },
+    ),
+  )
+
 
   return (
     <section class="files" aria-label="Файлы машины">
+      <header class="files-head">
+        <span class="files-title">
+          <Icon name="folder" size={14} /> Файлы
+        </span>
+        <div class="files-tools">
+          <button
+            type="button"
+            class="files-tool"
+            disabled={!props.enabled || loading() || path() === SANDBOX_HOME}
+            onClick={() => go(parentOf(path()))}
+            title="На уровень выше"
+          >
+            Вверх
+          </button>
+          <button
+            type="button"
+            class="files-tool"
+            disabled={!props.enabled || loading()}
+            onClick={() => void load()}
+          >
+            Обновить
+          </button>
+        </div>
+      </header>
+
+      <nav class="files-crumbs" aria-label="Текущий каталог">
+        <For each={crumbs(path())}>
+          {(crumb, index) => (
+            <>
+              <Show when={index() > 0}>
+                <span class="files-crumb-sep" aria-hidden="true">
+                  /
+                </span>
+              </Show>
+              <button
+                type="button"
+                class="files-crumb"
+                disabled={!props.enabled || loading()}
+                onClick={() => go(crumb.path)}
+              >
+                {crumb.label}
+              </button>
+            </>
+          )}
+        </For>
+      </nav>
+
       <Show when={!props.enabled}>
         <div class="files-blocked" role="status">
           {props.reason ?? 'Файлы доступны только на запущенной машине.'}
         </div>
       </Show>
 
-      <form class="files-open" onSubmit={(event) => void open(event)}>
-        <Field
-          label="Путь к файлу"
-          for={pathId}
-          hint={`Домашний каталог машины — ${SANDBOX_HOME}. Например, ${SANDBOX_HOME}/hello.sh.`}
-          error={readError()}
-        >
-          <input
-            id={pathId}
-            class="input"
-            type="text"
-            value={path()}
-            placeholder={`${SANDBOX_HOME}/hello.txt`}
-            autocomplete="off"
-            autocapitalize="off"
-            spellcheck={false}
-            disabled={!props.enabled || reading()}
-            aria-invalid={readError() === null ? undefined : 'true'}
-            onInput={(event) => {
-              setPath(event.currentTarget.value)
-              setSaved(false)
-            }}
-          />
-        </Field>
-        <Button type="submit" variant="secondary" loading={reading()} disabled={!props.enabled}>
-          Прочитать
-        </Button>
-      </form>
-
-      <Show
-        when={content() !== null}
-        fallback={
-          <EmptyState
-            icon="log"
-            title="Файл не прочитан"
-            description="Введите путь к файлу и нажмите «Прочитать»."
-          />
-        }
-      >
-        <CodeBlock code={content() ?? ''} label={readPath()} class="files-code" />
-      </Show>
-
-      <form class="files-save" onSubmit={(event) => void save(event)}>
-        <Field
-          label="Содержимое для записи"
-          for={bodyId}
-          hint="Файл создаётся или перезаписывается целиком. Пустую запись можно сделать после чтения файла."
-          error={writeError()}
-        >
-          <Textarea
-            id={bodyId}
-            rows={10}
-            value={draft()}
-            disabled={!props.enabled || writing()}
-            aria-invalid={writeError() === null ? undefined : 'true'}
-            onInput={(event) => {
-              setDraft(event.currentTarget.value)
-              setSaved(false)
-            }}
-          />
-        </Field>
-        <div class="files-actions">
-          <Button type="submit" variant="primary" loading={writing()} disabled={!canSave()}>
-            Сохранить
-          </Button>
-          <span class="files-count">{characters(draft().length)}</span>
-          <Show when={saved()}>
-            <span class="files-saved" role="status">
-              Сохранено
-            </span>
+      <Show when={props.enabled}>
+        <div class="files-list" role="listbox" aria-label={`Содержимое ${path()}`}>
+          <Show
+            when={!loading()}
+            fallback={
+              <div class="files-skeleton" aria-live="polite">
+                <Skeleton lines={5} />
+              </div>
+            }
+          >
+            <Show
+              when={sorted().length > 0}
+              fallback={
+                <EmptyState
+                  icon="folder"
+                  title={error() === null ? 'Пусто' : 'Каталог не открылся'}
+                  description={error() ?? 'В этом каталоге нет файлов и папок.'}
+                />
+              }
+            >
+              <For each={sorted()}>
+                {(entry) => (
+                  <button
+                    type="button"
+                    class="files-row"
+                    classList={{ 'is-selected': props.selectedPath === entry.path }}
+                    role="option"
+                    aria-selected={props.selectedPath === entry.path ? 'true' : 'false'}
+                    onClick={() => {
+                      if (entry.isDir) go(entry.path)
+                      else props.onSelect(entry)
+                    }}
+                  >
+                    <span class="files-row-icon" aria-hidden="true">
+                      <Icon name={entry.isDir ? 'folder' : 'file'} size={15} />
+                    </span>
+                    <span class="files-name">{entry.name}</span>
+                    <span class="files-meta">
+                      {entry.isDir ? 'папка' : formatBytes(entry.size)}
+                    </span>
+                  </button>
+                )}
+              </For>
+            </Show>
           </Show>
         </div>
-      </form>
+        <Show when={error() !== null && sorted().length > 0}>
+          <div class="files-error" role="alert">
+            {error()}
+          </div>
+        </Show>
+      </Show>
     </section>
   )
 }

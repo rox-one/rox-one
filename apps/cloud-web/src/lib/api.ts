@@ -124,6 +124,13 @@ function newIdempotencyKey(): string {
   return `rox-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 }
 
+/** ISO time from the wire, or `null` when the field is absent or unreadable. */
+function parseTime(value: unknown): number | null {
+  if (typeof value !== 'string') return null
+  const at = Date.parse(value)
+  return Number.isFinite(at) ? at : null
+}
+
 export async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
   const method = (options.method ?? 'GET').toUpperCase()
   const auth = options.auth ?? defaultAuth(path)
@@ -419,6 +426,31 @@ export interface ExecResult {
   stdout: string
   stderr: string
   exitCode: number | null
+}
+
+export interface FileEntry {
+  name: string
+  path: string
+  isDir: boolean
+  size: number
+  modifiedAt: number | null
+}
+
+export interface NetworkInfo {
+  privateIp: string | null
+  publicIp: string | null
+  note: string
+}
+
+export interface PreviewLink {
+  port: number
+  url: string
+  expiresAt: number | null
+}
+
+export interface SshAccess {
+  command: string
+  expiresAt: number | null
 }
 
 export interface CreateSandboxInput {
@@ -786,6 +818,56 @@ export const api = {
       stdout: typeof raw.stdout === 'string' ? raw.stdout : '',
       stderr: typeof raw.stderr === 'string' ? raw.stderr : '',
       exitCode: typeof raw.exit_code === 'number' ? raw.exit_code : null,
+    }
+  },
+
+  /** Directory entries for the machine's file browser. */
+  listFiles: async (id: string, path: string): Promise<FileEntry[]> => {
+    const raw = await request<{ data?: unknown }>(
+      withQuery(`/v1/sandboxes/${enc(id)}/files/list`, { path }),
+    )
+    const rows = Array.isArray(raw.data) ? raw.data : []
+    return rows.map((row) => {
+      const item = row as Record<string, unknown>
+      return {
+        name: typeof item.name === 'string' ? item.name : '',
+        path: typeof item.path === 'string' ? item.path : '',
+        isDir: item.is_dir === true,
+        size: typeof item.size === 'number' ? item.size : 0,
+        modifiedAt: parseTime(item.modified_at),
+      }
+    })
+  },
+
+  network: async (id: string): Promise<NetworkInfo> => {
+    const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/network`)
+    return {
+      privateIp: typeof raw.private_ip === 'string' ? raw.private_ip : null,
+      publicIp: typeof raw.public_ip === 'string' ? raw.public_ip : null,
+      note: typeof raw.note === 'string' ? raw.note : '',
+    }
+  },
+
+  preview: async (id: string, port: number): Promise<PreviewLink> => {
+    const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/preview`, {
+      method: 'POST',
+      body: { port },
+    })
+    return {
+      port: typeof raw.port === 'number' ? raw.port : port,
+      url: typeof raw.url === 'string' ? raw.url : '',
+      expiresAt: parseTime(raw.expires_at),
+    }
+  },
+
+  ssh: async (id: string): Promise<SshAccess> => {
+    const raw = await request<Record<string, unknown>>(`/v1/sandboxes/${enc(id)}/ssh`, {
+      method: 'POST',
+      body: {},
+    })
+    return {
+      command: typeof raw.command === 'string' ? raw.command : '',
+      expiresAt: parseTime(raw.expires_at),
     }
   },
 

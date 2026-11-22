@@ -896,6 +896,23 @@ export function createApp(options: CloudApiOptions): CloudApp {
     return record
   }
 
+  /** Network doors exist only while the machine runs; a stopped one has none. */
+  function requireRunning(record: SandboxRecord): void {
+    if (record.state !== 'running') {
+      throw new ApiError('conflict', 'Сеть и SSH доступны только у запущенной машины')
+    }
+  }
+
+  /** A link or token never outlives the machine it opens. */
+  function liveTtl(record: SandboxRecord, requested: number): number {
+    if (record.expiresAt === undefined) return requested
+    const remaining = Math.floor((record.expiresAt - now()) / 1000)
+    if (remaining <= 0) {
+      throw new ApiError('conflict', 'Срок жизни машины истёк: ссылка и SSH больше не нужны')
+    }
+    return Math.min(requested, remaining)
+  }
+
   // ---------- sandboxes ----------
 
   function routingReason(tenant: Tenant, providerId: string, requested: string | undefined): string {
@@ -1125,6 +1142,123 @@ export function createApp(options: CloudApiOptions): CloudApp {
     return json(200, { stdout: result.stdout, stderr: result.stderr, exit_code: result.exitCode })
   }
 
+  /**
+   * The private address the machine sees, and the fact that it has no public
+   * address of its own. The address comes from the machine itself, so a
+   * provider that cannot run commands simply reports `null` instead of a
+   * made-up number.
+   */
+  async function networkRoute(auth: VerifiedApiKey, id: string): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record)
+    const provider = await providerForRecord(record)
+    let privateIp: string | null = null
+    try {
+      const result = await provider.exec(record.id, 'hostname -I', { timeoutMs: 5000 })
+      const found = result.stdout
+        .trim()
+        .split(/\s+/)
+        .find((value) => /^\d{1,3}(?:\.\d{1,3}){3}$/.test(value))
+      privateIp = found ?? null
+    } catch {
+      // A stopped daemon or a missing `hostname` is not a reason to fail the
+      // page: the card says the address was not reported.
+    }
+    return json(200, {
+      object: 'network',
+      sandbox_id: record.id,
+      private_ip: privateIp,
+      public_ip: null,
+      note: 'Публичного адреса у машины нет: снаружи она открыта ссылкой на порт и SSH-шлюзом.',
+    })
+  }
+
+  /**
+   * A signed link to one HTTP port. The link is a credential, so the answer
+   * is never cached: a shared browser cache must not keep it after expiry.
+   */
+  async function previewRoute(auth: VerifiedApiKey, id: string, req: Request): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record)
+    const body = await readJson(req)
+    const port = positiveNumber(body.port, 'port')
+    if (!Number.isInteger(port) || port > 65_535) {
+      throw new ApiError('invalid_request', 'Поле port должно быть целым числом от 1 до 65535')
+    }
+    if (port === 2280 || port === 2281 || port === 22_220) {
+      throw new ApiError('invalid_request', 'Этот порт занят службой машины: выберите порт сайта')
+    }
+    const ttlRaw = optionalPositiveNumber(body.ttl_sec, 'ttl_sec')
+    const ttlSec = liveTtl(record, Math.min(Math.max(Math.trunc(ttlRaw ?? 3600), 60), 604_800))
+    const provider = await providerForRecord(record)
+    if (provider.previewUrl === undefined) {
+      throw new ApiError('capability_unavailable', `Провайдер «${provider.providerId}» не умеет открывать сайт`)
+    }
+    const preview = await provider.previewUrl(record.id, port, ttlSec)
+    return new Response(
+      JSON.stringify({
+        object: 'preview',
+        sandbox_id: record.id,
+        port,
+        url: preview.url,
+        expires_at: preview.expiresAt === undefined ? null : iso(preview.expiresAt),
+      }),
+      {
+        status: 200,
+        headers: {
+          'content-type': 'application/json; charset=utf-8',
+          'cache-control': 'no-store',
+        },
+      },
+    )
+  }
+
+  /**
+   * A one-shot SSH command. It contains the credential, so it is answered
+   * with `no-store` and never written to the journal: the request line names
+   * the route, not the command.
+   */
+  async function sshRoute(auth: VerifiedApiKey, id: string, req: Request): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record)
+    const text = await req.text()
+    let body: Record<string, unknown> = {}
+    if (text.trim().length > 0) {
+      let parsed: unknown
+      try {
+        parsed = JSON.parse(text)
+      } catch {
+        throw new ApiError('invalid_request', 'Тело запроса не является корректным JSON')
+      }
+      if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new ApiError('invalid_request', 'Тело запроса должно быть объектом JSON')
+      }
+      body = parsed as Record<string, unknown>
+    }
+    const ttlRaw = optionalPositiveNumber(body.ttl_sec, 'ttl_sec')
+    const ttlSec = liveTtl(record, Math.min(Math.max(Math.trunc(ttlRaw ?? 900), 60), 86_400))
+    const provider = await providerForRecord(record)
+    if (provider.sshAccess === undefined) {
+      throw new ApiError('capability_unavailable', `Провайдер «${provider.providerId}» не даёт SSH`)
+    }
+    const access = await provider.sshAccess(record.id, ttlSec)
+    return new Response(
+      JSON.stringify({
+        object: 'ssh_access',
+        sandbox_id: record.id,
+        command: access.command,
+        expires_at: access.expiresAt === undefined ? null : iso(access.expiresAt),
+      }),
+      {
+        status: 200,
+        headers: {
+          'content-type': 'application/json; charset=utf-8',
+          'cache-control': 'no-store',
+        },
+      },
+    )
+  }
+
   async function readFileRoute(auth: VerifiedApiKey, id: string, url: URL): Promise<Response> {
     const record = sandboxFor(auth.tenant.id, id)
     const path = url.searchParams.get('path')
@@ -1141,6 +1275,31 @@ export function createApp(options: CloudApiOptions): CloudApp {
         'content-type': 'application/octet-stream',
         'content-length': String(bytes.byteLength),
       },
+    })
+  }
+
+  async function listFilesRoute(auth: VerifiedApiKey, id: string, url: URL): Promise<Response> {
+    const record = sandboxFor(auth.tenant.id, id)
+    requireRunning(record)
+    const path = (url.searchParams.get('path') ?? '/home/daytona').trim()
+    if (!path.startsWith('/') || path.split('/').includes('..') || /[\n\r\0]/.test(path)) {
+      throw new ApiError('invalid_request', 'Путь к каталогу должен быть абсолютным и без «..»')
+    }
+    const provider = await providerForRecord(record)
+    if (provider.listFiles === undefined) {
+      throw new ApiError('capability_unavailable', `Провайдер «${provider.providerId}» не показывает файлы`)
+    }
+    const entries = await provider.listFiles(record.id, path)
+    return json(200, {
+      object: 'list',
+      path,
+      data: entries.map((entry) => ({
+        name: entry.name,
+        path: entry.path,
+        is_dir: entry.isDir,
+        size: entry.size,
+        modified_at: entry.modifiedAt === undefined ? null : iso(entry.modifiedAt),
+      })),
     })
   }
 
@@ -1768,11 +1927,23 @@ export function createApp(options: CloudApiOptions): CloudApp {
         }
         if (method === 'DELETE') return deleteRoute(requireAuth(req, 'sandboxes:write'), id)
       }
+      if (segments.length === 5 && segments[3] === 'files' && segments[4] === 'list' && method === 'GET') {
+        return listFilesRoute(requireAuth(req, 'sandboxes:read'), segments[2], url)
+      }
       if (segments.length === 4) {
         const id = segments[2]
         const action = segments[3]
         if (action === 'exec' && method === 'POST') {
           return execRoute(requireAuth(req, 'sandboxes:write'), id, req)
+        }
+        if (action === 'network' && method === 'GET') {
+          return networkRoute(requireAuth(req, 'sandboxes:read'), id)
+        }
+        if (action === 'preview' && method === 'POST') {
+          return previewRoute(requireAuth(req, 'sandboxes:write'), id, req)
+        }
+        if (action === 'ssh' && method === 'POST') {
+          return sshRoute(requireAuth(req, 'sandboxes:write'), id, req)
         }
         if (action === 'files' && method === 'GET') {
           return readFileRoute(requireAuth(req, 'sandboxes:read'), id, url)

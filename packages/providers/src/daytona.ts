@@ -18,9 +18,12 @@ import {
   type ProviderImage,
   type SandboxExecOptions,
   type SandboxExecResult,
+  type SandboxFileEntry,
   type SandboxOs,
+  type SandboxPreview,
   type SandboxProvider,
   type SandboxSpec,
+  type SandboxSshAccess,
   type SandboxState,
   type SandboxStatus,
   capabilityUnavailable,
@@ -432,6 +435,91 @@ export function createDaytonaProvider(config: ProviderConfig): SandboxProvider {
       });
       if (res.status === 404) throw notFoundError(id);
       if (!res.ok) throw httpError('writeFile', res.status);
+    },
+
+    /**
+     * Directory entries from the sandbox toolbox. The browser never runs
+     * `ls` through a shell, so a file name with a quote or a semicolon stays a
+     * name and cannot become a command.
+     */
+    async listFiles(id: string, path: string): Promise<SandboxFileEntry[]> {
+      const record = requireRecord(id);
+      if (!path.startsWith('/') || path.split('/').includes('..') || /[\n\r\0]/.test(path)) {
+        throw new CloudRunnerError('Недопустимый путь к каталогу', 'invalid_spec');
+      }
+      const res = await send(
+        toolboxUrlFor(record, `/files?path=${encodeURIComponent(path)}`),
+        { method: 'GET', headers: authHeaders() },
+      );
+      if (res.status === 404) throw notFoundError(id);
+      if (!res.ok) throw httpError('listFiles', res.status);
+      const payload = await readJson(res);
+      const rows = Array.isArray(payload) ? payload : [];
+      const entries: SandboxFileEntry[] = [];
+      for (const item of rows) {
+        if (item === null || typeof item !== 'object') continue;
+        const raw = item as Record<string, unknown>;
+        const name = typeof raw.name === 'string' ? raw.name : '';
+        const entryPath = typeof raw.path === 'string' ? raw.path : '';
+        if (name.length === 0 || entryPath.length === 0) continue;
+        const modified = typeof raw.modifiedAt === 'string' ? Date.parse(raw.modifiedAt) : NaN;
+        entries.push({
+          name,
+          path: entryPath,
+          isDir: raw.isDir === true,
+          size: wholeNumber(raw.size, 0),
+          ...(Number.isFinite(modified) ? { modifiedAt: modified } : {}),
+        });
+      }
+      return entries;
+    },
+
+    /**
+     * A signed link to one port. Signed means the link itself carries the
+     * credential, so it opens in a plain browser tab and can be shared until
+     * it expires. The URL is a secret and never appears in an error.
+     */
+    async previewUrl(id: string, port: number, ttlSec: number): Promise<SandboxPreview> {
+      const record = requireRecord(id);
+      const ttl = Math.min(Math.max(Math.trunc(ttlSec), 60), 604_800);
+      const res = await send(
+        sandboxUrl(record, `/ports/${Math.trunc(port)}/signed-preview-url?expiresInSeconds=${ttl}`),
+        { method: 'GET', headers: authHeaders() },
+      );
+      if (res.status === 404) throw notFoundError(id);
+      if (!res.ok) throw httpError('previewUrl', res.status);
+      const payload = await readJson(res);
+      const url = typeof payload.url === 'string' ? payload.url : '';
+      if (!/^https:\/\//.test(url)) {
+        throw new CloudRunnerError('Daytona не выдал ссылку на порт', 'provider_error');
+      }
+      return { url, expiresAt: now() + ttl * 1000 };
+    },
+
+    /**
+     * A one-shot SSH command. Daytona returns the whole `ssh …` line with the
+     * credential in the user name; it is handed back untouched and never
+     * logged. The gateway accepts it for the requested number of minutes.
+     */
+    async sshAccess(id: string, ttlSec: number): Promise<SandboxSshAccess> {
+      const record = requireRecord(id);
+      const minutes = Math.min(Math.max(Math.floor(ttlSec / 60), 1), 1_440);
+      const res = await send(sandboxUrl(record, `/ssh-access?expiresInMinutes=${minutes}`), {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      if (res.status === 404) throw notFoundError(id);
+      if (!res.ok) throw httpError('sshAccess', res.status);
+      const payload = await readJson(res);
+      const command = typeof payload.sshCommand === 'string' ? payload.sshCommand.trim() : '';
+      if (!/^ssh [^\n\r]+$/.test(command)) {
+        throw new CloudRunnerError('Daytona не выдал команду SSH', 'provider_error');
+      }
+      const parsed = typeof payload.expiresAt === 'string' ? Date.parse(payload.expiresAt) : NaN;
+      return {
+        command,
+        expiresAt: Number.isFinite(parsed) ? parsed : now() + minutes * 60_000,
+      };
     },
 
     async stop(id: string): Promise<void> {

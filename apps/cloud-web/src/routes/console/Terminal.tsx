@@ -18,8 +18,12 @@ interface TermLine {
 
 export interface TerminalProps {
   sandboxId: string
-  /** Short handle for the prompt: `daytona@<short>:<cwd>$`. */
+  /** Short handle for the prompt when no friendly host is given. */
   shortId: string
+  /** The name shown before `@`; the OS user inside the machine stays `daytona`. */
+  promptUser?: string
+  /** The friendly host shown after `@`, e.g. `rox-computer-medium-8G-2x4`. */
+  promptHost?: string
   /** Exec only works on a running machine; the parent reports that state. */
   enabled: boolean
   disabledReason?: string
@@ -100,7 +104,8 @@ export default function Terminal(props: TerminalProps): JSX.Element {
     return current
   }
 
-  const promptText = (): string => `${SANDBOX_USER}@${props.shortId}:${promptCwd()}$`
+  const promptText = (): string =>
+    `${props.promptUser ?? SANDBOX_USER}@${props.promptHost ?? props.shortId}:${promptCwd()}$`
 
   const append = (added: TermLine[]): void => {
     if (added.length === 0) return

@@ -9,31 +9,31 @@ import {
   Dialog,
   EmptyState,
   Icon,
-  Money,
   PageHeader,
   Skeleton,
-  Tabs,
   useToast,
 } from '@/components'
 import type { BadgeTone } from '@/components'
 import { ApiError, api } from '@/lib/api'
 import type { Sandbox, SandboxState } from '@/lib/api'
-import { formatDate, shortId } from '@/lib/format'
+import { formatCents, formatDate, formatMoney, formatTime, shortId } from '@/lib/format'
 
 import { useConsoleSession } from './components/console-session'
 import {
   coresLabel,
   errorText,
   gpuName,
+  machineDisplayName,
   modeLabel,
+  regionFlag,
   regionLabel,
   stateLabel as labelForState,
   stateTone as toneForState,
   ttlLabel,
 } from './components/console-ui'
 
-import Files from './Files'
-import Terminal from './Terminal'
+import MachineAccess from './MachineAccess'
+import MachineWorkspace from './MachineWorkspace'
 import './machine.css'
 
 const POLL_MS = 5000
@@ -74,26 +74,76 @@ function regionOf(machine: Sandbox): string | null {
   return typeof spec === 'string' && spec.length > 0 ? spec : null
 }
 
-function Fact(props: { label: string; children?: JSX.Element; note?: string }): JSX.Element {
-  return (
-    <div class="machine-fact">
-      <dt>{props.label}</dt>
-      <dd>
-        {props.children ?? '—'}
-        <Show when={props.note !== undefined}>
-          <span class="machine-fact-note">{props.note}</span>
-        </Show>
-      </dd>
-    </div>
-  )
+/** The ribbon keeps the site short: «США», not «США, общая»; the title has the rest. */
+function shortRegion(id: string | null): string {
+  if (id === 'us' || id === 'us-west-4') return 'США'
+  return regionText(id)
 }
 
-/** Money for an optional field: a missing rate reads as a dash, not «—/ч». */
-function Price(props: { cents: number | null | undefined; perHour?: boolean }): JSX.Element {
-  return typeof props.cents === 'number' ? (
-    <Money cents={props.cents} perHour={props.perHour} />
-  ) : (
-    <span>—</span>
+/**
+ * The whole machine in one horizontal ribbon: the image, its resources, the
+ * flag of the site, billing, spent money and lifetime. The id stays a button,
+ * so copying it does not need a second row.
+ */
+function MachineRibbon(props: { machine: Sandbox }): JSX.Element {
+  const [copied, setCopied] = createSignal(false)
+
+  const copyId = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(props.machine.id)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1600)
+    } catch {
+      setCopied(false)
+    }
+  }
+
+  return (
+    <div class="machine-ribbon" role="group" aria-label="Состав и цена машины">
+      <span
+        class="ribbon-name"
+        title={`Образ ${textOrDash(props.machine.spec?.snapshot ?? props.machine.spec?.image)}; поставщик ${textOrDash(props.machine.provider)}`}
+      >
+        {machineDisplayName(props.machine.spec)}
+      </span>
+      <span class="ribbon-sep" aria-hidden="true" />
+      <span>{textOrDash(props.machine.spec?.os)}</span>
+      <span title="Ядра">{coresLabel(props.machine.spec?.cpu)}</span>
+      <span title="Память">{gigabytes(props.machine.spec?.memoryGb)}</span>
+      <span title="Диск">{gigabytes(props.machine.spec?.diskGb)}</span>
+      <Show when={gpuName(props.machine.spec?.gpu)}>
+        {(card) => <span>{card()}</span>}
+      </Show>
+      <span class="ribbon-sep" aria-hidden="true" />
+      <span class="ribbon-region" title={`Площадка: ${regionText(regionOf(props.machine))}`}>
+        <span class="ribbon-flag" aria-hidden="true">
+          {regionFlag(regionOf(props.machine))}
+        </span>
+        {shortRegion(regionOf(props.machine))}
+      </span>
+      <span class="ribbon-sep" aria-hidden="true" />
+      <span title="Режим оплаты и ставка">
+        {modeLabel(props.machine.billing?.mode)} ·{' '}
+        {formatMoney(props.machine.billing?.rate_cents_per_hour, { perHour: true })}
+      </span>
+      <span title={`Потрачено ${formatCents(props.machine.cost_so_far_cents)}`}>
+        {formatCents(props.machine.cost_so_far_cents)}
+      </span>
+      <span
+        title={`Срок жизни ${ttlText(props.machine.spec?.ttlSec)}; создана ${formatDate(props.machine.created_at)}; истекает ${formatDate(props.machine.expires_at)}`}
+      >
+        {ttlText(props.machine.spec?.ttlSec)} · до {formatTime(props.machine.expires_at)}
+      </span>
+      <span class="ribbon-created">создана {formatTime(props.machine.created_at)}</span>
+      <button
+        type="button"
+        class="ribbon-id"
+        title={`Номер машины: ${props.machine.id}. Нажмите, чтобы скопировать.`}
+        onClick={() => void copyId()}
+      >
+        {copied() ? 'Скопировано' : shortId(props.machine.id, 8)}
+      </button>
+    </div>
   )
 }
 
@@ -114,7 +164,6 @@ export default function ConsoleMachine(): JSX.Element {
   const [actionError, setActionError] = createSignal<string | null>(null)
   const [confirmStop, setConfirmStop] = createSignal(false)
   const [confirmDelete, setConfirmDelete] = createSignal(false)
-  const [tab, setTab] = createSignal<'terminal' | 'files'>('terminal')
 
   const state = (): SandboxState | null => sandbox()?.state ?? null
   const currentLabel = (): string => {
@@ -131,7 +180,10 @@ export default function ConsoleMachine(): JSX.Element {
     return current === 'queued' || current === 'running' || current === 'starting' || current === 'paused'
   }
   const accessReason = (): string =>
-    `Терминал и файлы доступны только на запущенной машине. Сейчас машина ${currentLabel().toLowerCase()}.`
+    `Терминал, файлы и доступ к сети работают только на запущенной машине. Сейчас машина ${currentLabel().toLowerCase()}.`
+
+  const promptUser = (): string => (session.guest() ? 'guest' : 'user')
+  const promptHost = (machine: Sandbox): string => machineDisplayName(machine.spec)
 
   let loadToken = 0
 
@@ -182,7 +234,6 @@ export default function ConsoleMachine(): JSX.Element {
       setDeleting(false)
       setConfirmStop(false)
       setConfirmDelete(false)
-      setTab('terminal')
       void load(true)
     }),
   )
@@ -262,9 +313,12 @@ export default function ConsoleMachine(): JSX.Element {
         back={{ href: '/console/machines', label: 'Все машины' }}
         eyebrow="Машина"
         title={machineId().length === 0 ? 'Машина' : `Машина ${shortId(machineId(), 8)}`}
-        description="Состав, цена, срок жизни, терминал и файлы одной машины."
+        description="Состав, доступ, терминал и файлы одной машины."
         actions={
           <>
+            <Badge tone={currentTone()} dot>
+              {currentLabel()}
+            </Badge>
             <Button
               variant="ghost"
               size="sm"
@@ -361,111 +415,23 @@ export default function ConsoleMachine(): JSX.Element {
 
         <Show when={sandbox()}>
           {(machine) => (
-            <Card
-              title="Состав и цена"
-              subtitle="Ресурсы, площадка и режим оплаты этой машины."
-              actions={
-                <Badge tone={currentTone()} dot>
-                  {currentLabel()}
-                </Badge>
-              }
-            >
-              <dl class="machine-facts">
-                <Fact label="Образ">
-                  {textOrDash(machine().spec?.snapshot ?? machine().spec?.image)}
-                </Fact>
-                <Fact label="Система">{textOrDash(machine().spec?.os)}</Fact>
-                <Fact label="Ядра">{coresLabel(machine().spec?.cpu)}</Fact>
-                <Fact label="Память">{gigabytes(machine().spec?.memoryGb)}</Fact>
-                <Fact label="Диск">{gigabytes(machine().spec?.diskGb)}</Fact>
-                <Fact label="Видеокарта">{gpuName(machine().spec?.gpu) ?? '—'}</Fact>
-                <Fact label="Площадка">{regionText(regionOf(machine()))}</Fact>
-                <Fact label="Поставщик">{textOrDash(machine().provider)}</Fact>
-                <Fact
-                  label="Режим оплаты"
-                  note={
-                    machine().billing?.mode === 'byok'
-                      ? 'железо оплачиваете поставщику напрямую'
-                      : machine().billing?.mode === 'managed'
-                        ? 'полную цену платит кошелёк'
-                        : undefined
-                  }
-                >
-                  {modeLabel(machine().billing?.mode)}
-                </Fact>
-                <Fact label="Цена часа">
-                  <Price cents={machine().billing?.rate_cents_per_hour} perHour />
-                </Fact>
-                <Show when={machine().billing?.mode === 'byok'}>
-                  <Fact label="Сервисный сбор" note="только он списывается с кошелька">
-                    <Price cents={machine().billing?.service_fee_cents_per_hour} perHour />
-                  </Fact>
-                </Show>
-                <Fact label="Потрачено" note="счётчик растёт по ставке, пока машина работает">
-                  <Price cents={machine().cost_so_far_cents} />
-                </Fact>
-                <Fact label="Срок жизни">{ttlText(machine().spec?.ttlSec)}</Fact>
-                <Fact label="Создана">{formatDate(machine().created_at)}</Fact>
-                <Fact label="Истекает">
-                  {machine().expires_at === null || machine().expires_at === undefined
-                    ? '—'
-                    : formatDate(machine().expires_at)}
-                </Fact>
-                <Fact label="Номер">
-                  <span class="machine-id">{machine().id}</span>
-                </Fact>
-              </dl>
-            </Card>
+            <>
+              <MachineRibbon machine={machine()} />
+              <MachineAccess
+                sandboxId={machine().id}
+                enabled={isRunning()}
+                reason={accessReason()}
+              />
+              <MachineWorkspace
+                sandbox={machine()}
+                enabled={isRunning()}
+                disabledReason={accessReason()}
+                promptUser={promptUser()}
+                promptHost={promptHost(machine())}
+              />
+            </>
           )}
         </Show>
-
-        <div class="machine-access">
-          <Tabs
-            items={[
-              { id: 'terminal', label: 'Терминал' },
-              { id: 'files', label: 'Файлы' },
-            ]}
-            active={tab()}
-            onChange={(id) => setTab(id === 'files' ? 'files' : 'terminal')}
-            label="Терминал и файлы машины"
-          />
-          <div
-            class="machine-tab-panel"
-            role="tabpanel"
-            id="panel-terminal"
-            aria-labelledby="tab-terminal"
-            classList={{ 'is-hidden': tab() !== 'terminal' }}
-          >
-            <Show when={sandbox()}>
-              {(machine) => (
-                <Terminal
-                  sandboxId={machine().id}
-                  shortId={shortId(machine().id, 8)}
-                  enabled={isRunning()}
-                  disabledReason={accessReason()}
-                  visible={tab() === 'terminal'}
-                />
-              )}
-            </Show>
-          </div>
-          <div
-            class="machine-tab-panel"
-            role="tabpanel"
-            id="panel-files"
-            aria-labelledby="tab-files"
-            classList={{ 'is-hidden': tab() !== 'files' }}
-          >
-            <Show when={sandbox()}>
-              {(machine) => (
-                <Files
-                  sandboxId={machine().id}
-                  enabled={isRunning()}
-                  reason={accessReason()}
-                />
-              )}
-            </Show>
-          </div>
-        </div>
       </Show>
 
       <Dialog

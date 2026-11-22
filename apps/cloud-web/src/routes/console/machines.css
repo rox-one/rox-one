@@ -84,6 +84,11 @@
   white-space: nowrap;
 }
 
+.machine-region-flag {
+  font-size: 13px;
+  line-height: 1;
+}
+
 .machine-card-actions {
   display: flex;
   gap: 6px;

@@ -103,6 +103,42 @@ export function regionLabel(id: string | null | undefined): string {
   return id
 }
 
+const REGION_FLAGS: Record<string, string> = {
+  us: '🇺🇸',
+  'us-west-4': '🇺🇸',
+  'us-east': '🇺🇸',
+  'eu-central': '🇩🇪',
+  'eu-west': '🇪🇺',
+  eu: '🇪🇺',
+  uk: '🇬🇧',
+  ap: '🌏',
+  asia: '🌏',
+}
+
+/** A country flag for the region; an unknown region gets a globe, never a guess. */
+export function regionFlag(id: string | null | undefined): string {
+  return REGION_FLAGS[id ?? ''] ?? '🌐'
+}
+
+/**
+ * The friendly name a person sees in the prompt and the page: the image
+ * family, disk and CPU×RAM, e.g. `rox-computer-medium-8G-2x4`.
+ */
+export function machineDisplayName(spec?: {
+  snapshot?: string | null
+  image?: string | null
+  cpu?: number | null
+  memoryGb?: number | null
+  diskGb?: number | null
+}): string {
+  const source = spec?.snapshot ?? spec?.image ?? ''
+  const family = source.replace(/^rox-(?:cloud-)?/, '').replace(/-?\d+x\d+$/, '') || 'base'
+  const cpu = spec?.cpu ?? 1
+  const ram = spec?.memoryGb ?? 1
+  const disk = typeof spec?.diskGb === 'number' ? `${spec.diskGb}G-` : ''
+  return `rox-computer-${family}-${disk}${cpu}x${ram}`
+}
+
 const AUDIT_LABELS: Record<string, string> = {
   'sandbox.create': 'Запуск машины',
   'sandbox.stop': 'Остановка машины',
